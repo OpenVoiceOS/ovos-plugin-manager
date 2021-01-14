@@ -1,1 +1,2 @@
 ovos_utils
+requests

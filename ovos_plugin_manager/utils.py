@@ -11,7 +11,7 @@
 # limitations under the License.
 #
 """Common functions for loading plugins."""
-
+import requests
 import pkg_resources
 from enum import Enum
 from ovos_utils.log import LOG
@@ -62,3 +62,24 @@ def load_plugin(plug_name, plug_type=None):
     LOG.warning('Could not find the plugin {}.{}'.format(
         plug_type or "all plugin types", plug_name))
     return None
+
+
+def search_pip(query, strict=True):
+    raw_text = requests.get(f'https://pypi.org/search/?q={query}').text
+    raw_names = raw_text.split('<span class="package-snippet__name">')[1:-2]
+    names = []
+    for name in raw_names:
+        names.append(name.split('</span>')[0])
+
+    raw_desc = raw_text.split('<p class="package-snippet__description">')[1:-2]
+    descs = []
+    for desc in raw_desc:
+        descs.append(desc.split('</p>')[0])
+    if strict:
+        return [
+            (names[i], descs[i]) for i in range(len(names)) if query in names[i]
+        ]
+
+    return [
+        (names[i], descs[i]) for i in range(len(names))
+    ]
