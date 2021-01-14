@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import search_pip
+from ovos_plugin_manager.installation import search_pip
 
 packages = search_pip("mycroft-tts-plugin")
 """
