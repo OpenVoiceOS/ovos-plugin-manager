@@ -7,7 +7,9 @@ setup(
     url='https://github.com/OpenVoiceOS/OVOS-plugin-manager',
     license='Apache-2.0',
     author='jarbasAi',
-    install_requires=["ovos_utils>=0.0.5", "requests"],
+    install_requires=["ovos_utils>=0.0.7", "requests"],
     author_email='jarbasai@mailfence.com',
     description='OpenVoiceOS plugin manager'
 )
+
+E

@@ -1,2 +1,2 @@
-ovos_utils
+ovos_utils>=0.0.7
 requests
