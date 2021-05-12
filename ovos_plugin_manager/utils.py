@@ -21,8 +21,8 @@ class PluginTypes(str, Enum):
     STT = 'mycroft.plugin.stt'
     TTS = 'mycroft.plugin.tts'
     WAKEWORD = 'mycroft.plugin.wake_word'
-    TRANSLATE = "neon.lang.translate"
-    LANG_DETECT = "neon.lang.detect"
+    TRANSLATE = "neon.plugin.lang.translate"
+    LANG_DETECT = "neon.plugin.lang.detect"
 
 
 def find_plugins(plug_type=None):
