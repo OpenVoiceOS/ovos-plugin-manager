@@ -1,11 +1,6 @@
 import abc
 import re
 
-try:
-    from lingua_nostra.parse import normalize
-except ImportError:
-    from lingua_franca.parse import normalize
-
 
 class IntentEngine:
     keyword_based = False
@@ -31,12 +26,20 @@ class IntentEngine:
     def get_normalizations(self, utterance, lang=None):
         norms = [utterance]
         if lang:
-            norms.append(normalize(utterance,
-                                   remove_articles=True,
-                                   lang=lang))
-            norms.append(normalize(utterance,
-                                   remove_articles=False,
-                                   lang=lang))
+            try:
+                from lingua_nostra.parse import normalize
+                norms.append(normalize(utterance, lang=lang))
+            except ImportError:
+                pass
+
+            try:
+                from lingua_franca.parse import normalize
+                norms.append(normalize(utterance, remove_articles=True,
+                                       lang=lang))
+                norms.append(normalize(utterance, remove_articles=False,
+                                       lang=lang))
+            except ImportError:
+                pass
         norms.append(re.sub(r'[^\w]', ' ', utterance))
         norms.append(''.join([i if 64 < ord(i) < 128 or ord(i) == 32
                               else '' for i in utterance]))
