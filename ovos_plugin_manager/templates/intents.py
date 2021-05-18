@@ -19,11 +19,16 @@ class IntentEngine:
     def intent_samples(self):
         return self._intent_samples
 
-    def train(self, single_thread=True, timeout=120, force_training=True):
-        # in case engines need a training step this might be called
-        return True
+    @property
+    def manifest(self):
+        return {
+            "intent_names": self.registered_intents,
+            "entities": self.registered_entities,
+            "regex_entities": self.regexes
+        }
 
-    def get_normalizations(self, utterance, lang=None):
+    @staticmethod
+    def get_normalizations(utterance, lang=None):
         norms = [utterance]
         if lang:
             try:
@@ -103,9 +108,7 @@ class IntentEngine:
         """
         pass
 
-    def manifest(self):
-        return {
-            "intent_names": self.registered_intents,
-            "entities": self.registered_entities,
-            "regex_entities": self.regexes
-        }
+    @abc.abstractmethod
+    def train(self, single_thread=True, timeout=120, force_training=True):
+        # in case engines need a training step this might be called
+        return True
