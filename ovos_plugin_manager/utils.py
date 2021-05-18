@@ -23,6 +23,7 @@ class PluginTypes(str, Enum):
     WAKEWORD = 'mycroft.plugin.wake_word'
     TRANSLATE = "neon.plugin.lang.translate"
     LANG_DETECT = "neon.plugin.lang.detect"
+    INTENT = "chatterbox.plugin.intents"
 
 
 def find_plugins(plug_type=None):

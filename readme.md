@@ -13,3 +13,17 @@ pip install ovos-plugin-manager==0.0.1a1
 ## Usage
 
 see [./examples](examples) folder for basic usage
+
+
+## Plugins
+
+OPM provides templates to create OVOS plugins
+
+#### List of known plugins
+
+##### Wake Words
+
+##### STT
+
+##### TTS
+
