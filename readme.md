@@ -33,4 +33,4 @@ This list is non exhaustive
 - [jarbas-tts-plugin-responsivevoice](https://github.com/JarbasLingua/jarbas-tts-plugin-responsivevoice)
 
 ##### STT
--[jarbas-stt-plugin-vosk](https://github.com/JarbasLingua/jarbas-stt-plugin-vosk)
+- [jarbas-stt-plugin-vosk](https://github.com/JarbasLingua/jarbas-stt-plugin-vosk)
