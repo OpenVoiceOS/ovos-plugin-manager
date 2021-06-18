@@ -7,7 +7,7 @@ STATUS: alpha release 1
 ## Install
 
 ```bash
-pip install ovos-plugin-manager==0.0.1a1
+pip install ovos-plugin-manager
 ```
 
 ## Usage
