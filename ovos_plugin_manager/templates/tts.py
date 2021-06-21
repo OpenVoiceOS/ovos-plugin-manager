@@ -23,14 +23,11 @@ movements for all TTS engines (only mimic implements this in upstream)
     engine.playback.stop() # if you dont call this it will hang here forever
 """
 import hashlib
-import os
 import os.path
 import random
 import re
-import subprocess
 from os.path import isfile, join
 from queue import Queue, Empty
-from tempfile import gettempdir
 from threading import Thread
 from time import time
 
@@ -44,6 +41,18 @@ from ovos_utils.signal import check_for_signal, create_signal
 from ovos_utils.sound import play_mp3, play_wav
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
+
+from memory_tempfile import MemoryTempfile
+import os
+
+
+# TODO move to ovos_utils
+def get_ram_directory(folder):
+    tempfile = MemoryTempfile(fallback=True)
+    path = os.path.join(tempfile.gettempdir(), folder)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
 
 
 class PlaybackThread(Thread):
@@ -152,6 +161,7 @@ class TTS:
     def __init__(self, lang, config, validator=None, audio_ext='wav',
                  phonetic_spelling=True, ssml_tags=None):
         super(TTS, self).__init__()
+        self.tts_name = self.__class__.__name__
         self.bus = BUS()
         self.lang = lang or config.get("lang") or 'en-us'
         self.config = config
@@ -161,7 +171,8 @@ class TTS:
         self.ssml_tags = ssml_tags or []
 
         self.voice = config.get("voice")
-        self.filename = join(gettempdir(), '/tts.wav')
+        self.filename = join(get_ram_directory(self.tts_name),
+                             'tts.' + self.audio_ext)
         self.enclosure = None
         random.seed()
         self.queue = Queue()
@@ -173,7 +184,6 @@ class TTS:
         # if some module is calling get_tts (which is the correct usage)
         self.clear_cache()
         self.spellings = self.load_spellings()
-        self.tts_name = type(self).__name__
 
     def load_spellings(self, config=None):
         """Load phonetic spellings of words as dictionary."""
@@ -344,7 +354,7 @@ class TTS:
         for sentence, l in chunks:
             key = str(hashlib.md5(
                 sentence.encode('utf-8', 'ignore')).hexdigest())
-            cache_dir = os.path.join(gettempdir(), "tts/" + self.tts_name)
+            cache_dir = get_ram_directory(self.tts_name)
             wav_file = os.path.join(cache_dir, key + '.' + self.audio_ext)
 
             if os.path.exists(wav_file):
@@ -397,7 +407,7 @@ class TTS:
             key (str):        Hash key for the sentence
             phonemes (str):   phoneme string to save
         """
-        cache_dir = os.path.join(gettempdir(), "tts/" + self.tts_name)
+        cache_dir = get_ram_directory(self.tts_name)
         pho_file = os.path.join(cache_dir, key + ".pho")
         try:
             with open(pho_file, "w") as cachefile:
@@ -412,7 +422,7 @@ class TTS:
         Arguments:
             key (str): Key identifying phoneme cache
         """
-        cache_dir = os.path.join(gettempdir(), "tts/" + self.tts_name)
+        cache_dir = get_ram_directory(self.tts_name)
         pho_file = os.path.join(cache_dir, key + ".pho")
         if os.path.exists(pho_file):
             try:
@@ -508,7 +518,6 @@ class ConcatTTS(TTS):
         cmd.append(self.channels)
         cmd.append("rate")
         cmd.append(self.rate)
-        LOG.info(subprocess.check_output(cmd))
 
         return wav_file
 
@@ -526,5 +535,3 @@ class ConcatTTS(TTS):
         files, phonemes = self.sentence_to_files(sentence)
         wav_file = self.concat(files, wav_file)
         return wav_file, phonemes
-
-

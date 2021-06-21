@@ -1,3 +1,4 @@
-ovos_utils>=0.0.7
+ovos_utils>=0.0.11
 requests
 phoneme_guesser
+memory-tempfile
