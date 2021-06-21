@@ -24,25 +24,24 @@ movements for all TTS engines (only mimic implements this in upstream)
 """
 import hashlib
 import os
+import os.path
 import random
 import re
-from abc import abstractmethod
+import subprocess
+from os.path import isfile, join
+from queue import Queue, Empty
+from tempfile import gettempdir
 from threading import Thread
 from time import time
-from tempfile import gettempdir
-import os.path
-from os.path import dirname, exists, isdir, join
-from abc import ABCMeta
-from ovos_utils.lang.visimes import VISIMES
-from ovos_utils.messagebus import Message, FakeBus as BUS
+
+from ovos_utils import resolve_resource_file
 from ovos_utils.enclosure.api import EnclosureAPI
 from ovos_utils.lang.phonemes import get_phonemes
-from ovos_utils import resolve_resource_file
-from ovos_utils.sound import play_mp3, play_wav
-from ovos_utils.signal import check_for_signal, create_signal
+from ovos_utils.lang.visimes import VISIMES
 from ovos_utils.log import LOG
-from queue import Queue, Empty
-
+from ovos_utils.messagebus import Message, FakeBus as BUS
+from ovos_utils.signal import check_for_signal, create_signal
+from ovos_utils.sound import play_mp3, play_wav
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
 
@@ -136,7 +135,7 @@ class PlaybackThread(Thread):
         self.clear_queue()
 
 
-class TTS(metaclass=ABCMeta):
+class TTS:
     """TTS abstract class to be implemented by all TTS engines.
 
     It aggregates the minimum required parameters and exposes
@@ -149,13 +148,14 @@ class TTS(metaclass=ABCMeta):
         phonetic_spelling (bool): Whether to spell certain words phonetically
         ssml_tags (list): Supported ssml properties. Ex. ['speak', 'prosody']
     """
-    def __init__(self, lang, config, validator, audio_ext='wav',
+
+    def __init__(self, lang, config, validator=None, audio_ext='wav',
                  phonetic_spelling=True, ssml_tags=None):
         super(TTS, self).__init__()
         self.bus = BUS()
         self.lang = lang or config.get("lang") or 'en-us'
         self.config = config
-        self.validator = validator
+        self.validator = validator or TTSValidator(self)
         self.phonetic_spelling = phonetic_spelling
         self.audio_ext = audio_ext
         self.ssml_tags = ssml_tags or []
@@ -434,12 +434,13 @@ class TTS(metaclass=ABCMeta):
         self.stop()
 
 
-class TTSValidator(metaclass=ABCMeta):
+class TTSValidator:
     """TTS Validator abstract class to be implemented by all TTS engines.
 
     It exposes and implements ``validate(tts)`` function as a template to
     validate the TTS engines.
     """
+
     def __init__(self, tts):
         self.tts = tts
 
@@ -460,11 +461,9 @@ class TTSValidator(metaclass=ABCMeta):
     def validate_filename(self):
         pass
 
-    @abstractmethod
     def validate_lang(self):
         """Ensure the TTS supports current language."""
 
-    @abstractmethod
     def validate_connection(self):
         """Ensure the TTS can connect to it's backend.
 
@@ -472,6 +471,60 @@ class TTSValidator(metaclass=ABCMeta):
         or contact a webserver.
         """
 
-    @abstractmethod
     def get_tts_class(self):
         """Return TTS class that this validator is for."""
+
+
+class ConcatTTS(TTS):
+    def __init__(self, *args, **kwargs):
+        super(ConcatTTS, self).__init__(*args, **kwargs)
+        self.time_step = float(self.config.get("time_step", 0.1))
+        if self.time_step < 0.1:
+            self.time_step = 0.1
+        self.sound_files_path = self.config.get("sounds")
+        self.channels = self.config.get("channels", "1")
+        self.rate = self.config.get("rate", "16000")
+
+    def sentence_to_files(self, sentence):
+        """ list of ordered files to concatenate and form final wav file
+        return files (list) , phonemes (list)
+        """
+        raise NotImplementedError
+
+    def concat(self, files, wav_file):
+        """ generate output wav file from input files """
+        cmd = ["sox"]
+        for file in files:
+            if not isfile(file):
+                continue
+            cmd.append("-c")
+            cmd.append(self.channels)
+            cmd.append("-r")
+            cmd.append(self.rate)
+            cmd.append(file)
+
+        cmd.append(wav_file)
+        cmd.append("channels")
+        cmd.append(self.channels)
+        cmd.append("rate")
+        cmd.append(self.rate)
+        LOG.info(subprocess.check_output(cmd))
+
+        return wav_file
+
+    def get_tts(self, sentence, wav_file):
+        """
+            get data from tts.
+
+            Args:
+                sentence(str): Sentence to synthesize
+                wav_file(str): output file
+
+            Returns:
+                tuple: (wav_file, phoneme)
+        """
+        files, phonemes = self.sentence_to_files(sentence)
+        wav_file = self.concat(files, wav_file)
+        return wav_file, phonemes
+
+
