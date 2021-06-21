@@ -13,14 +13,13 @@ movements for all TTS engines (only mimic implements this in upstream)
 - playback start call has been omitted and moved to init method
 - init is called by mycroft, but non mycroft usage wont call it
 - outside mycroft the enclosure is not set, bus is dummy and playback thread is not used
-- playback queue is not wanted when some module is calling get_tts (which is the correct usage)
-- if playback was started on init then python scripts would never stop
-
-    # assuming they could even be imported in other module...
-    from mycroft.tts import TTSFactory
-    engine = TTSFactory.create()
-    engine.get_tts("hello world", "hello_world." + engine.audio_ext)
-    engine.playback.stop() # if you dont call this it will hang here forever
+    - playback queue is not wanted when some module is calling get_tts
+    - if playback was started on init then python scripts would never stop
+        from mycroft.tts import TTSFactory
+        engine = TTSFactory.create()
+        engine.get_tts("hello world", "hello_world." + engine.audio_ext)
+        # would hang here
+        engine.playback.stop()
 """
 import hashlib
 import os.path
@@ -158,13 +157,13 @@ class TTS:
         ssml_tags (list): Supported ssml properties. Ex. ['speak', 'prosody']
     """
 
-    def __init__(self, lang, config, validator=None, audio_ext='wav',
-                 phonetic_spelling=True, ssml_tags=None):
+    def __init__(self, lang="en-us", config=None, validator=None,
+                 audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
         super(TTS, self).__init__()
         self.tts_name = self.__class__.__name__
         self.bus = BUS()
         self.lang = lang or config.get("lang") or 'en-us'
-        self.config = config
+        self.config = config or {}
         self.validator = validator or TTSValidator(self)
         self.phonetic_spelling = phonetic_spelling
         self.audio_ext = audio_ext

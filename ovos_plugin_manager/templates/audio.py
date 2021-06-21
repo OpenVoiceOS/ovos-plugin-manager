@@ -4,6 +4,7 @@ These classes can be used to create an Audioservice plugin extending
 Mycroft's media playback options.
 """
 from abc import ABCMeta, abstractmethod
+from ovos_utils.messagebus import FakeBus
 
 
 class AudioBackend(metaclass=ABCMeta):
@@ -14,11 +15,11 @@ class AudioBackend(metaclass=ABCMeta):
         bus (MessageBusClient): Mycroft messagebus emitter
     """
 
-    def __init__(self, config, bus):
+    def __init__(self, config=None, bus=None):
         self._track_start_callback = None
         self.supports_mime_hints = False
-        self.config = config
-        self.bus = bus
+        self.config = config or {}
+        self.bus = bus or FakeBus()
 
     @property
     def playback_time(self):
