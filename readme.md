@@ -31,6 +31,7 @@ This list is non exhaustive
 ##### TTS
 - [ovos-tts-plugin-mimic](https://github.com/OpenVoiceOS/ovos-tts-plugin-mimic)
 - [ovos-tts-plugin-mimic2](https://github.com/OpenVoiceOS/ovos-tts-plugin-mimic2)
+- [ovos-tts-plugin-google](https://github.com/OpenVoiceOS/ovos-tts-plugin-google)
 - [jarbas-tts-plugin-responsivevoice](https://github.com/JarbasLingua/jarbas-tts-plugin-responsivevoice)
 - [jarbas-tts-plugin-pico](https://github.com/JarbasLingua/pico-tts-plugin)
 - [jarbas-tts-plugin-espeakNG](https://github.com/JarbasLingua/espeakNG-tts-plugin)

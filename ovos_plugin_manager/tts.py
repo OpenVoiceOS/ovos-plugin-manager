@@ -24,7 +24,7 @@ class OVOSTTSFactory:
     MAPPINGS = {
         "mimic": "ovos-tts-mimic",
         "mimic2": "ovos-tts-mimic2",
-        # "google": GoogleTTS,
+        "google": "ovos_tts_google",
         # "marytts": MaryTTS,
         # "fatts": FATTS,
         # "festival": Festival,
