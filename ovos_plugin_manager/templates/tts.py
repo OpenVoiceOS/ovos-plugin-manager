@@ -65,6 +65,7 @@ class PlaybackThread(Thread):
         self._terminated = False
         self._processing_queue = False
         self._paused = False
+        self.enclosure = None
 
     def init(self, tts):
         self.tts = tts
@@ -134,10 +135,8 @@ class PlaybackThread(Thread):
             Returns:
                 True if button has been pressed.
         """
-        if self.bus:
-            self.bus.emit(Message("enclosure.mouth.viseme_list",
-                                  {"start": time(), "visemes": pairs},
-                                  context={"destination": ["enclosure"]}))
+        if self.enclosure:
+            self.enclosure.mouth_viseme(time(), pairs)
 
     def pause(self):
         """pause thread"""
@@ -156,9 +155,8 @@ class PlaybackThread(Thread):
 
     def blink(self, rate=1.0):
         """ Blink mycroft's eyes """
-        if self.bus and random.random() < rate:
-            self.bus.emit(Message("enclosure.eyes.blink", {'side': "b"},
-                                  context={"destination": ["enclosure"]}))
+        if self.enclosure and random.random() < rate:
+            self.enclosure.eyes_blink("b")
 
     def stop(self):
         """ Stop thread """
