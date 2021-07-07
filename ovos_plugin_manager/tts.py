@@ -22,8 +22,8 @@ def load_tts_plugin(module_name):
 class OVOSTTSFactory:
     """ replicates the base mycroft class, but uses only OPM enabled plugins"""
     MAPPINGS = {
-        "mimic": "ovos-tts-mimic",
-        "mimic2": "ovos-tts-mimic2",
+        "mimic": "ovos_tts_mimic",
+        "mimic2": "ovos_tts_mimic2",
         "google": "ovos_tts_google",
         # "marytts": MaryTTS,
         # "fatts": FATTS,
