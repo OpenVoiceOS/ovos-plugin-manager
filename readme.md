@@ -34,6 +34,7 @@ This list is non exhaustive
 - [jarbas-tts-plugin-responsivevoice](https://github.com/JarbasLingua/jarbas-tts-plugin-responsivevoice)
 - [jarbas-tts-plugin-pico](https://github.com/JarbasLingua/pico-tts-plugin)
 - [jarbas-tts-plugin-espeakNG](https://github.com/JarbasLingua/espeakNG-tts-plugin)
-- 
+- [chatterbox-polly-tts-plugin](https://github.com/HelloChatterbox/chatterbox-polly-tts-plugin)
+
 ##### STT
 - [jarbas-stt-plugin-vosk](https://github.com/JarbasLingua/jarbas-stt-plugin-vosk)
