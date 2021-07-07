@@ -28,7 +28,9 @@ import re
 from os.path import isfile, join
 from queue import Queue, Empty
 from threading import Thread
-from time import time
+from time import time, sleep
+from memory_tempfile import MemoryTempfile
+import os
 
 from ovos_utils import resolve_resource_file
 from ovos_utils.enclosure.api import EnclosureAPI
@@ -40,9 +42,6 @@ from ovos_utils.signal import check_for_signal, create_signal
 from ovos_utils.sound import play_mp3, play_wav
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
-
-from memory_tempfile import MemoryTempfile
-import os
 
 
 # TODO move to ovos_utils
@@ -65,9 +64,16 @@ class PlaybackThread(Thread):
         self.queue = queue
         self._terminated = False
         self._processing_queue = False
+        self._paused = False
 
     def init(self, tts):
         self.tts = tts
+
+    @property
+    def bus(self):
+        if self.tts:
+            return self.tts.bus
+        return None
 
     def clear_queue(self):
         """
@@ -85,7 +91,10 @@ class PlaybackThread(Thread):
             Thread main loop. get audio and viseme data from queue
             and play.
         """
+        self._paused = False
         while not self._terminated:
+            while self._paused:  # barge-in support etc
+                sleep(0.2)
             try:
                 snd_type, data, visemes, ident = self.queue.get(timeout=2)
                 self.blink(0.5)
@@ -125,8 +134,21 @@ class PlaybackThread(Thread):
             Returns:
                 True if button has been pressed.
         """
-        if self.enclosure:
-            self.enclosure.mouth_viseme(time(), pairs)
+        if self.bus:
+            self.bus.emit(Message("enclosure.mouth.viseme_list",
+                                  {"start": time(), "visemes": pairs},
+                                  context={"destination": ["enclosure"]}))
+
+    def pause(self):
+        """pause thread"""
+        self._paused = True
+        # TODO is this desired?
+        # if self.playback_process:
+        #    self.playback_process.terminate()
+
+    def resume(self):
+        """resume thread"""
+        self._paused = False
 
     def clear(self):
         """ Clear all pending actions for the TTS playback thread. """
@@ -134,8 +156,9 @@ class PlaybackThread(Thread):
 
     def blink(self, rate=1.0):
         """ Blink mycroft's eyes """
-        if self.enclosure and random.random() < rate:
-            self.enclosure.eyes_blink("b")
+        if self.bus and random.random() < rate:
+            self.bus.emit(Message("enclosure.eyes.blink", {'side': "b"},
+                                  context={"destination": ["enclosure"]}))
 
     def stop(self):
         """ Stop thread """
