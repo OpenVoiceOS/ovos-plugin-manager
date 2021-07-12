@@ -24,6 +24,7 @@ class PluginTypes(str, Enum):
     TRANSLATE = "neon.plugin.lang.translate"
     LANG_DETECT = "neon.plugin.lang.detect"
     INTENT = "chatterbox.plugin.intentBox"
+    TRIGGER = "chatterbox.plugin.trigger"
 
 
 def find_plugins(plug_type=None):

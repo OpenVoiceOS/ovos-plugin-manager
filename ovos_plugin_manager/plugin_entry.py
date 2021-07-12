@@ -8,7 +8,7 @@ from ovos_utils import camel_case_split
 from ovos_utils.json_helper import merge_dict
 
 
-class MycroftPlugin:
+class OpenVoiceOSPlugin:
     def __init__(self, data):
         self._data = data
         self._clazz = None
@@ -30,7 +30,7 @@ class MycroftPlugin:
             data["class"] = engine.__name__
             data["description"] = engine.__doc__
 
-        return MycroftPlugin(data)
+        return OpenVoiceOSPlugin(data)
 
     @property
     def json(self):

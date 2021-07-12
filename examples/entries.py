@@ -1,8 +1,8 @@
-from ovos_plugin_manager.plugin_entry import MycroftPlugin
+from ovos_plugin_manager.plugin_entry import OpenVoiceOSPlugin
 from ovos_plugin_manager.installation import search_pip
 
 # installed
-p = MycroftPlugin.from_name("cotovia_tts_plug")
+p = OpenVoiceOSPlugin.from_name("cotovia_tts_plug")
 print(p.json)
 """
 {'class': 'CotoviaTTSPlugin',
@@ -18,7 +18,7 @@ print(p.json)
 
 for pkg in search_pip("mycroft-tts-plugin"):
     data = {"description": pkg[1], "package_name": pkg[0]}
-    p = MycroftPlugin(data)
+    p = OpenVoiceOSPlugin(data)
     print(p.json)
 """
 {'class': None,
