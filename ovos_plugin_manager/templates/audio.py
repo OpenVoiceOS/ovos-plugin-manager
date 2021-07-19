@@ -107,6 +107,26 @@ class AudioBackend(metaclass=ABCMeta):
         Mycroft has lowered it using lower_volume().
         """
 
+    def get_track_length(self):
+        """
+        getting the duration of the audio in milliseconds
+        NOTE: not yet supported by mycroft-core
+        """
+
+    def get_track_position(self):
+        """
+        get current position in milliseconds
+        NOTE: not yet supported by mycroft-core
+        """
+
+    def set_track_position(self, milliseconds):
+        """
+        go to position in milliseconds
+        NOTE: not yet supported by mycroft-core
+          Args:
+                milliseconds (int): number of milliseconds of final position
+        """
+
     def seek_forward(self, seconds=1):
         """Skip X seconds.
 
