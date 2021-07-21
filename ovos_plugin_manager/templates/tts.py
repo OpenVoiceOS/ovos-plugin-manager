@@ -190,7 +190,7 @@ class TTS:
         self.audio_ext = audio_ext
         self.ssml_tags = ssml_tags or []
 
-        self.voice = config.get("voice")
+        self.voice = self.config.get("voice")
         self.filename = join(get_ram_directory(self.tts_name),
                              'tts.' + self.audio_ext)
         self.enclosure = None
