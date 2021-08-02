@@ -9,7 +9,7 @@ print(p.json)
  'description': 'Interface to cotovia TTS.',
  'human_name': 'Cotovia TTS Plugin',
  'is_installed': True,
- 'module_name': 'jarbas_tts_plugin_cotovia',
+ 'module_name': 'ovos_tts_plugin_cotovia',
  'name': 'cotovia_tts_plug',
  'package_name': None,
  'plugin_type': <PluginTypes.TTS: 'mycroft.plugin.tts'>,

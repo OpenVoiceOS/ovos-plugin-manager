@@ -17,6 +17,7 @@ from ovos_utils.log import LOG
 
 
 class PluginTypes(str, Enum):
+    SKILL = "holmesol.plugin.skill"
     AUDIO = 'mycroft.plugin.audioservice'
     STT = 'mycroft.plugin.stt'
     TTS = 'mycroft.plugin.tts'
