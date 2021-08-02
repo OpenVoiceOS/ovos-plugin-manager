@@ -24,9 +24,10 @@ OPM provides templates to create OVOS plugins
 This list is non exhaustive 
 
 ##### Wake Words
-- [ovos-wakeword-plugin-pocketsphinx](https://github.com/OpenVoiceOS/ovos-wakeword-plugin-pocketsphinx)
-- [ovos-wakeword-plugin-precise](https://github.com/OpenVoiceOS/ovos-wake-word-plugin-precise)
-- [chatterbox-wakeword-plugin-dummy](https://github.com/HelloChatterbox/dummy_wakeword_plugin)
+- [ovos_ww_plugin_hotkeys](https://github.com/OpenVoiceOS/ovos_ww_plugin_hotkeys)
+- [ovos-ww-plugin-pocketsphinx](https://github.com/OpenVoiceOS/ovos-wakeword-plugin-pocketsphinx)
+- [ovos-ww-plugin-precise](https://github.com/OpenVoiceOS/ovos-wake-word-plugin-precise)
+- [chatterbox-ww-plugin-dummy](https://github.com/HelloChatterbox/dummy_wakeword_plugin)
 
 ##### TTS
 - [ovos-tts-plugin-mimic](https://github.com/OpenVoiceOS/ovos-tts-plugin-mimic)
