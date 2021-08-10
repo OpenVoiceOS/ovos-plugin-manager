@@ -40,6 +40,7 @@ from ovos_utils.log import LOG
 from ovos_utils.messagebus import Message, FakeBus as BUS
 from ovos_utils.signal import check_for_signal, create_signal
 from ovos_utils.sound import play_mp3, play_wav
+from ovos_utils.metrics import Stopwatch
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
 
@@ -181,6 +182,7 @@ class TTS:
     def __init__(self, lang="en-us", config=None, validator=None,
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
         super(TTS, self).__init__()
+        self.stopwatch = Stopwatch()
         self.tts_name = self.__class__.__name__
         self.bus = BUS()
         self.lang = lang or config.get("lang") or 'en-us'
@@ -204,6 +206,14 @@ class TTS:
         # if some module is calling get_tts (which is the correct usage)
         self.clear_cache()
         self.spellings = self.load_spellings()
+        self.log_timestamps = self.config.get("log_timestamps", False)
+        self.handle_metric({"metric_type": "tts.init"})
+
+    def handle_metric(self, metadata=None):
+        """ receive timing metrics for diagnostics
+        does nothing by default but plugins might use it, eg, NeonCore"""
+        if self.log_timestamps:
+            LOG.debug(f"stopwatch: {self.stopwatch.time} metric: {metadata}")
 
     def load_spellings(self, config=None):
         """Load phonetic spellings of words as dictionary."""
@@ -228,6 +238,8 @@ class TTS:
         create_signal("isSpeaking")
         # Create signals informing start of speech
         self.bus.emit(Message("recognizer_loop:audio_output_start"))
+        self.stopwatch.start()
+        self.handle_metric({"metric_type": "tts.start"})
 
     def end_audio(self, listen=False):
         """Helper function for child classes to call in execute().
@@ -247,6 +259,8 @@ class TTS:
 
         # This check will clear the "signal"
         check_for_signal("isSpeaking")
+        self.stopwatch.stop()
+        self.handle_metric({"metric_type": "tts.end"})
 
     def init(self, bus=None):
         """ Performs intial setup of TTS object.
@@ -259,6 +273,7 @@ class TTS:
         self.playback.init(self)
         self.enclosure = EnclosureAPI(self.bus)
         self.playback.enclosure = self.enclosure
+        self.handle_metric({"metric_type": "tts.setup"})
 
     def get_tts(self, sentence, wav_file):
         """Abstract method that a tts implementation needs to implement.
@@ -349,7 +364,7 @@ class TTS:
                     of the utterance.
         """
         sentence = self.validate_ssml(sentence)
-
+        self.handle_metric({"metric_type": "tts.ssml.validated"})
         create_signal("isSpeaking")
         try:
             self._execute(sentence, ident, listen)
@@ -370,7 +385,8 @@ class TTS:
         # Apply the listen flag to the last chunk, set the rest to False
         chunks = [(chunks[i], listen if i == len(chunks) - 1 else False)
                   for i in range(len(chunks))]
-
+        self.handle_metric({"metric_type": "tts.preprocessed",
+                            "n_chunks": len(chunks)})
         for sentence, l in chunks:
             key = str(hashlib.md5(
                 sentence.encode('utf-8', 'ignore')).hexdigest())
@@ -381,14 +397,18 @@ class TTS:
                 LOG.debug("TTS cache hit")
                 phonemes = self.load_phonemes(key)
             else:
+                self.handle_metric({"metric_type": "tts.synth.start"})
                 wav_file, phonemes = self.get_tts(sentence, wav_file)
+                self.handle_metric({"metric_type": "tts.synth.finished"})
                 if phonemes:
                     self.save_phonemes(key, phonemes)
                 else:
                     phonemes = get_phonemes(sentence)
+                    self.handle_metric({"metric_type": "tts.phonemes.guess"})
 
             vis = self.viseme(phonemes) if phonemes else None
             self.queue.put((self.audio_ext, wav_file, vis, ident, l))
+            self.handle_metric({"metric_type": "tts.queued"})
 
     def viseme(self, phonemes):
         """Create visemes from phonemes.
@@ -459,6 +479,7 @@ class TTS:
             self.playback.join()
         except Exception as e:
             pass
+        self.handle_metric({"metric_type": "tts.stop"})
 
     def __del__(self):
         self.stop()
