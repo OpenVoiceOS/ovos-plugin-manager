@@ -7,7 +7,7 @@ setup(
     url='https://github.com/OpenVoiceOS/OVOS-plugin-manager',
     license='Apache-2.0',
     author='jarbasAi',
-    install_requires=["ovos_utils>=0.0.12a1",
+    install_requires=["ovos_utils>=0.0.12a3",
                       "requests",
                       "memory-tempfile",
                       "phoneme_guesser"],
