@@ -90,6 +90,11 @@ class StreamThread(Thread, metaclass=ABCMeta):
     def run(self):
         return self.handle_audio_stream(self._get_data(), self.language)
 
+    def finalize(self):
+        text = self.text
+        self.text = ""
+        return text
+
     @abstractmethod
     def handle_audio_stream(self, audio, language):
         pass
@@ -117,11 +122,9 @@ class StreamingSTT(STT, metaclass=ABCMeta):
 
     def stream_stop(self):
         if self.stream is not None:
+            text = self.stream.finalize()
             self.queue.put(None)
             self.stream.join()
-
-            text = self.stream.text
-
             self.stream = None
             self.queue = None
             return text
