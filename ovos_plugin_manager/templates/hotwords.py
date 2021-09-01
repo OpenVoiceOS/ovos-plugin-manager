@@ -30,7 +30,10 @@ class HotWordEngine:
 
     def __init__(self, key_phrase="hey mycroft", config=None, lang="en-us"):
         self.key_phrase = str(key_phrase).lower()
-        mycroft_config = read_mycroft_config()
+        try:
+            mycroft_config = read_mycroft_config()
+        except FileNotFoundError:
+            mycroft_config = {}
         if config is None:
             # NOTE there is a bug in upstream,
             # the correct key is "hotwords" not "hot_words"

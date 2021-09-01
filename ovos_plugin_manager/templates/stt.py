@@ -18,7 +18,10 @@ class STT(metaclass=ABCMeta):
     def __init__(self, config=None):
         config_core = {}
         if not config:
-            config_core = read_mycroft_config() or {}
+            try:
+                config_core = read_mycroft_config() or {}
+            except FileNotFoundError:
+                config_core = {}
             config_stt = config_core.get("stt", {})
         else:
             config_stt = config

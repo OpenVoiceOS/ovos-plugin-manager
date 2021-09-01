@@ -41,6 +41,7 @@ from ovos_utils.messagebus import Message, FakeBus as BUS
 from ovos_utils.signal import check_for_signal, create_signal
 from ovos_utils.sound import play_mp3, play_wav
 from ovos_utils.metrics import Stopwatch
+from ovos_utils.configuration import read_mycroft_config
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
 
@@ -182,6 +183,14 @@ class TTS:
     def __init__(self, lang="en-us", config=None, validator=None,
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
         super(TTS, self).__init__()
+        if not config:
+            try:
+                config_core = read_mycroft_config() or {}
+            except FileNotFoundError:
+                config_core = {}
+            config = config_core.get("tts", {})
+            config["lang"] = config_core.get("lang")
+
         self.stopwatch = Stopwatch()
         self.tts_name = self.__class__.__name__
         self.bus = BUS()
