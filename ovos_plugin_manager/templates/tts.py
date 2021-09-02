@@ -35,6 +35,7 @@ import os
 from ovos_utils import resolve_resource_file
 from ovos_utils.enclosure.api import EnclosureAPI
 from ovos_utils.lang.phonemes import get_phonemes
+from phoneme_guesser.exceptions import FailedToGuessPhonemes
 from ovos_utils.lang.visimes import VISIMES
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import Message, FakeBus as BUS
@@ -430,9 +431,12 @@ class TTS:
                 if phonemes:
                     self.save_phonemes(key, phonemes)
                 else:
-                    phonemes = get_phonemes(sentence)
-                    self.handle_metric({"metric_type": "tts.phonemes.guess"})
-
+                    try:
+                        # TODO, debug why phonemes fail ?
+                        phonemes = get_phonemes(sentence)
+                        self.handle_metric({"metric_type": "tts.phonemes.guess"})
+                    except (ImportError, FailedToGuessPhonemes):
+                        pass
             vis = self.viseme(phonemes) if phonemes else None
             self.queue.put((self.audio_ext, wav_file, vis, ident, l))
             self.handle_metric({"metric_type": "tts.queued"})
