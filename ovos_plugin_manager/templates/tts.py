@@ -56,9 +56,8 @@ def get_ram_directory(folder):
 
 
 class PlaybackThread(Thread):
-    """
-        Thread class for playing back tts audio and sending
-        viseme data to enclosure.
+    """Thread class for playing back tts audio and sending
+    viseme data to enclosure.
     """
 
     def __init__(self, queue):
@@ -68,6 +67,8 @@ class PlaybackThread(Thread):
         self._processing_queue = False
         self._paused = False
         self.enclosure = None
+        self.p = None
+        self.tts = None
 
     def init(self, tts):
         self.tts = tts
@@ -79,9 +80,7 @@ class PlaybackThread(Thread):
         return None
 
     def clear_queue(self):
-        """
-            Remove all pending playbacks.
-        """
+        """Remove all pending playbacks."""
         while not self.queue.empty():
             self.queue.get()
         try:
@@ -90,16 +89,35 @@ class PlaybackThread(Thread):
             pass
 
     def run(self, cb=None):
-        """
-            Thread main loop. get audio and viseme data from queue
-            and play.
+        """Thread main loop. Get audio and extra data from queue and play.
+
+        The queue messages is a tuple containing
+        snd_type: 'mp3' or 'wav' telling the loop what format the data is in
+        data: path to temporary audio data
+        videmes: list of visemes to display while playing
+        listen: if listening should be triggered at the end of the sentence.
+
+        Playback of audio is started and the visemes are sent over the bus
+        the loop then wait for the playback process to finish before starting
+        checking the next position in queue.
+
+        If the queue is empty the tts.end_audio() is called possibly triggering
+        listening.
         """
         self._paused = False
         while not self._terminated:
             while self._paused:  # barge-in support etc
                 sleep(0.2)
+            listen = False
             try:
-                snd_type, data, visemes, ident = self.queue.get(timeout=2)
+                snd_data = self.queue.get(timeout=2)
+                if len(snd_data) == 5:
+                    # new mycroft style
+                    snd_type, data, visemes, ident, listen = snd_data
+                else:
+                    # old mycroft style
+                    snd_type, data, visemes, ident = snd_data
+
                 self.blink(0.5)
                 if not self._processing_queue:
                     self._processing_queue = True
@@ -112,11 +130,12 @@ class PlaybackThread(Thread):
 
                 if visemes:
                     self.show_visemes(visemes)
-                self.p.communicate()
-                self.p.wait()
+                if self.p:
+                    self.p.communicate()
+                    self.p.wait()
 
                 if self.queue.empty():
-                    self.tts.end_audio()
+                    self.tts.end_audio(listen)
                     self._processing_queue = False
                 self.blink(0.2)
             except Empty:
@@ -124,18 +143,17 @@ class PlaybackThread(Thread):
             except Exception as e:
                 LOG.exception(e)
                 if self._processing_queue:
-                    self.tts.end_audio()
+                    self.tts.end_audio(listen)
                     self._processing_queue = False
 
     def show_visemes(self, pairs):
-        """
-            Send viseme data to enclosure
+        """Send viseme data to enclosure
 
-            Args:
-                pairs(list): Visime and timing pair
+        Args:
+            pairs (list): Visime and timing pair
 
-            Returns:
-                True if button has been pressed.
+        Returns:
+            bool: True if button has been pressed.
         """
         if self.enclosure:
             self.enclosure.mouth_viseme(time(), pairs)
@@ -152,16 +170,16 @@ class PlaybackThread(Thread):
         self._paused = False
 
     def clear(self):
-        """ Clear all pending actions for the TTS playback thread. """
+        """Clear all pending actions for the TTS playback thread."""
         self.clear_queue()
 
     def blink(self, rate=1.0):
-        """ Blink mycroft's eyes """
+        """Blink mycroft's eyes"""
         if self.enclosure and random.random() < rate:
             self.enclosure.eyes_blink("b")
 
     def stop(self):
-        """ Stop thread """
+        """Stop thread"""
         self._terminated = True
         self.clear_queue()
 
