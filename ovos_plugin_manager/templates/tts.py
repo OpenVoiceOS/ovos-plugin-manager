@@ -246,7 +246,11 @@ class TTS:
     def load_spellings(self, config=None):
         """Load phonetic spellings of words as dictionary."""
         path = join('text', self.lang.lower(), 'phonetic_spellings.txt')
-        spellings_file = resolve_resource_file(path, config=config)
+        try:
+            spellings_file = resolve_resource_file(path, config=config)
+        except:
+            LOG.exception('Failed to locate phonetic spellings resouce file.')
+            return {}
         if not spellings_file:
             return {}
         try:
