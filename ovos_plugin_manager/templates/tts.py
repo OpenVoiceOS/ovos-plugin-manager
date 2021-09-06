@@ -439,7 +439,7 @@ class TTS:
                         pass
                 lang = lang or self.lang
                 # check the signature to either pass lang or not
-                if len(signature(self._execute).parameters) == 3:
+                if len(signature(self.get_tts).parameters) == 3:
                     wav_file, phonemes = self.get_tts(sentence, wav_file,
                                                       lang=lang)
                 else:
