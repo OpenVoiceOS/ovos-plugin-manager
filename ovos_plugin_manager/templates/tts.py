@@ -381,7 +381,7 @@ class TTS:
         """
         return [sentence]
 
-    def execute(self, sentence, ident=None, listen=False):
+    def execute(self, sentence, ident=None, listen=False, **kwargs):
         """Convert sentence to speech, preprocessing out unsupported ssml
 
         The method caches results if possible using the hash of the
@@ -397,14 +397,14 @@ class TTS:
         self.handle_metric({"metric_type": "tts.ssml.validated"})
         create_signal("isSpeaking")
         try:
-            self._execute(sentence, ident, listen)
+            self._execute(sentence, ident, listen, **kwargs)
         except Exception:
             # If an error occurs end the audio sequence through an empty entry
             self.queue.put(EMPTY_PLAYBACK_QUEUE_TUPLE)
             # Re-raise to allow the Exception to be handled externally as well.
             raise
 
-    def _execute(self, sentence, ident, listen):
+    def _execute(self, sentence, ident, listen, **kwargs):
         if self.phonetic_spelling:
             for word in re.findall(r"[\w']+", sentence):
                 if word.lower() in self.spellings:
@@ -428,7 +428,9 @@ class TTS:
                 phonemes = self.load_phonemes(key)
             else:
                 self.handle_metric({"metric_type": "tts.synth.start"})
-                wav_file, phonemes = self.get_tts(sentence, wav_file)
+                lang = kwargs.get("lang") or self.lang
+                # TODO inspect get_tts signature to ensure lang is even present
+                wav_file, phonemes = self.get_tts(sentence, wav_file, lang=lang)
                 self.handle_metric({"metric_type": "tts.synth.finished"})
                 if phonemes:
                     self.save_phonemes(key, phonemes)
