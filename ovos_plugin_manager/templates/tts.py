@@ -46,7 +46,7 @@ from ovos_utils.configuration import read_mycroft_config
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
 
 
-def get_temp_directory(folder):
+def get_cache_directory(folder):
     if os.name == 'nt':
         import tempfile
         return tempfile.mkdtemp(folder)
@@ -223,7 +223,7 @@ class TTS:
         self.ssml_tags = ssml_tags or []
 
         self.voice = self.config.get("voice")
-        self.cache_dir = get_temp_directory(self.tts_name)
+        self.cache_dir = get_cache_directory(self.tts_name)
         self.filename = join(self.cache_dir, 'tts.' + self.audio_ext)
         self.enclosure = None
         random.seed()
