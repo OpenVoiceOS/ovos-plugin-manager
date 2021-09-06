@@ -29,7 +29,6 @@ from os.path import isfile, join
 from queue import Queue, Empty
 from threading import Thread
 from time import time, sleep
-import tempfile
 import os
 
 from ovos_utils import resolve_resource_file
@@ -45,6 +44,19 @@ from ovos_utils.metrics import Stopwatch
 from ovos_utils.configuration import read_mycroft_config
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
+
+
+def get_temp_directory(folder):
+    if os.name == 'nt':
+        import tempfile
+        return tempfile.mkdtemp(folder)
+    else:
+        from memory_tempfile import MemoryTempfile
+        tempfile = MemoryTempfile(fallback=True)
+        path = os.path.join(tempfile.gettempdir(), folder)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
 
 class PlaybackThread(Thread):
     """Thread class for playing back tts audio and sending
@@ -211,7 +223,7 @@ class TTS:
         self.ssml_tags = ssml_tags or []
 
         self.voice = self.config.get("voice")
-        self.cache_dir = tempfile.mkdtemp()
+        self.cache_dir = get_temp_directory(self.tts_name)
         self.filename = join(self.cache_dir, 'tts.' + self.audio_ext)
         self.enclosure = None
         random.seed()
@@ -239,7 +251,7 @@ class TTS:
         try:
             spellings_file = resolve_resource_file(path, config=config)
         except:
-            LOG.exception('Failed to locate phonetic spellings resouce file.')
+            LOG.debug('Failed to locate phonetic spellings resouce file.')
             return {}
         if not spellings_file:
             return {}
