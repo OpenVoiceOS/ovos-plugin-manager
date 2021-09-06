@@ -32,6 +32,7 @@ from time import time, sleep
 from memory_tempfile import MemoryTempfile
 import subprocess
 import os
+from inspect import signature
 
 from ovos_utils import resolve_resource_file
 from ovos_utils.enclosure.api import EnclosureAPI
@@ -428,9 +429,21 @@ class TTS:
                 phonemes = self.load_phonemes(key)
             else:
                 self.handle_metric({"metric_type": "tts.synth.start"})
-                lang = kwargs.get("lang") or self.lang
-                # TODO inspect get_tts signature to ensure lang is even present
-                wav_file, phonemes = self.get_tts(sentence, wav_file, lang=lang)
+                lang = kwargs.get("lang")
+                if not lang and kwargs.get("message"):
+                    # some HolmesV derivatives accept a message object
+                    try:
+                        lang = kwargs["message"].data.get("lang") or \
+                               kwargs["message"].context.get("lang")
+                    except:  # not a mycroft message object
+                        pass
+                lang = lang or self.lang
+                # check the signature to either pass lang or not
+                if len(signature(self._execute).parameters) == 3:
+                    wav_file, phonemes = self.get_tts(sentence, wav_file,
+                                                      lang=lang)
+                else:
+                    wav_file, phonemes = self.get_tts(sentence, wav_file)
                 self.handle_metric({"metric_type": "tts.synth.finished"})
                 if phonemes:
                     self.save_phonemes(key, phonemes)
