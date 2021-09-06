@@ -303,7 +303,7 @@ class TTS:
         self.playback.enclosure = self.enclosure
         self.handle_metric({"metric_type": "tts.setup"})
 
-    def get_tts(self, sentence, wav_file):
+    def get_tts(self, sentence, wav_file, lang=None):
         """Abstract method that a tts implementation needs to implement.
 
         Should get data from tts.
@@ -311,6 +311,7 @@ class TTS:
         Arguments:
             sentence(str): Sentence to synthesize
             wav_file(str): output file
+            lang(str): requested language (optional), defaults to self.lang
 
         Returns:
             tuple: (wav_file, phoneme)
