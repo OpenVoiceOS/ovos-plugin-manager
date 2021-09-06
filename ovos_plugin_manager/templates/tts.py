@@ -30,6 +30,7 @@ from queue import Queue, Empty
 from threading import Thread
 from time import time, sleep
 from memory_tempfile import MemoryTempfile
+import subprocess
 import os
 
 from ovos_utils import resolve_resource_file
@@ -591,10 +592,10 @@ class ConcatTTS(TTS):
         cmd.append(self.channels)
         cmd.append("rate")
         cmd.append(self.rate)
-
+        LOG.info(subprocess.check_output(cmd))
         return wav_file
 
-    def get_tts(self, sentence, wav_file):
+    def get_tts(self, sentence, wav_file, lang=None):
         """
             get data from tts.
 
