@@ -49,7 +49,7 @@ class HotWordEngine:
         phoneme_duration = msec_to_sec(config.get('phoneme_duration', 120))
         self.expected_duration = self.num_phonemes * phoneme_duration
 
-        self.listener_config = mycroft_config.get("listener", {})
+        self.listener_config = mycroft_config.get("listener") or {}
         self.lang = str(self.config.get("lang", lang)).lower()
 
     def found_wake_word(self, frame_data):
