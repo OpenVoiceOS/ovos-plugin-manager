@@ -29,7 +29,6 @@ from os.path import isfile, join
 from queue import Queue, Empty
 from threading import Thread
 from time import time, sleep
-from memory_tempfile import MemoryTempfile
 import subprocess
 import os
 
@@ -48,14 +47,17 @@ from ovos_utils.configuration import read_mycroft_config
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
 
 
-# TODO move to ovos_utils
-def get_ram_directory(folder):
-    tempfile = MemoryTempfile(fallback=True)
-    path = os.path.join(tempfile.gettempdir(), folder)
-    if not os.path.exists(path):
-        os.makedirs(path)
-    return path
-
+def get_cache_directory(folder):
+    if os.name == 'nt':
+        import tempfile
+        return tempfile.mkdtemp(folder)
+    else:
+        from memory_tempfile import MemoryTempfile
+        tempfile = MemoryTempfile(fallback=True)
+        path = os.path.join(tempfile.gettempdir(), folder)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
 
 class PlaybackThread(Thread):
     """Thread class for playing back tts audio and sending
@@ -222,8 +224,8 @@ class TTS:
         self.ssml_tags = ssml_tags or []
 
         self.voice = self.config.get("voice")
-        self.filename = join(get_ram_directory(self.tts_name),
-                             'tts.' + self.audio_ext)
+        self.cache_dir = get_cache_directory(self.tts_name)
+        self.filename = join(self.cache_dir, 'tts.' + self.audio_ext)
         self.enclosure = None
         random.seed()
         self.queue = Queue()
@@ -247,7 +249,11 @@ class TTS:
     def load_spellings(self, config=None):
         """Load phonetic spellings of words as dictionary."""
         path = join('text', self.lang.lower(), 'phonetic_spellings.txt')
-        spellings_file = resolve_resource_file(path, config=config)
+        try:
+            spellings_file = resolve_resource_file(path, config=config)
+        except:
+            LOG.debug('Failed to locate phonetic spellings resouce file.')
+            return {}
         if not spellings_file:
             return {}
         try:
@@ -420,8 +426,7 @@ class TTS:
         for sentence, l in chunks:
             key = str(hashlib.md5(
                 sentence.encode('utf-8', 'ignore')).hexdigest())
-            cache_dir = get_ram_directory(self.tts_name)
-            wav_file = os.path.join(cache_dir, key + '.' + self.audio_ext)
+            wav_file = os.path.join(self.cache_dir, key + '.' + self.audio_ext)
 
             if os.path.exists(wav_file):
                 LOG.debug("TTS cache hit")
@@ -480,8 +485,7 @@ class TTS:
             key (str):        Hash key for the sentence
             phonemes (str):   phoneme string to save
         """
-        cache_dir = get_ram_directory(self.tts_name)
-        pho_file = os.path.join(cache_dir, key + ".pho")
+        pho_file = os.path.join(self.cache_dir, key + ".pho")
         try:
             with open(pho_file, "w") as cachefile:
                 cachefile.write(phonemes)
@@ -495,8 +499,7 @@ class TTS:
         Arguments:
             key (str): Key identifying phoneme cache
         """
-        cache_dir = get_ram_directory(self.tts_name)
-        pho_file = os.path.join(cache_dir, key + ".pho")
+        pho_file = os.path.join(self.cache_dir, key + ".pho")
         if os.path.exists(pho_file):
             try:
                 with open(pho_file, "r") as cachefile:
