@@ -203,6 +203,7 @@ class TTS:
 
     def __init__(self, lang="en-us", config=None, validator=None,
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
+        self.log_timestamps = False
         super(TTS, self).__init__()
         if not config:
             try:

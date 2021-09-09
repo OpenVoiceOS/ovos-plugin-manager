@@ -22,7 +22,7 @@ class OVOSSTTFactory:
     """ replicates the base mycroft class, but uses only OPM enabled plugins"""
     MAPPINGS = {
         #    "mycroft": MycroftSTT,
-        #    "google": GoogleSTT,
+        "google": "ovos-stt-plugin-chromium",
         #    "google_cloud": GoogleCloudSTT,
         #    "google_cloud_streaming": GoogleCloudStreamingSTT,
         #    "wit": WITSTT,
@@ -35,8 +35,8 @@ class OVOSSTTFactory:
         #    "deepspeech_stream_server": DeepSpeechStreamServerSTT,
         #    "mycroft_deepspeech": MycroftDeepSpeechSTT,
         #    "yandex": YandexSTT
-        "vosk": "vosk_stt_plug",
-        "vosk_streaming": "vosk_streaming_stt_plug"
+        "vosk": "ovos-stt-plugin-vosk",
+        "vosk_streaming": "ovos-stt-plugin-vosk-streaming"
     }
 
     @staticmethod
@@ -51,7 +51,8 @@ class OVOSSTTFactory:
         }
         """
         try:
-            config = config or read_mycroft_config().get("stt", {})
+            config = config or read_mycroft_config()
+            config = config.get("stt", {})
             stt_module = config.get("module", "mycroft")
             if stt_module in OVOSSTTFactory.MAPPINGS:
                 stt_module = OVOSSTTFactory.MAPPINGS[stt_module]

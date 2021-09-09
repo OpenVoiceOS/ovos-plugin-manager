@@ -22,22 +22,22 @@ def load_tts_plugin(module_name):
 class OVOSTTFactory:
     """ replicates the base mycroft class, but uses only OPM enabled plugins"""
     MAPPINGS = {
-        "mimic": "ovos_tts_mimic",
-        "mimic2": "ovos_tts_mimic2",
-        "google": "ovos_tts_google",
+        "mimic": "ovos-tts-plugin-mimic",
+        "mimic2": "ovos-tts-plugin-mimic2",
+        "google": "ovos-tts-plugin-google-tx",
         # "marytts": MaryTTS,
         # "fatts": FATTS,
         # "festival": Festival,
-        "espeak": "espeakNG_tts_plugin",
+        "espeak": "ovos_tts_plugin_espeakng",
         # "spdsay": SpdSay,
         # "watson": WatsonTTS,
         # "bing": BingTTS,
-        "responsive_voice": "responsivevoice_tts_plug",
+        "responsive_voice": "ovos-tts-plugin-responsivevoice",
         # "yandex": YandexTTS,
         "polly": "chatterbox_polly_tts",
         # "mozilla": MozillaTTS,
         # "dummy": DummyTTS
-        "pico": "pico_tts_plugin"
+        "pico": "ovos-tts-plugin-pico"
     }
 
     @staticmethod
