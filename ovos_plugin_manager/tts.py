@@ -19,25 +19,25 @@ def load_tts_plugin(module_name):
     return load_plugin(module_name, PluginTypes.TTS)
 
 
-class OVOSTTFactory:
+class OVOSTTSFactory:
     """ replicates the base mycroft class, but uses only OPM enabled plugins"""
     MAPPINGS = {
-        "mimic": "ovos_tts_mimic",
-        "mimic2": "ovos_tts_mimic2",
-        "google": "ovos_tts_google",
+        "mimic": "ovos-tts-plugin-mimic",
+        "mimic2": "ovos-tts-plugin-mimic2",
+        "google": "ovos-tts-plugin-google-tx",
         # "marytts": MaryTTS,
         # "fatts": FATTS,
         # "festival": Festival,
-        "espeak": "espeakNG_tts_plugin",
+        "espeak": "ovos_tts_plugin_espeakng",
         # "spdsay": SpdSay,
         # "watson": WatsonTTS,
         # "bing": BingTTS,
-        "responsive_voice": "responsivevoice_tts_plug",
+        "responsive_voice": "ovos-tts-plugin-responsivevoice",
         # "yandex": YandexTTS,
         "polly": "chatterbox_polly_tts",
         # "mozilla": MozillaTTS,
         # "dummy": DummyTTS
-        "pico": "pico_tts_plugin"
+        "pico": "ovos-tts-plugin-pico"
     }
 
     @staticmethod
@@ -59,8 +59,8 @@ class OVOSTTFactory:
         tts_config = config.get('tts', {}).get(tts_module, {})
         tts_lang = tts_config.get('lang', lang)
         try:
-            if tts_module in OVOSTTFactory.MAPPINGS:
-                tts_module = OVOSTTFactory.MAPPINGS[tts_module]
+            if tts_module in OVOSTTSFactory.MAPPINGS:
+                tts_module = OVOSTTSFactory.MAPPINGS[tts_module]
             clazz = load_tts_plugin(tts_module)
             if clazz is None:
                 raise ValueError(f'TTS plugin {tts_module} not found')

@@ -31,6 +31,7 @@ from threading import Thread
 from time import time, sleep
 import subprocess
 import os
+from inspect import signature
 
 from ovos_utils import resolve_resource_file
 from ovos_utils.enclosure.api import EnclosureAPI
@@ -204,6 +205,7 @@ class TTS:
 
     def __init__(self, lang="en-us", config=None, validator=None,
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
+        self.log_timestamps = False
         super(TTS, self).__init__()
         if not config:
             try:
@@ -387,7 +389,7 @@ class TTS:
         """
         return [sentence]
 
-    def execute(self, sentence, ident=None, listen=False):
+    def execute(self, sentence, ident=None, listen=False, **kwargs):
         """Convert sentence to speech, preprocessing out unsupported ssml
 
         The method caches results if possible using the hash of the
@@ -403,14 +405,14 @@ class TTS:
         self.handle_metric({"metric_type": "tts.ssml.validated"})
         create_signal("isSpeaking")
         try:
-            self._execute(sentence, ident, listen)
+            self._execute(sentence, ident, listen, **kwargs)
         except Exception:
             # If an error occurs end the audio sequence through an empty entry
             self.queue.put(EMPTY_PLAYBACK_QUEUE_TUPLE)
             # Re-raise to allow the Exception to be handled externally as well.
             raise
 
-    def _execute(self, sentence, ident, listen):
+    def _execute(self, sentence, ident, listen, **kwargs):
         if self.phonetic_spelling:
             for word in re.findall(r"[\w']+", sentence):
                 if word.lower() in self.spellings:
@@ -433,7 +435,21 @@ class TTS:
                 phonemes = self.load_phonemes(key)
             else:
                 self.handle_metric({"metric_type": "tts.synth.start"})
-                wav_file, phonemes = self.get_tts(sentence, wav_file)
+                lang = kwargs.get("lang")
+                if not lang and kwargs.get("message"):
+                    # some HolmesV derivatives accept a message object
+                    try:
+                        lang = kwargs["message"].data.get("lang") or \
+                               kwargs["message"].context.get("lang")
+                    except:  # not a mycroft message object
+                        pass
+                lang = lang or self.lang
+                # check the signature to either pass lang or not
+                if len(signature(self.get_tts).parameters) == 3:
+                    wav_file, phonemes = self.get_tts(sentence, wav_file,
+                                                      lang=lang)
+                else:
+                    wav_file, phonemes = self.get_tts(sentence, wav_file)
                 self.handle_metric({"metric_type": "tts.synth.finished"})
                 if phonemes:
                     self.save_phonemes(key, phonemes)
