@@ -53,10 +53,12 @@ class OVOSTTSFactory:
         """
         config = config or read_mycroft_config()
         lang = config.get("lang", "en-us")
-        tts_module = config.get('tts', {}).get('module', 'mimic')
+        if "tts" in config:
+            config = config["tts"]
+        tts_module = config.get('module', 'mimic')
         if tts_module == "dummy":
             return TTS()
-        tts_config = config.get('tts', {}).get(tts_module, {})
+        tts_config = config.get(tts_module, {})
         tts_lang = tts_config.get('lang', lang)
         try:
             if tts_module in OVOSTTSFactory.MAPPINGS:

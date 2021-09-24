@@ -43,7 +43,9 @@ class OVOSWakeWordFactory:
     def create_hotword(cls, hotword="hey mycroft", config=None,
                        lang="en-us", loop=None):
         config = config or read_mycroft_config() or {}
-        config = config.get('hotwords') or config
+        if "hotwords" in config:
+            config = config["hotwords"]
+
         config = config.get(hotword) or config["hey mycroft"]
 
         module = config.get("module", "pocketsphinx")

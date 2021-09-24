@@ -52,8 +52,9 @@ class OVOSSTTFactory:
         """
         try:
             config = config or read_mycroft_config()
-            config = config.get("stt", {})
-            stt_module = config.get("module", "mycroft")
+            if "stt" in config:
+                config = config["stt"]
+            stt_module = config.get("module", "google")
             if stt_module in OVOSSTTFactory.MAPPINGS:
                 stt_module = OVOSSTTFactory.MAPPINGS[stt_module]
 
