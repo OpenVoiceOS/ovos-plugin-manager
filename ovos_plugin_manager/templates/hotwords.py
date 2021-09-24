@@ -37,11 +37,11 @@ class HotWordEngine:
         if config is None:
             # NOTE there is a bug in upstream,
             # the correct key is "hotwords" not "hot_words"
-            # in here we account for both, but it's doubtful anyone is using "hot_words"
-            config = mycroft_config. \
-                get("hotwords", {}) \
-                .get("hot_words", {}) \
-                .get(self.key_phrase, {})
+            # in here we account for both, but it's doubtful anyone
+            # is using "hot_words"
+            config = mycroft_config.get("hotwords", {}) or\
+                     mycroft_config.get("hot_words", {})
+            config = config.get(self.key_phrase, {})
         self.config = config
 
         # rough estimate 1 phoneme per 2 chars

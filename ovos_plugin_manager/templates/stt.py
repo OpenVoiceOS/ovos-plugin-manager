@@ -25,12 +25,9 @@ class STT(metaclass=ABCMeta):
             config_stt = config_core.get("stt", {})
         else:
             config_stt = config
+
         self.lang = config_stt.get("lang")
         if not self.lang:
-            try:
-                config_core = config_core or read_mycroft_config() or {}
-            except:
-                config_core = config_core or {}
             self.lang = str(self.init_language(config_core))
         self.config = config_stt.get(config_stt.get("module"), {})
         self.credential = self.config.get("credential", {})
