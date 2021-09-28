@@ -132,9 +132,9 @@ class StreamingSTT(STT, metaclass=ABCMeta):
 
     def stream_stop(self):
         if self.stream is not None:
-            text = self.stream.finalize()
             self.queue.put(None)
             self.stream.join()
+            text = self.stream.finalize()
             self.stream = None
             self.queue = None
             return text
