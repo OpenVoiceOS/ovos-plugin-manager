@@ -17,15 +17,13 @@ from ovos_utils.log import LOG
 
 
 class PluginTypes(str, Enum):
-    SKILL = "holmesol.plugin.skill"
+    SKILL = "ovos.plugin.skill"
     AUDIO = 'mycroft.plugin.audioservice'
     STT = 'mycroft.plugin.stt'
     TTS = 'mycroft.plugin.tts'
     WAKEWORD = 'mycroft.plugin.wake_word'
     TRANSLATE = "neon.plugin.lang.translate"
     LANG_DETECT = "neon.plugin.lang.detect"
-    INTENT = "chatterbox.plugin.intentBox"
-    TRIGGER = "chatterbox.plugin.trigger"
 
 
 def find_plugins(plug_type=None):
