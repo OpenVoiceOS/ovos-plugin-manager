@@ -91,7 +91,7 @@ class OVOSLangTranslationFactory:
             if lang_module in OVOSLangDetectionFactory.MAPPINGS:
                 lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
 
-            clazz = load_lang_detect_plugin(lang_module)
+            clazz = load_tx_plugin(lang_module)
             if clazz is None:
                 raise ValueError(f'Language Translation plugin {lang_module} not found')
             LOG.info(f'Loaded the Language Translation plugin {lang_module}')
