@@ -25,6 +25,7 @@ import hashlib
 import os.path
 import random
 import re
+import shutil
 from os.path import isfile, join
 from queue import Queue, Empty
 from threading import Thread
@@ -59,6 +60,7 @@ def get_cache_directory(folder):
         if not os.path.exists(path):
             os.makedirs(path)
         return path
+
 
 class PlaybackThread(Thread):
     """Thread class for playing back tts audio and sending
@@ -185,6 +187,8 @@ class PlaybackThread(Thread):
 
     def stop(self):
         """Stop thread"""
+        if self.p:
+            self.p.terminate()
         self._terminated = True
         self.clear_queue()
 
@@ -254,7 +258,7 @@ class TTS:
         try:
             spellings_file = resolve_resource_file(path, config=config)
         except:
-            LOG.debug('Failed to locate phonetic spellings resouce file.')
+            LOG.debug('Failed to locate phonetic spellings resource file.')
             return {}
         if not spellings_file:
             return {}
@@ -412,12 +416,61 @@ class TTS:
             # Re-raise to allow the Exception to be handled externally as well.
             raise
 
+    def _get_tts(self, sentence, **kwargs):
+        self.handle_metric({"metric_type": "tts.synth.start"})
+
+        # check cache
+        key = str(hashlib.md5(sentence.encode('utf-8', 'ignore')).hexdigest())
+        wav_file = os.path.join(self.cache_dir, key + '.' + self.audio_ext)
+        if os.path.exists(wav_file):
+            LOG.debug("TTS cache hit")
+            phonemes = self.load_phonemes(key)
+            self.handle_metric({"metric_type": "tts.synth.cache.loaded"})
+            self.handle_metric({"metric_type": "tts.synth.finished"})
+            return wav_file, phonemes
+
+        # get language
+        lang = kwargs.get("lang")
+        if not lang and kwargs.get("message"):
+            # mycroft Message contains lang data in ovos-core
+            try:
+                lang = kwargs["message"].data.get("lang") or \
+                       kwargs["message"].context.get("lang")
+            except:  # not a mycroft message object
+                pass
+        kwargs["lang"] = lang or self.lang
+
+        # backwards compat get_tts signatures (plugins might use any):
+        # get_tts(self, sentence, wav_file) -> mycroft-core style
+        # get_tts(self, sentence, wav_file, lang=None) -> ovos style multi lingual support
+        # get_tts(self, sentence, wav_file, request=None) -> neon style info dict
+        # to avoid this mess to keep growing we want to pass the Message object instead
+        # TODO deprecation plan across all repos
+        kwargs = {k: v for k, v in kwargs.items()
+                  if k not in ["self", "sentence", "wav_file"]
+                  and k in signature(self.get_tts).parameters.keys()}
+        wav_file, phonemes = self.get_tts(sentence, wav_file, **kwargs)
+
+        # cache the results
+        self._cache_tts(sentence, wav_file, phonemes)
+
+        self.handle_metric({"metric_type": "tts.synth.finished"})
+        return wav_file, phonemes
+
+    def _cache_tts(self, sentence, wav_file, phonemes):
+        key = str(hashlib.md5(sentence.encode('utf-8', 'ignore')).hexdigest())
+        cached_wav = os.path.join(self.cache_dir, key + '.' + self.audio_ext)
+        if phonemes:
+            self.save_phonemes(key, phonemes)
+        if not isfile(cached_wav):
+            shutil.copy(wav_file, cached_wav)
+        self.handle_metric({"metric_type": "tts.synth.cache.saved"})
+
     def _execute(self, sentence, ident, listen, **kwargs):
         if self.phonetic_spelling:
             for word in re.findall(r"[\w']+", sentence):
                 if word.lower() in self.spellings:
-                    sentence = sentence.replace(word,
-                                                self.spellings[word.lower()])
+                    sentence = sentence.replace(word, self.spellings[word.lower()])
 
         chunks = self._preprocess_sentence(sentence)
         # Apply the listen flag to the last chunk, set the rest to False
@@ -425,42 +478,22 @@ class TTS:
                   for i in range(len(chunks))]
         self.handle_metric({"metric_type": "tts.preprocessed",
                             "n_chunks": len(chunks)})
-        for sentence, l in chunks:
-            key = str(hashlib.md5(
-                sentence.encode('utf-8', 'ignore')).hexdigest())
-            wav_file = os.path.join(self.cache_dir, key + '.' + self.audio_ext)
 
-            if os.path.exists(wav_file):
-                LOG.debug("TTS cache hit")
-                phonemes = self.load_phonemes(key)
-            else:
-                self.handle_metric({"metric_type": "tts.synth.start"})
-                lang = kwargs.get("lang")
-                if not lang and kwargs.get("message"):
-                    # some HolmesV derivatives accept a message object
-                    try:
-                        lang = kwargs["message"].data.get("lang") or \
-                               kwargs["message"].context.get("lang")
-                    except:  # not a mycroft message object
-                        pass
-                lang = lang or self.lang
-                # check the signature to either pass lang or not
-                if len(signature(self.get_tts).parameters) == 3:
-                    wav_file, phonemes = self.get_tts(sentence, wav_file,
-                                                      lang=lang)
-                else:
-                    wav_file, phonemes = self.get_tts(sentence, wav_file)
-                self.handle_metric({"metric_type": "tts.synth.finished"})
-                if phonemes:
-                    self.save_phonemes(key, phonemes)
-                else:
-                    try:
-                        # TODO, debug why phonemes fail ?
-                        phonemes = get_phonemes(sentence)
-                        self.handle_metric({"metric_type": "tts.phonemes.guess"})
-                    except (ImportError, FailedToGuessPhonemes):
-                        pass
+        for sentence, l in chunks:
+            # synth the utterance
+            wav_file, phonemes = self._get_tts(sentence, **kwargs)
+            if not phonemes:
+                try:
+                    # try to make every TTS provide rough phonemes
+                    # these are not cached and only used for viseme mappings
+                    # devices like the mk1 will appear buggy without visemes
+                    phonemes = get_phonemes(sentence)
+                    self.handle_metric({"metric_type": "tts.phonemes.guess"})
+                except (ImportError, FailedToGuessPhonemes):
+                    pass
+            # get mouth movement data
             vis = self.viseme(phonemes) if phonemes else None
+            # queue for playback
             self.queue.put((self.audio_ext, wav_file, vis, ident, l))
             self.handle_metric({"metric_type": "tts.queued"})
 
@@ -503,6 +536,8 @@ class TTS:
         """
         pho_file = os.path.join(self.cache_dir, key + ".pho")
         try:
+            if isinstance(phonemes, list):
+                phonemes = " ".join(phonemes)
             with open(pho_file, "w") as cachefile:
                 cachefile.write(phonemes)
         except Exception:
@@ -628,3 +663,7 @@ class ConcatTTS(TTS):
         files, phonemes = self.sentence_to_files(sentence)
         wav_file = self.concat(files, wav_file)
         return wav_file, phonemes
+
+
+sig = signature(TTS.get_tts)
+print(sig.parameters.keys())
