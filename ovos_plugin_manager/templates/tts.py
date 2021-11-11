@@ -664,6 +664,3 @@ class ConcatTTS(TTS):
         wav_file = self.concat(files, wav_file)
         return wav_file, phonemes
 
-
-sig = signature(TTS.get_tts)
-print(sig.parameters.keys())
