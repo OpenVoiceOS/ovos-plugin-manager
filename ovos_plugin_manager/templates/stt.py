@@ -8,7 +8,7 @@ import json
 from abc import ABCMeta, abstractmethod
 from speech_recognition import Recognizer
 from queue import Queue
-from threading import Thread
+from threading import Thread, Event
 from ovos_utils.configuration import read_mycroft_config
 
 
@@ -101,9 +101,8 @@ class StreamThread(Thread, metaclass=ABCMeta):
         return self.handle_audio_stream(self._get_data(), self.language)
 
     def finalize(self):
-        text = self.text
-        self.text = ""
-        return text
+        """ return final transcription """
+        return self.text
 
     @abstractmethod
     def handle_audio_stream(self, audio, language):
@@ -119,12 +118,14 @@ class StreamingSTT(STT, metaclass=ABCMeta):
         super().__init__()
         self.stream = None
         self.can_stream = True
+        self.transcript_ready = Event()
 
     def stream_start(self, language=None):
         self.stream_stop()
-        language = language or self.lang
         self.queue = Queue()
         self.stream = self.create_streaming_thread()
+        self.stream.language = language or self.lang
+        self.transcript_ready.clear()
         self.stream.start()
 
     def stream_data(self, data):
@@ -132,8 +133,9 @@ class StreamingSTT(STT, metaclass=ABCMeta):
 
     def stream_stop(self):
         if self.stream is not None:
-            text = self.stream.finalize()
+            self.transcript_ready.set()
             self.queue.put(None)
+            text = self.stream.finalize()
             self.stream.join()
             self.stream = None
             self.queue = None
