@@ -1,6 +1,7 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
 from ovos_utils.configuration import read_mycroft_config
 from ovos_utils.log import LOG
+from ovos_plugin_manager.templates.stt import STT, StreamingSTT, StreamThread
 
 
 def find_stt_plugins():
@@ -40,6 +41,25 @@ class OVOSSTTFactory:
     }
 
     @staticmethod
+    def get_class(config=None):
+        """Factory method to get a STT engine class based on configuration.
+
+        The configuration file ``mycroft.conf`` contains a ``stt`` section with
+        the name of a STT module to be read by this method.
+
+        "stt": {
+            "module": <engine_name>
+        }
+        """
+        config = config or get_stt_config()
+        stt_module = config["module"]
+        if stt_module == "dummy":
+            return STT
+        if stt_module in OVOSSTTFactory.MAPPINGS:
+            stt_module = OVOSSTTFactory.MAPPINGS[stt_module]
+        return load_stt_plugin(stt_module)
+
+    @staticmethod
     def create(config=None):
         """Factory method to create a STT engine based on configuration.
 
@@ -51,20 +71,19 @@ class OVOSSTTFactory:
         }
         """
         try:
-            config = config or read_mycroft_config()
-            if "stt" in config:
-                config = config["stt"]
-            stt_module = config.get("module", "google")
-            if stt_module in OVOSSTTFactory.MAPPINGS:
-                stt_module = OVOSSTTFactory.MAPPINGS[stt_module]
-
-            clazz = load_stt_plugin(stt_module)
-            if clazz is None:
-                raise ValueError(f'STT plugin {stt_module} not found')
-            LOG.info(f'Loaded the STT plugin {stt_module}')
+            clazz = OVOSSTTFactory.get_class(config)
             return clazz()
         except Exception:
-            # The STT backend failed to start. Report it and fall back to
-            # default.
             LOG.exception('The selected STT plugin could not be loaded!')
             raise
+
+
+def get_stt_config(config=None):
+    config = config or read_mycroft_config()
+    lang = config.get("lang", "en-us")
+    if "stt" in config:
+        config = config["stt"]
+    stt_module = config.get('module', 'google')
+    stt_config = config.get(stt_module, {})
+    stt_config["lang"] = stt_config.get('lang') or lang
+    return stt_config

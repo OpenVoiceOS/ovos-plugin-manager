@@ -51,10 +51,8 @@ class OVOSTTSFactory:
             "module": <engine_name>
         }
         """
-        config = config or read_mycroft_config()
-        if "tts" in config:
-            config = config["tts"]
-        tts_module = config.get('module', 'mimic')
+        config = config or get_tts_config()
+        tts_module = config["module"]
         if tts_module == "dummy":
             return TTS
         if tts_module in OVOSTTSFactory.MAPPINGS:
