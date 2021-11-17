@@ -21,44 +21,34 @@ movements for all TTS engines (only mimic implements this in upstream)
         # would hang here
         engine.playback.stop()
 """
-import hashlib
-import os.path
+import inspect
 import random
 import re
-from os.path import isfile, join
+import subprocess
+from os.path import isfile, join, splitext
+from pathlib import Path
 from queue import Queue, Empty
 from threading import Thread
 from time import time, sleep
-import subprocess
-import os
-from inspect import signature
 
-from ovos_utils import resolve_resource_file
-from ovos_utils.enclosure.api import EnclosureAPI
-from ovos_utils.lang.phonemes import get_phonemes
+import requests
 from phoneme_guesser.exceptions import FailedToGuessPhonemes
+
+from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
+from ovos_utils import resolve_resource_file
+from ovos_utils.configuration import read_mycroft_config
+from ovos_utils.enclosure.api import EnclosureAPI
+from ovos_utils.file_utils import get_cache_directory
+from ovos_utils.lang.phonemes import get_phonemes
 from ovos_utils.lang.visimes import VISIMES
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import Message, FakeBus as BUS
-from ovos_utils.signal import check_for_signal, create_signal
-from ovos_utils.sound import play_mp3, play_wav
 from ovos_utils.metrics import Stopwatch
-from ovos_utils.configuration import read_mycroft_config
+from ovos_utils.signal import check_for_signal, create_signal
+from ovos_utils.sound import play_audio
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
 
-
-def get_cache_directory(folder):
-    if os.name == 'nt':
-        import tempfile
-        return tempfile.mkdtemp(folder)
-    else:
-        from memory_tempfile import MemoryTempfile
-        tempfile = MemoryTempfile(fallback=True)
-        path = os.path.join(tempfile.gettempdir(), folder)
-        if not os.path.exists(path):
-            os.makedirs(path)
-        return path
 
 class PlaybackThread(Thread):
     """Thread class for playing back tts audio and sending
@@ -74,6 +64,7 @@ class PlaybackThread(Thread):
         self.enclosure = None
         self.p = None
         self.tts = None
+        self._now_playing = None
 
     def init(self, tts):
         self.tts = tts
@@ -93,6 +84,44 @@ class PlaybackThread(Thread):
         except Exception:
             pass
 
+    def on_start(self):
+        self.blink(0.5)
+        if not self._processing_queue:
+            self._processing_queue = True
+            self.tts.begin_audio()
+
+    def on_end(self, listen=False):
+        if self._processing_queue:
+            self.tts.end_audio(listen)
+            self._processing_queue = False
+        self.blink(0.2)
+
+    def _play(self):
+        listen = False
+        try:
+            if len(self._now_playing) == 5:
+                # new mycroft style
+                snd_type, data, visemes, ident, listen = self._now_playing
+            else:
+                # old mycroft style
+                snd_type, data, visemes, ident = self._now_playing
+            self.on_start()
+            self.p = play_audio(data)
+            if visemes:
+                self.show_visemes(visemes)
+            if self.p:
+                self.p.communicate()
+                self.p.wait()
+            if self.queue.empty():
+                self.on_end(listen)
+        except Empty:
+            pass
+        except Exception as e:
+            LOG.exception(e)
+            if self._processing_queue:
+                self.on_end(listen)
+        self._now_playing = None
+
     def run(self, cb=None):
         """Thread main loop. Get audio and extra data from queue and play.
 
@@ -111,45 +140,13 @@ class PlaybackThread(Thread):
         """
         self._paused = False
         while not self._terminated:
-            while self._paused:  # barge-in support etc
+            while self._paused:
                 sleep(0.2)
-            listen = False
             try:
-                snd_data = self.queue.get(timeout=2)
-                if len(snd_data) == 5:
-                    # new mycroft style
-                    snd_type, data, visemes, ident, listen = snd_data
-                else:
-                    # old mycroft style
-                    snd_type, data, visemes, ident = snd_data
-
-                self.blink(0.5)
-                if not self._processing_queue:
-                    self._processing_queue = True
-                    self.tts.begin_audio()
-
-                if snd_type == 'wav':
-                    self.p = play_wav(data)
-                elif snd_type == 'mp3':
-                    self.p = play_mp3(data)
-
-                if visemes:
-                    self.show_visemes(visemes)
-                if self.p:
-                    self.p.communicate()
-                    self.p.wait()
-
-                if self.queue.empty():
-                    self.tts.end_audio(listen)
-                    self._processing_queue = False
-                self.blink(0.2)
-            except Empty:
-                pass
+                self._now_playing = self.queue.get(timeout=2)
+                self._play()
             except Exception as e:
-                LOG.exception(e)
-                if self._processing_queue:
-                    self.tts.end_audio(listen)
-                    self._processing_queue = False
+                pass
 
     def show_visemes(self, pairs):
         """Send viseme data to enclosure
@@ -166,12 +163,13 @@ class PlaybackThread(Thread):
     def pause(self):
         """pause thread"""
         self._paused = True
-        # TODO is this desired?
-        # if self.playback_process:
-        #    self.playback_process.terminate()
+        if self.p:
+            self.p.terminate()
 
     def resume(self):
         """resume thread"""
+        if self._now_playing:
+            self._play()
         self._paused = False
 
     def clear(self):
@@ -185,6 +183,7 @@ class PlaybackThread(Thread):
 
     def stop(self):
         """Stop thread"""
+        self._now_playing = None
         self._terminated = True
         self.clear_queue()
 
@@ -206,7 +205,6 @@ class TTS:
     def __init__(self, lang="en-us", config=None, validator=None,
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
         self.log_timestamps = False
-        super(TTS, self).__init__()
         if not config:
             try:
                 config_core = read_mycroft_config() or {}
@@ -217,36 +215,41 @@ class TTS:
 
         self.stopwatch = Stopwatch()
         self.tts_name = self.__class__.__name__
-        self.bus = BUS()
+        self.bus = BUS()  # initialized in "init" step
         self.lang = lang or config.get("lang") or 'en-us'
         self.config = config or {}
         self.validator = validator or TTSValidator(self)
         self.phonetic_spelling = phonetic_spelling
         self.audio_ext = audio_ext
         self.ssml_tags = ssml_tags or []
+        self.log_timestamps = self.config.get("log_timestamps", False)
 
-        self.voice = self.config.get("voice")
-        self.cache_dir = get_cache_directory(self.tts_name)
-        self.filename = join(self.cache_dir, 'tts.' + self.audio_ext)
+        self.voice = self.config.get("voice") or "default"
+        # TODO can self.filename be deprecated ? is it used anywhere at all?
+        cache_dir = get_cache_directory(self.tts_name)
+        self.filename = join(cache_dir, 'tts.' + self.audio_ext)
         self.enclosure = None
         random.seed()
         self.queue = Queue()
         self.playback = PlaybackThread(self.queue)
-        # NOTE playback start call has been omitted and moved to init method
-        # init is called by mycroft, but non mycroft usage wont call it,
-        # meaning outside mycroft the enclosure is not set, bus is dummy and
-        # playback thread is not used, playback queue is not wanted
-        # if some module is calling get_tts (which is the correct usage)
-        self.clear_cache()
+        # NOTE: self.playback.start() was moved to init method
+        #   playback queue is not wanted if we only care about get_tts
+        #   init is called by mycroft, but non mycroft usage wont call it,
+        #   outside mycroft the enclosure is not set, bus is dummy and
+        #   playback thread is not used
         self.spellings = self.load_spellings()
-        self.log_timestamps = self.config.get("log_timestamps", False)
+        tts_id = join(self.tts_name, self.voice, self.lang)
+        self.cache = TextToSpeechCache(
+            self.config, tts_id, self.audio_ext
+        )
+        self.cache.curate()
         self.handle_metric({"metric_type": "tts.init"})
 
     def handle_metric(self, metadata=None):
         """ receive timing metrics for diagnostics
         does nothing by default but plugins might use it, eg, NeonCore"""
         if self.log_timestamps:
-            LOG.debug(f"stopwatch: {self.stopwatch.time} metric: {metadata}")
+            LOG.debug(f"time delta: {self.stopwatch.delta} metric: {metadata}")
 
     def load_spellings(self, config=None):
         """Load phonetic spellings of words as dictionary."""
@@ -275,7 +278,6 @@ class TTS:
         create_signal("isSpeaking")
         # Create signals informing start of speech
         self.bus.emit(Message("recognizer_loop:audio_output_start"))
-        self.stopwatch.start()
         self.handle_metric({"metric_type": "tts.start"})
 
     def end_audio(self, listen=False):
@@ -296,8 +298,9 @@ class TTS:
 
         # This check will clear the "signal"
         check_for_signal("isSpeaking")
-        self.stopwatch.stop()
         self.handle_metric({"metric_type": "tts.end"})
+        self.stopwatch.stop()
+        self.cache.curate()
 
     def init(self, bus=None):
         """ Performs intial setup of TTS object.
@@ -412,57 +415,114 @@ class TTS:
             # Re-raise to allow the Exception to be handled externally as well.
             raise
 
-    def _execute(self, sentence, ident, listen, **kwargs):
+    def _replace_phonetic_spellings(self, sentence):
         if self.phonetic_spelling:
             for word in re.findall(r"[\w']+", sentence):
                 if word.lower() in self.spellings:
-                    sentence = sentence.replace(word,
-                                                self.spellings[word.lower()])
+                    spelled = self.spellings[word.lower()]
+                    sentence = sentence.replace(word, spelled)
+        return sentence
 
+    def _execute(self, sentence, ident, listen, **kwargs):
+        self.stopwatch.start()
+        sentence = self._replace_phonetic_spellings(sentence)
         chunks = self._preprocess_sentence(sentence)
         # Apply the listen flag to the last chunk, set the rest to False
         chunks = [(chunks[i], listen if i == len(chunks) - 1 else False)
                   for i in range(len(chunks))]
         self.handle_metric({"metric_type": "tts.preprocessed",
                             "n_chunks": len(chunks)})
-        for sentence, l in chunks:
-            key = str(hashlib.md5(
-                sentence.encode('utf-8', 'ignore')).hexdigest())
-            wav_file = os.path.join(self.cache_dir, key + '.' + self.audio_ext)
 
-            if os.path.exists(wav_file):
-                LOG.debug("TTS cache hit")
-                phonemes = self.load_phonemes(key)
-            else:
-                self.handle_metric({"metric_type": "tts.synth.start"})
-                lang = kwargs.get("lang")
-                if not lang and kwargs.get("message"):
-                    # some HolmesV derivatives accept a message object
-                    try:
-                        lang = kwargs["message"].data.get("lang") or \
-                               kwargs["message"].context.get("lang")
-                    except:  # not a mycroft message object
-                        pass
-                lang = lang or self.lang
-                # check the signature to either pass lang or not
-                if len(signature(self.get_tts).parameters) == 3:
-                    wav_file, phonemes = self.get_tts(sentence, wav_file,
-                                                      lang=lang)
-                else:
-                    wav_file, phonemes = self.get_tts(sentence, wav_file)
-                self.handle_metric({"metric_type": "tts.synth.finished"})
-                if phonemes:
-                    self.save_phonemes(key, phonemes)
-                else:
-                    try:
-                        # TODO, debug why phonemes fail ?
-                        phonemes = get_phonemes(sentence)
-                        self.handle_metric({"metric_type": "tts.phonemes.guess"})
-                    except (ImportError, FailedToGuessPhonemes):
-                        pass
-            vis = self.viseme(phonemes) if phonemes else None
-            self.queue.put((self.audio_ext, wav_file, vis, ident, l))
+        # synth -> queue for playback
+        for sentence, l in chunks:
+            sentence_hash = hash_sentence(sentence)
+            if sentence_hash in self.cache:  # load from cache
+                audio_file, phonemes = self._get_from_cache(sentence, sentence_hash)
+            else:  # synth + cache
+                audio_file, phonemes = self._synth(sentence, sentence_hash, **kwargs)
+
+            viseme = self.viseme(phonemes) if phonemes else None
+            audio_ext = self._determine_ext(audio_file)
+            self.queue.put(
+                (audio_ext, str(audio_file), viseme, ident, l)
+            )
             self.handle_metric({"metric_type": "tts.queued"})
+
+    def _determine_ext(self, audio_file):
+        # determine audio_ext on the fly
+        # do not use the ext defined in the plugin since it might not match
+        # some plugins support multiple extensions
+        # or have caches in different extensions
+        try:
+            _, audio_ext = splitext(str(audio_file))
+            return audio_ext[1:]
+        except:
+            return self.audio_ext
+
+    def _synth(self, sentence, sentence_hash=None, **kwargs):
+        self.handle_metric({"metric_type": "tts.synth.start"})
+        sentence_hash = sentence_hash or hash_sentence(sentence)
+        audio = self.cache.define_audio_file(sentence_hash)
+
+        # parse requested language for this TTS request
+        # NOTE: this is ovos only functionality, not in mycroft-core!
+        lang = kwargs.get("lang")
+        if not lang and kwargs.get("message"):
+            # get lang from message object if possible
+            try:
+                lang = kwargs["message"].data.get("lang") or \
+                       kwargs["message"].context.get("lang")
+            except:  # not a mycroft message object
+                pass
+        kwargs["lang"] = lang or self.lang
+
+        # filter kwargs per plugin, different plugins expose different options
+        #   mycroft-core -> no kwargs
+        #   ovos -> lang
+        #   neon-core -> message
+        kwargs = {k: v for k, v in kwargs.items()
+                  if k in inspect.signature(self.get_tts).parameters
+                  and k not in ["sentence", "wav_file"]}
+
+        # finally do the TTS synth
+        audio.path, phonemes = self.get_tts(sentence, str(audio), **kwargs)
+        self.handle_metric({"metric_type": "tts.synth.finished"})
+        # cache sentence + phonemes
+        self._cache_sentence(sentence, audio, phonemes, sentence_hash)
+        return audio, phonemes
+
+    def _cache_phonemes(self, sentence, phonemes=None, sentence_hash=None):
+        sentence_hash = sentence_hash or hash_sentence(sentence)
+        if not phonemes:
+            try:  # TODO debug why get_phonemes fails in the first place
+                phonemes = get_phonemes(sentence)
+                self.handle_metric({"metric_type": "tts.phonemes.guess"})
+            except (ImportError, FailedToGuessPhonemes):
+                pass
+        if phonemes:
+            return self.save_phonemes(sentence_hash, phonemes)
+        return None
+
+    def _cache_sentence(self, sentence, audio_file, phonemes=None, sentence_hash=None):
+        sentence_hash = sentence_hash or hash_sentence(sentence)
+        # RANT: why do you hate strings ChrisV?
+        if isinstance(audio_file.path, str):
+            audio_file.path = Path(audio_file.path)
+        pho_file = self._cache_phonemes(sentence, phonemes, sentence_hash)
+        self.cache.cached_sentences[sentence_hash] = (audio_file, pho_file)
+        self.handle_metric({"metric_type": "tts.synth.cached"})
+
+    def _get_from_cache(self, sentence, sentence_hash=None):
+        sentence_hash = sentence_hash or hash_sentence(sentence)
+        phonemes = None
+        audio_file, pho_file = self.cache.cached_sentences[sentence_hash]
+        LOG.info(f"Found {audio_file.name} in TTS cache")
+        if not pho_file:
+            # guess phonemes from sentence + cache them
+            pho_file = self._cache_phonemes(sentence, sentence_hash)
+        if pho_file:
+            phonemes = pho_file.load()
+        return audio_file, phonemes
 
     def viseme(self, phonemes):
         """Create visemes from phonemes.
@@ -492,7 +552,7 @@ class TTS:
 
     def clear_cache(self):
         """ Remove all cached files. """
-        pass
+        self.cache.clear()
 
     def save_phonemes(self, key, phonemes):
         """Cache phonemes
@@ -501,13 +561,9 @@ class TTS:
             key (str):        Hash key for the sentence
             phonemes (str):   phoneme string to save
         """
-        pho_file = os.path.join(self.cache_dir, key + ".pho")
-        try:
-            with open(pho_file, "w") as cachefile:
-                cachefile.write(phonemes)
-        except Exception:
-            LOG.exception("Failed to write {} to cache".format(pho_file))
-            pass
+        phoneme_file = self.cache.define_phoneme_file(key)
+        phoneme_file.save(phonemes)
+        return phoneme_file
 
     def load_phonemes(self, key):
         """Load phonemes from cache file.
@@ -515,15 +571,8 @@ class TTS:
         Arguments:
             key (str): Key identifying phoneme cache
         """
-        pho_file = os.path.join(self.cache_dir, key + ".pho")
-        if os.path.exists(pho_file):
-            try:
-                with open(pho_file, "r") as cachefile:
-                    phonemes = cachefile.read().strip()
-                return phonemes
-            except Exception:
-                LOG.debug("Failed to read .PHO from cache")
-        return None
+        phoneme_file = self.cache.define_phoneme_file(key)
+        return phoneme_file.load()
 
     def stop(self):
         try:
@@ -628,3 +677,38 @@ class ConcatTTS(TTS):
         files, phonemes = self.sentence_to_files(sentence)
         wav_file = self.concat(files, wav_file)
         return wav_file, phonemes
+
+
+class RemoteTTSException(Exception):
+    pass
+
+
+class RemoteTTSTimeoutException(RemoteTTSException):
+    pass
+
+
+class RemoteTTS(TTS):
+    """
+    Abstract class for a Remote TTS engine implementation.
+    This class is only provided for backwards compatibility
+    Usage is discouraged
+    """
+
+    def __init__(self, lang, config, url, api_path, validator):
+        super(RemoteTTS, self).__init__(lang, config, validator)
+        self.api_path = api_path
+        self.auth = None
+        self.url = config.get('url', url).rstrip('/')
+
+    def build_request_params(self, sentence):
+        pass
+
+    def get_tts(self, sentence, wav_file, lang=None):
+        r = requests.get(
+            self.url + self.api_path, params=self.build_request_params(sentence),
+            timeout=10, verify=False, auth=self.auth)
+        if r.status_code != 200:
+            return None
+        with open(wav_file, 'wb') as f:
+            f.write(r.content)
+        return wav_file, None
