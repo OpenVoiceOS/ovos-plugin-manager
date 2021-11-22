@@ -5,7 +5,7 @@ import xdg.BaseDirectory
 class LanguageDetector:
     def __init__(self, config=None):
         self.config = config or {}
-        db_name = self.__class__.__name__.lower() + ".json"
+        db_name = self.__class__.__name__.lower()
         self.cache = JsonStorageXDG(db_name,
                                     xdg_folder=xdg.BaseDirectory.xdg_cache_home,
                                     subfolder="lang_detections")
