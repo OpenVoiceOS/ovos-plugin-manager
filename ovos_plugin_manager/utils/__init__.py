@@ -26,6 +26,7 @@ class PluginTypes(str, Enum):
     LANG_DETECT = "neon.plugin.lang.detect"
     UTTERANCE_TRANSFORMER = "neon.plugin.text"
     AUDIO_TRANSFORMER = "neon.plugin.audio"
+    QUESTION_SOLVER = "neon.plugin.solver"
 
 
 def find_plugins(plug_type=None):
