@@ -201,7 +201,8 @@ class TTS:
     """
 
     def __init__(self, lang="en-us", config=None, validator=None,
-                 audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
+                 audio_ext='wav', phonetic_spelling=True, ssml_tags=None,
+                 tts_name=None):
         self.log_timestamps = False
         if not config:
             try:
@@ -212,7 +213,7 @@ class TTS:
             config["lang"] = config_core.get("lang")
 
         self.stopwatch = Stopwatch()
-        self.tts_name = self.__class__.__name__
+        self.tts_name = tts_name or self.__class__.__name__
         self.bus = BUS()  # initialized in "init" step
         self.lang = lang or config.get("lang") or 'en-us'
         self.config = config or {}
