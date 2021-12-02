@@ -54,7 +54,7 @@ class Grapheme2PhonemePlugin:
     def utterance2arpa(self, utterance, lang, ignore_oov=False):
         arpa = []
         for w in utterance.split():
-            phones = self.get_arpa(w, lang, ignore_oov) or []
+            phones = self.get_arpa(w, lang) or []
             if not phones and not ignore_oov:
                 raise OutOfVocabulary(f"unknown word: {w}")
             arpa += phones + ["."]
@@ -67,7 +67,7 @@ class Grapheme2PhonemePlugin:
     def utterance2ipa(self, utterance, lang, ignore_oov=False):
         ipa = []
         for w in utterance.split():
-            phones = self.get_ipa(w, lang, ignore_oov) or []
+            phones = self.get_ipa(w, lang) or []
             if not phones and not ignore_oov:
                 raise OutOfVocabulary(f"unknown word: {w}")
             ipa += phones + ["."]

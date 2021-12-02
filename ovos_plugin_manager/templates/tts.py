@@ -242,7 +242,7 @@ class TTS:
             self.config, tts_id, self.audio_ext
         )
         self.cache.curate()
-        self.g2p = OVOSG2PFactory.create(config_core)
+        self.g2p = OVOSG2PFactory.create()
         self.handle_metric({"metric_type": "tts.init"})
 
     def handle_metric(self, metadata=None):
