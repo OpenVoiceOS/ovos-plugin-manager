@@ -1,3 +1,2 @@
 ovos_utils~=0.0.14a3
 requests
-phoneme_guesser

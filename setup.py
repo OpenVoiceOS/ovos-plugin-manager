@@ -9,8 +9,7 @@ setup(
     author='jarbasAi',
     install_requires=["ovos_utils>=0.0.12a3",
                       "requests",
-                      "memory-tempfile",
-                      "phoneme_guesser"],
+                      "memory-tempfile"],
     author_email='jarbasai@mailfence.com',
     description='OpenVoiceOS plugin manager'
 )
