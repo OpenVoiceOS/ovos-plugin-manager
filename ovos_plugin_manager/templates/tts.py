@@ -32,14 +32,12 @@ from threading import Thread
 from time import time, sleep
 
 import requests
-from phoneme_guesser.exceptions import FailedToGuessPhonemes
-
+from ovos_plugin_manager.g2p import OVOSG2PFactory
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 from ovos_utils import resolve_resource_file
 from ovos_utils.configuration import read_mycroft_config
 from ovos_utils.enclosure.api import EnclosureAPI
 from ovos_utils.file_utils import get_cache_directory
-from ovos_utils.lang.phonemes import get_phonemes
 from ovos_utils.lang.visimes import VISIMES
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import Message, FakeBus as BUS
@@ -243,6 +241,7 @@ class TTS:
             self.config, tts_id, self.audio_ext
         )
         self.cache.curate()
+        self.g2p = OVOSG2PFactory.create(config_core)
         self.handle_metric({"metric_type": "tts.init"})
 
     def handle_metric(self, metadata=None):
@@ -441,7 +440,13 @@ class TTS:
             else:  # synth + cache
                 audio_file, phonemes = self._synth(sentence, sentence_hash, **kwargs)
 
-            viseme = self.viseme(phonemes) if phonemes else None
+            # get visemes/mouth movements
+            if phonemes:
+                viseme = self.viseme(phonemes)
+            else:
+                lang = self._get_lang(kwargs)
+                viseme = self.g2p.utterance2visemes(sentence, lang)
+
             audio_ext = self._determine_ext(audio_file)
             self.queue.put(
                 (audio_ext, str(audio_file), viseme, ident, l)
@@ -459,11 +464,7 @@ class TTS:
         except:
             return self.audio_ext
 
-    def _synth(self, sentence, sentence_hash=None, **kwargs):
-        self.handle_metric({"metric_type": "tts.synth.start"})
-        sentence_hash = sentence_hash or hash_sentence(sentence)
-        audio = self.cache.define_audio_file(sentence_hash)
-
+    def _get_lang(self, kwargs):
         # parse requested language for this TTS request
         # NOTE: this is ovos only functionality, not in mycroft-core!
         lang = kwargs.get("lang")
@@ -474,7 +475,16 @@ class TTS:
                        kwargs["message"].context.get("lang")
             except:  # not a mycroft message object
                 pass
-        kwargs["lang"] = lang or self.lang
+        return lang or self.lang
+
+    def _synth(self, sentence, sentence_hash=None, **kwargs):
+        self.handle_metric({"metric_type": "tts.synth.start"})
+        sentence_hash = sentence_hash or hash_sentence(sentence)
+        audio = self.cache.define_audio_file(sentence_hash)
+
+        # parse requested language for this TTS request
+        # NOTE: this is ovos only functionality, not in mycroft-core!
+        kwargs["lang"] = self._get_lang(kwargs)
 
         # filter kwargs per plugin, different plugins expose different options
         #   mycroft-core -> no kwargs
@@ -494,11 +504,11 @@ class TTS:
     def _cache_phonemes(self, sentence, phonemes=None, sentence_hash=None):
         sentence_hash = sentence_hash or hash_sentence(sentence)
         if not phonemes:
-            try:  # TODO debug why get_phonemes fails in the first place
-                phonemes = get_phonemes(sentence)
-                self.handle_metric({"metric_type": "tts.phonemes.guess"})
-            except (ImportError, FailedToGuessPhonemes):
-                pass
+            try:
+                phonemes = self.g2p.utterance2arpa(sentence, self.lang)
+                self.handle_metric({"metric_type": "tts.phonemes.g2p"})
+            except Exception as e:
+                self.handle_metric({"metric_type": "tts.phonemes.g2p.error", "error": str(e)})
         if phonemes:
             return self.save_phonemes(sentence_hash, phonemes)
         return None
