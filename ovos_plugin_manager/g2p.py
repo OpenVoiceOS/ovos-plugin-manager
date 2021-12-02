@@ -1,5 +1,7 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
 from ovos_plugin_manager.templates.g2p import Grapheme2PhonemePlugin, PhonemeAlphabet
+from ovos_utils.log import LOG
+from ovos_utils.configuration import read_mycroft_config
 
 
 def find_g2p_plugins():
@@ -13,7 +15,7 @@ def load_g2p_plugin(module_name):
 class OVOSG2PFactory:
     """ replicates the base mycroft class, but uses only OPM enabled plugins"""
     MAPPINGS = {
-        "cmudict": "ovos-g2p-plugin-cmudict",
+        "dummy": "ovos-g2p-plugin-dummy",
         "phoneme_guesser": "neon-g2p-plugin-phoneme-guesser",
         "gruut": "neon-g2p-plugin-gruut"
     }
@@ -30,9 +32,9 @@ class OVOSG2PFactory:
         }
         """
         config = config or get_g2p_config()
-        g2p_module = config.get("module") or 'cmudict'
-        if g2p_module == 'cmudict':
-            return G2P
+        g2p_module = config.get("module") or 'dummy'
+        if g2p_module == 'dummy':
+            return Grapheme2PhonemePlugin
         if g2p_module in OVOSG2PFactory.MAPPINGS:
             g2p_module = OVOSG2PFactory.MAPPINGS[g2p_module]
         return load_g2p_plugin(g2p_module)
@@ -49,12 +51,11 @@ class OVOSG2PFactory:
         }
         """
         g2p_config = get_g2p_config(config)
-        g2p_module = g2p_config.get('module', 'cmudict')
+        g2p_module = g2p_config.get('module', 'dummy')
         try:
             clazz = OVOSG2PFactory.get_class(g2p_config)
             LOG.info(f'Found plugin {g2p_module}')
-            g2p = clazz(g2p_lang, g2p_config)
-            g2p.validator.validate()
+            g2p = clazz(g2p_config)
             LOG.info(f'Loaded plugin {g2p_module}')
         except Exception:
             LOG.exception('The selected G2P plugin could not be loaded.')
@@ -66,7 +67,7 @@ def get_g2p_config(config=None):
     config = config or read_mycroft_config()
     if "g2p" in config:
         config = config["g2p"]
-    g2p_module = config.get('module', 'cmudict')
+    g2p_module = config.get('module', 'dummy')
     g2p_config = config.get(g2p_module, {})
     g2p_config["module"] = g2p_module
     return g2p_config

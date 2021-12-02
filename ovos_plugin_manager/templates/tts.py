@@ -203,13 +203,14 @@ class TTS:
     def __init__(self, lang="en-us", config=None, validator=None,
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
         self.log_timestamps = False
-        if not config:
-            try:
-                config_core = read_mycroft_config() or {}
-            except FileNotFoundError:
-                config_core = {}
-            config = config_core.get("tts", {})
-            config["lang"] = config_core.get("lang")
+
+        try:
+            config_core = read_mycroft_config() or {}
+        except FileNotFoundError:
+            config_core = {}
+
+        config = config or config_core.get("tts", {})
+        config["lang"] = config.get("lang") or config_core.get("lang")
 
         self.stopwatch = Stopwatch()
         self.tts_name = self.__class__.__name__
