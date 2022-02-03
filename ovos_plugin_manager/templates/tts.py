@@ -335,7 +335,7 @@ class TTS:
         Returns:
             tuple: (wav_file, phoneme)
         """
-        pass
+        return "", None
 
     def modify_tag(self, tag):
         """Override to modify each supported ssml tag.
