@@ -52,7 +52,7 @@ class OVOSTTSFactory:
         }
         """
         config = config or get_tts_config()
-        tts_module = config["module"]
+        tts_module = config.get("module") or "dummy"
         if tts_module == "dummy":
             return TTS
         if tts_module in OVOSTTSFactory.MAPPINGS:
@@ -73,7 +73,6 @@ class OVOSTTSFactory:
         tts_config = get_tts_config(config)
         tts_lang = tts_config["lang"]
         tts_module = tts_config.get('module', 'mimic')
-
         try:
             clazz = OVOSTTSFactory.get_class(tts_config)
             LOG.info(f'Found plugin {tts_module}')
@@ -91,7 +90,8 @@ def get_tts_config(config=None):
     lang = config.get("lang", "en-us")
     if "tts" in config:
         config = config["tts"]
-    tts_module = config.get('module', 'mimic')
+    tts_module = config.get('module', 'dummy')
     tts_config = config.get(tts_module, {})
     tts_config["lang"] = tts_config.get('lang') or lang
+    tts_config["module"] = tts_module
     return tts_config
