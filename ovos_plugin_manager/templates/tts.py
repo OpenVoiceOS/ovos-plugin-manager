@@ -252,7 +252,7 @@ class TTS:
     def add_metric(self, metadata=None):
         """ wraps handle_metric to catch exceptions and log timestamps """
         try:
-            self.add_metric(metadata)
+            self.handle_metric(metadata)
             if self.log_timestamps:
                 LOG.debug(f"time delta: {self.stopwatch.delta} metric: {metadata}")
         except Exception as e:
