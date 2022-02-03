@@ -243,13 +243,20 @@ class TTS:
         )
         self.cache.curate()
         self.g2p = OVOSG2PFactory.create(config_core)
-        self.handle_metric({"metric_type": "tts.init"})
+        self.add_metric({"metric_type": "tts.init"})
 
     def handle_metric(self, metadata=None):
         """ receive timing metrics for diagnostics
         does nothing by default but plugins might use it, eg, NeonCore"""
-        if self.log_timestamps:
-            LOG.debug(f"time delta: {self.stopwatch.delta} metric: {metadata}")
+
+    def add_metric(self, metadata=None):
+        """ wraps handle_metric to catch exceptions and log timestamps """
+        try:
+            self.handle_metric(metadata)
+            if self.log_timestamps:
+                LOG.debug(f"time delta: {self.stopwatch.delta} metric: {metadata}")
+        except Exception as e:
+            LOG.exception(e)
 
     def load_spellings(self, config=None):
         """Load phonetic spellings of words as dictionary."""
@@ -278,7 +285,7 @@ class TTS:
         create_signal("isSpeaking")
         # Create signals informing start of speech
         self.bus.emit(Message("recognizer_loop:audio_output_start"))
-        self.handle_metric({"metric_type": "tts.start"})
+        self.add_metric({"metric_type": "tts.start"})
 
     def end_audio(self, listen=False):
         """Helper function for child classes to call in execute().
@@ -298,7 +305,7 @@ class TTS:
 
         # This check will clear the "signal"
         check_for_signal("isSpeaking")
-        self.handle_metric({"metric_type": "tts.end"})
+        self.add_metric({"metric_type": "tts.end"})
         self.stopwatch.stop()
         self.cache.curate()
 
@@ -313,7 +320,7 @@ class TTS:
         self.playback.init(self)
         self.enclosure = EnclosureAPI(self.bus)
         self.playback.enclosure = self.enclosure
-        self.handle_metric({"metric_type": "tts.setup"})
+        self.add_metric({"metric_type": "tts.setup"})
 
     def get_tts(self, sentence, wav_file, lang=None):
         """Abstract method that a tts implementation needs to implement.
@@ -405,7 +412,7 @@ class TTS:
                     of the utterance.
         """
         sentence = self.validate_ssml(sentence)
-        self.handle_metric({"metric_type": "tts.ssml.validated"})
+        self.add_metric({"metric_type": "tts.ssml.validated"})
         create_signal("isSpeaking")
         try:
             self._execute(sentence, ident, listen, **kwargs)
@@ -430,7 +437,7 @@ class TTS:
         # Apply the listen flag to the last chunk, set the rest to False
         chunks = [(chunks[i], listen if i == len(chunks) - 1 else False)
                   for i in range(len(chunks))]
-        self.handle_metric({"metric_type": "tts.preprocessed",
+        self.add_metric({"metric_type": "tts.preprocessed",
                             "n_chunks": len(chunks)})
 
         # synth -> queue for playback
@@ -452,7 +459,7 @@ class TTS:
             self.queue.put(
                 (audio_ext, str(audio_file), viseme, ident, l)
             )
-            self.handle_metric({"metric_type": "tts.queued"})
+            self.add_metric({"metric_type": "tts.queued"})
 
     def _determine_ext(self, audio_file):
         # determine audio_ext on the fly
@@ -479,7 +486,7 @@ class TTS:
         return lang or self.lang
 
     def _synth(self, sentence, sentence_hash=None, **kwargs):
-        self.handle_metric({"metric_type": "tts.synth.start"})
+        self.add_metric({"metric_type": "tts.synth.start"})
         sentence_hash = sentence_hash or hash_sentence(sentence)
         audio = self.cache.define_audio_file(sentence_hash)
 
@@ -497,7 +504,7 @@ class TTS:
 
         # finally do the TTS synth
         audio.path, phonemes = self.get_tts(sentence, str(audio), **kwargs)
-        self.handle_metric({"metric_type": "tts.synth.finished"})
+        self.add_metric({"metric_type": "tts.synth.finished"})
         # cache sentence + phonemes
         self._cache_sentence(sentence, audio, phonemes, sentence_hash)
         return audio, phonemes
@@ -507,9 +514,9 @@ class TTS:
         if not phonemes:
             try:
                 phonemes = self.g2p.utterance2arpa(sentence, self.lang)
-                self.handle_metric({"metric_type": "tts.phonemes.g2p"})
+                self.add_metric({"metric_type": "tts.phonemes.g2p"})
             except Exception as e:
-                self.handle_metric({"metric_type": "tts.phonemes.g2p.error", "error": str(e)})
+                self.add_metric({"metric_type": "tts.phonemes.g2p.error", "error": str(e)})
         if phonemes:
             return self.save_phonemes(sentence_hash, phonemes)
         return None
@@ -521,7 +528,7 @@ class TTS:
             audio_file.path = Path(audio_file.path)
         pho_file = self._cache_phonemes(sentence, phonemes, sentence_hash)
         self.cache.cached_sentences[sentence_hash] = (audio_file, pho_file)
-        self.handle_metric({"metric_type": "tts.synth.cached"})
+        self.add_metric({"metric_type": "tts.synth.cached"})
 
     def _get_from_cache(self, sentence, sentence_hash=None):
         sentence_hash = sentence_hash or hash_sentence(sentence)
@@ -591,7 +598,7 @@ class TTS:
             self.playback.join()
         except Exception as e:
             pass
-        self.handle_metric({"metric_type": "tts.stop"})
+        self.add_metric({"metric_type": "tts.stop"})
 
     def __del__(self):
         self.stop()
