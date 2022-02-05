@@ -86,11 +86,14 @@ class OVOSTTSFactory:
 
 
 def get_tts_config(config=None):
-    config = config or read_mycroft_config()
+    try:
+        config = config or read_mycroft_config()
+    except:
+        config = {}
     lang = config.get("lang", "en-us")
-    if "tts" in config:
+    if "tts" in config and "module" in config["tts"]:
         config = config["tts"]
-    tts_module = config.get('module', 'dummy')
+    tts_module = config.get('module') or "dummy"
     tts_config = config.get(tts_module, {})
     tts_config["lang"] = tts_config.get('lang') or lang
     tts_config["module"] = tts_module
