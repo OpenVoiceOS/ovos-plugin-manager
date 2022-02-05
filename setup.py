@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='ovos-plugin-manager',
-    version='0.0.3a2',
+    version='0.0.3a5',
     packages=['ovos_plugin_manager', 'ovos_plugin_manager.templates', 'ovos_plugin_manager.utils'],
     url='https://github.com/OpenVoiceOS/OVOS-plugin-manager',
     license='Apache-2.0',
