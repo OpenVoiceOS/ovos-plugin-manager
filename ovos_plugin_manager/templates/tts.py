@@ -115,7 +115,7 @@ class PlaybackThread(Thread):
         except Empty:
             pass
         except Exception as e:
-            LOG.exception(e)
+            LOG.exception(f"TTS execution failed: {e}")
             if self._processing_queue:
                 self.on_end(listen)
         self._now_playing = None
@@ -503,7 +503,11 @@ class TTS:
                   and k not in ["sentence", "wav_file"]}
 
         # finally do the TTS synth
-        audio.path, phonemes = self.get_tts(sentence, str(audio), **kwargs)
+        path, phonemes = self.get_tts(sentence, str(audio), **kwargs)
+        if not path:
+            self.add_metric({"metric_type": "tts.synth.failed"})
+            raise FileNotFoundError("TTS synth failed, no audio to playback")
+        audio.path = path
         self.add_metric({"metric_type": "tts.synth.finished"})
         # cache sentence + phonemes
         self._cache_sentence(sentence, audio, phonemes, sentence_hash)
