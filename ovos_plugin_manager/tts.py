@@ -16,6 +16,7 @@ def load_tts_plugin(module_name):
     Returns:
         class: found tts plugin class
     """
+    module_name = OVOSTTSFactory.get_equivalent_plugin(module_name) or module_name
     return load_plugin(module_name, PluginTypes.TTS)
 
 
@@ -55,9 +56,15 @@ class OVOSTTSFactory:
         tts_module = config.get("module") or "dummy"
         if tts_module == "dummy":
             return TTS
-        if tts_module in OVOSTTSFactory.MAPPINGS:
-            tts_module = OVOSTTSFactory.MAPPINGS[tts_module]
         return load_tts_plugin(tts_module)
+
+    @staticmethod
+    def get_equivalent_plugin(tts_module):
+        if tts_module in OVOSTTSFactory.MAPPINGS:
+            plug = OVOSTTSFactory.MAPPINGS[tts_module]
+            LOG.debug(f"tts module {tts_module} mapped to plugin {plug}")
+            return plug
+        return None
 
     @staticmethod
     def create(config=None):
@@ -71,8 +78,10 @@ class OVOSTTSFactory:
         }
         """
         tts_config = get_tts_config(config)
-        tts_lang = tts_config["lang"]
+        tts_lang = tts_config.get("lang", "en-us")
         tts_module = tts_config.get('module', 'mimic')
+        tts_module = OVOSTTSFactory.get_equivalent_plugin(tts_module) or tts_module
+        tts_config["module"] = tts_module  # avoid a re-read of mappings
         try:
             clazz = OVOSTTSFactory.get_class(tts_config)
             LOG.info(f'Found plugin {tts_module}')
