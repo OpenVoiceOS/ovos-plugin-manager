@@ -241,6 +241,8 @@ class TTS:
         self.cache = TextToSpeechCache(
             self.config, tts_id, self.audio_ext
         )
+        LOG.debug(f"{self.tts_name} persistent cache: {self.cache.persistent_cache_dir}")
+        LOG.debug(f"{self.tts_name} temporary cache: {self.cache.temporary_cache_dir}")
         self.cache.curate()
         self.g2p = OVOSG2PFactory.create(config_core)
         self.add_metric({"metric_type": "tts.init"})
