@@ -49,7 +49,10 @@ def find_plugins(plug_type=None):
         plugs = plug_type
     for plug in plugs:
         for entry_point in pkg_resources.iter_entry_points(plug):
-            entrypoints[entry_point.name] = entry_point.load()
+            try:
+                entrypoints[entry_point.name] = entry_point.load()
+            except Exception as e:
+                LOG.exception(f"Failed to load plugin entry point {entry_point}")
     return entrypoints
 
 
