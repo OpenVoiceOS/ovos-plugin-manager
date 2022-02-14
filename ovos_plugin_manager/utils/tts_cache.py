@@ -6,8 +6,7 @@ import shutil
 from pathlib import Path
 from stat import S_ISREG, ST_MTIME, ST_MODE, ST_SIZE
 
-import xdg.BaseDirectory
-
+from ovos_utils.configuration import get_xdg_data_save_path
 from ovos_utils.file_utils import get_cache_directory
 from ovos_utils.log import LOG
 
@@ -224,7 +223,7 @@ class TextToSpeechCache:
         self.audio_file_type = audio_file_type
 
         persistent_cache = self.config.get("preloaded_cache") or \
-                           join(xdg.BaseDirectory.xdg_data_home, tts_name)
+                           join(get_xdg_data_save_path(), tts_name)
         tmp_cache = get_cache_directory(f"tts/{tts_name}")
         os.makedirs(tmp_cache, exist_ok=True)
         os.makedirs(persistent_cache, exist_ok=True)

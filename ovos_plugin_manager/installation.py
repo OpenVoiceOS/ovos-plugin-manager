@@ -1,16 +1,17 @@
-import requests
-from ovos_utils.log import LOG
-from os.path import exists, join, dirname
 import os
 import sys
+from os.path import exists, dirname
 from subprocess import PIPE, Popen
+
+import requests
+from combo_lock import NamedLock
+from ovos_utils.log import LOG
+
 from ovos_plugin_manager.exceptions import PipException
-from json_database.utils.combo_lock import ComboLock
-from tempfile import gettempdir
 
 # default constraints to use if none are given
 DEFAULT_CONSTRAINTS = '/etc/mycroft/constraints.txt'
-PIP_LOCK = ComboLock(join(gettempdir(), "ovos_pip.lock"))
+PIP_LOCK = NamedLock("ovos_pip.lock")
 
 
 def search_pip(query, strict=True, page=1, max_results=10):
