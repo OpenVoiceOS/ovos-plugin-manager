@@ -468,8 +468,8 @@ class TTS:
         # or have caches in different extensions
         try:
             _, audio_ext = splitext(str(audio_file))
-            return audio_ext[1:]
-        except:
+            return audio_ext[1:] or self.audio_ext
+        except Exception as e:
             return self.audio_ext
 
     def _get_lang(self, kwargs):
