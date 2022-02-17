@@ -32,8 +32,6 @@ from threading import Thread
 from time import time, sleep
 
 import requests
-from ovos_plugin_manager.g2p import OVOSG2PFactory
-from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 from ovos_utils import resolve_resource_file
 from ovos_utils.configuration import read_mycroft_config
 from ovos_utils.enclosure.api import EnclosureAPI
@@ -44,6 +42,9 @@ from ovos_utils.messagebus import Message, FakeBus as BUS
 from ovos_utils.metrics import Stopwatch
 from ovos_utils.signal import check_for_signal, create_signal
 from ovos_utils.sound import play_audio
+
+from ovos_plugin_manager.g2p import OVOSG2PFactory
+from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
 
@@ -237,13 +238,37 @@ class TTS:
         #   outside mycroft the enclosure is not set, bus is dummy and
         #   playback thread is not used
         self.spellings = self.load_spellings()
-        tts_id = join(self.tts_name, self.voice, self.lang)
-        self.cache = TextToSpeechCache(
-            self.config, tts_id, self.audio_ext
-        )
-        self.cache.curate()
+
+        self.caches = {
+            self.tts_id: TextToSpeechCache(
+                self.config, self.tts_id, self.audio_ext
+            )}
+
         self.g2p = OVOSG2PFactory.create(config_core)
+        self.cache.curate()
         self.add_metric({"metric_type": "tts.init"})
+
+    @property
+    def tts_id(self):
+        return join(self.tts_name, self.voice, self.lang)
+
+    @property
+    def cache(self):
+        return self.caches[self.tts_id]
+
+    @cache.setter
+    def cache(self, val):
+        self.caches[self.tts_id] = val
+
+    def get_cache(self, voice=None, lang=None):
+        lang = lang or self.lang
+        voice = voice or self.voice or "default"
+        tts_id = join(self.tts_name, voice, lang)
+        if tts_id not in self.caches:
+            self.caches[tts_id] = TextToSpeechCache(
+                self.config, tts_id, self.audio_ext
+            )
+        return self.caches[tts_id]
 
     def handle_metric(self, metadata=None):
         """ receive timing metrics for diagnostics
@@ -438,13 +463,13 @@ class TTS:
         chunks = [(chunks[i], listen if i == len(chunks) - 1 else False)
                   for i in range(len(chunks))]
         self.add_metric({"metric_type": "tts.preprocessed",
-                            "n_chunks": len(chunks)})
+                         "n_chunks": len(chunks)})
 
         # synth -> queue for playback
         for sentence, l in chunks:
             sentence_hash = hash_sentence(sentence)
             if sentence_hash in self.cache:  # load from cache
-                audio_file, phonemes = self._get_from_cache(sentence, sentence_hash)
+                audio_file, phonemes = self._get_from_cache(sentence, sentence_hash, **kwargs)
             else:  # synth + cache
                 audio_file, phonemes = self._synth(sentence, sentence_hash, **kwargs)
 
@@ -485,6 +510,19 @@ class TTS:
                 pass
         return lang or self.lang
 
+    def _get_voice(self, kwargs):
+        # parse requested language for this TTS request
+        # NOTE: this is ovos only functionality, not in mycroft-core!
+        voice = kwargs.get("voice")
+        if not voice and kwargs.get("message"):
+            # get lang from message object if possible
+            try:
+                voice = kwargs["message"].data.get("voice") or \
+                       kwargs["message"].context.get("voice")
+            except:  # not a mycroft message object
+                pass
+        return voice or self.voice or "default"
+
     def _synth(self, sentence, sentence_hash=None, **kwargs):
         self.add_metric({"metric_type": "tts.synth.start"})
         sentence_hash = sentence_hash or hash_sentence(sentence)
@@ -492,11 +530,14 @@ class TTS:
 
         # parse requested language for this TTS request
         # NOTE: this is ovos only functionality, not in mycroft-core!
-        kwargs["lang"] = self._get_lang(kwargs)
+        lang = self._get_lang(kwargs)
+        voice = self._get_voice(kwargs)
+        kwargs["lang"] = lang
+        kwargs["voice"] = voice
 
         # filter kwargs per plugin, different plugins expose different options
         #   mycroft-core -> no kwargs
-        #   ovos -> lang
+        #   ovos -> lang + voice optional kwargs
         #   neon-core -> message
         kwargs = {k: v for k, v in kwargs.items()
                   if k in inspect.signature(self.get_tts).parameters
@@ -506,7 +547,8 @@ class TTS:
         audio.path, phonemes = self.get_tts(sentence, str(audio), **kwargs)
         self.add_metric({"metric_type": "tts.synth.finished"})
         # cache sentence + phonemes
-        self._cache_sentence(sentence, audio, phonemes, sentence_hash)
+        self._cache_sentence(sentence, audio, phonemes, sentence_hash,
+                             voice=voice, lang=lang)
         return audio, phonemes
 
     def _cache_phonemes(self, sentence, phonemes=None, sentence_hash=None):
@@ -521,19 +563,22 @@ class TTS:
             return self.save_phonemes(sentence_hash, phonemes)
         return None
 
-    def _cache_sentence(self, sentence, audio_file, phonemes=None, sentence_hash=None):
+    def _cache_sentence(self, sentence, audio_file, phonemes=None, sentence_hash=None,
+                        voice=None, lang=None):
         sentence_hash = sentence_hash or hash_sentence(sentence)
         # RANT: why do you hate strings ChrisV?
         if isinstance(audio_file.path, str):
             audio_file.path = Path(audio_file.path)
         pho_file = self._cache_phonemes(sentence, phonemes, sentence_hash)
-        self.cache.cached_sentences[sentence_hash] = (audio_file, pho_file)
+        cache = self.get_cache(voice=voice, lang=lang)
+        cache.cached_sentences[sentence_hash] = (audio_file, pho_file)
         self.add_metric({"metric_type": "tts.synth.cached"})
 
-    def _get_from_cache(self, sentence, sentence_hash=None):
+    def _get_from_cache(self, sentence, sentence_hash=None, **kwargs):
         sentence_hash = sentence_hash or hash_sentence(sentence)
         phonemes = None
-        audio_file, pho_file = self.cache.cached_sentences[sentence_hash]
+        cache = self.get_cache(voice=kwargs.get("voice"), lang=kwargs.get("lang"))
+        audio_file, pho_file = cache.cached_sentences[sentence_hash]
         LOG.info(f"Found {audio_file.name} in TTS cache")
         if not pho_file:
             # guess phonemes from sentence + cache them
