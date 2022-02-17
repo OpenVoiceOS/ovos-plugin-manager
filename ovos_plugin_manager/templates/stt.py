@@ -6,7 +6,6 @@ The main use case is for plugins to be used across different projects
 """
 import json
 from abc import ABCMeta, abstractmethod
-from speech_recognition import Recognizer
 from queue import Queue
 from threading import Thread, Event
 from ovos_utils.configuration import read_mycroft_config
@@ -16,6 +15,8 @@ class STT(metaclass=ABCMeta):
     """ STT Base class, all  STT backends derives from this one. """
 
     def __init__(self, config=None):
+        # only imported here to not drag dependency
+        from speech_recognition import Recognizer
         config_core = {}
         if not config:
             try:
