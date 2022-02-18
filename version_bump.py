@@ -3,7 +3,7 @@ from os.path import join, dirname
 
 version_file = join(dirname(__file__), "ovos_plugin_manager", "versioning",
                     "opm_versions.py")
-version_var_name = "CURRENT_OSM_VERSION"
+version_var_name = "CURRENT_OPM_VERSION"
 
 with open(version_file, "r", encoding="utf-8") as v:
     for line in v.readlines():
