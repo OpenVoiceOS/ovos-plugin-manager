@@ -47,6 +47,7 @@ from ovos_plugin_manager.g2p import OVOSG2PFactory
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
+SSML_TAGS = re.compile(r'<[^>]*>')
 
 
 class PlaybackThread(Thread):
@@ -62,17 +63,75 @@ class PlaybackThread(Thread):
         self._paused = False
         self.enclosure = None
         self.p = None
-        self.tts = None
+        self._tts = []
+        self.bus = None
         self._now_playing = None
+        self.active_tts = None
+
+    def activate_tts(self, tts_id):
+        self.active_tts = tts_id
+        tts = self.get_attached_tts()
+        if tts:
+            tts.begin_audio()
+
+    def deactivate_tts(self):
+        if self.active_tts:
+            tts = self.get_attached_tts()
+            if tts:
+                tts.end_audio()
+        self.active_tts = None
 
     def init(self, tts):
-        self.tts = tts
+        """DEPRECATED! Init the TTS Playback thread."""
+        self.attach_tts(tts)
+        self.set_bus(tts.bus)
+
+    def set_bus(self, bus):
+        """Provide bus instance to the TTS Playback thread.
+        Args:
+            bus (MycroftBusClient): bus client
+        """
+        self.bus = bus
 
     @property
-    def bus(self):
-        if self.tts:
-            return self.tts.bus
-        return None
+    def tts(self):
+        tts = self.get_attached_tts()
+        if not tts and self._tts:
+            return self._tts[0]
+        return tts
+
+    @tts.setter
+    def tts(self, val):
+        self.attach_tts(val)
+
+    @property
+    def attached_tts(self):
+        return self._tts
+
+    def attach_tts(self, tts):
+        """Add TTS to be cache checked."""
+        if tts not in self.attached_tts:
+            self.attached_tts.append(tts)
+
+    def detach_tts(self, tts):
+        """Remove TTS from cache check."""
+        self.attached_tts.remove(tts)
+
+    def get_attached_tts(self, tts_id=None):
+        tts_id = tts_id or self.active_tts
+        if not tts_id:
+            return
+        for tts in self.attached_tts:
+            if hasattr(tts, "tts_id"):
+                # opm plugin
+                if tts.tts_id == tts_id:
+                    return tts
+
+        for tts in self.attached_tts:
+            if not hasattr(tts, "tts_id"):
+                # non-opm plugin
+                if tts.tts_name == tts_id:
+                    return tts
 
     def clear_queue(self):
         """Remove all pending playbacks."""
@@ -83,27 +142,68 @@ class PlaybackThread(Thread):
         except Exception:
             pass
 
+    def begin_audio(self):
+        """Perform beginning of speech actions."""
+        # This check will clear the "signal", in case it is still there for some reasons
+        check_for_signal("isSpeaking")
+        # this will create it again
+        create_signal("isSpeaking")
+        # Create signals informing start of speech
+        if self.bus:
+            self.bus.emit(Message("recognizer_loop:audio_output_start"))
+        else:
+            LOG.warning("Speech started before bus was attached.")
+
+    def end_audio(self, listen):
+        """Perform end of speech output actions.
+        Will inform the system that speech has ended and trigger the TTS's
+        cache checks. Listening will be triggered if requested.
+        Args:
+            listen (bool): True if listening event should be emitted
+        """
+        if self.bus:
+            # Send end of speech signals to the system
+            self.bus.emit(Message("recognizer_loop:audio_output_end"))
+            if listen:
+                self.bus.emit(Message('mycroft.mic.listen'))
+        else:
+            LOG.warning("Speech started before bus was attached.")
+
+        # This check will clear the filesystem IPC "signal"
+        check_for_signal("isSpeaking")
+
     def on_start(self):
         self.blink(0.5)
         if not self._processing_queue:
             self._processing_queue = True
-            self.tts.begin_audio()
+            self.begin_audio()
 
     def on_end(self, listen=False):
         if self._processing_queue:
-            self.tts.end_audio(listen)
+            self.end_audio(listen)
             self._processing_queue = False
+
+        # Clear cache for all attached tts objects
+        # This is basically the only safe time
+        for tts in self.attached_tts:
+            tts.cache.curate()
         self.blink(0.2)
 
     def _play(self):
         listen = False
+        tts_id = None
         try:
-            if len(self._now_playing) == 5:
+            if len(self._now_playing) == 6:
+                # opm style with tts_id
+                snd_type, data, visemes, ident, listen, tts_id = self._now_playing
+            elif len(self._now_playing) == 5:
                 # new mycroft style
                 snd_type, data, visemes, ident, listen = self._now_playing
             else:
-                # old mycroft style
+                # old mycroft style  TODO can this be deprecated? its very old
                 snd_type, data, visemes, ident = self._now_playing
+
+            self.activate_tts(tts_id)
             self.on_start()
             self.p = play_audio(data)
             if visemes:
@@ -111,6 +211,7 @@ class PlaybackThread(Thread):
             if self.p:
                 self.p.communicate()
                 self.p.wait()
+            self.deactivate_tts()
             if self.queue.empty():
                 self.on_end(listen)
         except Empty:
@@ -200,6 +301,8 @@ class TTS:
         phonetic_spelling (bool): Whether to spell certain words phonetically
         ssml_tags (list): Supported ssml properties. Ex. ['speak', 'prosody']
     """
+    queue = None
+    playback = None
 
     def __init__(self, lang="en-us", config=None, validator=None,
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
@@ -228,10 +331,13 @@ class TTS:
         # TODO can self.filename be deprecated ? is it used anywhere at all?
         cache_dir = get_cache_directory(self.tts_name)
         self.filename = join(cache_dir, 'tts.' + self.audio_ext)
-        self.enclosure = None
+
         random.seed()
-        self.queue = Queue()
-        self.playback = PlaybackThread(self.queue)
+
+        if TTS.queue is None:
+            TTS.queue = Queue()
+            TTS.playback = PlaybackThread(TTS.queue)
+
         # NOTE: self.playback.start() was moved to init method
         #   playback queue is not wanted if we only care about get_tts
         #   init is called by mycroft, but non mycroft usage wont call it,
@@ -304,32 +410,14 @@ class TTS:
 
     def begin_audio(self):
         """Helper function for child classes to call in execute()"""
-        # This check will clear the "signal", in case it is still there for some reasons
-        check_for_signal("isSpeaking")
-        # this will create it again
-        create_signal("isSpeaking")
-        # Create signals informing start of speech
-        self.bus.emit(Message("recognizer_loop:audio_output_start"))
         self.add_metric({"metric_type": "tts.start"})
 
     def end_audio(self, listen=False):
-        """Helper function for child classes to call in execute().
-
-        Sends the recognizer_loop:audio_output_end message (indicating
-        that speaking is done for the moment) as well as trigger listening
-        if it has been requested. It also checks if cache directory needs
-        cleaning to free up disk space.
+        """Helper cleanup function for child classes to call in execute().
 
         Arguments:
-            listen (bool): indication if listening trigger should be sent.
+            listen (bool): DEPRECATED: indication if listening trigger should be sent.
         """
-
-        self.bus.emit(Message("recognizer_loop:audio_output_end"))
-        if listen:
-            self.bus.emit(Message('mycroft.mic.listen'))
-
-        # This check will clear the "signal"
-        check_for_signal("isSpeaking")
         self.add_metric({"metric_type": "tts.end"})
         self.stopwatch.stop()
         self.cache.curate()
@@ -340,12 +428,26 @@ class TTS:
         Arguments:
             bus:    Mycroft messagebus connection
         """
-        self.bus = bus or BUS
-        self.playback.start()
-        self.playback.init(self)
-        self.enclosure = EnclosureAPI(self.bus)
-        self.playback.enclosure = self.enclosure
+        self.bus = bus or BUS()
+
+        TTS.playback.set_bus(self.bus)
+        TTS.playback.attach_tts(self)
+        if not TTS.playback.enclosure:
+            TTS.playback.enclosure = EnclosureAPI(self.bus)
+        TTS.playback.start()
+
         self.add_metric({"metric_type": "tts.setup"})
+
+    @property
+    def enclosure(self):
+        if not TTS.playback.enclosure:
+            bus = TTS.playback.bus or self.bus
+            TTS.playback.enclosure = EnclosureAPI(bus)
+        return TTS.playback.enclosure
+
+    @enclosure.setter
+    def enclosure(self, val):
+        TTS.playback.enclosure = val
 
     def get_tts(self, sentence, wav_file, lang=None):
         """Abstract method that a tts implementation needs to implement.
@@ -398,7 +500,7 @@ class TTS:
             return self.remove_ssml(utterance)
 
         # find ssml tags in string
-        tags = re.findall('<[^>]*>', utterance)
+        tags = SSML_TAGS.findall(utterance)
 
         for tag in tags:
             if any(supported in tag for supported in self.ssml_tags):
@@ -439,13 +541,7 @@ class TTS:
         sentence = self.validate_ssml(sentence)
         self.add_metric({"metric_type": "tts.ssml.validated"})
         create_signal("isSpeaking")
-        try:
-            self._execute(sentence, ident, listen, **kwargs)
-        except Exception:
-            # If an error occurs end the audio sequence through an empty entry
-            self.queue.put(EMPTY_PLAYBACK_QUEUE_TUPLE)
-            # Re-raise to allow the Exception to be handled externally as well.
-            raise
+        self._execute(sentence, ident, listen, **kwargs)
 
     def _replace_phonetic_spellings(self, sentence):
         if self.phonetic_spelling:
@@ -482,7 +578,7 @@ class TTS:
 
             audio_ext = self._determine_ext(audio_file)
             self.queue.put(
-                (audio_ext, str(audio_file), viseme, ident, l)
+                (audio_ext, str(audio_file), viseme, ident, l, self.tts_id)
             )
             self.add_metric({"metric_type": "tts.queued"})
 
@@ -639,8 +735,7 @@ class TTS:
 
     def stop(self):
         try:
-            self.playback.stop()
-            self.playback.join()
+            TTS.playback.stop()
         except Exception as e:
             pass
         self.add_metric({"metric_type": "tts.stop"})
