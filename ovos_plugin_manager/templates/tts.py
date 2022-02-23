@@ -420,7 +420,6 @@ class TTS:
         """
         self.add_metric({"metric_type": "tts.end"})
         self.stopwatch.stop()
-        self.cache.curate()
 
     def init(self, bus=None):
         """ Performs intial setup of TTS object.
