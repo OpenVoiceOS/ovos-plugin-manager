@@ -287,6 +287,14 @@ class PlaybackThread(Thread):
         self._terminated = True
         self.clear_queue()
 
+    def shutdown(self):
+        self.stop()
+        for tts in self.attached_tts:
+            self.detach_tts(tts)
+
+    def __del__(self):
+        self.shutdown()
+
 
 class TTS:
     """TTS abstract class to be implemented by all TTS engines.
@@ -576,7 +584,7 @@ class TTS:
                 viseme = self.g2p.utterance2visemes(sentence, lang)
 
             audio_ext = self._determine_ext(audio_file)
-            self.queue.put(
+            TTS.queue.put(
                 (audio_ext, str(audio_file), viseme, ident, l, self.tts_id)
             )
             self.add_metric({"metric_type": "tts.queued"})
@@ -739,8 +747,12 @@ class TTS:
             pass
         self.add_metric({"metric_type": "tts.stop"})
 
-    def __del__(self):
+    def shutdown(self):
         self.stop()
+        TTS.playback.detach_tts(self)
+
+    def __del__(self):
+        self.shutdown()
 
 
 class TTSValidator:
