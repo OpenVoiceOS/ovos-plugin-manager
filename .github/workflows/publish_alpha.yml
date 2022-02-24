@@ -8,11 +8,12 @@ on:
     paths-ignore:
       - 'ovos_plugin_manager/version.py'
       - 'setup.py'
-      - 'test'
-      - 'examples'
-      - '.github'
+      - 'test/**'
+      - 'examples/**'
+      - '.github/**'
       - 'LICENSE'
       - 'readme.md'
+      - 'scripts/**'
   workflow_dispatch:
 
 jobs:

@@ -29,6 +29,26 @@ def get_version():
     return version
 
 
+def package_files(directory):
+    paths = []
+    for (path, directories, filenames) in os.walk(directory):
+        for filename in filenames:
+            paths.append(os.path.join('..', path, filename))
+    return paths
+
+
+def required(requirements_file):
+    """ Read requirements file and remove comments and empty lines. """
+    with open(os.path.join(BASEDIR, requirements_file), 'r') as f:
+        requirements = f.read().splitlines()
+        if 'MYCROFT_LOOSE_REQUIREMENTS' in os.environ:
+            print('USING LOOSE REQUIREMENTS!')
+            requirements = [r.replace('==', '>=').replace('~=', '>=') for r in requirements]
+        return [pkg for pkg in requirements
+                if pkg.strip() and not pkg.startswith("#")]
+
+
+
 setup(
     name='ovos-plugin-manager',
     version=get_version(),
@@ -38,10 +58,8 @@ setup(
     url='https://github.com/OpenVoiceOS/OVOS-plugin-manager',
     license='Apache-2.0',
     author='jarbasAi',
-    install_requires=["ovos_utils>=0.0.15",
-                      "requests~=2.26",
-                      "combo_lock~=0.2.1",
-                      "memory-tempfile"],
+    install_requires=required("requirements/requirements.txt"),
+    package_data={'': package_files('ovos-plugin-manager')},
     author_email='jarbasai@mailfence.com',
     description='OpenVoiceOS plugin manager'
 )
