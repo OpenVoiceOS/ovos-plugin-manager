@@ -9,6 +9,10 @@ on:
       - 'ovos_plugin_manager/version.py'
       - 'setup.py'
       - 'test'
+      - 'examples'
+      - '.github'
+      - 'LICENSE'
+      - 'readme.md'
   workflow_dispatch:
 
 jobs:
