@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.8a2...HEAD)
+
+**Fixed bugs:**
+
+- fix detach tts [\#33](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/33) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.8a2](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.8a2) (2022-02-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.8a1...V0.0.8a2)
+
 ## [V0.0.8a1](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.8a1) (2022-02-24)
 
 [Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.8...V0.0.8a1)
@@ -27,6 +39,7 @@
 **Implemented enhancements:**
 
 - Feat/g2p plugins [\#21](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/21) ([NeonJarbas](https://github.com/NeonJarbas))
+- fix/text transformer func names [\#20](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/20) ([NeonJarbas](https://github.com/NeonJarbas))
 - feat/solver\_plugins [\#19](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/19) ([NeonJarbas](https://github.com/NeonJarbas))
 - feat/translate\_dict/list [\#16](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/16) ([NeonJarbas](https://github.com/NeonJarbas))
 - Sync/tts cache [\#15](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/15) ([JarbasAl](https://github.com/JarbasAl))
@@ -48,7 +61,6 @@
 
 - Fix/remove pyxdg [\#30](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/30) ([NeonJarbas](https://github.com/NeonJarbas))
 - refactor/bump\_requests [\#28](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/28) ([NeonJarbas](https://github.com/NeonJarbas))
-- fix/text transformer func names [\#20](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/20) ([NeonJarbas](https://github.com/NeonJarbas))
 
 ## [0.0.2](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/0.0.2) (2021-11-05)
 
