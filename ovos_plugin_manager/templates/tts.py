@@ -115,7 +115,8 @@ class PlaybackThread(Thread):
 
     def detach_tts(self, tts):
         """Remove TTS from cache check."""
-        self.attached_tts.remove(tts)
+        if tts in self.attached_tts:
+            self.attached_tts.remove(tts)
 
     def get_attached_tts(self, tts_id=None):
         tts_id = tts_id or self.active_tts
