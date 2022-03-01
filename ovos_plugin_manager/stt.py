@@ -70,9 +70,12 @@ class OVOSSTTFactory:
             "module": <engine_name>
         }
         """
+        config = config or get_stt_config()
+        plugin = config["module"]
+        plugin_config = config[plugin]
         try:
             clazz = OVOSSTTFactory.get_class(config)
-            return clazz()
+            return clazz(plugin_config)
         except Exception:
             LOG.exception('The selected STT plugin could not be loaded!')
             raise
