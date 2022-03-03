@@ -493,7 +493,7 @@ class TTS:
         return re.sub('<[^>]*>', '', text).replace('  ', ' ')
 
     @staticmethod
-    def _format_speak_tags(sentence: str, include_tags: bool = True) -> str:
+    def format_speak_tags(sentence: str, include_tags: bool = True) -> str:
         """
         Cleans up SSML tags for speech synthesis and ensures the phrase is
         wrapped in 'speak' tags and any excluded text is
@@ -545,9 +545,9 @@ class TTS:
 
         # Validate speak tags
         if not self.ssml_tags or "speak" not in self.ssml_tags:
-            self._format_speak_tags(utterance, False)
+            self.format_speak_tags(utterance, False)
         elif self.ssml_tags and "speak" in self.ssml_tags:
-            self._format_speak_tags(utterance)
+            self.format_speak_tags(utterance)
 
 
         # if ssml is not supported by TTS engine remove all tags
