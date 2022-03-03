@@ -87,7 +87,7 @@ class OVOSLangTranslationFactory:
             config = config or read_mycroft_config()
             if "language" in config:
                 config = config["language"]
-            lang_module = config.get("detection_module", "libretranslate_detection_plug")
+            lang_module = config.get("translation_module", "libretranslate_detection_plug")
             if lang_module in OVOSLangDetectionFactory.MAPPINGS:
                 lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
 
