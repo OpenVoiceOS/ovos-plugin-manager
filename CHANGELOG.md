@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.11a2...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.11a3...HEAD)
+
+**Implemented enhancements:**
+
+- Implement `format_speak_tags` from neon\_utils [\#36](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/36) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.11a3](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.11a3) (2022-03-03)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.11a2...V0.0.11a3)
 
 **Fixed bugs:**
 
