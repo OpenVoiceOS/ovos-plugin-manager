@@ -54,9 +54,8 @@ class OVOSG2PFactory:
         g2p_module = g2p_config.get('module', 'dummy')
         try:
             clazz = OVOSG2PFactory.get_class(g2p_config)
-            LOG.info(f'Found plugin {g2p_module}')
             g2p = clazz(g2p_config)
-            LOG.info(f'Loaded plugin {g2p_module}')
+            LOG.debug(f'Loaded plugin {g2p_module}')
         except Exception:
             LOG.exception('The selected G2P plugin could not be loaded.')
             raise
