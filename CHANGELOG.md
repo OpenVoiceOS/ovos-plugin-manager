@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.11a1...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.11a2...HEAD)
+
+**Fixed bugs:**
+
+- Fix/tx module reading [\#38](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/38) ([NeonJarbas](https://github.com/NeonJarbas))
+
+## [V0.0.11a2](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.11a2) (2022-03-03)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.11a1...V0.0.11a2)
 
 **Merged pull requests:**
 
