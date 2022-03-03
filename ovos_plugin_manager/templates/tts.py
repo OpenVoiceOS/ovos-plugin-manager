@@ -492,6 +492,45 @@ class TTS:
         """
         return re.sub('<[^>]*>', '', text).replace('  ', ' ')
 
+    @staticmethod
+    def format_speak_tags(sentence: str, include_tags: bool = True) -> str:
+        """
+        Cleans up SSML tags for speech synthesis and ensures the phrase is
+        wrapped in 'speak' tags and any excluded text is
+        removed.
+        Args:
+            sentence: Input sentence to be spoken
+            include_tags: Flag to include <speak> tags in returned string
+        Returns:
+            Cleaned sentence to pass to TTS
+        """
+        # Wrap sentence in speak tag if no tags present
+        if "<speak>" not in sentence and "</speak>" not in sentence:
+            to_speak = f"<speak>{sentence}</speak>"
+        # Assume speak starts at the beginning of the sentence
+        elif "<speak>" not in sentence:
+            to_speak = f"<speak>{sentence}"
+        # Assume speak ends at the end of the sentence
+        elif "</speak>" not in sentence:
+            to_speak = f"{sentence}</speak>"
+        else:
+            to_speak = sentence
+
+        # Trim text outside of speak tags
+        if not to_speak.startswith("<speak>"):
+            to_speak = f"<speak>{to_speak.split('<speak>', 1)[1]}"
+
+        if not to_speak.endswith("</speak>"):
+            to_speak = f"{to_speak.split('</speak>', 1)[0]}</speak>"
+
+        if to_speak == "<speak></speak>":
+            return ""
+
+        if include_tags:
+            return to_speak
+        else:
+            return to_speak.lstrip("<speak>").rstrip("</speak>")
+
     def validate_ssml(self, utterance):
         """Check if engine supports ssml, if not remove all tags.
 
@@ -503,6 +542,14 @@ class TTS:
         Returns:
             str: validated_sentence
         """
+
+        # Validate speak tags
+        if not self.ssml_tags or "speak" not in self.ssml_tags:
+            self.format_speak_tags(utterance, False)
+        elif self.ssml_tags and "speak" in self.ssml_tags:
+            self.format_speak_tags(utterance)
+
+
         # if ssml is not supported by TTS engine remove all tags
         if not self.ssml_tags:
             return self.remove_ssml(utterance)
