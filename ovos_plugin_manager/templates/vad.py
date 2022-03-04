@@ -16,7 +16,7 @@ class VADEngine:
         else:
             self.config = config
 
-    def is_silence(self, chunk):
+    def is_silence(self, chunk, vad_threshold):
         # return True or False
         return False
 
