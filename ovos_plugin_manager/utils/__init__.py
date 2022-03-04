@@ -19,6 +19,7 @@ from ovos_utils.log import LOG
 class PluginTypes(str, Enum):
     PHAL = "ovos.plugin.phal"
     SKILL = "ovos.plugin.skill"
+    VAD = "ovos.plugin.VAD"
     PHONEME = "ovos.plugin.g2p"
     AUDIO = 'mycroft.plugin.audioservice'
     STT = 'mycroft.plugin.stt'
