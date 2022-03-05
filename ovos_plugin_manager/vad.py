@@ -1,7 +1,7 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
 from ovos_utils.configuration import read_mycroft_config
 from ovos_utils.log import LOG
-from ovos_plugin_manager.templates.vad import VAD
+from ovos_plugin_manager.templates.vad import VADEngine
 
 
 def find_vad_plugins():
@@ -38,9 +38,9 @@ class OVOSVADFactory:
         }
         """
         config = config or get_vad_config()
-        vad_module = config["module"]
+        vad_module = config.get("module", "dummy")
         if vad_module == "dummy":
-            return VAD
+            return VADEngine
         if vad_module in OVOSVADFactory.MAPPINGS:
             vad_module = OVOSVADFactory.MAPPINGS[vad_module]
         return load_vad_plugin(vad_module)
@@ -57,22 +57,22 @@ class OVOSVADFactory:
         }
         """
         config = config or get_vad_config()
-        plugin = config["module"]
-        plugin_config = config[plugin]
+        plugin = config.get("module") or "dummy"
+        plugin_config = config.get(plugin) or {}
         try:
             clazz = OVOSVADFactory.get_class(config)
             return clazz(plugin_config)
         except Exception:
-            LOG.exception('The selected VAD plugin could not be loaded!')
+            LOG.error(f'VAD plugin {plugin} could not be loaded!')
             raise
 
 
 def get_vad_config(config=None):
     config = config or read_mycroft_config()
-    lang = config.get("lang", "en-us")
-    if "vad" in config:
-        config = config["vad"]
-    vad_module = config.get('module', 'dummy')
+    if "listener" in config and "VAD" not in config:
+        config = config["listener"] or {}
+    if "VAD" in config:
+        config = config["VAD"]
+    vad_module = config.get('module') or 'dummy'
     vad_config = config.get(vad_module, {})
-    vad_config["lang"] = vad_config.get('lang') or lang
     return vad_config
