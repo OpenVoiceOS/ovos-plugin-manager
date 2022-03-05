@@ -57,13 +57,13 @@ class OVOSVADFactory:
         }
         """
         config = config or get_vad_config()
-        plugin = config.get("module", "dummy")
+        plugin = config.get("module") or "dummy"
         plugin_config = config.get(plugin) or {}
         try:
             clazz = OVOSVADFactory.get_class(config)
             return clazz(plugin_config)
         except Exception:
-            LOG.exception(f'VAD plugin {plugin} could not be loaded!')
+            LOG.error(f'VAD plugin {plugin} could not be loaded!')
             raise
 
 
@@ -73,6 +73,6 @@ def get_vad_config(config=None):
         config = config["listener"] or {}
     if "VAD" in config:
         config = config["VAD"]
-    vad_module = config.get('module', 'dummy')
+    vad_module = config.get('module') or 'dummy'
     vad_config = config.get(vad_module, {})
     return vad_config
