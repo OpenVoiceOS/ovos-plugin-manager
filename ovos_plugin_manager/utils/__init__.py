@@ -17,7 +17,10 @@ from ovos_utils.log import LOG
 
 
 class PluginTypes(str, Enum):
+    PHAL = "ovos.plugin.phal"
     SKILL = "ovos.plugin.skill"
+    VAD = "ovos.plugin.VAD"
+    PHONEME = "ovos.plugin.g2p"
     AUDIO = 'mycroft.plugin.audioservice'
     STT = 'mycroft.plugin.stt'
     TTS = 'mycroft.plugin.tts'
@@ -26,6 +29,7 @@ class PluginTypes(str, Enum):
     LANG_DETECT = "neon.plugin.lang.detect"
     UTTERANCE_TRANSFORMER = "neon.plugin.text"
     AUDIO_TRANSFORMER = "neon.plugin.audio"
+    QUESTION_SOLVER = "neon.plugin.solver"
 
 
 def find_plugins(plug_type=None):
@@ -46,7 +50,10 @@ def find_plugins(plug_type=None):
         plugs = plug_type
     for plug in plugs:
         for entry_point in pkg_resources.iter_entry_points(plug):
-            entrypoints[entry_point.name] = entry_point.load()
+            try:
+                entrypoints[entry_point.name] = entry_point.load()
+            except Exception as e:
+                LOG.exception(f"Failed to load plugin entry point {entry_point}")
     return entrypoints
 
 

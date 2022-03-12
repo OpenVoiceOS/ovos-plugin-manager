@@ -6,7 +6,6 @@ The main use case is for plugins to be used across different projects
 """
 import json
 from abc import ABCMeta, abstractmethod
-from speech_recognition import Recognizer
 from queue import Queue
 from threading import Thread, Event
 from ovos_utils.configuration import read_mycroft_config
@@ -16,24 +15,60 @@ class STT(metaclass=ABCMeta):
     """ STT Base class, all  STT backends derives from this one. """
 
     def __init__(self, config=None):
-        config_core = {}
-        if not config:
+        # only imported here to not drag dependency
+        from speech_recognition import Recognizer
+        try:
+            self.config_core = read_mycroft_config() or {}
+        except FileNotFoundError:
+            self.config_core = {}
+        self._lang = None
+        self._credential = None
+        self._keys = None
+
+        self._init_config(config)
+
+        self.can_stream = False
+        self.recognizer = Recognizer()
+
+    @property
+    def lang(self):
+        return self._lang or \
+               self.config.get("lang") or \
+               self.init_language(self.config_core)
+
+    @lang.setter
+    def lang(self, val):
+        # backwards compat
+        self._lang = val
+
+    @property
+    def keys(self):
+        return self._keys or self.config_core.get("keys", {})
+
+    @keys.setter
+    def keys(self, val):
+        # backwards compat
+        self._keys = val
+
+    @property
+    def credential(self):
+        return self._credential or self.config.get("credential", {})
+
+    @credential.setter
+    def credential(self, val):
+        # backwards compat
+        self._credential = val
+
+    def _init_config(self, config=None):
+        if config is None:
             try:
                 config_core = read_mycroft_config() or {}
             except FileNotFoundError:
                 config_core = {}
             config_stt = config_core.get("stt", {})
+            self.config = config_stt.get(config_stt.get("module"), {})
         else:
-            config_stt = config
-
-        self.lang = config_stt.get("lang")
-        if not self.lang:
-            self.lang = str(self.init_language(config_core))
-        self.config = config_stt.get(config_stt.get("module"), {})
-        self.credential = self.config.get("credential", {})
-        self.recognizer = Recognizer()
-        self.can_stream = False
-        self.keys = config_core.get("keys", {})
+            self.config = config
 
     @staticmethod
     def init_language(config_core):
