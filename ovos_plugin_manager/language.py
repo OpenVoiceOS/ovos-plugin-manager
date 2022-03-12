@@ -52,6 +52,11 @@ class OVOSLangDetectionFactory:
                 lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
 
             clazz = load_lang_detect_plugin(lang_module)
+            if clazz is None and lang_module != "libretranslate_detection_plug":
+                lang_module = "libretranslate_detection_plug"
+                LOG.error(f'Language Translation plugin {lang_module} not found\n'
+                          f'Falling back to libretranslate plugin')
+                clazz = load_tx_plugin("libretranslate_detection_plug")
             if clazz is None:
                 raise ValueError(f'Language Detection plugin {lang_module} not found')
             LOG.info(f'Loaded the Language Detection plugin {lang_module}')
@@ -87,11 +92,15 @@ class OVOSLangTranslationFactory:
             config = config or read_mycroft_config()
             if "language" in config:
                 config = config["language"]
-            lang_module = config.get("translation_module", "libretranslate_detection_plug")
+            lang_module = config.get("translation_module", "libretranslate_plug")
             if lang_module in OVOSLangDetectionFactory.MAPPINGS:
                 lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
-
             clazz = load_tx_plugin(lang_module)
+            if clazz is None and lang_module != "libretranslate_plug":
+                lang_module = "libretranslate_plug"
+                LOG.error(f'Language Translation plugin {lang_module} not found\n'
+                          f'Falling back to libretranslate plugin')
+                clazz = load_tx_plugin("libretranslate_plug")
             if clazz is None:
                 raise ValueError(f'Language Translation plugin {lang_module} not found')
             LOG.info(f'Loaded the Language Translation plugin {lang_module}')
