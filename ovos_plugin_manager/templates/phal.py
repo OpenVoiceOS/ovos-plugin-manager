@@ -1,6 +1,7 @@
 import time
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
+from ovos_utils.configuration import read_mycroft_config
 
 
 class PHALValidator:
@@ -21,7 +22,12 @@ class PHALPlugin:
     """
     validator = PHALValidator
 
-    def __init__(self, bus=None, name=""):
+    def __init__(self, bus=None, name="", config=None):
+        try:
+            self.config_core = read_mycroft_config() or {}
+        except FileNotFoundError:
+            self.config_core = {}
+        self.config = config or self.config_core.get("PHAL", {}).get(name) or {}
         self._mouth_events = False
         self._running = False
         self.bus = bus or get_mycroft_bus()
