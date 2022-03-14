@@ -3,6 +3,15 @@ from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
 
 
+class PHALValidator:
+    @staticmethod
+    def validate(config=None):
+        """ this method is called before loading the plugin.
+        If it returns False the plugin is not loaded.
+        This allows a plugin to run platform checks"""
+        return config.get("enabled", True)
+
+
 class PHALPlugin:
     """
     This base class is intended to be used to interface with the hardware
@@ -10,6 +19,7 @@ class PHALPlugin:
     are expected be sent to a PHAL plugin.
     All of the handlers are optional and for convenience only
     """
+    validator = PHALValidator
 
     def __init__(self, bus=None, name=""):
         self._mouth_events = False
