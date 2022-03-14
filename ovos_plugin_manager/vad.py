@@ -75,4 +75,5 @@ def get_vad_config(config=None):
         config = config["VAD"]
     vad_module = config.get('module') or 'dummy'
     vad_config = config.get(vad_module, {})
+    vad_config["module"] = vad_module
     return vad_config

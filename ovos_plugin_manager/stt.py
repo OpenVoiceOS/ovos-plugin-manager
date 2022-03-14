@@ -86,7 +86,8 @@ def get_stt_config(config=None):
     lang = config.get("lang", "en-us")
     if "stt" in config:
         config = config["stt"]
-    stt_module = config.get('module', 'google')
+    stt_module = config.get('module', 'dummy')
     stt_config = config.get(stt_module, {})
     stt_config["lang"] = stt_config.get('lang') or lang
+    stt_config["module"] = stt_module
     return stt_config
