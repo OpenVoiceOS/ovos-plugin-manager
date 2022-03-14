@@ -47,15 +47,14 @@ class OVOSWakeWordFactory:
 
     @staticmethod
     def load_module(module, hotword, config, lang, loop):
-        LOG.info('Loading "{}" wake word via {}'.format(hotword, module))
+        LOG.info(f'Loading "{hotword}" wake word via {module}')
         if module in OVOSWakeWordFactory.MAPPINGS:
             module = OVOSWakeWordFactory.MAPPINGS[module]
 
         clazz = load_wake_word_plugin(module)
         if clazz is None:
             raise ValueError(f'Wake Word plugin {module} not found')
-        LOG.info(
-            'Loaded the Wake Word plugin {}'.format(module))
+        LOG.info(f'Loaded the Wake Word plugin {module}')
 
         return clazz(hotword, config, lang=lang)
 

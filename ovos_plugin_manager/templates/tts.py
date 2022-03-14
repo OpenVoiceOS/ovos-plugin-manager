@@ -789,15 +789,17 @@ class TTS:
         return phoneme_file.load()
 
     def stop(self):
-        try:
-            TTS.playback.stop()
-        except Exception as e:
-            pass
+        if TTS.playback:
+            try:
+                TTS.playback.stop()
+            except Exception as e:
+                pass
         self.add_metric({"metric_type": "tts.stop"})
 
     def shutdown(self):
         self.stop()
-        TTS.playback.detach_tts(self)
+        if TTS.playback:
+            TTS.playback.detach_tts(self)
 
     def __del__(self):
         self.shutdown()
