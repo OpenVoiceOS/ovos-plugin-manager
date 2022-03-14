@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.14a1...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.14a2...HEAD)
+
+**Fixed bugs:**
+
+- Fix/phal config [\#44](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/44) ([NeonJarbas](https://github.com/NeonJarbas))
+
+## [V0.0.14a2](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.14a2) (2022-03-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.14a1...V0.0.14a2)
 
 **Fixed bugs:**
 
