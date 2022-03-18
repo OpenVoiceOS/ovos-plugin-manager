@@ -25,6 +25,7 @@ import inspect
 import random
 import re
 import subprocess
+import threading
 from os.path import isfile, join, splitext
 from pathlib import Path
 from queue import Queue, Empty
@@ -67,6 +68,11 @@ class PlaybackThread(Thread):
         self.bus = None
         self._now_playing = None
         self.active_tts = None
+        self._started = threading.Event()
+
+    @property
+    def is_running(self):
+        return self._started.is_set() and not self._terminated
 
     def activate_tts(self, tts_id):
         self.active_tts = tts_id
@@ -240,6 +246,7 @@ class PlaybackThread(Thread):
         listening.
         """
         self._paused = False
+        self._started.set()
         while not self._terminated:
             while self._paused:
                 sleep(0.2)
@@ -442,7 +449,8 @@ class TTS:
         TTS.playback.attach_tts(self)
         if not TTS.playback.enclosure:
             TTS.playback.enclosure = EnclosureAPI(self.bus)
-        TTS.playback.start()
+        if not TTS.playback.is_running:
+            TTS.playback.start()
 
         self.add_metric({"metric_type": "tts.setup"})
 
