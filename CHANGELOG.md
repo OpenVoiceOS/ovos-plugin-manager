@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.14a2...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.14a3...HEAD)
+
+**Fixed bugs:**
+
+- Fix/multiple playback thread start [\#45](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/45) ([NeonJarbas](https://github.com/NeonJarbas))
+
+## [V0.0.14a3](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.14a3) (2022-03-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.14a2...V0.0.14a3)
 
 **Fixed bugs:**
 
