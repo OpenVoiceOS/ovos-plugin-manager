@@ -8,7 +8,9 @@ class Segmenter:
     # NOTE str.split operation, not token by token comparison
     # this means you need spaces on both sides of the marker
     SEGMENTATION_MARKERS_EN = [" and ", " then "]
-    SEGMENTATION_MARKERS_PT = [" e ", " depois ", " a seguir ", " de seguida "]
+    SEGMENTATION_MARKERS_PT = [" e depois ", " e a seguir ", " e de seguida ",
+                               " depois ", " a seguir ", " de seguida ",
+                               " e "]
 
     def __init__(self, config=None):
         self.config = config or {}
@@ -36,13 +38,26 @@ class Segmenter:
         return sents
 
     @staticmethod
-    def extract_candidates(text, lang="en"):
+    def extract_candidates(text, lang="en", split_at_commas=False, split_at_punc=False):
         sents = sentence_tokenize(text)
+
+        markers = []
+        if split_at_commas:
+            markers += [", ", "; "]
+        if split_at_punc:
+            markers += [". ", "! ", "? "]
         if lang.startswith("en"):
-            return Segmenter._extract(sents, Segmenter.SEGMENTATION_MARKERS_EN)
+            markers += Segmenter.SEGMENTATION_MARKERS_EN
         elif lang.startswith("pt"):
-            return Segmenter._extract(sents, Segmenter.SEGMENTATION_MARKERS_PT)
+            markers += Segmenter.SEGMENTATION_MARKERS_PT
+
+        if markers:
+            return Segmenter._extract(sents, markers)
         return sents
 
     def segment(self, text):
-        return [s.strip() for s in self.extract_candidates(text, lang=self.lang) if s]
+        split_at_commas = self.config.get("split_commas", False)
+        split_at_punc = self.config.get("split_punc", False)
+        return [s.strip() for s in self.extract_candidates(
+            text, lang=self.lang, split_at_commas=split_at_commas,
+            split_at_punc=split_at_punc) if s]

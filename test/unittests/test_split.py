@@ -28,11 +28,50 @@ class TestQuebraFrasesSegmenter(unittest.TestCase):
             ]
         )
 
-        # test marker joined sentences
+        # test lang marker joined sentences
         self.assertEqual(solver.segment("Turn on the lights and play some music"),
                          ["Turn on the lights", "play some music"])
         self.assertEqual(solver.segment("Make the lights red then play communist music"),
                          ['Make the lights red', 'play communist music'])
+        self.assertEqual(
+            solver.segment("tell me a joke and say hello"),
+            ['tell me a joke', 'say hello'])
+        self.assertEqual(
+            solver.segment("tell me a joke and the weather"),
+            ['tell me a joke', 'the weather'])
+
+    def test_punc_settings(self):
+        # test split at commas
+        solver = Segmenter()
+        solver2 = Segmenter(config={"split_commas": True, "split_punc": False})
+        solver3 = Segmenter(config={"split_commas": False, "split_punc": True})
+        solver4 = Segmenter(config={"split_commas": True, "split_punc": True})
+
+        self.assertNotEqual(
+            solver.segment("turn off the lights, open the door"),
+            ['turn off the lights', 'open the door'])
+        self.assertEqual(
+            solver2.segment("turn off the lights, open the door"),
+            ['turn off the lights', 'open the door'])
+        self.assertNotEqual(
+            solver3.segment("turn off the lights, open the door"),
+            ['turn off the lights', 'open the door'])
+        self.assertEqual(
+            solver4.segment("turn off the lights, open the door"),
+            ['turn off the lights', 'open the door'])
+
+        self.assertNotEqual(
+            solver.segment("nice work! get me a beer"),
+            ['nice work', 'get me a beer'])
+        self.assertNotEqual(
+            solver2.segment("nice work! get me a beer"),
+            ['nice work', 'get me a beer'])
+        self.assertEqual(
+            solver3.segment("nice work! get me a beer"),
+            ['nice work', 'get me a beer'])
+        self.assertEqual(
+            solver4.segment("nice work! get me a beer"),
+            ['nice work', 'get me a beer'])
 
     @unittest.skip("know segmentation failures, new plugins should handle these")
     def test_known_failures(self):
@@ -43,3 +82,31 @@ class TestQuebraFrasesSegmenter(unittest.TestCase):
         self.assertEqual(solver.segment(
             "I am Batman I live in gotham"),
             ["I am Batman", "I live in gotham"])
+
+    def test_segment_pt(self):
+        # dig_for_message is used internally and takes priority over config lang
+        solver = Segmenter({"lang": "pt-pt"})
+
+        # test quebra frases segmentation in punctuation
+        test_sent = "O Sr. Smith comprou o dominio sitebarato.pt por 1,5 milhões de dólares. " \
+                    "Ele importou-se? " \
+                    "Adam Jones Jr. acha que não. " \
+                    "De qualquer forma, isto não é verdade... " \
+                    "Bem, com uma probabilidade de .9 não é."
+
+        self.assertEqual(
+            solver.segment(test_sent),
+            ['O Sr. Smith comprou o dominio sitebarato.pt por 1,5 milhões de dólares.',
+             'Ele importou-se?',
+             'Adam Jones Jr. acha que não.',
+             'De qualquer forma, isto não é verdade...',
+             'Bem, com uma probabilidade de .9 não é.']
+        )
+
+        # test lang marker joined sentences
+        self.assertEqual(solver.segment("Liga a luz e bota ai um som"),
+                         ['Liga a luz', 'bota ai um som'])
+        self.assertEqual(solver.segment("Põe a luz vermelha e toca musica comunista"),
+                         ['Põe a luz vermelha', 'toca musica comunista'])
+        self.assertEqual(solver.segment("conta uma piada e depois desliga-te"),
+                         ['conta uma piada', 'desliga-te'])
