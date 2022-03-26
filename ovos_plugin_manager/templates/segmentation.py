@@ -22,27 +22,15 @@ class Segmenter:
         return lang or "en-us"
 
     @staticmethod
-    def _extract(text, markers, no_replaces=None):
-        # TODO refactor this ugly beast
-        no_replaces = no_replaces or []
+    def _extract(text, markers):
         if isinstance(text, str):
             sents = [text]
         else:
             sents = text
         for m in markers:
             for idx, sent in enumerate(sents):
-                subs = {}
                 if isinstance(sent, str):
-                    for no in no_replaces:
-                        if m in no:
-                            _ = str(idx) + no.replace(m, "")
-                            subs[_] = no
-                            sents[idx] = sents[idx].replace(no, _)
-                    splits = sents[idx].split(m)
-                    for k in subs:
-                        splits = [_.replace(k, subs[k]) for _ in splits]
-                    sents[idx] = splits
-
+                    sents[idx] = sents[idx].split(m)
             # flatten list
             sents = flatten_list(sents)
         return sents
@@ -51,8 +39,7 @@ class Segmenter:
     def extract_candidates(text, lang="en"):
         sents = sentence_tokenize(text)
         if lang.startswith("en"):
-            return Segmenter._extract(sents, Segmenter.SEGMENTATION_MARKERS_EN,
-                                      ["p.m", "p.m.", "a.m", "a.m."])
+            return Segmenter._extract(sents, Segmenter.SEGMENTATION_MARKERS_EN)
         elif lang.startswith("pt"):
             return Segmenter._extract(sents, Segmenter.SEGMENTATION_MARKERS_PT)
         return sents
