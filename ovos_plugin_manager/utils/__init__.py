@@ -30,6 +30,7 @@ class PluginTypes(str, Enum):
     UTTERANCE_TRANSFORMER = "neon.plugin.text"
     AUDIO_TRANSFORMER = "neon.plugin.audio"
     QUESTION_SOLVER = "neon.plugin.solver"
+    UTTERANCE_SEGMENTATION = "intentbox.segmentation"
 
 
 def find_plugins(plug_type=None):
