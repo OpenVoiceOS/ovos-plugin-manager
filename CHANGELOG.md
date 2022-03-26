@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.14...HEAD)
+
+**Implemented enhancements:**
+
+- Feat/improve segmentation [\#49](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/49) ([NeonJarbas](https://github.com/NeonJarbas))
+
+## [V0.0.14](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.14) (2022-03-26)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.14a5...V0.0.14)
+
 ## [V0.0.14a5](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.14a5) (2022-03-26)
 
 [Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.14a4...V0.0.14a5)
@@ -36,7 +48,7 @@
 
 [Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.13...V0.0.14a1)
 
-**Merged pull requests:**
+**Implemented enhancements:**
 
 - feat/PHAL\_validator [\#42](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/42) ([NeonJarbas](https://github.com/NeonJarbas))
 
@@ -72,7 +84,7 @@
 
 [Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.11a4...V0.0.11a5)
 
-**Merged pull requests:**
+**Implemented enhancements:**
 
 - feat/VAD\_plugins [\#39](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/39) ([NeonJarbas](https://github.com/NeonJarbas))
 
@@ -116,7 +128,7 @@
 
 [Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.9...V0.0.10a1)
 
-**Merged pull requests:**
+**Fixed bugs:**
 
 - fix/requirements [\#34](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/34) ([NeonJarbas](https://github.com/NeonJarbas))
 
@@ -148,13 +160,13 @@
 
 [Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/0.0.4...V0.0.7a1)
 
+**Implemented enhancements:**
+
+- feat/pypi\_workflow [\#31](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/31) ([NeonJarbas](https://github.com/NeonJarbas))
+
 **Fixed bugs:**
 
 - Backport/playback queue singleton [\#32](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/32) ([NeonJarbas](https://github.com/NeonJarbas))
-
-**Merged pull requests:**
-
-- feat/pypi\_workflow [\#31](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/31) ([NeonJarbas](https://github.com/NeonJarbas))
 
 ## [0.0.4](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/0.0.4) (2022-02-17)
 
