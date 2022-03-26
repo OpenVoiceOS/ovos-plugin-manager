@@ -1,3 +1,4 @@
-ovos_utils~=0.0.18
+ovos_utils>=0.0.20a3
 combo_lock~=0.2
 requests~=2.26
+quebra_frases
