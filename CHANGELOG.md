@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.14a3...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.14a4...HEAD)
+
+**Implemented enhancements:**
+
+- feat/segmentation\_plugins [\#48](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/48) ([NeonJarbas](https://github.com/NeonJarbas))
+
+## [V0.0.14a4](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.14a4) (2022-03-18)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.14a3...V0.0.14a4)
 
 **Fixed bugs:**
 
