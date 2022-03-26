@@ -48,6 +48,7 @@ def required(requirements_file):
                 if pkg.strip() and not pkg.startswith("#")]
 
 
+PLUGIN_ENTRY_POINT = 'ovos-segmentation-plugin-quebrafrases=ovos_plugin_manager.templates.segmentation:Segmenter'
 
 setup(
     name='ovos-plugin-manager',
@@ -61,5 +62,6 @@ setup(
     install_requires=required("requirements/requirements.txt"),
     package_data={'': package_files('ovos-plugin-manager')},
     author_email='jarbasai@mailfence.com',
-    description='OpenVoiceOS plugin manager'
+    description='OpenVoiceOS plugin manager',
+    entry_points={'intentbox.segmentation': PLUGIN_ENTRY_POINT}
 )

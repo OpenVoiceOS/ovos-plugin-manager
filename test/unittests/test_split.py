@@ -1,9 +1,14 @@
 import unittest
 
-from ovos_plugin_manager.segmentation import Segmenter
+from ovos_plugin_manager.segmentation import Segmenter, find_segmentation_plugins
 
 
 class TestQuebraFrasesSegmenter(unittest.TestCase):
+
+    def test_find_plugin(self):
+        plugs = find_segmentation_plugins()
+        self.assertTrue(len(plugs) > 0)
+        self.assertIn("ovos-segmentation-plugin-quebrafrases", plugs)
 
     def test_segment(self):
         solver = Segmenter()
