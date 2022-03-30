@@ -19,7 +19,7 @@ def load_tokenization_plugin(module_name):
     return load_plugin(module_name, PluginTypes.TOKENIZATION)
 
 
-class OVOSUtteranceTokenizerFactory:
+class OVOSTokenizerFactory:
     """ reads mycroft.conf and returns the globally configured plugin """
     MAPPINGS = {
         # default split at sentence boundaries
@@ -40,8 +40,8 @@ class OVOSUtteranceTokenizerFactory:
         """
         config = config or get_tokenization_config()
         tokenization_module = config.get("module", "ovos-tokenization-plugin-quebrafrases")
-        if tokenization_module in OVOSUtteranceTokenizerFactory.MAPPINGS:
-            tokenization_module = OVOSUtteranceTokenizerFactory.MAPPINGS[tokenization_module]
+        if tokenization_module in OVOSTokenizerFactory.MAPPINGS:
+            tokenization_module = OVOSTokenizerFactory.MAPPINGS[tokenization_module]
         return load_tokenization_plugin(tokenization_module)
 
     @staticmethod
@@ -59,7 +59,7 @@ class OVOSUtteranceTokenizerFactory:
         plugin = config.get("module") or "ovos-tokenization-plugin-quebrafrases"
         plugin_config = config.get(plugin) or {}
         try:
-            clazz = OVOSUtteranceTokenizerFactory.get_class(config)
+            clazz = OVOSTokenizerFactory.get_class(config)
             return clazz(plugin_config)
         except Exception:
             LOG.error(f'Tokenizer plugin {plugin} could not be loaded!')
