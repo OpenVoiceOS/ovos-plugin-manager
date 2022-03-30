@@ -15,68 +15,67 @@ class PosTagger:
 
     def postag(self, spans, lang=None):
         lang = lang or self.lang
-        tokens = [t for (s, e, t) in spans]
         # this should be implemented by plugins!
         if lang.startswith("pt"):
-            return _dummy_postag_pt(tokens)
+            return _dummy_postag_pt(spans)
         elif lang.startswith("en"):
-            return _dummy_postag_en(tokens)
-        return _dummy_postag(tokens)
+            return _dummy_postag_en(spans)
+        return _dummy_postag(spans)
 
 
-def _dummy_postag_pt(tokens):
+def _dummy_postag_pt(spans):
     pos = []
-    for t in tokens:
+    for s, e, t in spans:
         if t == "e":
-            pos.append((t, "CONJ"))
+            pos.append((s, e, t, "CONJ"))
         elif t in ["o", "a", "os", "as"]:
-            pos.append((t, "DET"))
+            pos.append((s, e, t, "DET"))
         elif t.lower() in ["ele", "ela", "eles", "elas", "nós", "vós"]:
-            pos.append((t, "PRON"))
+            pos.append((s, e, t, "PRON"))
         elif t in ["do", "da", "dos", "das"]:
-            pos.append((t, "ADP"))
+            pos.append((s, e, t, "ADP"))
         elif t.isdigit():
-            pos.append((t, "NUMBER"))
+            pos.append((s, e, t, "NUMBER"))
         elif t[0].isupper() and len(t) >= 5:
-            pos.append((t, "PROPN"))
+            pos.append((s, e, t, "PROPN"))
         elif len(t) >= 4:
-            pos.append((t, "NOUN"))
+            pos.append((s, e, t, "NOUN"))
         else:
-            pos.append((t, "VERB"))
+            pos.append((s, e, t, "VERB"))
     return pos
 
 
-def _dummy_postag_en(tokens):
+def _dummy_postag_en(spans):
     pos = []
-    for t in tokens:
+    for s, e, t in spans:
         if t == "and":
-            pos.append((t, "CONJ"))
+            pos.append((s, e, t, "CONJ"))
         elif t in ["the", "a", "an"]:
-            pos.append((t, "DET"))
+            pos.append((s, e, t, "DET"))
         elif t.lower() in ["he", "she", "it", "they"]:
-            pos.append((t, "PRON"))
+            pos.append((s, e, t, "PRON"))
         elif t in ["of", "for"]:
-            pos.append((t, "ADP"))
+            pos.append((s, e, t, "ADP"))
         elif t.isdigit():
-            pos.append((t, "NUMBER"))
+            pos.append((s, e, t, "NUMBER"))
         elif t[0].isupper() and len(t) >= 5:
-            pos.append((t, "PROPN"))
+            pos.append((s, e, t, "PROPN"))
         elif len(t) >= 4:
-            pos.append((t, "NOUN"))
+            pos.append((s, e, t, "NOUN"))
         else:
-            pos.append((t, "VERB"))
+            pos.append((s, e, t, "VERB"))
     return pos
 
 
-def _dummy_postag(tokens):
+def _dummy_postag(spans):
     pos = []
-    for t in tokens:
+    for s, e, t in spans:
         if t.isdigit():
-            pos.append((t, "NUMBER"))
+            pos.append((s, e, t, "NUMBER"))
         elif t[0].isupper() and len(t) >= 4:
-            pos.append((t, "PROPN"))
+            pos.append((s, e, t, "PROPN"))
         elif len(t) >= 5:
-            pos.append((t, "NOUN"))
+            pos.append((s, e, t, "NOUN"))
         else:
-            pos.append((t, "VERB"))
+            pos.append((s, e, t, "VERB"))
     return pos
