@@ -13,9 +13,9 @@ class PosTagger:
             lang = msg.data.get("lang")
         return lang or "en-us"
 
-    def postag(self, tokens, lang=None):
+    def postag(self, spans, lang=None):
         lang = lang or self.lang
-
+        tokens = [t for (s, e, t) in spans]
         # this should be implemented by plugins!
         if lang.startswith("pt"):
             return _dummy_postag_pt(tokens)
@@ -43,6 +43,7 @@ def _dummy_postag_pt(tokens):
             pos.append((t, "NOUN"))
         else:
             pos.append((t, "VERB"))
+    return pos
 
 
 def _dummy_postag_en(tokens):
@@ -64,6 +65,7 @@ def _dummy_postag_en(tokens):
             pos.append((t, "NOUN"))
         else:
             pos.append((t, "VERB"))
+    return pos
 
 
 def _dummy_postag(tokens):
