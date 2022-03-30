@@ -32,6 +32,7 @@ class PluginTypes(str, Enum):
     QUESTION_SOLVER = "neon.plugin.solver"
     COREFERENCE_SOLVER = "intentbox.coreference"
     UTTERANCE_SEGMENTATION = "intentbox.segmentation"
+    TOKENIZATION = "intentbox.tokenization"
 
 
 def find_plugins(plug_type=None):

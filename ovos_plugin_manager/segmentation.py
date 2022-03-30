@@ -24,8 +24,7 @@ class OVOSUtteranceSegmenterFactory:
     MAPPINGS = {
         # default split at sentence boundaries
         # usually helpful in other plugins and included in base class
-        # there is no dedicated plugin anymore
-        "ovos-segmentation-plugin-quebrafrases": "dummy"
+        "dummy": "ovos-segmentation-plugin-quebrafrases"
     }
 
     @staticmethod
@@ -40,11 +39,9 @@ class OVOSUtteranceSegmenterFactory:
         }
         """
         config = config or get_segmentation_config()
-        segmentation_module = config.get("module", "dummy")
+        segmentation_module = config.get("module", "ovos-segmentation-plugin-quebrafrases")
         if segmentation_module in OVOSUtteranceSegmenterFactory.MAPPINGS:
             segmentation_module = OVOSUtteranceSegmenterFactory.MAPPINGS[segmentation_module]
-        if segmentation_module == "dummy":
-            return Segmenter
         return load_segmentation_plugin(segmentation_module)
 
     @staticmethod
@@ -59,14 +56,14 @@ class OVOSUtteranceSegmenterFactory:
         }
         """
         config = config or get_segmentation_config()
-        plugin = config.get("module") or "dummy"
+        plugin = config.get("module") or "ovos-segmentation-plugin-quebrafrases"
         plugin_config = config.get(plugin) or {}
         try:
             clazz = OVOSUtteranceSegmenterFactory.get_class(config)
             return clazz(plugin_config)
         except Exception:
             LOG.error(f'Utterance Segmentation plugin {plugin} could not be loaded!')
-            raise
+            return Segmenter()
 
 
 def get_segmentation_config(config=None):
@@ -79,7 +76,7 @@ def get_segmentation_config(config=None):
         config = config["segmentation"]
         lang = config.get("lang") or lang
     config["lang"] = lang or "en-us"
-    segmentation_module = config.get('module') or 'dummy'
+    segmentation_module = config.get('module') or 'ovos-segmentation-plugin-quebrafrases'
     segmentation_config = config.get(segmentation_module, {})
     segmentation_config["module"] = segmentation_module
     return segmentation_config
