@@ -48,7 +48,9 @@ def required(requirements_file):
                 if pkg.strip() and not pkg.startswith("#")]
 
 
-PLUGIN_ENTRY_POINT = 'ovos-segmentation-plugin-quebrafrases=ovos_plugin_manager.templates.segmentation:Segmenter'
+SEG_PLUGIN_ENTRY_POINT = 'ovos-segmentation-plugin-quebrafrases=ovos_plugin_manager.templates.segmentation:Segmenter'
+TOK_PLUGIN_ENTRY_POINT = 'ovos-tokenization-plugin-quebrafrases=ovos_plugin_manager.templates.tokenization:Tokenizer'
+
 
 setup(
     name='ovos-plugin-manager',
@@ -63,5 +65,8 @@ setup(
     package_data={'': package_files('ovos-plugin-manager')},
     author_email='jarbasai@mailfence.com',
     description='OpenVoiceOS plugin manager',
-    entry_points={'intentbox.segmentation': PLUGIN_ENTRY_POINT}
+    entry_points={
+        'intentbox.segmentation': SEG_PLUGIN_ENTRY_POINT,
+        'intentbox.tokenization': TOK_PLUGIN_ENTRY_POINT
+    }
 )

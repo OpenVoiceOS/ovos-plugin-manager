@@ -24,7 +24,7 @@ class Segmenter:
         return lang or "en-us"
 
     @staticmethod
-    def _extract(text, markers):
+    def __extract(text, markers):
         if isinstance(text, str):
             sents = [text]
         else:
@@ -52,7 +52,7 @@ class Segmenter:
             markers += Segmenter.SEGMENTATION_MARKERS_PT
 
         if markers:
-            return Segmenter._extract(sents, markers)
+            return Segmenter.__extract(sents, markers)
         return sents
 
     def segment(self, text):
