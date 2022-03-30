@@ -33,6 +33,7 @@ class PluginTypes(str, Enum):
     COREFERENCE_SOLVER = "intentbox.coreference"
     UTTERANCE_SEGMENTATION = "intentbox.segmentation"
     TOKENIZATION = "intentbox.tokenization"
+    POSTAG = "intentbox.postag"
 
 
 def find_plugins(plug_type=None):

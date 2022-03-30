@@ -22,3 +22,12 @@ class Tokenizer:
         lang = lang or self.lang
         return word_tokenize(text)
 
+    @staticmethod
+    def restore_spans(spans):
+        # restore sentence from spans
+        sentence = ""
+        for start, end, token in spans:
+            if start > len(sentence):
+                sentence += " "
+            sentence += token
+        return sentence
