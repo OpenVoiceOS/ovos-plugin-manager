@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.16a1...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.16a2...HEAD)
+
+**Fixed bugs:**
+
+- fix/do not discard spans in postag [\#53](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/53) ([NeonJarbas](https://github.com/NeonJarbas))
+
+## [V0.0.16a2](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.16a2) (2022-03-30)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.16a1...V0.0.16a2)
 
 **Implemented enhancements:**
 
