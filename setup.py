@@ -50,6 +50,7 @@ def required(requirements_file):
 
 SEG_PLUGIN_ENTRY_POINT = 'ovos-segmentation-plugin-quebrafrases=ovos_plugin_manager.templates.segmentation:Segmenter'
 TOK_PLUGIN_ENTRY_POINT = 'ovos-tokenization-plugin-quebrafrases=ovos_plugin_manager.templates.tokenization:Tokenizer'
+POSTAG_PLUGIN_ENTRY_POINT = 'ovos-postag-plugin-dummy=ovos_plugin_manager.templates.postag:PosTagger'
 
 
 setup(
@@ -67,6 +68,7 @@ setup(
     description='OpenVoiceOS plugin manager',
     entry_points={
         'intentbox.segmentation': SEG_PLUGIN_ENTRY_POINT,
-        'intentbox.tokenization': TOK_PLUGIN_ENTRY_POINT
+        'intentbox.tokenization': TOK_PLUGIN_ENTRY_POINT,
+        'intentbox.postag': POSTAG_PLUGIN_ENTRY_POINT
     }
 )
