@@ -1,5 +1,6 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
-
+from ovos_plugin_manager.templates.intents import IntentExtractor, IntentPriority,\
+    IntentDeterminationStrategy, IntentMatch
 
 def find_intent_engine_plugins():
     return find_plugins(PluginTypes.INTENT_ENGINE)

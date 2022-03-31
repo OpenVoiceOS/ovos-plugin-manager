@@ -1,6 +1,6 @@
 import enum
 import re
-
+from collections import namedtuple
 from mycroft_bus_client.message import dig_for_message
 from ovos_utils import flatten_list
 from ovos_utils.json_helper import merge_dict
@@ -16,6 +16,16 @@ try:
 except ImportError:
     lf_normalize = None
 
+# Intent match response tuple containing
+# intent_service: Name of the service that matched the intent
+# intent_type: intent name
+# intent_data: data provided by the intent match
+# skill_id: the skill this handler belongs to
+IntentMatch = namedtuple('IntentMatch',
+                         ['intent_service', 'intent_type',
+                          'intent_data', 'skill_id']
+                         )
+
 
 class IntentDeterminationStrategy(str, enum.Enum):
     SINGLE_INTENT = "single"
@@ -25,16 +35,32 @@ class IntentDeterminationStrategy(str, enum.Enum):
     SEGMENT_MULTI = "segment+multi"
 
 
-class IntentExtractor:
-    keyword_based = False
-    regex_entity_support = False
+class IntentPriority(enum.IntEnum):
+    CONVERSE = 0
+    HIGH = 1
+    KEYWORDS_HIGH = 2
+    FALLBACK_HIGH = 3
+    REGEX_HIGH = 4
+    MEDIUM = 5
+    KEYWORDS_MEDIUM = 6
+    FALLBACK_MEDIUM = 7
+    REGEX_MEDIUM = 8
+    LOW = 9
+    KEYWORDS_LOW = 10
+    FALLBACK_LOW = 11
+    REGEX_LOW= 12
 
+
+class IntentExtractor:
     def __init__(self, config=None,
                  strategy=IntentDeterminationStrategy.SEGMENT_REMAINDER,
+                 priority=IntentPriority.LOW,
                  segmenter=None):
         self.config = config or {}
         self.segmenter = segmenter or OVOSUtteranceSegmenterFactory.create()
         self.strategy = strategy
+        self.priority = priority
+
         self._intent_samples = {}
         self.registered_intents = []
         self.registered_entities = {}
@@ -314,5 +340,7 @@ class IntentExtractor:
     def manifest(self):
         return {
             "intent_names": self.registered_intents,
-            "entities": self.registered_entities
+            "entities": self.registered_entities,
+            "patterns": self.patterns,
+            "entity_patterns": self.entity_patterns
         }
