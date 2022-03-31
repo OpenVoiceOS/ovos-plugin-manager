@@ -37,18 +37,18 @@ class IntentDeterminationStrategy(str, enum.Enum):
 
 class IntentPriority(enum.IntEnum):
     CONVERSE = 0
-    HIGH = 1
-    KEYWORDS_HIGH = 2
-    FALLBACK_HIGH = 3
-    REGEX_HIGH = 4
-    MEDIUM = 5
-    KEYWORDS_MEDIUM = 6
-    FALLBACK_MEDIUM = 7
-    REGEX_MEDIUM = 8
-    LOW = 9
-    KEYWORDS_LOW = 10
-    FALLBACK_LOW = 11
-    REGEX_LOW= 12
+    HIGH = 5
+    KEYWORDS_HIGH = 10
+    FALLBACK_HIGH = 15
+    REGEX_HIGH = 20
+    MEDIUM = 25
+    KEYWORDS_MEDIUM = 30
+    REGEX_MEDIUM = 40
+    FALLBACK_MEDIUM = 50
+    LOW = 75
+    KEYWORDS_LOW = 80
+    REGEX_LOW = 90
+    FALLBACK_LOW = 100
 
 
 class IntentExtractor:
@@ -91,7 +91,8 @@ class IntentExtractor:
     def intent_samples(self):
         return self._intent_samples
 
-    def normalize_utterance(self, text, lang='', remove_articles=False):
+    def normalize_utterance(self, text, lang=None, remove_articles=False):
+        lang = lang or self.lang
         # use lingua_franca if installed
         if lf_normalize:
             try:
@@ -107,15 +108,6 @@ class IntentExtractor:
                 removals = ["the"]
                 words = [w for w in words if len(w) >= 3 and w.lower() not in removals]
         return " ".join(w for w in words if w)
-
-    def get_normalizations(self, utterance, lang=None):
-        lang = lang or self.lang
-        norm = self.normalize_utterance(utterance, remove_articles=True, lang=lang)
-        norm2 = self.normalize_utterance(utterance, remove_articles=False, lang=lang)
-        norm3 = re.sub(r'[^\w]', ' ', utterance)
-        norm4 = ''.join([i if 64 < ord(i) < 128 or ord(i) == 32
-                         else '' for i in utterance])
-        return [u for u in [norm, norm2, norm3, norm4] if u != utterance]
 
     def get_utterance_remainder(self, utterance, samples, as_string=True):
         chunks = get_exclusive_tokens([utterance] + samples)
