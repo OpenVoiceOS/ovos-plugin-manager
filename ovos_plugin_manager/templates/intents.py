@@ -7,8 +7,10 @@ from ovos_utils.json_helper import merge_dict
 from ovos_utils.log import LOG
 from quebra_frases import word_tokenize, get_exclusive_tokens
 
+from mycroft.messagebus.message import get_message_lang
 from ovos_plugin_manager.segmentation import OVOSUtteranceSegmenterFactory
 from ovos_plugin_manager.utils.intent_context import ContextManager
+
 
 # optional imports, strongly recommended
 try:
@@ -41,10 +43,14 @@ class IntentPriority(enum.IntEnum):
     KEYWORDS_HIGH = 10
     FALLBACK_HIGH = 15
     REGEX_HIGH = 20
-    MEDIUM = 25
+
+    MEDIUM_HIGH = 25
     KEYWORDS_MEDIUM = 30
-    REGEX_MEDIUM = 40
-    FALLBACK_MEDIUM = 50
+    MEDIUM = 40
+    REGEX_MEDIUM = 50
+    MEDIUM_LOW = 60
+    FALLBACK_MEDIUM = 70
+
     LOW = 75
     KEYWORDS_LOW = 80
     REGEX_LOW = 90
@@ -61,9 +67,13 @@ class IntentExtractor:
         self.strategy = strategy
         self.priority = priority
 
-        self._intent_samples = {}
-        self.registered_intents = []
+        # sample based
+        self.registered_intents = {}
+        # keyword based
+        self.keyword_intents = {}
+        # entities are also keywords
         self.registered_entities = {}
+        # regex
         self.patterns = {}
         self.entity_patterns = {}
 
@@ -81,15 +91,9 @@ class IntentExtractor:
 
     @property
     def lang(self):
-        lang = self.config.get("lang")
-        msg = dig_for_message()
-        if msg:
-            lang = msg.data.get("lang")
-        return lang or "en-us"
-
-    @property
-    def intent_samples(self):
-        return self._intent_samples
+        return get_message_lang() or \
+               self.config.get("lang") or \
+               "en-us"
 
     def normalize_utterance(self, text, lang=None, remove_articles=False):
         lang = lang or self.lang
@@ -116,14 +120,16 @@ class IntentExtractor:
             return " ".join(words)
         return words
 
+    # registering/unloading intents
     def detach_skill(self, skill_id):
-        remove_list = [i for i in self.registered_intents if skill_id in i]
+        remove_list = [i for i in self.registered_intents.keys()
+                       if skill_id in i]
         for i in remove_list:
             self.detach_intent(i)
 
     def detach_intent(self, intent_name):
         if intent_name in self.registered_intents:
-            self.registered_intents.remove(intent_name)
+            self.registered_intents.pop(intent_name)
 
     def register_entity(self, entity_name, samples=None):
         samples = samples or [entity_name]
@@ -133,11 +139,20 @@ class IntentExtractor:
 
     def register_intent(self, intent_name, samples=None):
         samples = samples or [intent_name]
-        if intent_name not in self._intent_samples:
-            self._intent_samples[intent_name] = samples
-        else:
-            self._intent_samples[intent_name] += samples
-        self.registered_intents.append(intent_name)
+        if intent_name not in self.registered_intents:
+            self.registered_intents[intent_name] = []
+        self.registered_intents[intent_name] += samples
+
+    def register_keyword_intent(self, intent_name, keywords,
+                                optional=None, at_least_one=None,
+                                excluded=None):
+        optional = optional or []
+        excluded = excluded or []
+        at_least_one = at_least_one or []
+        self.keyword_intents[intent_name] = {"requires": keywords,
+                                             "at_least_one": at_least_one,
+                                             "excluded": excluded,
+                                             "optional": optional}
 
     def register_regex_entity(self, entity_name, samples):
         if entity_name not in self.patterns:
@@ -151,6 +166,7 @@ class IntentExtractor:
         self.patterns[intent_name] += [re.compile(pattern)
                                        for pattern in samples]
 
+    # from file helper methods
     def register_entity_from_file(self, entity_name, file_name):
         with open(file_name) as f:
             entities = f.read().split("\n")
@@ -159,7 +175,7 @@ class IntentExtractor:
     def register_intent_from_file(self, intent_name, file_name):
         with open(file_name) as f:
             intents = f.read().split("\n")
-            self.register_entity(intent_name, intents)
+            self.register_intent(intent_name, intents)
 
     def register_regex_entity_from_file(self, entity_name, file_name):
         with open(file_name) as f:
@@ -169,8 +185,9 @@ class IntentExtractor:
     def register_regex_intent_from_file(self, intent_name, file_name):
         with open(file_name) as f:
             intents = f.read().split("\n")
-            self.register_regex_entity(intent_name, intents)
+            self.register_regex_intent(intent_name, intents)
 
+    # intent handling
     def extract_regex_entities(self, utterance):
         entities = {}
         utterance = utterance.strip().lower()
@@ -195,7 +212,6 @@ class IntentExtractor:
        UTTERANCE: tell me a joke and say hello
         {'say hello': {'conf': 0.5750943775957492, 'matches': {}, 'name': 'hello'},
          'tell me a joke': {'conf': 1.0, 'matches': {}, 'name': 'joke'}}
-
         """
         bucket = {}
         for ut in self.segmenter.segment(utterance):
@@ -331,8 +347,231 @@ class IntentExtractor:
 
     def manifest(self):
         return {
-            "intent_names": self.registered_intents,
+            "intent_names": list(self.registered_intents.keys()),
+            "keyword_intent_names": list(self.keyword_intents.keys()),
             "entities": self.registered_entities,
             "patterns": self.patterns,
             "entity_patterns": self.entity_patterns
         }
+
+
+class IntentEngine:
+    def __init__(self, engine_id, config=None, bus=None, engine=None):
+        self.engine_id = engine_id
+        self.bus = bus
+        self.engine = engine
+        self.config = config or {}
+        if bus:
+            self.bind(bus, engine)
+
+    def bind(self, bus=None, engine=None):
+        engine = engine or self.engine
+        if engine is None:
+            from ovos_plugin_manager.intents import load_intent_engine
+            engine = load_intent_engine(self.engine_id, self.config)
+        self.engine = engine
+        self.bus = bus or self.bus
+        self.register_bus_handlers()
+        self.register_compat_bus_handlers()
+
+    def register_bus_handlers(self):
+        self.bus.on('ovos.intentbox.register.entity', self.handle_register_entity)
+        self.bus.on('ovos.intentbox.register.intent', self.handle_register_intent)
+        self.bus.on('ovos.intentbox.register.keyword_intent', self.handle_register_keyword_intent)
+        self.bus.on("ovos.intentbox.register.regex_intent", self.handle_register_regex_intent)
+
+        self.bus.on('ovos.intentbox.detach.entity', self.handle_detach_entity)
+        self.bus.on('ovos.intentbox.detach.intent', self.handle_detach_intent)
+        self.bus.on('ovos.intentbox.detach.skill', self.handle_detach_skill)
+
+        self.bus.on(f'ovos.intentbox.get.intent.{self.engine_id}', self.handle_get_intent)
+        self.bus.on(f'ovos.intentbox.get.manifest.{self.engine_id}', self.handle_get_manifest)
+
+        self.bus.on('ovos.intentbox.context.add', self.handle_add_context)
+        self.bus.on('ovos.intentbox.context.remove', self.handle_remove_context)
+        self.bus.on('ovos.intentbox.context.clear', self.handle_clear_context)
+
+    def register_compat_bus_handlers(self):
+        """mycroft compatible namespaces"""
+        self.bus.on('detach_intent', self.handle_detach_intent)  # api compatible
+        self.bus.on('detach_skill', self.handle_detach_skill)  # api compatible
+        # adapt api
+        self.bus.on('register_vocab', self.handle_register_adapt_vocab)
+        self.bus.on('register_intent', self.handle_register_keyword_intent)  # api compatible
+        # padatious api
+        self.bus.on('padatious:register_intent', self.handle_register_intent)  # api compatible
+        self.bus.on('padatious:register_entity', self.handle_register_entity)  # api compatible
+        # regex intent api (mark2)
+        self.bus.on("regex:register_intent", self.handle_register_mk2_regex_intent)
+        # Context api
+        self.bus.on('add_context', self.handle_add_context)  # api compatible
+        self.bus.on('remove_context', self.handle_remove_context)  # api compatible
+        self.bus.on('clear_context', self.handle_clear_context)  # api compatible
+
+    @property
+    def priority(self):
+        if self.engine:
+            return self.engine.priority
+        return IntentPriority.FALLBACK_LOW
+
+    def handle_utterance_message(self, message):
+        utterances = message.data["utterances"]
+        lang = get_message_lang(message)
+        good_utterance = False
+        for utterance in utterances:
+            for intent in self.engine.calc(utterance):
+                skill_id = ""
+                intent_type = None
+                intent_data = {}
+                yield IntentMatch(self.engine_id, intent_type, intent_data, skill_id)
+                good_utterance = True
+            if good_utterance:
+                break
+
+    # bus handlers
+    @staticmethod
+    def _parse_message(message):
+        name = message.data["name"]
+        lang = get_message_lang(message)
+        skill_id = message.data.get("skill_id") or \
+                   message.context.get("skill_id")
+        if not skill_id and ":" in name:
+            skill_id, _ = name.split(":")[0]
+
+        samples = message.data.get("samples") or []
+        if not samples and message.data.get("file_name"):
+            with open(message.data["file_name"]) as f:
+                samples = [l for l in f.read().split("\n")
+                           if l and not l.startswith("#")]
+        samples = samples or [name]
+
+        return name, samples, lang, skill_id
+
+    def handle_register_intent(self, message):
+        intent_name, samples, lang, skill_id = self._parse_message(message)
+        self.engine.register_intent(intent_name, samples)
+
+    def handle_register_entity(self, message):
+        entity_name = message.data["name"]
+        lang = get_message_lang(message)
+        skill_id = message.data.get("skill_id") or \
+                   message.context.get("skill_id")
+        if not skill_id and ":" in entity_name:
+            skill_id, _ = entity_name.split(":")[0]
+
+        samples = message.data.get("samples") or []
+        if not samples and message.data.get("file_name"):
+            with open(message.data["file_name"]) as f:
+                samples = [l for l in f.read().split("\n")
+                           if l and not l.startswith("#")]
+        samples = samples or [entity_name]
+
+        self.engine.register_entity(entity_name, samples)
+
+    def handle_register_regex_intent(self, message):
+        intent_name, samples, lang, skill_id = self._parse_message(message)
+        self.engine.register_regex_intent(intent_name, samples)
+
+    def handle_register_regex_entity(self, message):
+        entity_name, samples, lang, skill_id = self._parse_message(message)
+        self.engine.register_regex_entity(entity_name, samples)
+
+    def handle_register_keyword_intent(self, message):
+        self.engine.register_keyword_intent(
+            message.data['name'],
+            message.data['requires'],
+            message.get('optional', []),
+            message.get('at_least_one', []),
+            message.get('excludes', []))
+
+    def handle_detach_intent(self, message):
+        intent_name = message.data.get('intent_name')
+        self.engine.detach_intent(intent_name)
+
+    def handle_detach_entity(self, message):
+        pass
+
+    def handle_detach_skill(self, message):
+        """Remove all intents registered for a specific skill.
+        Args:
+            message (Message): message containing intent info
+        """
+        skill_id = message.data.get('skill_id')
+        self.engine.detach_skill(skill_id)
+
+    def handle_get_intent(self, message):
+        # TODO
+        utterance = message.data["utterance"]
+        lang = get_message_lang(message)
+
+    def handle_get_manifest(self, message):
+        # TODO
+        pass
+
+    def handle_add_context(self, message):
+        """Add context
+        Args:
+            message: data contains the 'context' item to add
+                     optionally can include 'word' to be injected as
+                     an alias for the context item.
+        """
+        entity = {'confidence': 1.0}
+        context = message.data.get('context')
+        word = message.data.get('word') or ''
+        origin = message.data.get('origin') or ''
+        # if not a string type try creating a string from it
+        if not isinstance(word, str):
+            word = str(word)
+        entity['data'] = [(word, context)]
+        entity['match'] = word
+        entity['key'] = word
+        entity['origin'] = origin
+        self.engine.context_manager.inject_context(entity)
+
+    def handle_remove_context(self, message):
+        """Remove specific context
+        Args:
+            message: data contains the 'context' item to remove
+        """
+        context = message.data.get('context')
+        if context:
+            self.engine.context_manager.remove_context(context)
+
+    def handle_clear_context(self, message):
+        """Clears all keywords from context """
+        self.engine.context_manager.clear_context()
+
+    # backwards compat bus handlers
+    def handle_register_adapt_vocab(self, message):
+        if 'entity_value' not in message.data and 'start' in message.data:
+            message.data['entity_value'] = message.data['start']
+            message.data['entity_type'] = message.data['end']
+        entity_value = message.data.get('entity_value')
+        entity_type = message.data.get('entity_type')
+        regex_str = message.data.get('regex')
+        alias_of = message.data.get('alias_of') or []
+        lang = get_message_lang(message)
+        if regex_str:
+            if not entity_type:
+                # TODO mycroft does not send an entity_type when registering adapt regex
+                # the entity name is in the regex itself, how to extract from string ?
+                # is syntax always (?P<name>someregexhere)  ?
+                entity_type = regex_str.split("(?P<")[-1].split(">")[0]
+            message["name"] = entity_type
+            message["samples"] = [regex_str]
+            self.handle_register_regex_entity(message)
+        else:
+            for ent in [entity_type] + alias_of:
+                message["name"] = ent
+                message["samples"] = [entity_value]
+                self.handle_register_entity(message)
+
+    def handle_register_mk2_regex_intent(self, message):
+        message.data["samples"] = [message.data["pattern"]]
+        self.handle_register_regex_intent(message)
+
+    def __str__(self):
+        return self.engine_id
+
+    def __repr__(self):
+        return f"IntentEngine:{self.engine_id}"
