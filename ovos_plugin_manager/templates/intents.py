@@ -11,7 +11,6 @@ from mycroft.messagebus.message import get_message_lang
 from ovos_plugin_manager.segmentation import OVOSUtteranceSegmenterFactory
 from ovos_plugin_manager.utils.intent_context import ContextManager
 
-
 # optional imports, strongly recommended
 try:
     from lingua_franca.parse import normalize as lf_normalize
@@ -57,6 +56,46 @@ class IntentPriority(enum.IntEnum):
     FALLBACK_LOW = 100
 
 
+class BaseDefinition:
+    def __init__(self, name, lang):
+        self.name = name
+        self.lang = lang
+
+
+class EntityDefinition(BaseDefinition):
+    def __init__(self, name, lang, samples=None):
+        super().__init__(name, lang)
+        self.samples = samples or [name]
+
+
+class IntentDefinition(BaseDefinition):
+    def __init__(self, name, lang, samples=None):
+        super().__init__(name, lang)
+        self.samples = samples or [name]
+
+
+class RegexEntityDefinition(BaseDefinition):
+    def __init__(self, name, lang, patterns):
+        super().__init__(name, lang)
+        self.patterns = patterns
+
+
+class RegexIntentDefinition(BaseDefinition):
+    def __init__(self, name, lang, patterns=None):
+        super().__init__(name, lang)
+        self.patterns = patterns or []
+
+
+class KeywordIntentDefinition(BaseDefinition):
+    def __init__(self, name, lang, requires,
+                 optional=None, at_least_one=None, excluded=None):
+        super().__init__(name, lang)
+        self.requires = requires
+        self.optional = optional or []
+        self.excluded = excluded or []
+        self.at_least_one = at_least_one or []
+
+
 class IntentExtractor:
     def __init__(self, config=None,
                  strategy=IntentDeterminationStrategy.SEGMENT_REMAINDER,
@@ -68,14 +107,8 @@ class IntentExtractor:
         self.priority = priority
 
         # sample based
-        self.registered_intents = {}
-        # keyword based
-        self.keyword_intents = {}
-        # entities are also keywords
-        self.registered_entities = {}
-        # regex
-        self.patterns = {}
-        self.entity_patterns = {}
+        self.registered_intents = []
+        self.registered_entities = []
 
         # Context related initializations
         # the context manager is from adapt, however it can be used by any
@@ -113,99 +146,132 @@ class IntentExtractor:
                 words = [w for w in words if len(w) >= 3 and w.lower() not in removals]
         return " ".join(w for w in words if w)
 
-    def get_utterance_remainder(self, utterance, samples, as_string=True):
+    def get_utterance_remainder(self, utterance, samples, as_string=True, lang=None):
+        lang = lang or self.lang
         chunks = get_exclusive_tokens([utterance] + samples)
         words = [t for t in word_tokenize(utterance) if t in chunks]
         if as_string:
             return " ".join(words)
         return words
 
+    def get_intent_samples(self, intent_name, lang=None):
+        lang = lang or self.lang
+        for e in [e for e in self.registered_intents if isinstance(e, IntentDefinition)]:
+            if e.name == intent_name and e.lang == lang:
+                return e.samples
+        return []
+
+    def get_entity_samples(self, entity_name, lang=None):
+        lang = lang or self.lang
+        for e in [e for e in self.registered_entities if isinstance(e, EntityDefinition)]:
+            if e.name == entity_name and e.lang == lang:
+                return e.samples
+        return []
+
     # registering/unloading intents
     def detach_skill(self, skill_id):
-        remove_list = [i for i in self.registered_intents.keys()
-                       if skill_id in i]
-        for i in remove_list:
-            self.detach_intent(i)
+        for i in [e for e in self.registered_intents
+                  if e.skill_id == skill_id]:
+            self.detach_intent(i.name, i.skill_id)
+
+        for i in [e for e in self.registered_entities
+                  if e.skill_id == skill_id]:
+            self.detach_entity(i.name, i.skill_id)
+
+    def detach_entity(self, entity_name):
+        self.registered_entities = [e for e in self.registered_entities
+                                    if e.name != entity_name]
 
     def detach_intent(self, intent_name):
-        if intent_name in self.registered_intents:
-            self.registered_intents.pop(intent_name)
+        self.registered_intents = [e for e in self.registered_intents
+                                   if e.name != intent_name]
 
-    def register_entity(self, entity_name, samples=None):
-        samples = samples or [entity_name]
-        if entity_name not in self.registered_entities:
-            self.registered_entities[entity_name] = []
-        self.registered_entities[entity_name] += samples
+    def register_entity(self, entity_name, samples=None, lang=None):
+        lang = lang or self.lang
+        entity = EntityDefinition(entity_name, lang, samples)
+        self.registered_entities.append(entity)
 
-    def register_intent(self, intent_name, samples=None):
-        samples = samples or [intent_name]
-        if intent_name not in self.registered_intents:
-            self.registered_intents[intent_name] = []
-        self.registered_intents[intent_name] += samples
+    def register_intent(self, intent_name, samples=None, lang=None):
+        lang = lang or self.lang
+        intent = IntentDefinition(intent_name, lang, samples)
+        self.registered_intents.append(intent)
 
     def register_keyword_intent(self, intent_name, keywords,
                                 optional=None, at_least_one=None,
-                                excluded=None):
-        optional = optional or []
-        excluded = excluded or []
-        at_least_one = at_least_one or []
-        self.keyword_intents[intent_name] = {"requires": keywords,
-                                             "at_least_one": at_least_one,
-                                             "excluded": excluded,
-                                             "optional": optional}
+                                excluded=None, lang=None):
+        lang = lang or self.lang
+        intent = KeywordIntentDefinition(intent_name, lang,
+                                         requires=keywords, optional=optional,
+                                         at_least_one=at_least_one, excluded=excluded)
+        self.registered_intents.append(intent)
 
-    def register_regex_entity(self, entity_name, samples):
-        if entity_name not in self.patterns:
-            self.entity_patterns[entity_name] = []
-        self.entity_patterns[entity_name] += [re.compile(pattern)
-                                              for pattern in samples]
+    def register_regex_entity(self, entity_name, samples,
+                              lang=None):
+        lang = lang or self.lang
+        entity = RegexEntityDefinition(entity_name, lang,
+                                       patterns=[re.compile(pattern) for pattern in samples])
+        self.registered_entities.append(entity)
 
-    def register_regex_intent(self, intent_name, samples):
-        if intent_name not in self.patterns:
-            self.patterns[intent_name] = []
-        self.patterns[intent_name] += [re.compile(pattern)
-                                       for pattern in samples]
+    def register_regex_intent(self, intent_name, samples,
+                              lang=None):
+        lang = lang or self.lang
+        intent = RegexIntentDefinition(intent_name, lang,
+                                       patterns=[re.compile(pattern) for pattern in samples])
+        self.registered_intents.append(intent)
 
     # from file helper methods
-    def register_entity_from_file(self, entity_name, file_name):
+    def register_entity_from_file(self, entity_name, file_name,
+                                  lang=None):
         with open(file_name) as f:
             entities = f.read().split("\n")
-            self.register_entity(entity_name, entities)
+            self.register_entity(entity_name, entities,
+                                 lang=lang)
 
-    def register_intent_from_file(self, intent_name, file_name):
+    def register_intent_from_file(self, intent_name, file_name,
+                                  lang=None):
         with open(file_name) as f:
             intents = f.read().split("\n")
-            self.register_intent(intent_name, intents)
+            self.register_intent(intent_name, intents,
+                                 lang=lang)
 
-    def register_regex_entity_from_file(self, entity_name, file_name):
+    def register_regex_entity_from_file(self, entity_name, file_name,
+                                        lang=None):
         with open(file_name) as f:
             entities = f.read().split("\n")
-            self.register_regex_entity(entity_name, entities)
+            self.register_regex_entity(entity_name, entities,
+                                       lang=lang)
 
-    def register_regex_intent_from_file(self, intent_name, file_name):
+    def register_regex_intent_from_file(self, intent_name, file_name,
+                                        lang=None):
         with open(file_name) as f:
             intents = f.read().split("\n")
-            self.register_regex_intent(intent_name, intents)
+            self.register_regex_intent(intent_name, intents,
+                                       lang=lang)
 
     # intent handling
-    def extract_regex_entities(self, utterance):
+    def extract_regex_entities(self, utterance, lang=None):
+        lang = lang or self.lang
         entities = {}
         utterance = utterance.strip().lower()
-        for name, patterns in self.entity_patterns.items():
-            for pattern in patterns:
+        entity_patterns = [e for e in self.registered_entities
+                           if isinstance(e, RegexEntityDefinition)]
+        for ent in entity_patterns:
+            if ent.lang != lang:
+                continue
+            for pattern in ent.patterns:
                 match = pattern.match(utterance)
                 if match:
                     entities = merge_dict(entities, match.groupdict())
         return entities
 
-    def calc_intent(self, utterance, min_conf=0.0):
+    def calc_intent(self, utterance, min_conf=0.5, lang=None):
         """ return intent result for utterance
         UTTERANCE: tell me a joke and say hello
         {'name': 'joke', 'sent': 'tell me a joke and say hello', 'matches': {}, 'conf': 0.5634853146417653}
         """
         raise NotImplementedError
 
-    def calc_intents(self, utterance, min_conf=0.0):
+    def calc_intents(self, utterance, min_conf=0.5, lang=None):
         """ segment utterance and return best intent for individual segments
         if confidence is below min_conf intent is None
 
@@ -213,13 +279,14 @@ class IntentExtractor:
         {'say hello': {'conf': 0.5750943775957492, 'matches': {}, 'name': 'hello'},
          'tell me a joke': {'conf': 1.0, 'matches': {}, 'name': 'joke'}}
         """
+        lang = lang or self.lang
         bucket = {}
         for ut in self.segmenter.segment(utterance):
-            intent = self.calc_intent(ut, min_conf=min_conf)
+            intent = self.calc_intent(ut, min_conf=min_conf, lang=lang)
             bucket[ut] = intent
         return bucket
 
-    def calc_intents_list(self, utterance, min_conf=0.0):
+    def calc_intents_list(self, utterance, min_conf=0.5, lang=None):
         """ segment utterance and return all intents for individual segments
 
        UTTERANCE: tell me a joke and say hello
@@ -234,13 +301,14 @@ class IntentExtractor:
                             {'conf': 1.0, 'matches': {}, 'name': 'joke'}]}
 
         """
+        lang = lang or self.lang
         utterance = utterance.strip().lower()
         bucket = {}
         for ut in self.segmenter.segment(utterance):
-            bucket[ut] = self.filter_intents(ut, min_conf=min_conf)
+            bucket[ut] = self.filter_intents(ut, min_conf=min_conf, lang=lang)
         return bucket
 
-    def intent_remainder(self, utterance, _prev="", min_conf=0.0):
+    def intent_remainder(self, utterance, _prev="", min_conf=0.5, lang=None):
         """
         calc intent, remove matches from utterance, check for intent in leftover, repeat
 
@@ -248,16 +316,17 @@ class IntentExtractor:
         :param _prev:
         :return:
         """
+        lang = lang or self.lang
         intent_bucket = []
         while _prev != utterance:
             _prev = utterance
-            intent = self.calc_intent(utterance, min_conf)
+            intent = self.calc_intent(utterance, min_conf=min_conf, lang=lang)
             if intent:
                 intent_bucket += [intent]
                 utterance = intent['utterance_remainder']
         return intent_bucket
 
-    def intents_remainder(self, utterance, min_conf=0.0):
+    def intents_remainder(self, utterance, min_conf=0.5, lang=None):
         """
         segment utterance and for each chunk recursively check for intents in utterance remainer
 
@@ -265,16 +334,18 @@ class IntentExtractor:
         :param min_conf:
         :return:
         """
+        lang = lang or self.lang
         utterances = self.segmenter.segment(utterance)
         bucket = []
         for utterance in utterances:
-            bucket += self.intent_remainder(utterance, min_conf=min_conf)
+            bucket += self.intent_remainder(utterance, min_conf=min_conf, lang=lang)
         return [b for b in bucket if b]
 
-    def intent_scores(self, utterance):
+    def intent_scores(self, utterance, lang=None):
+        lang = lang or self.lang
         utterance = utterance.strip().lower()
         intents = []
-        bucket = self.calc_intents(utterance)
+        bucket = self.calc_intents(utterance, lang=lang)
         for utt in bucket:
             intent = bucket[utt]
             if not intent:
@@ -282,7 +353,7 @@ class IntentExtractor:
             intents.append(intent)
         return intents
 
-    def filter_intents(self, utterance, min_conf=0.0):
+    def filter_intents(self, utterance, min_conf=0.5, lang=None):
         """
         returns all intents above a minimum confidence, meant for disambiguation
 
@@ -292,13 +363,15 @@ class IntentExtractor:
         [{'conf': 0.5311372507542608, 'entities': {}, 'name': 'lights_off'},
          {'conf': 0.505765852348431, 'entities': {}, 'name': 'door_close'}]
         """
-        return [i for i in self.intent_scores(utterance) if
+        lang = lang or self.lang
+        return [i for i in self.intent_scores(utterance, lang=lang) if
                 i["conf"] >= min_conf]
 
-    def calc(self, utterance):
+    def calc(self, utterance, min_conf=0.5, lang=None):
         """
         segment utterance and for each chunk recursively check for intents in utterance remainer
         """
+        lang = lang or self.lang
         if self.strategy in [IntentDeterminationStrategy.SEGMENT_REMAINDER,
                              IntentDeterminationStrategy.SEGMENT]:
             utterances = self.segmenter.segment(utterance)
@@ -311,13 +384,14 @@ class IntentExtractor:
             # calc intent + calc intent again in leftover text
             if self.strategy in [IntentDeterminationStrategy.REMAINDER,
                                  IntentDeterminationStrategy.SEGMENT_REMAINDER]:
-                intents = self.intent_remainder(utterance)  # up to 2 intents
+                intents = self.intent_remainder(utterance, min_conf=min_conf, lang=lang)  # up to 2 intents
 
                 # use a bigger chunk of the utterance
                 if not intents and prev_ut:
                     # TODO ensure original utterance form
                     # TODO lang support
-                    intents = self.intent_remainder(prev_ut + " " + utterance)
+                    intents = self.intent_remainder(prev_ut + " " + utterance,
+                                                    min_conf=min_conf, lang=lang)
                     if intents:
                         # replace previous intent match with
                         # larger utterance segment match
@@ -331,7 +405,7 @@ class IntentExtractor:
             # if this strategy is selected the segmenter step is skipped
             # and there is only 1 utterance
             elif self.strategy == IntentDeterminationStrategy.SINGLE_INTENT:
-                bucket.append([self.calc_intent(utterance)])
+                bucket.append([self.calc_intent(utterance, min_conf=min_conf, lang=lang)])
 
             # calc multiple intents over full utterance
             # "segment+multi" is misleading in the sense that
@@ -340,18 +414,23 @@ class IntentExtractor:
             # and there is only 1 utterance
             else:
                 intents = [intent for ut, intent in
-                           self.calc_intents(utterance).items()]
+                           self.calc_intents(utterance, min_conf=min_conf, lang=lang).items()]
                 bucket.append(intents)
 
         return [i for i in flatten_list(bucket) if i]
 
     def manifest(self):
         return {
-            "intent_names": list(self.registered_intents.keys()),
-            "keyword_intent_names": list(self.keyword_intents.keys()),
-            "entities": self.registered_entities,
-            "patterns": self.patterns,
-            "entity_patterns": self.entity_patterns
+            "intent_names": [e.name for e in self.registered_intents
+                             if isinstance(e, IntentDefinition)],
+            "keyword_intent_names": [e.name for e in self.registered_intents
+                                     if isinstance(e, KeywordIntentDefinition)],
+            "patterns": [e.name for e in self.registered_intents
+                         if isinstance(e, RegexIntentDefinition)],
+            "entities": [e.name for e in self.registered_entities
+                         if isinstance(e, EntityDefinition)],
+            "entity_patterns": [e.name for e in self.registered_entities
+                                if isinstance(e, RegexEntityDefinition)],
         }
 
 
@@ -420,10 +499,8 @@ class IntentEngine:
         good_utterance = False
         for utterance in utterances:
             for intent in self.engine.calc(utterance):
-                skill_id = ""
-                intent_type = None
-                intent_data = {}
-                yield IntentMatch(self.engine_id, intent_type, intent_data, skill_id)
+                intent_type = intent["intent_type"]
+                yield IntentMatch(self.engine_id, intent_type, intent)
                 good_utterance = True
             if good_utterance:
                 break
@@ -433,11 +510,6 @@ class IntentEngine:
     def _parse_message(message):
         name = message.data["name"]
         lang = get_message_lang(message)
-        skill_id = message.data.get("skill_id") or \
-                   message.context.get("skill_id")
-        if not skill_id and ":" in name:
-            skill_id, _ = name.split(":")[0]
-
         samples = message.data.get("samples") or []
         if not samples and message.data.get("file_name"):
             with open(message.data["file_name"]) as f:
@@ -445,20 +517,15 @@ class IntentEngine:
                            if l and not l.startswith("#")]
         samples = samples or [name]
 
-        return name, samples, lang, skill_id
+        return name, samples, lang
 
     def handle_register_intent(self, message):
-        intent_name, samples, lang, skill_id = self._parse_message(message)
+        intent_name, samples, lang = self._parse_message(message)
         self.engine.register_intent(intent_name, samples)
 
     def handle_register_entity(self, message):
         entity_name = message.data["name"]
         lang = get_message_lang(message)
-        skill_id = message.data.get("skill_id") or \
-                   message.context.get("skill_id")
-        if not skill_id and ":" in entity_name:
-            skill_id, _ = entity_name.split(":")[0]
-
         samples = message.data.get("samples") or []
         if not samples and message.data.get("file_name"):
             with open(message.data["file_name"]) as f:
@@ -469,27 +536,28 @@ class IntentEngine:
         self.engine.register_entity(entity_name, samples)
 
     def handle_register_regex_intent(self, message):
-        intent_name, samples, lang, skill_id = self._parse_message(message)
+        intent_name, samples, lang = self._parse_message(message)
         self.engine.register_regex_intent(intent_name, samples)
 
     def handle_register_regex_entity(self, message):
-        entity_name, samples, lang, skill_id = self._parse_message(message)
+        entity_name, samples, lang = self._parse_message(message)
         self.engine.register_regex_entity(entity_name, samples)
 
     def handle_register_keyword_intent(self, message):
         self.engine.register_keyword_intent(
             message.data['name'],
-            message.data['requires'],
-            message.get('optional', []),
-            message.get('at_least_one', []),
-            message.get('excludes', []))
+            [_[0] for _ in message.data['requires']],
+            [_[0] for _ in message.data.get('optional', [])],
+            [_[0] for _ in message.data.get('at_least_one', [])],
+            [_[0] for _ in message.data.get('excludes', [])])
 
     def handle_detach_intent(self, message):
         intent_name = message.data.get('intent_name')
         self.engine.detach_intent(intent_name)
 
     def handle_detach_entity(self, message):
-        pass
+        name = message.data.get('name')
+        self.engine.detach_entity(name)
 
     def handle_detach_skill(self, message):
         """Remove all intents registered for a specific skill.
@@ -557,13 +625,13 @@ class IntentEngine:
                 # the entity name is in the regex itself, how to extract from string ?
                 # is syntax always (?P<name>someregexhere)  ?
                 entity_type = regex_str.split("(?P<")[-1].split(">")[0]
-            message["name"] = entity_type
-            message["samples"] = [regex_str]
+            message.data["name"] = entity_type
+            message.data["samples"] = [regex_str]
             self.handle_register_regex_entity(message)
         else:
             for ent in [entity_type] + alias_of:
-                message["name"] = ent
-                message["samples"] = [entity_value]
+                message.data["name"] = ent
+                message.data["samples"] = [entity_value]
                 self.handle_register_entity(message)
 
     def handle_register_mk2_regex_intent(self, message):
