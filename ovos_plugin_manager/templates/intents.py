@@ -171,12 +171,12 @@ class IntentExtractor:
     # registering/unloading intents
     def detach_skill(self, skill_id):
         for i in [e for e in self.registered_intents
-                  if e.skill_id == skill_id]:
-            self.detach_intent(i.name, i.skill_id)
+                  if e.name.startswith(skill_id)]:
+            self.detach_intent(i.name)
 
         for i in [e for e in self.registered_entities
-                  if e.skill_id == skill_id]:
-            self.detach_entity(i.name, i.skill_id)
+                  if e.name.startswith(skill_id)]:
+            self.detach_entity(i.name)
 
     def detach_entity(self, entity_name):
         self.registered_entities = [e for e in self.registered_entities
@@ -247,6 +247,10 @@ class IntentExtractor:
             intents = f.read().split("\n")
             self.register_regex_intent(intent_name, intents,
                                        lang=lang)
+
+    def train(self):
+        """ if the plugin needs to train on the registered data this is the place to do it"""
+        pass
 
     # intent handling
     def extract_regex_entities(self, utterance, lang=None):
@@ -493,17 +497,22 @@ class IntentEngine:
             return self.engine.priority
         return IntentPriority.FALLBACK_LOW
 
+    def train(self):
+        if self.engine:
+            self.engine.train()
+
     def handle_utterance_message(self, message):
         utterances = message.data["utterances"]
         lang = get_message_lang(message)
         good_utterance = False
-        for utterance in utterances:
-            for intent in self.engine.calc(utterance):
-                intent_type = intent["intent_type"]
-                yield IntentMatch(self.engine_id, intent_type, intent)
-                good_utterance = True
-            if good_utterance:
-                break
+        if self.engine:
+            for utterance in utterances:
+                for intent in self.engine.calc(utterance):
+                    intent_type = intent["intent_type"]
+                    yield IntentMatch(self.engine_id, intent_type, intent)
+                    good_utterance = True
+                if good_utterance:
+                    break
 
     # bus handlers
     @staticmethod
@@ -521,7 +530,8 @@ class IntentEngine:
 
     def handle_register_intent(self, message):
         intent_name, samples, lang = self._parse_message(message)
-        self.engine.register_intent(intent_name, samples)
+        if self.engine:
+            self.engine.register_intent(intent_name, samples)
 
     def handle_register_entity(self, message):
         entity_name = message.data["name"]
@@ -532,32 +542,37 @@ class IntentEngine:
                 samples = [l for l in f.read().split("\n")
                            if l and not l.startswith("#")]
         samples = samples or [entity_name]
-
-        self.engine.register_entity(entity_name, samples)
+        if self.engine:
+            self.engine.register_entity(entity_name, samples)
 
     def handle_register_regex_intent(self, message):
         intent_name, samples, lang = self._parse_message(message)
-        self.engine.register_regex_intent(intent_name, samples)
+        if self.engine:
+            self.engine.register_regex_intent(intent_name, samples)
 
     def handle_register_regex_entity(self, message):
         entity_name, samples, lang = self._parse_message(message)
-        self.engine.register_regex_entity(entity_name, samples)
+        if self.engine:
+            self.engine.register_regex_entity(entity_name, samples)
 
     def handle_register_keyword_intent(self, message):
-        self.engine.register_keyword_intent(
-            message.data['name'],
-            [_[0] for _ in message.data['requires']],
-            [_[0] for _ in message.data.get('optional', [])],
-            [_[0] for _ in message.data.get('at_least_one', [])],
-            [_[0] for _ in message.data.get('excludes', [])])
+        if self.engine:
+            self.engine.register_keyword_intent(
+                message.data['name'],
+                [_[0] for _ in message.data['requires']],
+                [_[0] for _ in message.data.get('optional', [])],
+                [_[0] for _ in message.data.get('at_least_one', [])],
+                [_[0] for _ in message.data.get('excludes', [])])
 
     def handle_detach_intent(self, message):
         intent_name = message.data.get('intent_name')
-        self.engine.detach_intent(intent_name)
+        if self.engine:
+            self.engine.detach_intent(intent_name)
 
     def handle_detach_entity(self, message):
         name = message.data.get('name')
-        self.engine.detach_entity(name)
+        if self.engine:
+            self.engine.detach_entity(name)
 
     def handle_detach_skill(self, message):
         """Remove all intents registered for a specific skill.
@@ -565,7 +580,8 @@ class IntentEngine:
             message (Message): message containing intent info
         """
         skill_id = message.data.get('skill_id')
-        self.engine.detach_skill(skill_id)
+        if self.engine:
+            self.engine.detach_skill(skill_id)
 
     def handle_get_intent(self, message):
         # TODO
