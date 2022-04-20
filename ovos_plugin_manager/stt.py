@@ -72,7 +72,7 @@ class OVOSSTTFactory:
         """
         config = config or get_stt_config()
         plugin = config["module"]
-        plugin_config = config[plugin]
+        plugin_config = config.get(plugin) or {}
         try:
             clazz = OVOSSTTFactory.get_class(config)
             return clazz(plugin_config)
