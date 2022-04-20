@@ -1,6 +1,6 @@
 from ovos_plugin_manager.utils import find_plugins, PluginTypes
-from ovos_utils.messagebus import get_mycroft_bus
 from ovos_utils.log import LOG
+from ovos_utils.messagebus import get_mycroft_bus
 
 
 def setup_audio_service(service_module, config=None, bus=None):
@@ -46,9 +46,10 @@ def load_audio_service_plugins(config=None, bus=None):
     """
     bus = bus or get_mycroft_bus()
     plugin_services = []
-    plugins = find_audio_service_plugins()
-    for plug in plugins:
-        service = setup_audio_service(plug, config, bus)
+    found_plugins = find_audio_service_plugins()
+    for plugin_name, plugin_module in found_plugins.items():
+        LOG.info(f'Loading audio service plugin: {plugin_name}')
+        service = setup_audio_service(plugin_module, config, bus)
         if service:
             plugin_services += service
     return plugin_services

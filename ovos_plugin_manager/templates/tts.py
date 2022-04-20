@@ -39,11 +39,11 @@ from ovos_utils.enclosure.api import EnclosureAPI
 from ovos_utils.file_utils import get_cache_directory
 from ovos_utils.lang.visimes import VISIMES
 from ovos_utils.log import LOG
-from ovos_utils.messagebus import Message, FakeBus as BUS
+from ovos_utils.messagebus import FakeBus as BUS
 from ovos_utils.metrics import Stopwatch
 from ovos_utils.signal import check_for_signal, create_signal
 from ovos_utils.sound import play_audio
-
+from mycroft_bus_client import Message
 from ovos_plugin_manager.g2p import OVOSG2PFactory
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 
