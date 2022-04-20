@@ -84,14 +84,14 @@ class STT(metaclass=ABCMeta):
 
 
 class TokenSTT(STT, metaclass=ABCMeta):
-    def __init__(self):
-        super(TokenSTT, self).__init__()
+    def __init__(self, config=None):
+        super().__init__(config)
         self.token = self.credential.get("token")
 
 
 class GoogleJsonSTT(STT, metaclass=ABCMeta):
-    def __init__(self):
-        super(GoogleJsonSTT, self).__init__()
+    def __init__(self, config=None):
+        super().__init__(config)
         if not self.credential.get("json") or self.keys.get("google_cloud"):
             self.credential["json"] = self.keys["google_cloud"]
         self.json_credentials = json.dumps(self.credential.get("json"))
@@ -99,16 +99,16 @@ class GoogleJsonSTT(STT, metaclass=ABCMeta):
 
 class BasicSTT(STT, metaclass=ABCMeta):
 
-    def __init__(self):
-        super(BasicSTT, self).__init__()
+    def __init__(self, config=None):
+        super().__init__(config)
         self.username = str(self.credential.get("username"))
         self.password = str(self.credential.get("password"))
 
 
 class KeySTT(STT, metaclass=ABCMeta):
 
-    def __init__(self):
-        super(KeySTT, self).__init__()
+    def __init__(self, config=None):
+        super().__init__(config)
         self.id = str(self.credential.get("client_id"))
         self.key = str(self.credential.get("client_key"))
 
@@ -149,8 +149,8 @@ class StreamingSTT(STT, metaclass=ABCMeta):
         ABC class for threaded streaming STT implemenations.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, config=None):
+        super().__init__(config)
         self.stream = None
         self.can_stream = True
         self.transcript_ready = Event()
