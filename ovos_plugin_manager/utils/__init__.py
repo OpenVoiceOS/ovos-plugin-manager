@@ -57,7 +57,7 @@ def find_plugins(plug_type=None):
             try:
                 entrypoints[entry_point.name] = entry_point.load()
             except Exception as e:
-                LOG.error(f"Failed to load plugin entry point {entry_point}")
+                LOG.exception(f"Failed to load plugin entry point {entry_point}")
     return entrypoints
 
 
