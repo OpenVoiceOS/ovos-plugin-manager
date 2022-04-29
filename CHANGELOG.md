@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.17a1...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.17a2...HEAD)
+
+**Merged pull requests:**
+
+- Automations/matrix chat workflow [\#56](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/56) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.17a2](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.17a2) (2022-04-26)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.17a1...V0.0.17a2)
 
 **Merged pull requests:**
 
