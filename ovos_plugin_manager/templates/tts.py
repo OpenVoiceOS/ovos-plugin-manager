@@ -358,6 +358,9 @@ class KwargParser:
 
         return voice or self.engine.voice
 
+    def parse(self, kwargs):
+        return self.get_lang(kwargs), self.get_voice(kwargs)
+
 
 class TTS:
     """TTS abstract class to be implemented by all TTS engines.
@@ -718,8 +721,7 @@ class TTS:
 
         # parse requested language for this TTS request
         # NOTE: this is ovos/neon only functionality, not in mycroft-core!
-        lang = self.kwarg_parser.get_lang(kwargs)
-        voice = self.kwarg_parser.get_voice(kwargs)
+        lang, voice = self.kwarg_parser.parse(kwargs)
         kwargs["lang"] = lang
         kwargs["voice"] = voice
 
@@ -776,8 +778,7 @@ class TTS:
     def get_from_cache(self, sentence, sentence_hash=None, **kwargs):
         sentence_hash = sentence_hash or hash_sentence(sentence)
         phonemes = None
-        voice = self.kwarg_parser.get_voice(kwargs)
-        lang = self.kwarg_parser.get_lang(kwargs)
+        lang, voice = self.kwarg_parser.parse(kwargs)
         cache = self.get_cache(voice=voice, lang=lang)
         audio_file, pho_file = cache.cached_sentences[sentence_hash]
         LOG.info(f"Found {audio_file.name} in TTS cache")
