@@ -725,14 +725,15 @@ class TTS:
         kwargs["lang"] = lang
         kwargs["voice"] = voice
 
+        cache = self.get_cache(voice, lang)  # cache per tts_id (lang/voice combo)
+
         # load from cache
-        if sentence_hash in self.cache:
-            audio, phonemes = self.get_from_cache(sentence, sentence_hash, **kwargs)
+        if sentence_hash in cache:
+            audio, phonemes = self.get_from_cache(sentence, **kwargs)
             self.add_metric({"metric_type": "tts.synth.finished", "cache": True})
             return audio, phonemes
 
         # synth + cache
-        cache = self.get_cache(voice, lang)  # cache per tts_id (lang/voice combo)
         audio = cache.define_audio_file(sentence_hash)
 
         # filter kwargs per plugin, different plugins expose different options
@@ -775,8 +776,8 @@ class TTS:
         cache.cached_sentences[sentence_hash] = (audio_file, pho_file)
         self.add_metric({"metric_type": "tts.synth.cached"})
 
-    def get_from_cache(self, sentence, sentence_hash=None, **kwargs):
-        sentence_hash = sentence_hash or hash_sentence(sentence)
+    def get_from_cache(self, sentence, **kwargs):
+        sentence_hash = hash_sentence(sentence)
         phonemes = None
         lang, voice = self.kwarg_parser.parse(kwargs)
         cache = self.get_cache(voice=voice, lang=lang)
