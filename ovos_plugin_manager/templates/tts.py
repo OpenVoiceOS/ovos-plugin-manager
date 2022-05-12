@@ -362,6 +362,10 @@ class TTSContext:
         kwargs = kwargs or {}
         return self.get_lang(kwargs), self.get_voice(kwargs)
 
+    def get_cache(self, kwargs=None):
+        lang, voice = self.get(kwargs)
+        return self.engine.get_cache(voice, lang)
+
 
 class TTS:
     """TTS abstract class to be implemented by all TTS engines.
@@ -785,8 +789,7 @@ class TTS:
     def get_from_cache(self, sentence, **kwargs):
         sentence_hash = hash_sentence(sentence)
         phonemes = None
-        lang, voice = self.context.get(kwargs)
-        cache = self.get_cache(voice=voice, lang=lang)
+        cache = self.context.get_cache(kwargs)
         audio_file, pho_file = cache.cached_sentences[sentence_hash]
         LOG.info(f"Found {audio_file.name} in TTS cache")
         if not pho_file:
