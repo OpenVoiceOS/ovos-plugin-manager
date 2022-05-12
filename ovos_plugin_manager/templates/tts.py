@@ -33,6 +33,7 @@ from threading import Thread
 from time import time, sleep
 
 import requests
+from mycroft_bus_client.message import Message, dig_for_message
 from ovos_utils import resolve_resource_file
 from ovos_utils.configuration import read_mycroft_config
 from ovos_utils.enclosure.api import EnclosureAPI
@@ -43,7 +44,7 @@ from ovos_utils.messagebus import FakeBus as BUS
 from ovos_utils.metrics import Stopwatch
 from ovos_utils.signal import check_for_signal, create_signal
 from ovos_utils.sound import play_audio
-from mycroft_bus_client.message import Message, dig_for_message
+
 from ovos_plugin_manager.g2p import OVOSG2PFactory
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 
@@ -315,7 +316,9 @@ class TTSContext:
         self.engine = engine
 
     def get_message(self, kwargs):
-        return kwargs.get("message") or dig_for_message()
+        msg = kwargs.get("message") or dig_for_message()
+        if msg and isinstance(msg, Message):
+            return msg
 
     def get_lang(self, kwargs):
         # parse requested language for this TTS request
@@ -324,11 +327,8 @@ class TTSContext:
         message = self.get_message(kwargs)
         if not lang and message:
             # get lang from message object if possible
-            try:
-                lang = message.data.get("lang") or \
-                       message.context.get("lang")
-            except:  # not a mycroft message object
-                pass
+            lang = message.data.get("lang") or \
+                   message.context.get("lang")
         return lang or self.engine.lang
 
     def get_gender(self, kwargs):
@@ -336,11 +336,8 @@ class TTSContext:
         message = self.get_message(kwargs)
         if not gender and message:
             # get gender from message object if possible
-            try:
-                gender = message.data.get("gender") or \
-                         message.context.get("gender")
-            except:  # not a mycroft message object
-                pass
+            gender = message.data.get("gender") or \
+                     message.context.get("gender")
         return gender
 
     def get_voice(self, kwargs):
@@ -350,11 +347,8 @@ class TTSContext:
         message = self.get_message(kwargs)
         if not voice and message:
             # get voice from message object if possible
-            try:
-                voice = message.data.get("voice") or \
-                       message.context.get("voice")
-            except:  # not a mycroft message object
-                pass
+            voice = message.data.get("voice") or \
+                    message.context.get("voice")
 
         if not voice:
             gender = self.get_gender(kwargs)
@@ -625,7 +619,6 @@ class TTS:
             self.format_speak_tags(utterance, False)
         elif self.ssml_tags and "speak" in self.ssml_tags:
             self.format_speak_tags(utterance)
-
 
         # if ssml is not supported by TTS engine remove all tags
         if not self.ssml_tags:
