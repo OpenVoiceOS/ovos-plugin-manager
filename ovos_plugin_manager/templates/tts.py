@@ -311,9 +311,8 @@ class KwargParser:
     in that case the helper method get_voice will be used to resolve the final voice_id
     """
 
-    def __init__(self, lang, voice="default"):
-        self.lang = lang
-        self.voice = voice
+    def __init__(self, engine):
+        self.engine = engine
 
     def get_lang(self, kwargs):
         # parse requested language for this TTS request
@@ -326,7 +325,7 @@ class KwargParser:
                        kwargs["message"].context.get("lang")
             except:  # not a mycroft message object
                 pass
-        return lang or self.lang
+        return lang or self.engine.lang
 
     def get_gender(self, kwargs):
         gender = kwargs.get("gender")
@@ -355,9 +354,9 @@ class KwargParser:
             gender = self.get_gender(kwargs)
             if gender:
                 lang = self.get_lang(kwargs)
-                voice = self.get_voice(gender, lang)
+                voice = self.engine.get_voice(gender, lang)
 
-        return voice or self.voice or "default"
+        return voice or self.engine.voice
 
 
 class TTS:
@@ -424,11 +423,8 @@ class TTS:
 
         self.g2p = OVOSG2PFactory.create(config_core)
         self.cache.curate()
+        self.kwarg_parser = KwargParser(self)
         self.add_metric({"metric_type": "tts.init"})
-
-    @property
-    def kwarg_parser(self):
-        return KwargParser(self.lang, self.voice)
 
     @property
     def tts_id(self):
