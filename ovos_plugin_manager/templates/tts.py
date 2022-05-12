@@ -720,6 +720,13 @@ class TTS:
         self.add_metric({"metric_type": "tts.synth.start"})
         sentence_hash = hash_sentence(sentence)
 
+        # parse requested language for this TTS request
+        # NOTE: this is ovos/neon only functionality, not in mycroft-core!
+        lang = self.kwarg_parser.get_lang(kwargs)
+        voice = self.kwarg_parser.get_voice(kwargs)
+        kwargs["lang"] = lang
+        kwargs["voice"] = voice
+
         # load from cache
         if sentence_hash in self.cache:
             audio, phonemes = self.get_from_cache(sentence, sentence_hash, **kwargs)
@@ -727,14 +734,8 @@ class TTS:
             return audio, phonemes
 
         # synth + cache
-        audio = self.cache.define_audio_file(sentence_hash)
-
-        # parse requested language for this TTS request
-        # NOTE: this is ovos only functionality, not in mycroft-core!
-        lang = self.kwarg_parser.get_lang(kwargs)
-        voice = self.kwarg_parser.get_voice(kwargs)
-        kwargs["lang"] = lang
-        kwargs["voice"] = voice
+        cache = self.get_cache(voice, lang)  # cache per tts_id (lang/voice combo)
+        audio = cache.define_audio_file(sentence_hash)
 
         # filter kwargs per plugin, different plugins expose different options
         #   mycroft-core -> no kwargs
