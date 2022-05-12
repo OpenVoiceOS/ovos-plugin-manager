@@ -304,6 +304,62 @@ class PlaybackThread(Thread):
         self.shutdown()
 
 
+class KwargParser:
+    """ parses kwargs for valid signatures and extracts voice/lang optional parameters
+    it will look for a requested voice in kwargs and inside the source Message data if available.
+    voice can also be defined by a combination of language and gender,
+    in that case the helper method get_voice will be used to resolve the final voice_id
+    """
+
+    def __init__(self, lang, voice="default"):
+        self.lang = lang
+        self.voice = voice
+
+    def get_lang(self, kwargs):
+        # parse requested language for this TTS request
+        # NOTE: this is ovos only functionality, not in mycroft-core!
+        lang = kwargs.get("lang")
+        if not lang and kwargs.get("message"):
+            # get lang from message object if possible
+            try:
+                lang = kwargs["message"].data.get("lang") or \
+                       kwargs["message"].context.get("lang")
+            except:  # not a mycroft message object
+                pass
+        return lang or self.lang
+
+    def get_gender(self, kwargs):
+        gender = kwargs.get("gender")
+        if not gender and kwargs.get("message"):
+            # get gender from message object if possible
+            try:
+                gender = kwargs["message"].data.get("gender") or \
+                         kwargs["message"].context.get("gender")
+            except:  # not a mycroft message object
+                pass
+        return gender
+
+    def get_voice(self, kwargs):
+        # parse requested voice for this TTS request
+        # NOTE: this is ovos only functionality, not in mycroft-core!
+        voice = kwargs.get("voice")
+        if not voice and kwargs.get("message"):
+            # get voice from message object if possible
+            try:
+                voice = kwargs["message"].data.get("voice") or \
+                       kwargs["message"].context.get("voice")
+            except:  # not a mycroft message object
+                pass
+
+        if not voice:
+            gender = self.get_gender(kwargs)
+            if gender:
+                lang = self.get_lang(kwargs)
+                voice = self.get_voice(gender, lang)
+
+        return voice or self.voice or "default"
+
+
 class TTS:
     """TTS abstract class to be implemented by all TTS engines.
 
@@ -369,6 +425,10 @@ class TTS:
         self.g2p = OVOSG2PFactory.create(config_core)
         self.cache.curate()
         self.add_metric({"metric_type": "tts.init"})
+
+    @property
+    def kwarg_parser(self):
+        return KwargParser(self.lang, self.voice)
 
     @property
     def tts_id(self):
@@ -626,17 +686,14 @@ class TTS:
 
         # synth -> queue for playback
         for sentence, l in chunks:
-            sentence_hash = hash_sentence(sentence)
-            if sentence_hash in self.cache:  # load from cache
-                audio_file, phonemes = self._get_from_cache(sentence, sentence_hash, **kwargs)
-            else:  # synth + cache
-                audio_file, phonemes = self._synth(sentence, sentence_hash, **kwargs)
+            # load from cache or synth + cache
+            audio_file, phonemes = self.synth(sentence, **kwargs)
 
             # get visemes/mouth movements
             if phonemes:
                 viseme = self.viseme(phonemes)
             else:
-                lang = self._get_lang(kwargs)
+                lang = self.kwarg_parser.get_lang(kwargs)
                 viseme = self.g2p.utterance2visemes(sentence, lang)
 
             audio_ext = self._determine_ext(audio_file)
@@ -656,41 +713,26 @@ class TTS:
         except Exception as e:
             return self.audio_ext
 
-    def _get_lang(self, kwargs):
-        # parse requested language for this TTS request
-        # NOTE: this is ovos only functionality, not in mycroft-core!
-        lang = kwargs.get("lang")
-        if not lang and kwargs.get("message"):
-            # get lang from message object if possible
-            try:
-                lang = kwargs["message"].data.get("lang") or \
-                       kwargs["message"].context.get("lang")
-            except:  # not a mycroft message object
-                pass
-        return lang or self.lang
-
-    def _get_voice(self, kwargs):
-        # parse requested language for this TTS request
-        # NOTE: this is ovos only functionality, not in mycroft-core!
-        voice = kwargs.get("voice")
-        if not voice and kwargs.get("message"):
-            # get lang from message object if possible
-            try:
-                voice = kwargs["message"].data.get("voice") or \
-                       kwargs["message"].context.get("voice")
-            except:  # not a mycroft message object
-                pass
-        return voice or self.voice or "default"
-
-    def _synth(self, sentence, sentence_hash=None, **kwargs):
+    def synth(self, sentence, **kwargs):
+        """ This method wraps get_tts
+        several optional keyword arguments are supported
+        sentence will be read/saved to cache"""
         self.add_metric({"metric_type": "tts.synth.start"})
-        sentence_hash = sentence_hash or hash_sentence(sentence)
+        sentence_hash = hash_sentence(sentence)
+
+        # load from cache
+        if sentence_hash in self.cache:
+            audio, phonemes = self.get_from_cache(sentence, sentence_hash, **kwargs)
+            self.add_metric({"metric_type": "tts.synth.finished", "cache": True})
+            return audio, phonemes
+
+        # synth + cache
         audio = self.cache.define_audio_file(sentence_hash)
 
         # parse requested language for this TTS request
         # NOTE: this is ovos only functionality, not in mycroft-core!
-        lang = self._get_lang(kwargs)
-        voice = self._get_voice(kwargs)
+        lang = self.kwarg_parser.get_lang(kwargs)
+        voice = self.kwarg_parser.get_voice(kwargs)
         kwargs["lang"] = lang
         kwargs["voice"] = voice
 
@@ -705,6 +747,7 @@ class TTS:
         # finally do the TTS synth
         audio.path, phonemes = self.get_tts(sentence, str(audio), **kwargs)
         self.add_metric({"metric_type": "tts.synth.finished"})
+
         # cache sentence + phonemes
         self._cache_sentence(sentence, audio, phonemes, sentence_hash,
                              voice=voice, lang=lang)
@@ -733,10 +776,12 @@ class TTS:
         cache.cached_sentences[sentence_hash] = (audio_file, pho_file)
         self.add_metric({"metric_type": "tts.synth.cached"})
 
-    def _get_from_cache(self, sentence, sentence_hash=None, **kwargs):
+    def get_from_cache(self, sentence, sentence_hash=None, **kwargs):
         sentence_hash = sentence_hash or hash_sentence(sentence)
         phonemes = None
-        cache = self.get_cache(voice=kwargs.get("voice"), lang=kwargs.get("lang"))
+        voice = self.kwarg_parser.get_voice(kwargs)
+        lang = self.kwarg_parser.get_lang(kwargs)
+        cache = self.get_cache(voice=voice, lang=lang)
         audio_file, pho_file = cache.cached_sentences[sentence_hash]
         LOG.info(f"Found {audio_file.name} in TTS cache")
         if not pho_file:
@@ -745,6 +790,11 @@ class TTS:
         if pho_file:
             phonemes = pho_file.load()
         return audio_file, phonemes
+
+    def get_voice(self, gender, lang=None):
+        """ map a language and gender to a valid voice for this TTS engine """
+        lang = lang or self.lang
+        return gender
 
     def viseme(self, phonemes):
         """Create visemes from phonemes.
