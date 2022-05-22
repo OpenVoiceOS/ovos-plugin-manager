@@ -376,7 +376,8 @@ class TTS:
 
     @property
     def cache(self):
-        return self.caches[self.tts_id]
+        return self.caches.get(self.tts_id) or \
+               self.get_cache()
 
     @cache.setter
     def cache(self, val):
