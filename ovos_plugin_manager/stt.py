@@ -23,6 +23,7 @@ class OVOSSTTFactory:
     """ replicates the base mycroft class, but uses only OPM enabled plugins"""
     MAPPINGS = {
         #    "mycroft": MycroftSTT,
+        "dummy": "ovos-stt-plugin-dummy",
         "google": "ovos-stt-plugin-chromium",
         #    "google_cloud": GoogleCloudSTT,
         #    "google_cloud_streaming": GoogleCloudStreamingSTT,
@@ -53,8 +54,6 @@ class OVOSSTTFactory:
         """
         config = config or get_stt_config()
         stt_module = config["module"]
-        if stt_module == "dummy":
-            return STT
         if stt_module in OVOSSTTFactory.MAPPINGS:
             stt_module = OVOSSTTFactory.MAPPINGS[stt_module]
         return load_stt_plugin(stt_module)

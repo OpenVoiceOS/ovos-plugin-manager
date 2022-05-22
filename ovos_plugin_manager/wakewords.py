@@ -20,6 +20,7 @@ def load_wake_word_plugin(module_name):
 class OVOSWakeWordFactory:
     """ replicates the base mycroft class, but uses only OPM enabled plugins"""
     MAPPINGS = {
+        "dummy": "ovos-ww-plugin-dummy",
         "pocketsphinx": "ovos-ww-plugin-pocketsphinx",
         "precise": "ovos-ww-plugin-precise",
         "snowboy": "ovos-ww-plugin-snowboy",
@@ -38,7 +39,7 @@ class OVOSWakeWordFactory:
         }
         """
         config = get_hotwords_config(config)
-        if hotword == "dummy" or hotword not in config:
+        if hotword not in config:
             return HotWordEngine
         ww_module = config["module"]
         if ww_module in OVOSWakeWordFactory.MAPPINGS:
