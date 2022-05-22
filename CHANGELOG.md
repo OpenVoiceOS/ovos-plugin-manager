@@ -2,7 +2,19 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a1...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a2...HEAD)
+
+**Implemented enhancements:**
+
+- feat/tts\_context [\#58](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/58) ([NeonJarbas](https://github.com/NeonJarbas))
+
+**Closed issues:**
+
+- Compatability with neon plugins [\#57](https://github.com/OpenVoiceOS/OVOS-plugin-manager/issues/57)
+
+## [V0.0.18a2](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.18a2) (2022-05-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a1...V0.0.18a2)
 
 **Fixed bugs:**
 
