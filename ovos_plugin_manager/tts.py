@@ -22,6 +22,7 @@ def load_tts_plugin(module_name):
 class OVOSTTSFactory:
     """ replicates the base mycroft class, but uses only OPM enabled plugins"""
     MAPPINGS = {
+        "dummy": "ovos-tts-plugin-dummy",
         "mimic": "ovos-tts-plugin-mimic",
         "mimic2": "ovos-tts-plugin-mimic2",
         "google": "ovos-tts-plugin-google-tx",
@@ -34,7 +35,7 @@ class OVOSTTSFactory:
         # "bing": BingTTS,
         "responsive_voice": "ovos-tts-plugin-responsivevoice",
         # "yandex": YandexTTS,
-        "polly": "chatterbox_polly_tts",
+        "polly": "ovos-tts-plugin-polly",
         # "mozilla": MozillaTTS,
         # "dummy": DummyTTS
         "pico": "ovos-tts-plugin-pico"
@@ -53,8 +54,6 @@ class OVOSTTSFactory:
         """
         config = config or get_tts_config()
         tts_module = config.get("module") or "dummy"
-        if tts_module == "dummy":
-            return TTS
         if tts_module in OVOSTTSFactory.MAPPINGS:
             tts_module = OVOSTTSFactory.MAPPINGS[tts_module]
         return load_tts_plugin(tts_module)
