@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.17...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a1...HEAD)
+
+**Fixed bugs:**
+
+- fix/cache\_property [\#60](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/60) ([NeonJarbas](https://github.com/NeonJarbas))
+
+## [V0.0.18a1](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.18a1) (2022-05-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.17...V0.0.18a1)
 
 **Implemented enhancements:**
 
