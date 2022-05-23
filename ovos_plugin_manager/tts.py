@@ -26,7 +26,7 @@ class OVOSTTSFactory:
         "mimic": "ovos-tts-plugin-mimic",
         "mimic2": "ovos-tts-plugin-mimic2",
         "google": "ovos-tts-plugin-google-tx",
-        # "marytts": MaryTTS,
+        "marytts": "ovos-tts-plugin-marytts",
         # "fatts": FATTS,
         # "festival": Festival,
         "espeak": "ovos_tts_plugin_espeakng",
