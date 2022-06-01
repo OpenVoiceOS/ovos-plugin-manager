@@ -2,7 +2,19 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a2...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a3...HEAD)
+
+**Implemented enhancements:**
+
+- mycroft hardcoded engines compat [\#61](https://github.com/OpenVoiceOS/OVOS-plugin-manager/issues/61)
+
+**Fixed bugs:**
+
+- add marytts [\#62](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/62) ([NeonJarbas](https://github.com/NeonJarbas))
+
+## [V0.0.18a3](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.18a3) (2022-05-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a2...V0.0.18a3)
 
 **Implemented enhancements:**
 
