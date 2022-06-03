@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a3...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a4...HEAD)
+
+**Fixed bugs:**
+
+- fix/tts\_playback\_thread [\#63](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/63) ([NeonJarbas](https://github.com/NeonJarbas))
+
+## [V0.0.18a4](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.18a4) (2022-06-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a3...V0.0.18a4)
 
 **Implemented enhancements:**
 
