@@ -515,9 +515,9 @@ class TTS:
         self.add_metric({"metric_type": "tts.setup"})
 
     def _init_playback(self):
-        # shutdown any previous stopped thread
-        if TTS.playback and not TTS.playback.is_running:
-            TTS.playback.stop()
+        # shutdown any previous thread
+        if TTS.playback:
+            TTS.playback.shutdown()
 
         TTS.playback = PlaybackThread(TTS.queue)
         TTS.playback.set_bus(self.bus)
