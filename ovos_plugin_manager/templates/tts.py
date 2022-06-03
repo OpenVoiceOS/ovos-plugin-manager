@@ -415,7 +415,6 @@ class TTS:
 
         if TTS.queue is None:
             TTS.queue = Queue()
-            TTS.playback = PlaybackThread(TTS.queue)
 
         self.context = TTSContext(self)
 
@@ -512,15 +511,20 @@ class TTS:
             bus:    Mycroft messagebus connection
         """
         self.bus = bus or BUS()
+        self._init_playback()
+        self.add_metric({"metric_type": "tts.setup"})
 
+    def _init_playback(self):
+        # shutdown any previous thread
+        if TTS.playback:
+            TTS.playback.shutdown()
+
+        TTS.playback = PlaybackThread(TTS.queue)
         TTS.playback.set_bus(self.bus)
         TTS.playback.attach_tts(self)
         if not TTS.playback.enclosure:
             TTS.playback.enclosure = EnclosureAPI(self.bus)
-        if not TTS.playback.is_running:
-            TTS.playback.start()
-
-        self.add_metric({"metric_type": "tts.setup"})
+        TTS.playback.start()
 
     @property
     def enclosure(self):
