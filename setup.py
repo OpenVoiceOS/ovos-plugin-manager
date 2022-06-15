@@ -51,6 +51,7 @@ def required(requirements_file):
 SEG_PLUGIN_ENTRY_POINT = 'ovos-segmentation-plugin-quebrafrases=ovos_plugin_manager.templates.segmentation:Segmenter'
 TOK_PLUGIN_ENTRY_POINT = 'ovos-tokenization-plugin-quebrafrases=ovos_plugin_manager.templates.tokenization:Tokenizer'
 POSTAG_PLUGIN_ENTRY_POINT = 'ovos-postag-plugin-dummy=ovos_plugin_manager.templates.postag:PosTagger'
+KW_PLUGIN_ENTRY_POINT = 'ovos-keyword-plugin-dummy=ovos_plugin_manager.templates.keywords:KeywordExtractor'
 TTS_PLUGIN_ENTRY_POINT = 'ovos-tts-plugin-dummy=ovos_plugin_manager.templates.tts:TTS'
 STT_PLUGIN_ENTRY_POINT = 'ovos-stt-plugin-dummy=ovos_plugin_manager.templates.stt:STT'
 WW_PLUGIN_ENTRY_POINT = 'ovos-ww-plugin-dummy=ovos_plugin_manager.templates.hotwords:HotWordEngine'
@@ -73,6 +74,7 @@ setup(
         'intentbox.segmentation': SEG_PLUGIN_ENTRY_POINT,
         'intentbox.tokenization': TOK_PLUGIN_ENTRY_POINT,
         'intentbox.postag': POSTAG_PLUGIN_ENTRY_POINT,
+        'intentbox.keywords': KW_PLUGIN_ENTRY_POINT,
         'mycroft.plugin.tts': TTS_PLUGIN_ENTRY_POINT,
         'mycroft.plugin.stt': STT_PLUGIN_ENTRY_POINT,
         'mycroft.plugin.wake_word': WW_PLUGIN_ENTRY_POINT
