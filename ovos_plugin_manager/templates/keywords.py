@@ -10,4 +10,4 @@ class KeywordExtractor:
         return get_message_lang()
 
     def extract(self, text):
-        return text
+        return {text: 0.0}
