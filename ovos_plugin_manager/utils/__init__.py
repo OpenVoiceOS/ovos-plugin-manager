@@ -28,6 +28,7 @@ class PluginTypes(str, Enum):
     TRANSLATE = "neon.plugin.lang.translate"
     LANG_DETECT = "neon.plugin.lang.detect"
     UTTERANCE_TRANSFORMER = "neon.plugin.text"
+    METADATA_TRANSFORMER = "neon.plugin.metadata"
     AUDIO_TRANSFORMER = "neon.plugin.audio"
     QUESTION_SOLVER = "neon.plugin.solver"
     COREFERENCE_SOLVER = "intentbox.coreference"
