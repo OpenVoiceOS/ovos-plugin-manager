@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a4...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a5...HEAD)
+
+**Implemented enhancements:**
+
+- feat/metadata\_transformers [\#64](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/64) ([NeonJarbas](https://github.com/NeonJarbas))
+
+## [V0.0.18a5](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.18a5) (2022-06-03)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a4...V0.0.18a5)
 
 **Fixed bugs:**
 
