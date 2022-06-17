@@ -32,6 +32,7 @@ class PluginTypes(str, Enum):
     AUDIO_TRANSFORMER = "neon.plugin.audio"
     QUESTION_SOLVER = "neon.plugin.solver"
     COREFERENCE_SOLVER = "intentbox.coreference"
+    KEYWORD_EXTRACTION = "intentbox.keywords"
     UTTERANCE_SEGMENTATION = "intentbox.segmentation"
     TOKENIZATION = "intentbox.tokenization"
     POSTAG = "intentbox.postag"
