@@ -4,7 +4,7 @@ using this import instead of mycroft can be used
 
 The main use case is for plugins to be used across different projects
 """
-from ovos_utils.configuration import read_mycroft_config
+from ovos_config.config import read_mycroft_config
 
 
 def msec_to_sec(msecs):

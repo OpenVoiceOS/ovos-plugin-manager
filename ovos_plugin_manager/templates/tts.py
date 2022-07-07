@@ -35,7 +35,7 @@ from time import time, sleep
 import requests
 from mycroft_bus_client.message import Message, dig_for_message
 from ovos_utils import resolve_resource_file
-from ovos_utils.configuration import read_mycroft_config
+from ovos_config.config import read_mycroft_config
 from ovos_utils.enclosure.api import EnclosureAPI
 from ovos_utils.file_utils import get_cache_directory
 from ovos_utils.lang.visimes import VISIMES

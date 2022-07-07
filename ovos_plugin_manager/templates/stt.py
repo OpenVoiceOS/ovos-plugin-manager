@@ -8,7 +8,7 @@ import json
 from abc import ABCMeta, abstractmethod
 from queue import Queue
 from threading import Thread, Event
-from ovos_utils.configuration import read_mycroft_config
+from ovos_config.config import read_mycroft_config
 
 
 class STT(metaclass=ABCMeta):
