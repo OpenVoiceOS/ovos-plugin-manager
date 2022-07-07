@@ -1,7 +1,7 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
 from ovos_plugin_manager.templates.g2p import Grapheme2PhonemePlugin, PhonemeAlphabet
 from ovos_utils.log import LOG
-from ovos_utils.configuration import read_mycroft_config
+from ovos_config.config import read_mycroft_config
 
 
 def find_g2p_plugins():

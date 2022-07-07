@@ -1,5 +1,5 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
-from ovos_utils.configuration import read_mycroft_config
+from ovos_config.config import read_mycroft_config
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.stt import STT, StreamingSTT, StreamThread
 

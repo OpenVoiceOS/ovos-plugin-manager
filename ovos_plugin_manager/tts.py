@@ -1,6 +1,6 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
 from ovos_plugin_manager.templates.tts import TTS
-from ovos_utils.configuration import read_mycroft_config
+from ovos_config.config import read_mycroft_config
 from ovos_utils.log import LOG
 
 

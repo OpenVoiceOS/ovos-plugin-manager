@@ -1,4 +1,4 @@
-from ovos_utils.configuration import read_mycroft_config
+from ovos_config.config import read_mycroft_config
 
 
 class VADEngine:
