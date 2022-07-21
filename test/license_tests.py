@@ -13,7 +13,9 @@ license_overrides = {
     'psutil': 'BSD3'
 }
 # explicitly allow these packages that would fail otherwise
-whitelist = []
+whitelist = [
+    'python-dateutil'  # Apache Software License, BSD License (Dual License)
+]
 
 # validation flags
 allow_nonfree = False
