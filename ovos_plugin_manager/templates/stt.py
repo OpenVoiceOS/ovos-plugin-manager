@@ -8,7 +8,7 @@ import json
 from abc import ABCMeta, abstractmethod
 from queue import Queue
 from threading import Thread, Event
-from ovos_config.config import read_mycroft_config
+from ovos_config import Configuration
 
 
 class STT(metaclass=ABCMeta):
@@ -17,10 +17,7 @@ class STT(metaclass=ABCMeta):
     def __init__(self, config=None):
         # only imported here to not drag dependency
         from speech_recognition import Recognizer
-        try:
-            self.config_core = read_mycroft_config() or {}
-        except FileNotFoundError:
-            self.config_core = {}
+        self.config_core = Configuration()
         self._lang = None
         self._credential = None
         self._keys = None
@@ -61,10 +58,7 @@ class STT(metaclass=ABCMeta):
 
     def _init_config(self, config=None):
         if config is None:
-            try:
-                config_core = read_mycroft_config() or {}
-            except FileNotFoundError:
-                config_core = {}
+            config_core = Configuration()
             config_stt = config_core.get("stt", {})
             self.config = config_stt.get(config_stt.get("module"), {})
         else:

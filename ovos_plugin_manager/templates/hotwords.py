@@ -4,7 +4,7 @@ using this import instead of mycroft can be used
 
 The main use case is for plugins to be used across different projects
 """
-from ovos_config.config import read_mycroft_config
+from ovos_config import Configuration
 
 
 def msec_to_sec(msecs):
@@ -30,10 +30,7 @@ class HotWordEngine:
 
     def __init__(self, key_phrase="hey mycroft", config=None, lang="en-us"):
         self.key_phrase = str(key_phrase).lower()
-        try:
-            mycroft_config = read_mycroft_config()
-        except FileNotFoundError:
-            mycroft_config = {}
+        mycroft_config = Configuration()
         if config is None:
             # NOTE there is a bug in upstream,
             # the correct key is "hotwords" not "hot_words"
