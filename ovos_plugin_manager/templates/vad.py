@@ -1,12 +1,9 @@
-from ovos_config.config import read_mycroft_config
+from ovos_config import Configuration
 
 
 class VADEngine:
     def __init__(self, config=None, sample_rate=None):
-        try:
-            self.config_core = read_mycroft_config() or {}
-        except FileNotFoundError:
-            self.config_core = {}
+        self.config_core = Configuration()
         self._init_config(config)
         self.sample_rate = sample_rate or \
                            self.config_core.get("listener", {}).get("sample_rate", 16000)

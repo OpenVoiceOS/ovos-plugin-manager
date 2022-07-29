@@ -1,6 +1,7 @@
 from ovos_plugin_manager.utils import find_plugins, PluginTypes
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
+from ovos_config import Configuration
 
 
 def setup_audio_service(service_module, config=None, bus=None):
@@ -13,7 +14,7 @@ def setup_audio_service(service_module, config=None, bus=None):
     Returns:
         (list) List of created services.
     """
-    config = config or {}
+    config = config or Configuration()
     bus = bus or get_mycroft_bus()
     if (hasattr(service_module, 'autodetect') and
             callable(service_module.autodetect)):

@@ -35,7 +35,7 @@ from time import time, sleep
 import requests
 from mycroft_bus_client.message import Message, dig_for_message
 from ovos_utils import resolve_resource_file
-from ovos_config.config import read_mycroft_config
+from ovos_config import Configuration
 from ovos_utils.enclosure.api import EnclosureAPI
 from ovos_utils.file_utils import get_cache_directory
 from ovos_utils.lang.visimes import VISIMES
@@ -387,10 +387,7 @@ class TTS:
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
         self.log_timestamps = False
 
-        try:
-            config_core = read_mycroft_config() or {}
-        except FileNotFoundError:
-            config_core = {}
+        config_core = Configuration()
 
         config = config or config_core.get("tts", {})
         config["lang"] = config.get("lang") or config_core.get("lang")

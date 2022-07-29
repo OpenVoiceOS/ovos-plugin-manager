@@ -1,6 +1,6 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
 from ovos_plugin_manager.templates.tts import TTS
-from ovos_config.config import read_mycroft_config
+from ovos_config import Configuration
 from ovos_utils.log import LOG
 
 
@@ -25,6 +25,7 @@ class OVOSTTSFactory:
         "dummy": "ovos-tts-plugin-dummy",
         "mimic": "ovos-tts-plugin-mimic",
         "mimic2": "ovos-tts-plugin-mimic2",
+        "mimic3": "ovos-tts-plugin-mimic3",
         "google": "ovos-tts-plugin-google-tx",
         "marytts": "ovos-tts-plugin-marytts",
         # "fatts": FATTS,
@@ -37,7 +38,6 @@ class OVOSTTSFactory:
         # "yandex": YandexTTS,
         "polly": "ovos-tts-plugin-polly",
         # "mozilla": MozillaTTS,
-        # "dummy": DummyTTS
         "pico": "ovos-tts-plugin-pico"
     }
 
@@ -71,13 +71,16 @@ class OVOSTTSFactory:
         """
         tts_config = get_tts_config(config)
         tts_lang = tts_config["lang"]
-        tts_module = tts_config.get('module', 'mimic')
+        tts_module = tts_config.get('module', 'dummy')
         try:
             clazz = OVOSTTSFactory.get_class(tts_config)
-            LOG.info(f'Found plugin {tts_module}')
-            tts = clazz(tts_lang, tts_config)
-            tts.validator.validate()
-            LOG.info(f'Loaded plugin {tts_module}')
+            if clazz:
+                LOG.info(f'Found plugin {tts_module}')
+                tts = clazz(tts_lang, tts_config)
+                tts.validator.validate()
+                LOG.info(f'Loaded plugin {tts_module}')
+            else:
+                raise FileNotFoundError("unknown plugin")
         except Exception:
             LOG.exception('The selected TTS plugin could not be loaded.')
             raise
@@ -85,10 +88,7 @@ class OVOSTTSFactory:
 
 
 def get_tts_config(config=None):
-    try:
-        config = config or read_mycroft_config()
-    except:
-        config = {}
+    config = config or Configuration()
     lang = config.get("lang", "en-us")
     if "tts" in config and "module" in config["tts"]:
         config = config["tts"]

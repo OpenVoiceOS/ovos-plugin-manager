@@ -1,5 +1,5 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
-from ovos_config.config import read_mycroft_config
+from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.vad import VADEngine
 
@@ -68,7 +68,7 @@ class OVOSVADFactory:
 
 
 def get_vad_config(config=None):
-    config = config or read_mycroft_config()
+    config = config or Configuration()
     if "listener" in config and "VAD" not in config:
         config = config["listener"] or {}
     if "VAD" in config:

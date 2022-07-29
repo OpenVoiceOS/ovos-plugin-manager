@@ -1,5 +1,5 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
-from ovos_config.config import read_mycroft_config
+from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.hotwords import HotWordEngine
 
@@ -65,11 +65,15 @@ class OVOSWakeWordFactory:
         config = get_hotwords_config(config)
         config = config.get(hotword) or config["hey mycroft"]
         module = config.get("module", "pocketsphinx")
-        return cls.load_module(module, hotword, config, lang, loop)
+        try:
+            return cls.load_module(module, hotword, config, lang, loop)
+        except:
+            LOG.error(f"failed to created hotword: {config}")
+            raise
 
 
 def get_hotwords_config(config=None):
-    config = config or read_mycroft_config()
+    config = config or Configuration()
     lang = config.get("lang", "en-us")
     if "hotwords" in config:
         config = config["hotwords"]

@@ -1,5 +1,5 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
-from ovos_config.config import read_mycroft_config
+from ovos_config import Configuration
 from ovos_utils.log import LOG
 
 
@@ -44,7 +44,7 @@ class OVOSLangDetectionFactory:
           }
         """
         try:
-            config = config or read_mycroft_config()
+            config = config or Configuration()
             if "language" in config:
                 config = config["language"]
             lang_module = config.get("detection_module", "libretranslate_detection_plug")
@@ -89,7 +89,7 @@ class OVOSLangTranslationFactory:
           }
         """
         try:
-            config = config or read_mycroft_config()
+            config = config or Configuration()
             if "language" in config:
                 config = config["language"]
             lang_module = config.get("translation_module", "libretranslate_plug")

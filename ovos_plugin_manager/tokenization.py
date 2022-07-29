@@ -1,5 +1,5 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
-from ovos_config.config import read_mycroft_config
+from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.tokenization import Tokenizer
 
@@ -67,7 +67,7 @@ class OVOSTokenizerFactory:
 
 
 def get_tokenization_config(config=None):
-    config = config or read_mycroft_config()
+    config = config or Configuration()
     lang = config.get("lang")
     if "intentBox" in config and "tokenization" not in config:
         config = config["intentBox"] or {}
