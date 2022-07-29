@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import find_plugins, PluginTypes
+from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
 from ovos_config import Configuration
@@ -33,6 +33,10 @@ def setup_audio_service(service_module, config=None, bus=None):
 
 def find_audio_service_plugins():
     return find_plugins(PluginTypes.AUDIO)
+
+
+def get_audio_config_examples(module_name):
+    return load_plugin(module_name + ".config", PluginTypes.AUDIO_CONFIG)
 
 
 def load_audio_service_plugins(config=None, bus=None):

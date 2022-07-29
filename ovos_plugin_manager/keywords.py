@@ -8,6 +8,11 @@ def find_keyword_extract_plugins():
     return find_plugins(PluginTypes.KEYWORD_EXTRACTION)
 
 
+def get_keyword_extract_config_examples(module_name):
+    return load_plugin(module_name + ".config",
+                       PluginTypes.KEYWORD_EXTRACTION_CONFIG)
+
+
 def load_keyword_extract_plugin(module_name):
     """Wrapper function for loading keyword_extract plugin.
 

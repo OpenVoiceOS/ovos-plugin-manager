@@ -8,6 +8,11 @@ def find_segmentation_plugins():
     return find_plugins(PluginTypes.UTTERANCE_SEGMENTATION)
 
 
+def get_segmentation_config_examples(module_name):
+    return load_plugin(module_name + ".config",
+                       PluginTypes.UTTERANCE_SEGMENTATION_CONFIG)
+
+
 def load_segmentation_plugin(module_name):
     """Wrapper function for loading segmentation plugin.
 

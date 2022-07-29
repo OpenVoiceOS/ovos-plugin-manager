@@ -19,6 +19,10 @@ def load_tts_plugin(module_name):
     return load_plugin(module_name, PluginTypes.TTS)
 
 
+def get_tts_config_examples(module_name):
+    return load_plugin(module_name + ".config", PluginTypes.TTS_CONFIG)
+
+
 class OVOSTTSFactory:
     """ replicates the base mycroft class, but uses only OPM enabled plugins"""
     MAPPINGS = {
@@ -97,3 +101,8 @@ def get_tts_config(config=None):
     tts_config["lang"] = tts_config.get('lang') or lang
     tts_config["module"] = tts_module
     return tts_config
+
+
+if __name__ == "__main__":
+    print(get_tts_config_examples("ovos-tts-plugin-mimic"))
+

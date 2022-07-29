@@ -5,6 +5,10 @@ def find_audio_transformer_plugins():
     return find_plugins(PluginTypes.AUDIO_TRANSFORMER)
 
 
+def get_audio_transformer_config_examples(module_name):
+    return load_plugin(module_name + ".config", PluginTypes.AUDIO_TRANSFORMER_CONFIG)
+
+
 def load_audio_transformer_plugin(module_name):
     """Wrapper function for loading audio_transformer plugin.
 

@@ -5,6 +5,11 @@ def find_metadata_transformer_plugins():
     return find_plugins(PluginTypes.METADATA_TRANSFORMER)
 
 
+def get_metadata_transformer_config_examples(module_name):
+    return load_plugin(module_name + ".config",
+                       PluginTypes.METADATA_TRANSFORMER_CONFIG)
+
+
 def load_metadata_transformer_plugin(module_name):
     """Wrapper function for loading metadata_transformer plugin.
 

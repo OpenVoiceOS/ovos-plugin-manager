@@ -7,12 +7,22 @@ def find_tx_plugins():
     return find_plugins(PluginTypes.TRANSLATE)
 
 
+def get_tx_config_examples(module_name):
+    return load_plugin(module_name + ".config",
+                       PluginTypes.TRANSLATE_CONFIG)
+
+
 def load_tx_plugin(module_name):
     return load_plugin(module_name, PluginTypes.TRANSLATE)
 
 
 def find_lang_detect_plugins():
     return find_plugins(PluginTypes.LANG_DETECT)
+
+
+def get_lang_detect_config_examples(module_name):
+    return load_plugin(module_name + ".config",
+                       PluginTypes.LANG_DETECT_CONFIG)
 
 
 def load_lang_detect_plugin(module_name):

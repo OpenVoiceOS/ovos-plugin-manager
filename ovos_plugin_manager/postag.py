@@ -8,6 +8,11 @@ def find_postag_plugins():
     return find_plugins(PluginTypes.POSTAG)
 
 
+def get_postag_config_examples(module_name):
+    return load_plugin(module_name + ".config",
+                       PluginTypes.POSTAG_CONFIG)
+
+
 def load_postag_plugin(module_name):
     """Wrapper function for loading postag plugin.
 

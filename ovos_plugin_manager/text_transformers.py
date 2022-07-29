@@ -5,6 +5,11 @@ def find_utterance_transformer_plugins():
     return find_plugins(PluginTypes.UTTERANCE_TRANSFORMER)
 
 
+def get_utterance_transformer_config_examples(module_name):
+    return load_plugin(module_name + ".config",
+                       PluginTypes.UTTERANCE_TRANSFORMER_CONFIG)
+
+
 def load_utterance_transformer_plugin(module_name):
     """Wrapper function for loading text_transformer plugin.
 

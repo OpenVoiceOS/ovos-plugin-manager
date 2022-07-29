@@ -8,6 +8,11 @@ def find_wake_word_plugins():
     return find_plugins(PluginTypes.WAKEWORD)
 
 
+def get_wake_word_config_examples(module_name):
+    return load_plugin(module_name + ".config",
+                       PluginTypes.WAKEWORD_CONFIG)
+
+
 def load_wake_word_plugin(module_name):
     """Wrapper function for loading wake word plugin.
 

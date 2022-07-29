@@ -8,6 +8,11 @@ def find_stt_plugins():
     return find_plugins(PluginTypes.STT)
 
 
+def get_stt_config_examples(module_name):
+    return load_plugin(module_name + ".config",
+                       PluginTypes.STT_CONFIG)
+
+
 def load_stt_plugin(module_name):
     """Wrapper function for loading stt plugin.
 

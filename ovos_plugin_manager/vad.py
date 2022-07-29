@@ -8,6 +8,11 @@ def find_vad_plugins():
     return find_plugins(PluginTypes.VAD)
 
 
+def get_vad_config_examples(module_name):
+    return load_plugin(module_name + ".config",
+                       PluginTypes.VAD_CONFIG)
+
+
 def load_vad_plugin(module_name):
     """Wrapper function for loading vad plugin.
 

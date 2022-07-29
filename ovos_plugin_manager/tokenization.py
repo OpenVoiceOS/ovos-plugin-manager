@@ -8,6 +8,11 @@ def find_tokenization_plugins():
     return find_plugins(PluginTypes.TOKENIZATION)
 
 
+def get_tokenization_config_examples(module_name):
+    return load_plugin(module_name + ".config",
+                       PluginTypes.TOKENIZATION_CONFIG)
+
+
 def load_tokenization_plugin(module_name):
     """Wrapper function for loading tokenization plugin.
 

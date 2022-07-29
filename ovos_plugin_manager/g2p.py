@@ -8,6 +8,10 @@ def find_g2p_plugins():
     return find_plugins(PluginTypes.PHONEME)
 
 
+def get_g2p_config_examples(module_name):
+    return load_plugin(module_name + ".config", PluginTypes.PHONEME_CONFIG)
+
+
 def load_g2p_plugin(module_name):
     return load_plugin(module_name, PluginTypes.PHONEME)
 

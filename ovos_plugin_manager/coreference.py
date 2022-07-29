@@ -8,6 +8,10 @@ def find_coref_plugins():
     return find_plugins(PluginTypes.COREFERENCE_SOLVER)
 
 
+def get_coref_config_examples(module_name):
+    return load_plugin(module_name + ".config", PluginTypes.COREFERENCE_SOLVER_CONFIG)
+
+
 def load_coref_plugin(module_name):
     """Wrapper function for loading coref plugin.
 
