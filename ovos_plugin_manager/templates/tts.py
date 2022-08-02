@@ -872,6 +872,16 @@ class TTS:
     def __del__(self):
         self.shutdown()
 
+    @property
+    def available_languages(self) -> set:
+        """Return languages supported by this TTS implementation in this state
+        This property should be overridden by the derived class to advertise
+        what languages that engine supports.
+        Returns:
+            set: supported languages
+        """
+        return set()
+
 
 class TTSValidator:
     """TTS Validator abstract class to be implemented by all TTS engines.

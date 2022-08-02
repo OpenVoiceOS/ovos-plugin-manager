@@ -76,6 +76,16 @@ class STT(metaclass=ABCMeta):
     def execute(self, audio, language=None):
         pass
 
+    @property
+    def available_languages(self) -> set:
+        """Return languages supported by this TTS implementation in this state
+        This property should be overridden by the derived class to advertise
+        what languages that engine supports.
+        Returns:
+            set: supported languages
+        """
+        return set()
+
 
 class TokenSTT(STT, metaclass=ABCMeta):
     def __init__(self, config=None):
