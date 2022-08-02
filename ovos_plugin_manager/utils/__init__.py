@@ -14,6 +14,7 @@
 import pkg_resources
 from enum import Enum
 from ovos_utils.log import LOG
+from langcodes import standardize_tag as _normalize_lang
 
 
 class PluginTypes(str, Enum):
@@ -99,3 +100,20 @@ def load_plugin(plug_name, plug_type=None):
         plug_type or "all plugin types", plug_name))
     return None
 
+
+def normalize_lang(lang):
+    # TODO consider moving to LF or ovos_utils
+    try:
+        # special handling, the parse sometimes messes this up
+        # eg, uk-uk gets normalized to uk-gb
+        # this also makes lookup easier as we
+        # often get duplicate entries with both variants
+        if "-" in lang:
+            pieces = lang.split("-")
+            if len(pieces) == 2 and pieces[0] == pieces[1]:
+                lang = pieces[0]
+        lang = _normalize_lang(lang, macro=True)
+    except ValueError:
+        # this lang code is apparently not valid ?
+        pass
+    return lang
