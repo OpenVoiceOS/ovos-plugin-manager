@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.hotwords import HotWordEngine
@@ -9,8 +9,38 @@ def find_wake_word_plugins():
 
 
 def get_wake_word_config_examples(module_name):
-    return load_plugin(module_name + ".config",
-                       PluginTypes.WAKEWORD_CONFIG)
+    cfgs = load_plugin(module_name + ".config", PluginTypes.WAKEWORD_CONFIG) or {}
+    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+
+
+def get_wake_word_lang_config_examples(lang, include_dialects=False):
+    lang = normalize_lang(lang)
+    configs = {}
+    for plug in find_wake_word_plugins():
+        configs[plug] = []
+        confs = get_wake_word_config_examples(plug)
+        if include_dialects:
+            lang = lang.split("-")[0]
+            for l in confs:
+                if l.startswith(lang):
+                    configs[plug] += confs[l]
+        elif lang in confs:
+            configs[plug] += confs[lang]
+        elif f"{lang}-{lang}" in confs:
+            configs[plug] += confs[f"{lang}-{lang}"]
+    return {k: v for k, v in configs.items() if v}
+
+
+def get_wake_word_supported_langs():
+    configs = {}
+    for plug in find_wake_word_plugins():
+        confs = get_wake_word_config_examples(plug)
+        for lang, cfgs in confs.items():
+            if confs:
+                if lang not in configs:
+                    configs[lang] = []
+                configs[lang].append(plug)
+    return configs
 
 
 def load_wake_word_plugin(module_name):
@@ -34,15 +64,6 @@ class OVOSWakeWordFactory:
 
     @staticmethod
     def get_class(hotword, config=None):
-        """Factory method to get a TTS engine class based on configuration.
-
-        The configuration file ``mycroft.conf`` contains a ``tts`` section with
-        the name of a TTS module to be read by this method.
-
-        "tts": {
-            "module": <engine_name>
-        }
-        """
         config = get_hotwords_config(config)
         if hotword not in config:
             return HotWordEngine

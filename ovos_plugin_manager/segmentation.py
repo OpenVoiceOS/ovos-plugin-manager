@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.segmentation import Segmenter
@@ -9,8 +9,38 @@ def find_segmentation_plugins():
 
 
 def get_segmentation_config_examples(module_name):
-    return load_plugin(module_name + ".config",
-                       PluginTypes.UTTERANCE_SEGMENTATION_CONFIG)
+    cfgs = load_plugin(module_name + ".config", PluginTypes.UTTERANCE_SEGMENTATION_CONFIG) or {}
+    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+
+
+def get_segmentation_lang_config_examples(lang, include_dialects=False):
+    lang = normalize_lang(lang)
+    configs = {}
+    for plug in find_segmentation_plugins():
+        configs[plug] = []
+        confs = get_segmentation_config_examples(plug)
+        if include_dialects:
+            lang = lang.split("-")[0]
+            for l in confs:
+                if l.startswith(lang):
+                    configs[plug] += confs[l]
+        elif lang in confs:
+            configs[plug] += confs[lang]
+        elif f"{lang}-{lang}" in confs:
+            configs[plug] += confs[f"{lang}-{lang}"]
+    return {k: v for k, v in configs.items() if v}
+
+
+def get_segmentation_supported_langs():
+    configs = {}
+    for plug in find_segmentation_plugins():
+        confs = get_segmentation_config_examples(plug)
+        for lang, cfgs in confs.items():
+            if confs:
+                if lang not in configs:
+                    configs[lang] = []
+                configs[lang].append(plug)
+    return configs
 
 
 def load_segmentation_plugin(module_name):
