@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import load_plugin, normalize_lang, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import load_plugin, normalize_lang, find_plugins, PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.stt import STT, StreamingSTT, StreamThread
@@ -9,7 +9,7 @@ def find_stt_plugins():
 
 
 def get_stt_config_examples(module_name):
-    cfgs = load_plugin(module_name + ".config", PluginTypes.STT_CONFIG) or {}
+    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.STT) or {}
     return {normalize_lang(lang): v for lang, v in cfgs.items()}
 
 

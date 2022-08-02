@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
 
 
 def find_utterance_transformer_plugins():
@@ -6,7 +6,7 @@ def find_utterance_transformer_plugins():
 
 
 def get_utterance_transformer_config_examples(module_name):
-    cfgs = load_plugin(module_name + ".config", PluginTypes.UTTERANCE_TRANSFORMER_CONFIG) or {}
+    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.UTTERANCE_TRANSFORMER) or {}
     return {normalize_lang(lang): v for lang, v in cfgs.items()}
 
 

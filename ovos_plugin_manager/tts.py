@@ -1,7 +1,7 @@
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, TextToSpeechCache, ConcatTTS, RemoteTTS
 from ovos_config import Configuration
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, normalize_lang
+from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, normalize_lang, PluginConfigTypes
 
 
 def find_tts_plugins():
@@ -20,7 +20,7 @@ def load_tts_plugin(module_name):
 
 
 def get_tts_config_examples(module_name):
-    cfgs = load_plugin(module_name + ".config", PluginTypes.TTS_CONFIG) or {}
+    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.TTS) or {}
     return {normalize_lang(lang): v for lang, v in cfgs.items()}
 
 

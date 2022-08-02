@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import load_plugin, normalize_lang, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import load_plugin, normalize_lang, find_plugins, PluginTypes, PluginConfigTypes
 
 
 def find_question_solver_plugins():
@@ -6,7 +6,7 @@ def find_question_solver_plugins():
 
 
 def get_question_solver_config_examples(module_name):
-    cfgs = load_plugin(module_name + ".config", PluginTypes.QUESTION_SOLVER_CONFIG) or {}
+    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.QUESTION_SOLVER) or {}
     return {normalize_lang(lang): v for lang, v in cfgs.items()}
 
 

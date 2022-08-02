@@ -19,43 +19,46 @@ from langcodes import standardize_tag as _normalize_lang
 
 class PluginTypes(str, Enum):
     PHAL = "ovos.plugin.phal"
-    PHAL_CONFIG = "ovos.plugin.phal.config"
     SKILL = "ovos.plugin.skill"
-    SKILL_CONFIG = "ovos.plugin.skill.config"
     VAD = "ovos.plugin.VAD"
-    VAD_CONFIG = "ovos.plugin.VAD.config"
     PHONEME = "ovos.plugin.g2p"
-    PHONEME_CONFIG = "ovos.plugin.g2p.config"
     AUDIO = 'mycroft.plugin.audioservice'
-    AUDIO_CONFIG = 'mycroft.plugin.audioservice.config'
     STT = 'mycroft.plugin.stt'
-    STT_CONFIG = 'mycroft.plugin.stt.config'
     TTS = 'mycroft.plugin.tts'
-    TTS_CONFIG = 'mycroft.plugin.tts.config'
     WAKEWORD = 'mycroft.plugin.wake_word'
-    WAKEWORD_CONFIG = 'mycroft.plugin.wake_word.config'
     TRANSLATE = "neon.plugin.lang.translate"
-    TRANSLATE_CONFIG = "neon.plugin.lang.translate.config"
     LANG_DETECT = "neon.plugin.lang.detect"
-    LANG_DETECT_CONFIG = "neon.plugin.lang.detect.config"
     UTTERANCE_TRANSFORMER = "neon.plugin.text"
-    UTTERANCE_TRANSFORMER_CONFIG = "neon.plugin.text.config"
     METADATA_TRANSFORMER = "neon.plugin.metadata"
-    METADATA_TRANSFORMER_CONFIG = "neon.plugin.metadata.config"
     AUDIO_TRANSFORMER = "neon.plugin.audio"
-    AUDIO_TRANSFORMER_CONFIG = "neon.plugin.audio.config"
     QUESTION_SOLVER = "neon.plugin.solver"
-    QUESTION_SOLVER_CONFIG = "neon.plugin.solver.config"
     COREFERENCE_SOLVER = "intentbox.coreference"
-    COREFERENCE_SOLVER_CONFIG = "intentbox.coreference.config"
     KEYWORD_EXTRACTION = "intentbox.keywords"
-    KEYWORD_EXTRACTION_CONFIG = "intentbox.keywords.config"
     UTTERANCE_SEGMENTATION = "intentbox.segmentation"
-    UTTERANCE_SEGMENTATION_CONFIG = "intentbox.segmentation.config"
     TOKENIZATION = "intentbox.tokenization"
-    TOKENIZATION_CONFIG = "intentbox.tokenization.config"
     POSTAG = "intentbox.postag"
-    POSTAG_CONFIG = "intentbox.postag.config"
+
+
+class PluginConfigTypes(str, Enum):
+    PHAL = "ovos.plugin.phal.config"
+    SKILL = "ovos.plugin.skill.config"
+    VAD = "ovos.plugin.VAD.config"
+    PHONEME = "ovos.plugin.g2p.config"
+    AUDIO = 'mycroft.plugin.audioservice.config'
+    STT = 'mycroft.plugin.stt.config'
+    TTS = 'mycroft.plugin.tts.config'
+    WAKEWORD = 'mycroft.plugin.wake_word.config'
+    TRANSLATE = "neon.plugin.lang.translate.config"
+    LANG_DETECT = "neon.plugin.lang.detect.config"
+    UTTERANCE_TRANSFORMER = "neon.plugin.text.config"
+    METADATA_TRANSFORMER = "neon.plugin.metadata.config"
+    AUDIO_TRANSFORMER = "neon.plugin.audio.config"
+    QUESTION_SOLVER = "neon.plugin.solver.config"
+    COREFERENCE_SOLVER = "intentbox.coreference.config"
+    KEYWORD_EXTRACTION = "intentbox.keywords.config"
+    UTTERANCE_SEGMENTATION = "intentbox.segmentation.config"
+    TOKENIZATION = "intentbox.tokenization.config"
+    POSTAG = "intentbox.postag.config"
 
 
 def find_plugins(plug_type=None):

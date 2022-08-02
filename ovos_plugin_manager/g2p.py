@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.g2p import Grapheme2PhonemePlugin, PhonemeAlphabet
 from ovos_utils.log import LOG
 from ovos_config import Configuration
@@ -9,7 +9,7 @@ def find_g2p_plugins():
 
 
 def get_g2p_config_examples(module_name):
-    cfgs = load_plugin(module_name + ".config", PluginTypes.PHONEME_CONFIG) or {}
+    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.PHONEME) or {}
     return {normalize_lang(lang): v for lang, v in cfgs.items()}
 
 

@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 
@@ -9,7 +9,7 @@ def find_tx_plugins():
 
 def get_tx_config_examples(module_name):
     return load_plugin(module_name + ".config",
-                       PluginTypes.TRANSLATE_CONFIG)
+                       PluginConfigTypes.TRANSLATE)
 
 
 def load_tx_plugin(module_name):
@@ -22,7 +22,7 @@ def find_lang_detect_plugins():
 
 def get_lang_detect_config_examples(module_name):
     return load_plugin(module_name + ".config",
-                       PluginTypes.LANG_DETECT_CONFIG)
+                       PluginConfigTypes.LANG_DETECT)
 
 
 def load_lang_detect_plugin(module_name):

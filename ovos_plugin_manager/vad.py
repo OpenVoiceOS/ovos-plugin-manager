@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.vad import VADEngine
@@ -10,7 +10,7 @@ def find_vad_plugins():
 
 def get_vad_config_examples(module_name):
     return load_plugin(module_name + ".config",
-                       PluginTypes.VAD_CONFIG)
+                       PluginConfigTypes.VAD)
 
 
 def load_vad_plugin(module_name):

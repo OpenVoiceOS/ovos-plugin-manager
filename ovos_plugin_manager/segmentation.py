@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.segmentation import Segmenter
@@ -9,7 +9,7 @@ def find_segmentation_plugins():
 
 
 def get_segmentation_config_examples(module_name):
-    cfgs = load_plugin(module_name + ".config", PluginTypes.UTTERANCE_SEGMENTATION_CONFIG) or {}
+    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.UTTERANCE_SEGMENTATION) or {}
     return {normalize_lang(lang): v for lang, v in cfgs.items()}
 
 
