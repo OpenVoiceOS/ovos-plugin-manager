@@ -5,17 +5,23 @@ def find_question_solver_plugins():
     return find_plugins(PluginTypes.QUESTION_SOLVER)
 
 
-def get_question_solver_config_examples(module_name):
+def get_question_solver_configs():
+    return {plug: get_question_solver_module_configs(plug)
+            for plug in find_question_solver_plugins()}
+
+
+def get_question_solver_module_configs(module_name):
+    # solver plugins return {lang: [list of config dicts]}
     cfgs = load_plugin(module_name + ".config", PluginConfigTypes.QUESTION_SOLVER) or {}
     return {normalize_lang(lang): v for lang, v in cfgs.items()}
 
 
-def get_question_solver_lang_config_examples(lang, include_dialects=False):
+def get_question_solver_lang_configs(lang, include_dialects=False):
     lang = normalize_lang(lang)
     configs = {}
     for plug in find_question_solver_plugins():
         configs[plug] = []
-        confs = get_question_solver_config_examples(plug)
+        confs = get_question_solver_module_configs(plug)
         if include_dialects:
             lang = lang.split("-")[0]
             for l in confs:
@@ -31,7 +37,7 @@ def get_question_solver_lang_config_examples(lang, include_dialects=False):
 def get_question_solver_supported_langs():
     configs = {}
     for plug in find_question_solver_plugins():
-        confs = get_question_solver_config_examples(plug)
+        confs = get_question_solver_module_configs(plug)
         for lang, cfgs in confs.items():
             if confs:
                 if lang not in configs:

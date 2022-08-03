@@ -8,9 +8,15 @@ def find_vad_plugins():
     return find_plugins(PluginTypes.VAD)
 
 
-def get_vad_config_examples(module_name):
-    return load_plugin(module_name + ".config",
-                       PluginConfigTypes.VAD)
+def get_vad_configs():
+    return {plug: get_vad_module_configs(plug)
+            for plug in find_vad_plugins()}
+
+
+def get_vad_module_configs(module_name):
+    # VAD plugins return [list of config dicts] or {module_name: [list of config dicts]}
+    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.VAD)
+    return {module_name: cfgs} if isinstance(cfgs, list) else cfgs
 
 
 def load_vad_plugin(module_name):

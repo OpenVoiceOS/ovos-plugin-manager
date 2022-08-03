@@ -5,17 +5,22 @@ def find_metadata_transformer_plugins():
     return find_plugins(PluginTypes.METADATA_TRANSFORMER)
 
 
-def get_metadata_transformer_config_examples(module_name):
+def get_metadata_transformer_configs():
+    return {plug: get_metadata_transformer_module_configs(plug)
+            for plug in find_metadata_transformer_plugins()}
+
+
+def get_metadata_transformer_module_configs(module_name):
     cfgs = load_plugin(module_name + ".config", PluginConfigTypes.METADATA_TRANSFORMER) or {}
     return {normalize_lang(lang): v for lang, v in cfgs.items()}
 
 
-def get_metadata_transformer_lang_config_examples(lang, include_dialects=False):
+def get_metadata_transformer_lang_configs(lang, include_dialects=False):
     lang = normalize_lang(lang)
     configs = {}
     for plug in find_metadata_transformer_plugins():
         configs[plug] = []
-        confs = get_metadata_transformer_config_examples(plug)
+        confs = get_metadata_transformer_module_configs(plug)
         if include_dialects:
             lang = lang.split("-")[0]
             for l in confs:
@@ -31,7 +36,7 @@ def get_metadata_transformer_lang_config_examples(lang, include_dialects=False):
 def get_metadata_transformer_supported_langs():
     configs = {}
     for plug in find_metadata_transformer_plugins():
-        confs = get_metadata_transformer_config_examples(plug)
+        confs = get_metadata_transformer_module_configs(plug)
         for lang, cfgs in confs.items():
             if confs:
                 if lang not in configs:

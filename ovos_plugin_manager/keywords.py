@@ -7,18 +7,21 @@ from ovos_plugin_manager.templates.keywords import KeywordExtractor
 def find_keyword_extract_plugins():
     return find_plugins(PluginTypes.KEYWORD_EXTRACTION)
 
+def get_keyword_extract_configs():
+    return {plug: get_keyword_extract_module_configs(plug)
+            for plug in find_keyword_extract_plugins()}
 
-def get_keyword_extract_config_examples(module_name):
+def get_keyword_extract_module_configs(module_name):
     cfgs = load_plugin(module_name + ".config", PluginConfigTypes.KEYWORD_EXTRACTION) or {}
     return {normalize_lang(lang): v for lang, v in cfgs.items()}
 
 
-def get_keyword_extract_lang_config_examples(lang, include_dialects=False):
+def get_keyword_extract_lang_configs(lang, include_dialects=False):
     lang = normalize_lang(lang)
     configs = {}
     for plug in find_keyword_extract_plugins():
         configs[plug] = []
-        confs = get_keyword_extract_config_examples(plug)
+        confs = get_keyword_extract_module_configs(plug)
         if include_dialects:
             lang = lang.split("-")[0]
             for l in confs:
@@ -34,7 +37,7 @@ def get_keyword_extract_lang_config_examples(lang, include_dialects=False):
 def get_keyword_extract_supported_langs():
     configs = {}
     for plug in find_keyword_extract_plugins():
-        confs = get_keyword_extract_config_examples(plug)
+        confs = get_keyword_extract_module_configs(plug)
         for lang, cfgs in confs.items():
             if confs:
                 if lang not in configs:

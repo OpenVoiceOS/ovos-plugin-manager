@@ -8,17 +8,22 @@ def find_coref_plugins():
     return find_plugins(PluginTypes.COREFERENCE_SOLVER)
 
 
-def get_coref_config_examples(module_name):
+def get_coref_configs():
+    return {plug: get_coref_module_configs(plug)
+            for plug in find_coref_plugins()}
+
+
+def get_coref_module_configs(module_name):
     cfgs = load_plugin(module_name + ".config", PluginConfigTypes.COREFERENCE_SOLVER) or {}
     return {normalize_lang(lang): v for lang, v in cfgs.items()}
 
 
-def get_coref_lang_config_examples(lang, include_dialects=False):
+def get_coref_lang_configs(lang, include_dialects=False):
     lang = normalize_lang(lang)
     configs = {}
     for plug in find_coref_plugins():
         configs[plug] = []
-        confs = get_coref_config_examples(plug)
+        confs = get_coref_module_configs(plug)
         if include_dialects:
             lang = lang.split("-")[0]
             for l in confs:
@@ -34,7 +39,7 @@ def get_coref_lang_config_examples(lang, include_dialects=False):
 def get_coref_supported_langs():
     configs = {}
     for plug in find_coref_plugins():
-        confs = get_coref_config_examples(plug)
+        confs = get_coref_module_configs(plug)
         for lang, cfgs in confs.items():
             if confs:
                 if lang not in configs:

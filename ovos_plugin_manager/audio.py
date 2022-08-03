@@ -35,7 +35,12 @@ def find_audio_service_plugins():
     return find_plugins(PluginTypes.AUDIO)
 
 
-def get_audio_config_examples(module_name):
+def get_audio_service_configs():
+    return {plug: get_audio_service_module_configs(plug)
+            for plug in find_audio_service_plugins()}
+
+
+def get_audio_service_module_configs(module_name):
     return load_plugin(module_name + ".config", PluginConfigTypes.AUDIO)
 
 

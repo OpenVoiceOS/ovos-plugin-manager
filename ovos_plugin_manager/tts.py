@@ -19,17 +19,23 @@ def load_tts_plugin(module_name):
     return load_plugin(module_name, PluginTypes.TTS)
 
 
-def get_tts_config_examples(module_name):
+def get_tts_configs():
+    return {plug: get_tts_module_configs(plug)
+            for plug in find_tts_plugins()}
+
+
+def get_tts_module_configs(module_name):
+    # TTS plugins return {lang: [list of config dicts]}
     cfgs = load_plugin(module_name + ".config", PluginConfigTypes.TTS) or {}
     return {normalize_lang(lang): v for lang, v in cfgs.items()}
 
 
-def get_tts_lang_config_examples(lang, include_dialects=False):
+def get_tts_lang_configs(lang, include_dialects=False):
     lang = normalize_lang(lang)
     configs = {}
     for plug in find_tts_plugins():
         configs[plug] = []
-        confs = get_tts_config_examples(plug)
+        confs = get_tts_module_configs(plug)
         if include_dialects:
             lang = lang.split("-")[0]
             for l in confs:
@@ -45,7 +51,7 @@ def get_tts_lang_config_examples(lang, include_dialects=False):
 def get_tts_supported_langs():
     configs = {}
     for plug in find_tts_plugins():
-        confs = get_tts_config_examples(plug)
+        confs = get_tts_module_configs(plug)
         for lang, cfgs in confs.items():
             if confs:
                 if lang not in configs:
@@ -135,7 +141,7 @@ def get_tts_config(config=None):
 
 
 if __name__ == "__main__":
-    configs = get_tts_config_examples('ovos-tts-plugin-marytts')
+    configs = get_tts_module_configs('ovos-tts-plugin-marytts')
     # {'de': [{'display_name': 'Dfki Pavoque Styles',
     #          'gender': 'male',
     #          'url': 'http://mary.dfki.de:59125',
@@ -462,7 +468,7 @@ if __name__ == "__main__":
     #  'zh-CN': ['ovos-tts-plugin-google-tx'],
     #  'zh-TW': ['ovos-tts-plugin-google-tx']}
 
-    lang_configs = get_tts_lang_config_examples("fr")
+    lang_configs = get_tts_lang_configs("fr")
     # {'neon-tts-plugin-larynx-server': [{'display_name': 'gilles le blanc',
     #                                     'gender': '',
     #                                     'voice': 'fr-fr/gilles_le_blanc-glow_tts'},

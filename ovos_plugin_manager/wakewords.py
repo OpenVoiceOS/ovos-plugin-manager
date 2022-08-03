@@ -8,33 +8,41 @@ def find_wake_word_plugins():
     return find_plugins(PluginTypes.WAKEWORD)
 
 
-def get_wake_word_config_examples(module_name):
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.WAKEWORD) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+def get_ww_configs():
+    configs = {}
+    for plug in find_wake_word_plugins():
+        configs[plug] = get_ww_module_configs(plug)
+    return configs
 
 
-def get_wake_word_lang_config_examples(lang, include_dialects=False):
+def get_ww_module_configs(module_name):
+    # WW plugins return {ww_name: [list of config dicts]}
+    return load_plugin(module_name + ".config", PluginConfigTypes.WAKEWORD) or {}
+
+
+def get_ww_lang_configs(lang, include_dialects=False):
     lang = normalize_lang(lang)
     configs = {}
     for plug in find_wake_word_plugins():
         configs[plug] = []
-        confs = get_wake_word_config_examples(plug)
-        if include_dialects:
-            lang = lang.split("-")[0]
-            for l in confs:
-                if l.startswith(lang):
-                    configs[plug] += confs[l]
-        elif lang in confs:
-            configs[plug] += confs[lang]
-        elif f"{lang}-{lang}" in confs:
-            configs[plug] += confs[f"{lang}-{lang}"]
+        confs = get_ww_module_configs(plug)
+        for ww_name, ww_conf in confs.items():
+            ww_lang = ww_conf.get("lang")
+            if not ww_lang:
+                continue
+            if include_dialects:
+                lang = lang.split("-")[0]
+                if ww_lang.startswith(lang):
+                    configs[plug] += ww_conf
+            elif lang == ww_lang or f"{lang}-{lang}" == ww_lang:
+                configs[plug] += ww_conf
     return {k: v for k, v in configs.items() if v}
 
 
-def get_wake_word_supported_langs():
+def get_ww_supported_langs():
     configs = {}
     for plug in find_wake_word_plugins():
-        confs = get_wake_word_config_examples(plug)
+        confs = get_ww_module_configs(plug)
         for lang, cfgs in confs.items():
             if confs:
                 if lang not in configs:
