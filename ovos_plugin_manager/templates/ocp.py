@@ -1,3 +1,4 @@
+from ovos_plugin_manager.utils import classproperty
 
 
 class OCPStreamExtractor:
@@ -5,7 +6,7 @@ class OCPStreamExtractor:
     def __init__(self, ocp_settings=None):
         self.ocp_settings = ocp_settings or {}
 
-    @property
+    @classproperty
     def supported_seis(self):
         """
         skills may return results requesting a specific extractor to be used
