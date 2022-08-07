@@ -125,10 +125,3 @@ def normalize_lang(lang):
         pass
     return lang
 
-
-class classproperty(property):
-    """Decorator for a Class-level property.
-    Credit to Denis Rhyzhkov on Stackoverflow: https://stackoverflow.com/a/13624858/1280629"""
-    def __get__(self, owner_self, owner_cls):
-        return self.fget(owner_cls)
-
