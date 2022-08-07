@@ -2,8 +2,8 @@
 
 class OCPStreamExtractor:
 
-    def __init__(self, ocp_settings):
-        self.ocp_settings = ocp_settings
+    def __init__(self, ocp_settings=None):
+        self.ocp_settings = ocp_settings or {}
 
     @property
     def supported_seis(self):
