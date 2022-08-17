@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.coreference import CoreferenceSolverEngine, replace_coreferences
@@ -6,6 +6,46 @@ from ovos_plugin_manager.templates.coreference import CoreferenceSolverEngine, r
 
 def find_coref_plugins():
     return find_plugins(PluginTypes.COREFERENCE_SOLVER)
+
+
+def get_coref_configs():
+    return {plug: get_coref_module_configs(plug)
+            for plug in find_coref_plugins()}
+
+
+def get_coref_module_configs(module_name):
+    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.COREFERENCE_SOLVER) or {}
+    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+
+
+def get_coref_lang_configs(lang, include_dialects=False):
+    lang = normalize_lang(lang)
+    configs = {}
+    for plug in find_coref_plugins():
+        configs[plug] = []
+        confs = get_coref_module_configs(plug)
+        if include_dialects:
+            lang = lang.split("-")[0]
+            for l in confs:
+                if l.startswith(lang):
+                    configs[plug] += confs[l]
+        elif lang in confs:
+            configs[plug] += confs[lang]
+        elif f"{lang}-{lang}" in confs:
+            configs[plug] += confs[f"{lang}-{lang}"]
+    return {k: v for k, v in configs.items() if v}
+
+
+def get_coref_supported_langs():
+    configs = {}
+    for plug in find_coref_plugins():
+        confs = get_coref_module_configs(plug)
+        for lang, cfgs in confs.items():
+            if confs:
+                if lang not in configs:
+                    configs[lang] = []
+                configs[lang].append(plug)
+    return configs
 
 
 def load_coref_plugin(module_name):

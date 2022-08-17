@@ -14,6 +14,7 @@
 import pkg_resources
 from enum import Enum
 from ovos_utils.log import LOG
+from langcodes import standardize_tag as _normalize_lang
 
 
 class PluginTypes(str, Enum):
@@ -36,6 +37,28 @@ class PluginTypes(str, Enum):
     UTTERANCE_SEGMENTATION = "intentbox.segmentation"
     TOKENIZATION = "intentbox.tokenization"
     POSTAG = "intentbox.postag"
+
+
+class PluginConfigTypes(str, Enum):
+    PHAL = "ovos.plugin.phal.config"
+    SKILL = "ovos.plugin.skill.config"
+    VAD = "ovos.plugin.VAD.config"
+    PHONEME = "ovos.plugin.g2p.config"
+    AUDIO = 'mycroft.plugin.audioservice.config'
+    STT = 'mycroft.plugin.stt.config'
+    TTS = 'mycroft.plugin.tts.config'
+    WAKEWORD = 'mycroft.plugin.wake_word.config'
+    TRANSLATE = "neon.plugin.lang.translate.config"
+    LANG_DETECT = "neon.plugin.lang.detect.config"
+    UTTERANCE_TRANSFORMER = "neon.plugin.text.config"
+    METADATA_TRANSFORMER = "neon.plugin.metadata.config"
+    AUDIO_TRANSFORMER = "neon.plugin.audio.config"
+    QUESTION_SOLVER = "neon.plugin.solver.config"
+    COREFERENCE_SOLVER = "intentbox.coreference.config"
+    KEYWORD_EXTRACTION = "intentbox.keywords.config"
+    UTTERANCE_SEGMENTATION = "intentbox.segmentation.config"
+    TOKENIZATION = "intentbox.tokenization.config"
+    POSTAG = "intentbox.postag.config"
 
 
 def find_plugins(plug_type=None):
@@ -80,3 +103,20 @@ def load_plugin(plug_name, plug_type=None):
         plug_type or "all plugin types", plug_name))
     return None
 
+
+def normalize_lang(lang):
+    # TODO consider moving to LF or ovos_utils
+    try:
+        # special handling, the parse sometimes messes this up
+        # eg, uk-uk gets normalized to uk-gb
+        # this also makes lookup easier as we
+        # often get duplicate entries with both variants
+        if "-" in lang:
+            pieces = lang.split("-")
+            if len(pieces) == 2 and pieces[0] == pieces[1]:
+                lang = pieces[0]
+        lang = _normalize_lang(lang, macro=True)
+    except ValueError:
+        # this lang code is apparently not valid ?
+        pass
+    return lang

@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.hotwords import HotWordEngine
@@ -6,6 +6,49 @@ from ovos_plugin_manager.templates.hotwords import HotWordEngine
 
 def find_wake_word_plugins():
     return find_plugins(PluginTypes.WAKEWORD)
+
+
+def get_ww_configs():
+    configs = {}
+    for plug in find_wake_word_plugins():
+        configs[plug] = get_ww_module_configs(plug)
+    return configs
+
+
+def get_ww_module_configs(module_name):
+    # WW plugins return {ww_name: [list of config dicts]}
+    return load_plugin(module_name + ".config", PluginConfigTypes.WAKEWORD) or {}
+
+
+def get_ww_lang_configs(lang, include_dialects=False):
+    lang = normalize_lang(lang)
+    configs = {}
+    for plug in find_wake_word_plugins():
+        configs[plug] = []
+        confs = get_ww_module_configs(plug)
+        for ww_name, ww_conf in confs.items():
+            ww_lang = ww_conf.get("lang")
+            if not ww_lang:
+                continue
+            if include_dialects:
+                lang = lang.split("-")[0]
+                if ww_lang.startswith(lang):
+                    configs[plug] += ww_conf
+            elif lang == ww_lang or f"{lang}-{lang}" == ww_lang:
+                configs[plug] += ww_conf
+    return {k: v for k, v in configs.items() if v}
+
+
+def get_ww_supported_langs():
+    configs = {}
+    for plug in find_wake_word_plugins():
+        confs = get_ww_module_configs(plug)
+        for lang, cfgs in confs.items():
+            if confs:
+                if lang not in configs:
+                    configs[lang] = []
+                configs[lang].append(plug)
+    return configs
 
 
 def load_wake_word_plugin(module_name):
@@ -29,15 +72,6 @@ class OVOSWakeWordFactory:
 
     @staticmethod
     def get_class(hotword, config=None):
-        """Factory method to get a TTS engine class based on configuration.
-
-        The configuration file ``mycroft.conf`` contains a ``tts`` section with
-        the name of a TTS module to be read by this method.
-
-        "tts": {
-            "module": <engine_name>
-        }
-        """
         config = get_hotwords_config(config)
         if hotword not in config:
             return HotWordEngine
