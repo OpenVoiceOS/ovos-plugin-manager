@@ -17,7 +17,9 @@ class LanguageDetector:
 
     @property
     def available_languages(self) -> set:
-        """Return languages supported by this detector implementation in this state
+        """
+        Return languages supported by this detector implementation in this state.
+        This should be a set of languages this detector is capable of recognizing.
         This property should be overridden by the derived class to advertise
         what languages that engine supports.
         Returns:
@@ -59,7 +61,9 @@ class LanguageTranslator:
 
     @property
     def available_languages(self) -> set:
-        """Return languages supported by this translator implementation in this state
+        """
+        Return languages supported by this translator implementation in this state.
+        Any language in this set should be translatable to any other language in the set.
         This property should be overridden by the derived class to advertise
         what languages that engine supports.
         Returns:
