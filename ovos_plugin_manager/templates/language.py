@@ -70,3 +70,14 @@ class LanguageTranslator:
             set: supported languages
         """
         return set()
+
+    def supported_translations(self, source_lang: str = None) -> set:
+        """
+        Return valid target languages we can translate `source_lang` to.
+        This method should be overridden by the derived class.
+        Args:
+            source_lang: ISO 639-1 source language code
+        Returns:
+            set of ISO 639-1 languages the source language can be translated to
+        """
+        return self.available_languages
