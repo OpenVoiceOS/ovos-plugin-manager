@@ -103,10 +103,5 @@ class OVOSG2PFactory:
 
 
 def get_g2p_config(config=None):
-    config = config or Configuration()
-    if "g2p" in config:
-        config = config["g2p"]
-    g2p_module = config.get('module', 'dummy')
-    g2p_config = config.get(g2p_module, {})
-    g2p_config["module"] = g2p_module
-    return g2p_config
+    from ovos_plugin_manager.utils.config import get_plugin_config
+    return get_plugin_config(config, "g2p")

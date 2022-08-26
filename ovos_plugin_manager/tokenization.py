@@ -108,18 +108,12 @@ class OVOSTokenizerFactory:
 
 
 def get_tokenization_config(config=None):
+    from ovos_plugin_manager.utils.config import get_plugin_config
     config = config or Configuration()
-    lang = config.get("lang")
     if "intentBox" in config and "tokenization" not in config:
-        config = config["intentBox"] or {}
-        lang = config.get("lang") or lang
-    if "tokenization" in config:
-        config = config["tokenization"]
-        lang = config.get("lang") or lang
-    config["lang"] = lang or "en-us"
-    tokenization_module = config.get('module') or 'ovos-tokenization-plugin-quebrafrases'
-    tokenization_config = config.get(tokenization_module, {})
-    tokenization_config["module"] = tokenization_module
-    return tokenization_config
+        return get_plugin_config(config, "intentBox")
+    else:
+        return get_plugin_config(config, "tokenization")
+
 
 

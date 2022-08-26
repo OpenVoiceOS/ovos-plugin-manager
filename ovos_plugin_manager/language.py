@@ -1,3 +1,4 @@
+from ovos_plugin_manager.utils.config import get_plugin_config
 from ovos_utils.log import LOG
 
 from ovos_config import Configuration
@@ -81,7 +82,7 @@ class OVOSLangDetectionFactory:
             if clazz is None:
                 raise ValueError(f'Language Detection plugin {lang_module} not found')
             LOG.info(f'Loaded the Language Detection plugin {lang_module}')
-            return clazz(config=config.get(lang_module))
+            return clazz(config=get_plugin_config(config, "language", lang_module))
         except Exception:
             # The Language Detection backend failed to start.
             LOG.exception('The selected Language Detection plugin could not be loaded!')
@@ -125,7 +126,7 @@ class OVOSLangTranslationFactory:
             if clazz is None:
                 raise ValueError(f'Language Translation plugin {lang_module} not found')
             LOG.info(f'Loaded the Language Translation plugin {lang_module}')
-            return clazz(config=config.get(lang_module))
+            return clazz(config=get_plugin_config(config, "language", lang_module))
         except Exception:
             # The Language Detection backend failed to start.
             LOG.exception('The selected Language Translation plugin could not be loaded!')
