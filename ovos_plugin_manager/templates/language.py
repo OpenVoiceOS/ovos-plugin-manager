@@ -22,13 +22,13 @@ class LanguageDetector:
 
 class LanguageTranslator:
     def __init__(self, config=None):
-        config_core = Configuration()
-        self.config = config or config_core.get('language')
+        self.config = config or get_plugin_config(config, "language")
         # translate from, unless specified/detected otherwise
-        self.default_language = config_core.get("lang") or "en-us"
+        self.default_language = self.config.get("lang") or "en-us"
         # translate to
-        self.internal_language = self.config.get("internal") or \
-            self.default_language or "en-us"
+        self.internal_language = (Configuration().get('language') or
+                                  dict()).get("internal") or \
+            self.default_language
 
     def translate(self, text, target=None, source=None):
         return text
