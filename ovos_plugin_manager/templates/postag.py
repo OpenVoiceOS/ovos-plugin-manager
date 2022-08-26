@@ -1,9 +1,10 @@
 from mycroft_bus_client.message import dig_for_message
+from ovos_plugin_manager.utils.config import get_plugin_config
 
 
 class PosTagger:
     def __init__(self, config=None):
-        self.config = config or {}
+        self.config = config or get_plugin_config(config, "postag")
 
     @property
     def lang(self):

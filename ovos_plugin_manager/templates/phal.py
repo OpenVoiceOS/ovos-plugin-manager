@@ -2,6 +2,7 @@ import time
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
 from ovos_config import Configuration
+from ovos_plugin_manager.utils.config import get_plugin_config
 
 
 class PHALValidator:
@@ -24,7 +25,8 @@ class PHALPlugin:
 
     def __init__(self, bus=None, name="", config=None):
         self.config_core = Configuration()
-        self.config = config or self.config_core.get("PHAL", {}).get(name) or {}
+        self.config = config or get_plugin_config(self.config_core,
+                                                  "PHAL", name)
         self._mouth_events = False
         self._running = False
         self.bus = bus or get_mycroft_bus()

@@ -9,6 +9,7 @@ from abc import ABCMeta, abstractmethod
 from queue import Queue
 from threading import Thread, Event
 from ovos_config import Configuration
+from ovos_plugin_manager.utils.config import get_plugin_config
 
 
 class STT(metaclass=ABCMeta):
@@ -22,7 +23,7 @@ class STT(metaclass=ABCMeta):
         self._credential = None
         self._keys = None
 
-        self._init_config(config)
+        self.config = get_plugin_config(config, "stt")
 
         self.can_stream = False
         self.recognizer = Recognizer()
@@ -55,14 +56,6 @@ class STT(metaclass=ABCMeta):
     def credential(self, val):
         # backwards compat
         self._credential = val
-
-    def _init_config(self, config=None):
-        if config is None:
-            config_core = Configuration()
-            config_stt = config_core.get("stt", {})
-            self.config = config_stt.get(config_stt.get("module"), {})
-        else:
-            self.config = config
 
     @staticmethod
     def init_language(config_core):

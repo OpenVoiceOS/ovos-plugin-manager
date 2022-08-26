@@ -1,6 +1,7 @@
 import enum
 from ovos_utils.lang.phonemes import arpabet2ipa, ipa2arpabet
 from ovos_utils.lang.visimes import VISIMES
+from ovos_plugin_manager.utils.config import get_plugin_config
 
 
 class PhonemeAlphabet(str, enum.Enum):
@@ -14,7 +15,7 @@ class OutOfVocabulary(ValueError):
 
 class Grapheme2PhonemePlugin:
     def __init__(self, config=None):
-        self.config = config or {}
+        self.config = config or get_plugin_config(config, "g2p")
 
     @property
     def arpa_is_implemented(self):

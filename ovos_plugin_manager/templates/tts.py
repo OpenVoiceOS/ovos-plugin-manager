@@ -47,6 +47,7 @@ from ovos_utils.sound import play_audio
 
 from ovos_plugin_manager.g2p import OVOSG2PFactory
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
+from ovos_plugin_manager.utils.config import get_plugin_config
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
 SSML_TAGS = re.compile(r'<[^>]*>')
@@ -387,16 +388,12 @@ class TTS:
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
         self.log_timestamps = False
 
-        config_core = Configuration()
-
-        config = config or config_core.get("tts", {})
-        config["lang"] = config.get("lang") or config_core.get("lang")
+        self.config = config or get_plugin_config(config, "tts")
 
         self.stopwatch = Stopwatch()
         self.tts_name = self.__class__.__name__
         self.bus = BUS()  # initialized in "init" step
-        self.lang = lang or config.get("lang") or 'en-us'
-        self.config = config or {}
+        self.lang = lang or self.config.get("lang") or 'en-us'
         self.validator = validator or TTSValidator(self)
         self.phonetic_spelling = phonetic_spelling
         self.audio_ext = audio_ext
@@ -427,7 +424,7 @@ class TTS:
                 self.config, self.tts_id, self.audio_ext
             )}
 
-        self.g2p = OVOSG2PFactory.create(config_core)
+        self.g2p = OVOSG2PFactory.create(Configuration())
         self.cache.curate()
 
         self.add_metric({"metric_type": "tts.init"})

@@ -15,7 +15,10 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
     lang = config.get('lang') or Configuration().get('lang')
     config = config.get(section) or config if section else config
     module = module or config.get('module')
-    module_config = config.get(module) or dict()
-    module_config.setdefault('lang', lang)
-    module_config.setdefault('module', module)
-    return module_config
+    if module:
+        module_config = config.get(module) or dict()
+        module_config.setdefault('lang', lang)
+        module_config.setdefault('module', module)
+        return module_config
+    config.setdefault('lang', lang)
+    return config
