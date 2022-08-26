@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18...HEAD)
+
+**Merged pull requests:**
+
+- Add `available_languages` properties to Language Detector and Translator plugins [\#73](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/73) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.18](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.18) (2022-08-17)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a13...V0.0.18)
+
 ## [V0.0.18a13](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.18a13) (2022-08-17)
 
 [Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.18a12...V0.0.18a13)
