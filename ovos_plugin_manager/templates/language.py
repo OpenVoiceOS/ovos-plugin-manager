@@ -15,6 +15,18 @@ class LanguageDetector:
     def detect_probs(self, text):
         return {self.detect(text): 1}
 
+    @property
+    def available_languages(self) -> set:
+        """
+        Return languages supported by this detector implementation in this state.
+        This should be a set of languages this detector is capable of recognizing.
+        This property should be overridden by the derived class to advertise
+        what languages that engine supports.
+        Returns:
+            set: supported languages
+        """
+        return set()
+
 
 class LanguageTranslator:
     def __init__(self, config=None):
@@ -46,3 +58,26 @@ class LanguageTranslator:
             elif isinstance(v, list):
                 data[idx] = self.translate_list(v, lang_tgt, lang_src)
         return data
+
+    @property
+    def available_languages(self) -> set:
+        """
+        Return languages supported by this translator implementation in this state.
+        Any language in this set should be translatable to any other language in the set.
+        This property should be overridden by the derived class to advertise
+        what languages that engine supports.
+        Returns:
+            set: supported languages
+        """
+        return set()
+
+    def supported_translations(self, source_lang: str = None) -> set:
+        """
+        Return valid target languages we can translate `source_lang` to.
+        This method should be overridden by the derived class.
+        Args:
+            source_lang: ISO 639-1 source language code
+        Returns:
+            set of ISO 639-1 languages the source language can be translated to
+        """
+        return self.available_languages
