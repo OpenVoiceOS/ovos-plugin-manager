@@ -81,7 +81,7 @@ class OVOSLangDetectionFactory:
             if clazz is None:
                 raise ValueError(f'Language Detection plugin {lang_module} not found')
             LOG.info(f'Loaded the Language Detection plugin {lang_module}')
-            return clazz()
+            return clazz(config=config.get(lang_module))
         except Exception:
             # The Language Detection backend failed to start.
             LOG.exception('The selected Language Detection plugin could not be loaded!')
@@ -114,8 +114,8 @@ class OVOSLangTranslationFactory:
             if "language" in config:
                 config = config["language"]
             lang_module = config.get("translation_module", "libretranslate_plug")
-            if lang_module in OVOSLangDetectionFactory.MAPPINGS:
-                lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
+            if lang_module in OVOSLangTranslationFactory.MAPPINGS:
+                lang_module = OVOSLangTranslationFactory.MAPPINGS[lang_module]
             clazz = load_tx_plugin(lang_module)
             if clazz is None and lang_module != "libretranslate_plug":
                 lang_module = "libretranslate_plug"
@@ -125,7 +125,7 @@ class OVOSLangTranslationFactory:
             if clazz is None:
                 raise ValueError(f'Language Translation plugin {lang_module} not found')
             LOG.info(f'Loaded the Language Translation plugin {lang_module}')
-            return clazz()
+            return clazz(config=config.get(lang_module))
         except Exception:
             # The Language Detection backend failed to start.
             LOG.exception('The selected Language Translation plugin could not be loaded!')
