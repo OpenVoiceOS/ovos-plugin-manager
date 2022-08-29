@@ -1,6 +1,6 @@
 from mycroft_bus_client.message import dig_for_message
 from quebra_frases import word_tokenize
-from ovos_plugin_manager.utils.config import get_plugin_config
+
 
 class CoreferenceSolverEngine:
     # TODO move lang data elsewhere
@@ -16,7 +16,7 @@ class CoreferenceSolverEngine:
         "vossos", "nossas", "vossas"]
 
     def __init__(self, config=None):
-        self.config = config or get_plugin_config(section="coref")
+        self.config = config or {}
         self._prev_sentence = ""
         self._prev_solved = ""
         self.contexts = {}

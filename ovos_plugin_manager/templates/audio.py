@@ -5,7 +5,6 @@ Mycroft's media playback options.
 """
 from abc import ABCMeta, abstractmethod
 from ovos_utils.messagebus import FakeBus
-from ovos_config.config import Configuration
 
 
 class AudioBackend(metaclass=ABCMeta):
@@ -19,7 +18,7 @@ class AudioBackend(metaclass=ABCMeta):
     def __init__(self, config=None, bus=None):
         self._track_start_callback = None
         self.supports_mime_hints = False
-        self.config = config or Configuration()
+        self.config = config or {}
         self.bus = bus or FakeBus()
 
     @property

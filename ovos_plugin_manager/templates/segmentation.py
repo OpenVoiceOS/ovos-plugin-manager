@@ -1,7 +1,6 @@
 from mycroft_bus_client.message import dig_for_message
 from ovos_utils import flatten_list
 from quebra_frases import sentence_tokenize
-from ovos_plugin_manager.utils.config import get_plugin_config
 
 
 class Segmenter:
@@ -14,7 +13,7 @@ class Segmenter:
                                " e "]
 
     def __init__(self, config=None):
-        self.config = config or get_plugin_config(config, "segmentation")
+        self.config = config or {}
 
     @property
     def lang(self):

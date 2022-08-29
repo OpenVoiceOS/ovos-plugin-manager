@@ -1,10 +1,9 @@
 from ovos_config.config import Configuration
-from ovos_plugin_manager.utils.config import get_plugin_config
 
 
 class LanguageDetector:
     def __init__(self, config=None):
-        self.config = config or get_plugin_config(config, "language")
+        self.config = config or {}
         self.default_language = self.config.get("lang") or "en-us"
         # hint_language: str  E.g., 'it' boosts Italian
         self.hint_language = self.config.get("hint_lang") or \
@@ -22,7 +21,7 @@ class LanguageDetector:
 
 class LanguageTranslator:
     def __init__(self, config=None):
-        self.config = config or get_plugin_config(config, "language")
+        self.config = config or {}
         # translate from, unless specified/detected otherwise
         self.default_language = self.config.get("lang") or "en-us"
         # translate to
