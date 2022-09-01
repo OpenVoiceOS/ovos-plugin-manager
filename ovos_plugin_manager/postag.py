@@ -110,9 +110,6 @@ class OVOSPosTaggerFactory:
 def get_postag_config(config=None):
     from ovos_plugin_manager.utils.config import get_plugin_config
     config = config or Configuration()
-    if "intentBox" in config and "postag" not in config:
-        return get_plugin_config(config, "intentBox")
-    else:
-        return get_plugin_config(config, "postag")
+    return get_plugin_config(config, "postag")
 
 

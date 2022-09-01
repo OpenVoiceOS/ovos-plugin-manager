@@ -13,7 +13,8 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
     """
     config = config or Configuration()
     lang = config.get('lang') or Configuration().get('lang')
-    config = config.get(section) or config if section else config
+    config = (config.get('intentBox', {}).get(section) or config.get(section)
+              or config) if section else config
     module = module or config.get('module')
     if module:
         module_config = config.get(module) or dict()

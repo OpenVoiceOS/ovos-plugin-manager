@@ -107,9 +107,6 @@ class OVOSKeywordExtractorFactory:
 def get_keyword_extract_config(config=None):
     from ovos_plugin_manager.utils.config import get_plugin_config
     config = config or Configuration()
-    if "intentBox" in config and "keyword_extract" not in config:
-        return get_plugin_config(config, "intentBox")
-    else:
-        return get_plugin_config(config, "keyword_extract")
+    return get_plugin_config(config, "keyword_extract")
 
 

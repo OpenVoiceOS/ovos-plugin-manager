@@ -16,6 +16,23 @@ _MOCK_CONFIG = {
     },
     "keywords": {
         "lang": "keyword_lang"
+    },
+    "postag": {
+        "module": "postag-module"
+    },
+    "segmentation": {
+        "module": "wrong-module",
+        "right-module": {
+            "invalid": True
+        }
+    },
+    "intentBox": {
+        "segmentation": {
+            "module": "right-module",
+            "right-module": {
+                "valid": True
+            }
+        }
     }
 }
 
@@ -28,6 +45,8 @@ class TestUtils(unittest.TestCase):
         keyword_config = get_plugin_config(_MOCK_CONFIG, "keywords")
         tts_config_override = get_plugin_config(_MOCK_CONFIG, "tts",
                                                 "tts-module")
+        seg_config = get_plugin_config(_MOCK_CONFIG, "segmentation")
+        pos_config = get_plugin_config(_MOCK_CONFIG, "postag")
 
         self.assertEqual(tts_config,
                          {"lang": "global",
@@ -44,6 +63,15 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(tts_config_override,
                          {"lang": "override",
                           "module": "tts-module"})
+
+        self.assertEqual(pos_config,
+                         {"lang": "global",
+                          "module": "postag-module"})
+
+        self.assertEqual(seg_config,
+                         {"lang": "global",
+                          "module": "right-module",
+                          "valid": True})
 
     def test_hash_sentence(self):
         from ovos_plugin_manager.utils.tts_cache import hash_sentence

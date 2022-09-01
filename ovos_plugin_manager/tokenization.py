@@ -110,10 +110,7 @@ class OVOSTokenizerFactory:
 def get_tokenization_config(config=None):
     from ovos_plugin_manager.utils.config import get_plugin_config
     config = config or Configuration()
-    if "intentBox" in config and "tokenization" not in config:
-        return get_plugin_config(config, "intentBox")
-    else:
-        return get_plugin_config(config, "tokenization")
+    return get_plugin_config(config, "tokenization")
 
 
 

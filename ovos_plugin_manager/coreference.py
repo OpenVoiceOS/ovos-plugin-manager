@@ -109,7 +109,4 @@ class OVOSCoreferenceSolverFactory:
 def get_coref_config(config=None):
     from ovos_plugin_manager.utils.config import get_plugin_config
     config = config or Configuration()
-    if "intentBox" in config and "coref" not in config:
-        return get_plugin_config(config, "intentBox")
-    else:
-        return get_plugin_config(config, "coref")
+    return get_plugin_config(config, "coref")
