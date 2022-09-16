@@ -108,18 +108,8 @@ class OVOSPosTaggerFactory:
 
 
 def get_postag_config(config=None):
+    from ovos_plugin_manager.utils.config import get_plugin_config
     config = config or Configuration()
-    lang = config.get("lang")
-    if "intentBox" in config and "postag" not in config:
-        config = config["intentBox"] or {}
-        lang = config.get("lang") or lang
-    if "postag" in config:
-        config = config["postag"]
-        lang = config.get("lang") or lang
-    config["lang"] = lang or "en-us"
-    postag_module = config.get('module') or 'ovos-postag-plugin-dummy'
-    postag_config = config.get(postag_module, {})
-    postag_config["module"] = postag_module
-    return postag_config
+    return get_plugin_config(config, "postag")
 
 

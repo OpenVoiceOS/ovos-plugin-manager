@@ -1,6 +1,5 @@
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, TextToSpeechCache, ConcatTTS, RemoteTTS
-from ovos_config import Configuration
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, normalize_lang, PluginConfigTypes
 
 
@@ -129,15 +128,8 @@ class OVOSTTSFactory:
 
 
 def get_tts_config(config=None):
-    config = config or Configuration()
-    lang = config.get("lang", "en-us")
-    if "tts" in config and "module" in config["tts"]:
-        config = config["tts"]
-    tts_module = config.get('module') or "dummy"
-    tts_config = config.get(tts_module, {})
-    tts_config["lang"] = tts_config.get('lang') or lang
-    tts_config["module"] = tts_module
-    return tts_config
+    from ovos_plugin_manager.utils.config import get_plugin_config
+    return get_plugin_config(config)
 
 
 if __name__ == "__main__":

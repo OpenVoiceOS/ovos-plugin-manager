@@ -79,12 +79,10 @@ class OVOSVADFactory:
 
 
 def get_vad_config(config=None):
+    from ovos_plugin_manager.utils.config import get_plugin_config
     config = config or Configuration()
     if "listener" in config and "VAD" not in config:
-        config = config["listener"] or {}
-    if "VAD" in config:
-        config = config["VAD"]
-    vad_module = config.get('module') or 'dummy'
-    vad_config = config.get(vad_module, {})
-    vad_config["module"] = vad_module
-    return vad_config
+        return get_plugin_config(config, "listener")
+    else:
+        return get_plugin_config(config, "VAD")
+

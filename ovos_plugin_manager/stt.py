@@ -122,12 +122,7 @@ class OVOSSTTFactory:
 
 
 def get_stt_config(config=None):
-    config = config or Configuration()
-    lang = config.get("lang", "en-us")
-    if "stt" in config:
-        config = config["stt"]
-    stt_module = config.get('module', 'dummy')
-    stt_config = config.get(stt_module, {})
-    stt_config["lang"] = stt_config.get('lang') or lang
-    stt_config["module"] = stt_module
+    from ovos_plugin_manager.utils.config import get_plugin_config
+    stt_config = get_plugin_config(config, "stt")
+    stt_config.setdefault("lang", "en-us")
     return stt_config

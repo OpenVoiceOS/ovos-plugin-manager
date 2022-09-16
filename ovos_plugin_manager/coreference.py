@@ -107,18 +107,6 @@ class OVOSCoreferenceSolverFactory:
 
 
 def get_coref_config(config=None):
+    from ovos_plugin_manager.utils.config import get_plugin_config
     config = config or Configuration()
-    lang = config.get("lang")
-    if "intentBox" in config and "coref" not in config:
-        config = config["intentBox"] or {}
-        lang = config.get("lang") or lang
-    if "coref" in config:
-        config = config["coref"]
-        lang = config.get("lang") or lang
-    config["lang"] = lang or "en-us"
-    coref_module = config.get('module') or 'dummy'
-    coref_config = config.get(coref_module, {})
-    coref_config["module"] = coref_module
-    return coref_config
-
-
+    return get_plugin_config(config, "coref")

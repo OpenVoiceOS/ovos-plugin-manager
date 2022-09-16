@@ -107,18 +107,9 @@ class OVOSUtteranceSegmenterFactory:
 
 
 def get_segmentation_config(config=None):
+    from ovos_plugin_manager.utils.config import get_plugin_config
     config = config or Configuration()
-    lang = config.get("lang")
-    if "intentBox" in config and "segmentation" not in config:
-        config = config["intentBox"] or {}
-        lang = config.get("lang") or lang
-    if "segmentation" in config:
-        config = config["segmentation"]
-        lang = config.get("lang") or lang
-    config["lang"] = lang or "en-us"
-    segmentation_module = config.get('module') or 'ovos-segmentation-plugin-quebrafrases'
-    segmentation_config = config.get(segmentation_module, {})
-    segmentation_config["module"] = segmentation_module
-    return segmentation_config
+    return get_plugin_config(config, "segmentation")
+
 
 

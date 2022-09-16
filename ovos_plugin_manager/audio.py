@@ -48,7 +48,7 @@ def load_audio_service_plugins(config=None, bus=None):
     """Load installed audioservice plugins.
 
     Arguments:
-        config: configuration dict for the audio backends.
+        config: Mycroft core configuration
         bus: Mycroft messagebus
 
     Returns:

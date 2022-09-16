@@ -1,10 +1,13 @@
+from ovos_config.config import Configuration
+
 
 class LanguageDetector:
     def __init__(self, config=None):
         self.config = config or {}
         self.default_language = self.config.get("lang") or "en-us"
         # hint_language: str  E.g., 'it' boosts Italian
-        self.hint_language = self.config.get("hint_lang") or self.default_language
+        self.hint_language = self.config.get("hint_lang") or \
+            self.config.get('user') or self.default_language
         # boost score for this language
         self.boost = self.config.get("boost")
 
@@ -34,7 +37,9 @@ class LanguageTranslator:
         # translate from, unless specified/detected otherwise
         self.default_language = self.config.get("lang") or "en-us"
         # translate to
-        self.internal_language = self.config.get("lang") or "en-us"
+        self.internal_language = (Configuration().get('language') or
+                                  dict()).get("internal") or \
+            self.default_language
 
     def translate(self, text, target=None, source=None):
         return text

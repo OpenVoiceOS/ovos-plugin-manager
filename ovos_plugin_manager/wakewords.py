@@ -107,11 +107,5 @@ class OVOSWakeWordFactory:
 
 
 def get_hotwords_config(config=None):
-    config = config or Configuration()
-    lang = config.get("lang", "en-us")
-    if "hotwords" in config:
-        config = config["hotwords"]
-        for ww in config:
-            if not config[ww].get("lang"):
-                config[ww]["lang"] = lang
-    return config
+    from ovos_plugin_manager.utils.config import get_plugin_config
+    return get_plugin_config(config, "hotwords")

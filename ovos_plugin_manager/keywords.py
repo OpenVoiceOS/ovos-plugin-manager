@@ -105,18 +105,8 @@ class OVOSKeywordExtractorFactory:
 
 
 def get_keyword_extract_config(config=None):
+    from ovos_plugin_manager.utils.config import get_plugin_config
     config = config or Configuration()
-    lang = config.get("lang")
-    if "intentBox" in config and "keyword_extract" not in config:
-        config = config["intentBox"] or {}
-        lang = config.get("lang") or lang
-    if "keyword_extract" in config:
-        config = config["keyword_extract"]
-        lang = config.get("lang") or lang
-    config["lang"] = lang or "en-us"
-    keyword_extract_module = config.get('module') or 'ovos-keyword-plugin-dummy'
-    keyword_extract_config = config.get(keyword_extract_module, {})
-    keyword_extract_config["module"] = keyword_extract_module
-    return keyword_extract_config
+    return get_plugin_config(config, "keyword_extract")
 
 
