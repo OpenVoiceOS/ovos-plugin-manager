@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.19a1...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.19a2...HEAD)
+
+**Fixed bugs:**
+
+- Update VAD config to match other plugins [\#75](https://github.com/OpenVoiceOS/OVOS-plugin-manager/pull/75) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.19a2](https://github.com/OpenVoiceOS/OVOS-plugin-manager/tree/V0.0.19a2) (2022-09-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/OVOS-plugin-manager/compare/V0.0.19a1...V0.0.19a2)
 
 **Fixed bugs:**
 
