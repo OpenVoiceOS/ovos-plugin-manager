@@ -63,7 +63,7 @@ def load_stt_plugin(module_name):
 class OVOSSTTFactory:
     """ replicates the base mycroft class, but uses only OPM enabled plugins"""
     MAPPINGS = {
-        #    "mycroft": MycroftSTT,
+        "mycroft": "ovos-stt-plugin-selene",
         "dummy": "ovos-stt-plugin-dummy",
         "google": "ovos-stt-plugin-chromium",
         #    "google_cloud": GoogleCloudSTT,
@@ -110,7 +110,7 @@ class OVOSSTTFactory:
             "module": <engine_name>
         }
         """
-        config = config or get_stt_config()
+        config = get_stt_config(config)
         plugin = config["module"]
         plugin_config = config.get(plugin) or {}
         try:

@@ -48,7 +48,7 @@ class OVOSVADFactory:
             "module": <engine_name>
         }
         """
-        config = config or get_vad_config()
+        config = get_vad_config(config)
         vad_module = config.get("module", "dummy")
         if vad_module == "dummy":
             return VADEngine

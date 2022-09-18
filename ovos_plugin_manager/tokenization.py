@@ -79,7 +79,7 @@ class OVOSTokenizerFactory:
             "module": <engine_name>
         }
         """
-        config = config or get_tokenization_config()
+        config = get_tokenization_config(config)
         tokenization_module = config.get("module", "ovos-tokenization-plugin-quebrafrases")
         if tokenization_module in OVOSTokenizerFactory.MAPPINGS:
             tokenization_module = OVOSTokenizerFactory.MAPPINGS[tokenization_module]
