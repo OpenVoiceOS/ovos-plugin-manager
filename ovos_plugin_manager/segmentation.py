@@ -78,7 +78,7 @@ class OVOSUtteranceSegmenterFactory:
             "module": <engine_name>
         }
         """
-        config = config or get_segmentation_config()
+        config = get_segmentation_config(config)
         segmentation_module = config.get("module", "ovos-segmentation-plugin-quebrafrases")
         if segmentation_module in OVOSUtteranceSegmenterFactory.MAPPINGS:
             segmentation_module = OVOSUtteranceSegmenterFactory.MAPPINGS[segmentation_module]

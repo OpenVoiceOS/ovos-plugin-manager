@@ -76,7 +76,7 @@ class OVOSCoreferenceSolverFactory:
             "module": <engine_name>
         }
         """
-        config = config or get_coref_config()
+        config = get_coref_config(config)
         coref_module = config.get("module", "dummy")
         if coref_module == "dummy":
             return CoreferenceSolverEngine

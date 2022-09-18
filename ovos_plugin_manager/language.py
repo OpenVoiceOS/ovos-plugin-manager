@@ -54,6 +54,8 @@ class OVOSLangDetectionFactory:
         "lingua_podre": "lingua_podre_plug"
     }
 
+    # TODO - get_class method
+
     @staticmethod
     def create(config=None):
         """Factory method to create a LangDetection engine based on configuration.
@@ -98,6 +100,7 @@ class OVOSLangTranslationFactory:
         "apertium": "apertium_plug"
     }
 
+    # TODO - get_class method
     @staticmethod
     def create(config=None):
         """Factory method to create a LangTranslation engine based on configuration.

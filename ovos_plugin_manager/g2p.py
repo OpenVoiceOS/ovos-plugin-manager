@@ -71,7 +71,7 @@ class OVOSG2PFactory:
             "module": <engine_name>
         }
         """
-        config = config or get_g2p_config()
+        config = get_g2p_config(config)
         g2p_module = config.get("module") or 'dummy'
         if g2p_module == 'dummy':
             return Grapheme2PhonemePlugin

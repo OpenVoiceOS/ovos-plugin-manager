@@ -79,7 +79,7 @@ class OVOSPosTaggerFactory:
             "module": <engine_name>
         }
         """
-        config = config or get_postag_config()
+        config = get_postag_config(config)
         postag_module = config.get("module", "ovos-postag-plugin-dummy")
         if postag_module in OVOSPosTaggerFactory.MAPPINGS:
             postag_module = OVOSPosTaggerFactory.MAPPINGS[postag_module]

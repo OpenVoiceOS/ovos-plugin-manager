@@ -1,5 +1,4 @@
 from ovos_plugin_manager.utils import find_plugins, PluginTypes
-from ovos_utils.messagebus import get_mycroft_bus
 from ovos_utils.log import LOG
 
 

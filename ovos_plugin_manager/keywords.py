@@ -76,7 +76,7 @@ class OVOSKeywordExtractorFactory:
             "module": <engine_name>
         }
         """
-        config = config or get_keyword_extract_config()
+        config = get_keyword_extract_config(config)
         keyword_extract_module = config.get("module", "ovos-keyword-plugin-dummy")
         if keyword_extract_module in OVOSKeywordExtractorFactory.MAPPINGS:
             keyword_extract_module = OVOSKeywordExtractorFactory.MAPPINGS[keyword_extract_module]
