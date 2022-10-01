@@ -2,7 +2,7 @@
 
 OPM can be used to search, install, load and create plugins for the OpenVoiceOS ecosystem!
 
-STATUS: alpha release 1
+![logo](https://raw.githubusercontent.com/OpenVoiceOS/ovos_assets/921b41891ed18c9e16d24d1894266200ee3bd104/Logo/Raw/opm-logo.svg)
 
 ## Install
 
