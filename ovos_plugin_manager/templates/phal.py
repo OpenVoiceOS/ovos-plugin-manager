@@ -1,4 +1,5 @@
 import time
+from ovos_utils import camel_case_split
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
 from ovos_config import Configuration
@@ -25,6 +26,7 @@ class PHALPlugin:
 
     def __init__(self, bus=None, name="", config=None):
         self.config_core = Configuration()
+        name = name or camel_case_split(self.__class__.__name__).replace(" ", "-").lower()
         self.config = config or get_plugin_config(self.config_core,
                                                   "PHAL", name)
         self._mouth_events = False
