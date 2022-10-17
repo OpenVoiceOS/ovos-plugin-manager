@@ -24,16 +24,18 @@ class Grapheme2PhonemePlugin:
     def ipa_is_implemented(self):
         return self.__class__.get_ipa is not Grapheme2PhonemePlugin.get_ipa
 
-    def get_arpa(self, word, lang):
+    def get_arpa(self, word, lang, ignore_oov=False):
         # if ipa is implemented, use it and convert
         if self.ipa_is_implemented:
             ipa = self.get_ipa(word, lang)
             norm = lambda k: k.replace('ˈ', "")
             return [ipa2arpabet[norm(p)] for p in ipa
                     if norm(p) in ipa2arpabet]
-        return None
+        if ignore_oov:
+            return None
+        raise OutOfVocabulary
 
-    def get_ipa(self, word, lang):
+    def get_ipa(self, word, lang, ignore_oov=False):
         # if arpa is implemented, use it and convert
         if self.arpa_is_implemented:
             arpa = self.get_arpa(word, lang)
@@ -49,7 +51,9 @@ class Grapheme2PhonemePlugin:
                     .replace("0", "")
             return [arpabet2ipa[norm(p)] for p in arpa
                     if norm(p) in arpabet2ipa]
-        return None
+        if ignore_oov:
+            return None
+        raise OutOfVocabulary
 
     def utterance2arpa(self, utterance, lang, ignore_oov=False):
         arpa = []
