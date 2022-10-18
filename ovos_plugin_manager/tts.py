@@ -40,10 +40,12 @@ def get_tts_lang_configs(lang, include_dialects=False):
         configs[plug] = []
         confs = get_tts_module_configs(plug)
         if include_dialects:
-            lang = lang.split("-")[0]
-            for l in confs:
-                if l.startswith(lang):
-                    configs[plug] += confs[l]
+            lang2 = lang.split("-")[0]
+            for l, c in confs.items():
+                if l.startswith(lang2):
+                    if l != lang:
+                        c["priority"] = c.get("priority", 60) + 15
+                    configs[plug] += c
         elif lang in confs:
             configs[plug] += confs[lang]
         elif f"{lang}-{lang}" in confs:
