@@ -30,7 +30,7 @@ def get_valid_plugin_configs(configs: dict, lang: str,
                              include_dialects: bool) -> list:
     """
     Get a sorted dict of configurations for a particular plugin
-    @param configs: dict of normalized language to sorted list of valid
+    @param configs: dict of normalized language to sorted list of valid dict
                     configurations for a particular plugin
     @param lang: normalized language to return valid configurations for
     @param include_dialects: if True, include configs for alternate dialects
@@ -39,19 +39,19 @@ def get_valid_plugin_configs(configs: dict, lang: str,
     valid_configs = list()
     if include_dialects:
         # Check other dialects of the requested language
-        lang2 = lang.split("-")[0]
-        for l, confs in configs.items():
-            try:
-                if l.startswith(lang2):
-                    for config in configs:
-                        if l != lang:
+        base_lang = lang.split("-")[0]
+        for language, confs in configs.items():
+            if language.startswith(base_lang):
+                for config in confs:
+                    try:
+                        if language != lang:
                             # Dialect match, boost priority
                             config["priority"] = config.get("priority",
                                                             60) + 15
                         valid_configs.append(config)
-            except Exception as e:
-                LOG.error(f'c={configs}')
-                LOG.exception(e)
+                    except Exception as e:
+                        LOG.error(f'config={config}')
+                        LOG.exception(e)
     elif lang in configs:
         # Exact language/dialog match
         valid_configs.append(configs[lang])
