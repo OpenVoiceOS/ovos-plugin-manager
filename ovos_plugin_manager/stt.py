@@ -25,29 +25,30 @@ def get_stt_module_configs(module_name):
 
 def get_stt_lang_configs(lang, include_dialects=False):
     lang = normalize_lang(lang)
-    configs = {}
+    sorted_configs = {}
     for plug in find_stt_plugins():
-        configs[plug] = []
+        sorted_configs[plug] = []
         confs = get_stt_module_configs(plug)
         if include_dialects:
             lang2 = lang.split("-")[0]
-            for l, c in confs.items():
+            for l, configs in confs.items():
                 try:
                     if l.startswith(lang2):
-                        if l != lang:
-                            c["priority"] = c.get("priority", 60) + 15
-                        configs[plug] += c
+                        for config in configs:
+                            if l != lang:
+                                config["priority"] = config.get("priority", 60) + 15
+                            sorted_configs[plug] += config
                 except Exception as e:
-                    LOG.error(f'c={c}')
+                    LOG.error(f'c={configs}')
                     LOG.exception(e)
         elif lang in confs:
-            configs[plug] += confs[lang]
+            sorted_configs[plug] += confs[lang]
         elif f"{lang}-{lang}" in confs:
-            configs[plug] += confs[f"{lang}-{lang}"]
+            sorted_configs[plug] += confs[f"{lang}-{lang}"]
     # let's sort by priority key
-    for k, v in configs.items():
-            configs[k] = sorted(v, key=lambda k: k.get("priority", 60))
-    return {k: v for k, v in configs.items() if v}
+    for k, v in sorted_configs.items():
+            sorted_configs[k] = sorted(v, key=lambda k: k.get("priority", 60))
+    return {k: v for k, v in sorted_configs.items() if v}
 
 
 def get_stt_supported_langs():
