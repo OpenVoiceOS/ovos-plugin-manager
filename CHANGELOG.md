@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a6...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a7...HEAD)
+
+**Merged pull requests:**
+
+- Fix bug in plugin priority config handling [\#81](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/81) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.19a7](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.19a7) (2022-10-18)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a6...V0.0.19a7)
 
 **Implemented enhancements:**
 
