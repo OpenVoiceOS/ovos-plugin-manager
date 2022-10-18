@@ -26,7 +26,11 @@ def get_tts_configs():
 def get_tts_module_configs(module_name):
     # TTS plugins return {lang: [list of config dicts]}
     cfgs = load_plugin(module_name + ".config", PluginConfigTypes.TTS) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+    configs = {normalize_lang(lang): v for lang, v in cfgs.items()}
+    # let's sort by priority key
+    for k, v in configs.items():
+        configs[k] = sorted(v, key=lambda k: k.get("priority", 60))
+    return configs
 
 
 def get_tts_lang_configs(lang, include_dialects=False):
@@ -44,6 +48,9 @@ def get_tts_lang_configs(lang, include_dialects=False):
             configs[plug] += confs[lang]
         elif f"{lang}-{lang}" in confs:
             configs[plug] += confs[f"{lang}-{lang}"]
+    # let's sort by priority key
+    for k, v in configs.items():
+        configs[k] = sorted(v, key=lambda k: k.get("priority", 60))
     return {k: v for k, v in configs.items() if v}
 
 
@@ -133,7 +140,8 @@ def get_tts_config(config=None):
 
 
 if __name__ == "__main__":
-    configs = get_tts_module_configs('ovos-tts-plugin-marytts')
+    configs = get_tts_module_configs('ovos-tts-plugin-mimic2')
+    print(configs["en-US"])
     # {'de': [{'display_name': 'Dfki Pavoque Styles',
     #          'gender': 'male',
     #          'url': 'http://mary.dfki.de:59125',
@@ -461,6 +469,7 @@ if __name__ == "__main__":
     #  'zh-TW': ['ovos-tts-plugin-google-tx']}
 
     lang_configs = get_tts_lang_configs("fr")
+    print(lang_configs)
     # {'neon-tts-plugin-larynx-server': [{'display_name': 'gilles le blanc',
     #                                     'gender': '',
     #                                     'voice': 'fr-fr/gilles_le_blanc-glow_tts'},
