@@ -1,3 +1,4 @@
+from ovos_plugin_manager.utils.config import get_valid_plugin_configs, sort_configs
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, TextToSpeechCache, ConcatTTS, RemoteTTS
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, normalize_lang, PluginConfigTypes
@@ -29,36 +30,19 @@ def get_tts_module_configs(module_name):
     configs = {normalize_lang(lang): v for lang, v in cfgs.items()}
     # let's sort by priority key
     for k, v in configs.items():
-        configs[k] = sorted(v, key=lambda k: k.get("priority", 60))
+        configs[k] = sorted(v, key=lambda c: c.get("priority", 60))
     return configs
 
 
 def get_tts_lang_configs(lang, include_dialects=False):
     lang = normalize_lang(lang)
-    sorted_configs = {}
+    matched_configs = {}
     for plug in find_tts_plugins():
-        sorted_configs[plug] = []
+        matched_configs[plug] = []
         confs = get_tts_module_configs(plug)
-        if include_dialects:
-            lang2 = lang.split("-")[0]
-            for l, configs in confs.items():
-                try:
-                    if l.startswith(lang2):
-                        for config in configs:
-                            if l != lang:
-                                config["priority"] = config.get("priority", 60) + 15
-                            sorted_configs[plug] += config
-                except Exception as e:
-                    LOG.error(f'c={configs}')
-                    LOG.exception(e)
-        elif lang in confs:
-            sorted_configs[plug] += confs[lang]
-        elif f"{lang}-{lang}" in confs:
-            sorted_configs[plug] += confs[f"{lang}-{lang}"]
-    # let's sort by priority key
-    for k, v in sorted_configs.items():
-        sorted_configs[k] = sorted(v, key=lambda k: k.get("priority", 60))
-    return {k: v for k, v in sorted_configs.items() if v}
+        matched_configs[plug] = get_valid_plugin_configs(confs, lang,
+                                                         include_dialects)
+    return sort_configs(matched_configs)
 
 
 def get_tts_supported_langs():

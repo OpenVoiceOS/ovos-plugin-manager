@@ -1,5 +1,6 @@
 from typing import Optional
 from ovos_config.config import Configuration
+from ovos_utils.log import LOG
 
 
 def get_plugin_config(config: Optional[dict] = None, section: str = None,
@@ -23,3 +24,53 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
         return module_config
     config.setdefault('lang', lang)
     return config
+
+
+def get_valid_plugin_configs(configs: dict, lang: str,
+                             include_dialects: bool) -> list:
+    """
+    Get a sorted dict of configurations for a particular plugin
+    @param configs: dict of normalized language to sorted list of valid
+                    configurations for a particular plugin
+    @param lang: normalized language to return valid configurations for
+    @param include_dialects: if True, include configs for alternate dialects
+    @return: list of valid configurations matching the requested lang
+    """
+    valid_configs = list()
+    if include_dialects:
+        # Check other dialects of the requested language
+        lang2 = lang.split("-")[0]
+        for l, confs in configs.items():
+            try:
+                if l.startswith(lang2):
+                    for config in configs:
+                        if l != lang:
+                            # Dialect match, boost priority
+                            config["priority"] = config.get("priority",
+                                                            60) + 15
+                        valid_configs.append(config)
+            except Exception as e:
+                LOG.error(f'c={configs}')
+                LOG.exception(e)
+    elif lang in configs:
+        # Exact language/dialog match
+        valid_configs.append(configs[lang])
+    elif f"{lang}-{lang}" in configs:
+        # match (some) default locales
+        valid_configs.append(configs[f"{lang}-{lang}"])
+    LOG.debug(f'Found {len(valid_configs)} valid configurations for {lang}')
+    return valid_configs
+
+
+def sort_configs(configs: dict) -> dict:
+    """
+    Sort a dict of plugin name to valid configurations by priority
+    @param configs: dict config name to valid configurations
+    @return: dict of sorted lists
+    """
+    for plug_name, plug_configs in configs.items():
+        LOG.debug(plug_configs)
+        configs[plug_name] = sorted(plug_configs,
+                                    key=lambda c: c.get("priority", 60))
+    LOG.debug(configs)
+    return {k: v for k, v in configs.items() if v}
