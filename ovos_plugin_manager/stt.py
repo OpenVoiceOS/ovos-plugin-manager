@@ -9,13 +9,21 @@ def find_stt_plugins():
     return find_plugins(PluginTypes.STT)
 
 
-def get_stt_configs():
+def get_stt_configs() -> dict:
+    """
+    Get a dict of plugin names to valid STT configuration
+    @return: dict plugin name to dict of str lang to list of dict valid configs
+    """
     return {plug: get_stt_module_configs(plug)
             for plug in find_stt_plugins()}
 
 
-def get_stt_module_configs(module_name):
-    # STT plugins return {lang: [list of config dicts]}
+def get_stt_module_configs(module_name: str) -> dict:
+    """
+    Get a dict of lang to list of valid config dicts for a specific plugin
+    @param module_name: name of plugin to get configurations for
+    @return: {lang: [list of config dicts]}
+    """
     cfgs = load_plugin(module_name + ".config", PluginConfigTypes.STT) or {}
     configs = {normalize_lang(lang): v for lang, v in cfgs.items()}
     # let's sort by priority key
@@ -24,7 +32,14 @@ def get_stt_module_configs(module_name):
     return configs
 
 
-def get_stt_lang_configs(lang, include_dialects=False):
+def get_stt_lang_configs(lang: str, include_dialects: bool = False) -> dict:
+    """
+    Get a dict of plugins names to sorted list of valid configurations
+    @param lang: language to get configurations for (i.e. en, en-US)
+    @param include_dialects: If true, include configs for other locales
+        (i.e. include en-GB configs for lang=en-US)
+    @return: dict plugin name to list of valid configs sorted by priority
+    """
     lang = normalize_lang(lang)
     matched_configs = {}
     for plug in find_stt_plugins():
@@ -35,7 +50,11 @@ def get_stt_lang_configs(lang, include_dialects=False):
     return sort_plugin_configs(matched_configs)
 
 
-def get_stt_supported_langs():
+def get_stt_supported_langs() -> dict:
+    """
+    Get a dict of languages to valid configuration options
+    @return: dict lang to list of plugins that support that lang
+    """
     configs = {}
     for plug in find_stt_plugins():
         confs = get_stt_module_configs(plug)

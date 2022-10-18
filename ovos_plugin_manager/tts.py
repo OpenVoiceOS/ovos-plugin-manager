@@ -19,13 +19,21 @@ def load_tts_plugin(module_name):
     return load_plugin(module_name, PluginTypes.TTS)
 
 
-def get_tts_configs():
+def get_tts_configs() -> dict:
+    """
+    Get a dict of plugin names to valid TTS configuration
+    @return: dict plugin name to dict of str lang to list of dict valid configs
+    """
     return {plug: get_tts_module_configs(plug)
             for plug in find_tts_plugins()}
 
 
-def get_tts_module_configs(module_name):
-    # TTS plugins return {lang: [list of config dicts]}
+def get_tts_module_configs(module_name: str) -> dict:
+    """
+    Get a dict of lang to list of valid config dicts for a specific plugin
+    @param module_name: name of plugin to get configurations for
+    @return: {lang: [list of config dicts]}
+    """
     cfgs = load_plugin(module_name + ".config", PluginConfigTypes.TTS) or {}
     configs = {normalize_lang(lang): v for lang, v in cfgs.items()}
     # let's sort by priority key
@@ -35,6 +43,13 @@ def get_tts_module_configs(module_name):
 
 
 def get_tts_lang_configs(lang, include_dialects=False):
+    """
+    Get a dict of plugins names to sorted list of valid configurations
+    @param lang: language to get configurations for (i.e. en, en-US)
+    @param include_dialects: If true, include configs for other locales
+        (i.e. include en-GB configs for lang=en-US)
+    @return: dict plugin name to list of valid configs sorted by priority
+    """
     lang = normalize_lang(lang)
     matched_configs = {}
     for plug in find_tts_plugins():
@@ -46,6 +61,10 @@ def get_tts_lang_configs(lang, include_dialects=False):
 
 
 def get_tts_supported_langs():
+    """
+    Get a dict of languages to valid configuration options
+    @return: dict lang to list of plugins that support that lang
+    """
     configs = {}
     for plug in find_tts_plugins():
         confs = get_tts_module_configs(plug)
