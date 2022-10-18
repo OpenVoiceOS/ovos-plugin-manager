@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a5...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a6...HEAD)
+
+**Implemented enhancements:**
+
+- feat/sorted\_plugin\_configs\_dialect [\#80](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/80) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.19a6](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.19a6) (2022-10-18)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a5...V0.0.19a6)
 
 **Implemented enhancements:**
 
