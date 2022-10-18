@@ -1,3 +1,4 @@
+from ovos_plugin_manager.utils.config import get_valid_plugin_configs, sort_plugin_configs
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, TextToSpeechCache, ConcatTTS, RemoteTTS
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, normalize_lang, PluginConfigTypes
@@ -18,45 +19,52 @@ def load_tts_plugin(module_name):
     return load_plugin(module_name, PluginTypes.TTS)
 
 
-def get_tts_configs():
+def get_tts_configs() -> dict:
+    """
+    Get a dict of plugin names to valid TTS configuration
+    @return: dict plugin name to dict of str lang to list of dict valid configs
+    """
     return {plug: get_tts_module_configs(plug)
             for plug in find_tts_plugins()}
 
 
-def get_tts_module_configs(module_name):
-    # TTS plugins return {lang: [list of config dicts]}
+def get_tts_module_configs(module_name: str) -> dict:
+    """
+    Get a dict of lang to list of valid config dicts for a specific plugin
+    @param module_name: name of plugin to get configurations for
+    @return: {lang: [list of config dicts]}
+    """
     cfgs = load_plugin(module_name + ".config", PluginConfigTypes.TTS) or {}
     configs = {normalize_lang(lang): v for lang, v in cfgs.items()}
     # let's sort by priority key
     for k, v in configs.items():
-        configs[k] = sorted(v, key=lambda k: k.get("priority", 60))
+        configs[k] = sorted(v, key=lambda c: c.get("priority", 60))
     return configs
 
 
 def get_tts_lang_configs(lang, include_dialects=False):
+    """
+    Get a dict of plugins names to sorted list of valid configurations
+    @param lang: language to get configurations for (i.e. en, en-US)
+    @param include_dialects: If true, include configs for other locales
+        (i.e. include en-GB configs for lang=en-US)
+    @return: dict plugin name to list of valid configs sorted by priority
+    """
     lang = normalize_lang(lang)
-    configs = {}
+    matched_configs = {}
     for plug in find_tts_plugins():
-        configs[plug] = []
+        matched_configs[plug] = []
         confs = get_tts_module_configs(plug)
-        if include_dialects:
-            lang2 = lang.split("-")[0]
-            for l, c in confs.items():
-                if l.startswith(lang2):
-                    if l != lang:
-                        c["priority"] = c.get("priority", 60) + 15
-                    configs[plug] += c
-        elif lang in confs:
-            configs[plug] += confs[lang]
-        elif f"{lang}-{lang}" in confs:
-            configs[plug] += confs[f"{lang}-{lang}"]
-    # let's sort by priority key
-    for k, v in configs.items():
-        configs[k] = sorted(v, key=lambda k: k.get("priority", 60))
-    return {k: v for k, v in configs.items() if v}
+        matched_configs[plug] = get_valid_plugin_configs(confs, lang,
+                                                         include_dialects)
+    return sort_plugin_configs(matched_configs)
 
 
 def get_tts_supported_langs():
+    """
+    Get a dict of languages to valid configuration options
+    @return: dict lang to list of plugins that support that lang
+    """
     configs = {}
     for plug in find_tts_plugins():
         confs = get_tts_module_configs(plug)
