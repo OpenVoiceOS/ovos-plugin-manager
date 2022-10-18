@@ -16,7 +16,11 @@ def get_stt_configs():
 def get_stt_module_configs(module_name):
     # STT plugins return {lang: [list of config dicts]}
     cfgs = load_plugin(module_name + ".config", PluginConfigTypes.STT) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+    configs = {normalize_lang(lang): v for lang, v in cfgs.items()}
+    # let's sort by priority key
+    for k, v in configs.items():
+        configs[k] = sorted(v, key=lambda k: k.get("priority", 60))
+    return configs
 
 
 def get_stt_lang_configs(lang, include_dialects=False):
@@ -34,6 +38,9 @@ def get_stt_lang_configs(lang, include_dialects=False):
             configs[plug] += confs[lang]
         elif f"{lang}-{lang}" in confs:
             configs[plug] += confs[f"{lang}-{lang}"]
+    # let's sort by priority key
+    for k, v in configs.items():
+        configs[k] = sorted(v, key=lambda k: k.get("priority", 60))
     return {k: v for k, v in configs.items() if v}
 
 
