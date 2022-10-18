@@ -1,4 +1,4 @@
-from ovos_plugin_manager.utils.config import get_valid_plugin_configs, sort_configs
+from ovos_plugin_manager.utils.config import get_valid_plugin_configs, sort_plugin_configs
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, TextToSpeechCache, ConcatTTS, RemoteTTS
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, normalize_lang, PluginConfigTypes
@@ -42,7 +42,7 @@ def get_tts_lang_configs(lang, include_dialects=False):
         confs = get_tts_module_configs(plug)
         matched_configs[plug] = get_valid_plugin_configs(confs, lang,
                                                          include_dialects)
-    return sort_configs(matched_configs)
+    return sort_plugin_configs(matched_configs)
 
 
 def get_tts_supported_langs():

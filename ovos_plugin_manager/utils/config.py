@@ -62,11 +62,11 @@ def get_valid_plugin_configs(configs: dict, lang: str,
     return valid_configs
 
 
-def sort_configs(configs: dict) -> dict:
+def sort_plugin_configs(configs: dict) -> dict:
     """
     Sort a dict of plugin name to valid configurations by priority
     @param configs: dict config name to valid configurations
-    @return: dict of sorted lists
+    @return: dict of sorted lists with highest priority at the end of the list
     """
     for plug_name, plug_configs in configs.items():
         LOG.debug(plug_configs)

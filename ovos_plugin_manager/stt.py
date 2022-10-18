@@ -1,6 +1,6 @@
 from ovos_plugin_manager.utils import load_plugin, normalize_lang, find_plugins, PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
-from ovos_plugin_manager.utils.config import get_valid_plugin_configs, sort_configs
+from ovos_plugin_manager.utils.config import get_valid_plugin_configs, sort_plugin_configs
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.stt import STT, StreamingSTT, StreamThread
 
@@ -32,7 +32,7 @@ def get_stt_lang_configs(lang, include_dialects=False):
         confs = get_stt_module_configs(plug)
         matched_configs[plug] = get_valid_plugin_configs(confs, lang,
                                                          include_dialects)
-    return sort_configs(matched_configs)
+    return sort_plugin_configs(matched_configs)
 
 
 def get_stt_supported_langs():
