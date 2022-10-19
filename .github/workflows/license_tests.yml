@@ -6,9 +6,6 @@ on:
   pull_request:
     branches:
       - dev
-    paths:
-      - 'requirements/**'
-      - 'setup.py'
   workflow_dispatch:
 
 jobs:
@@ -30,12 +27,18 @@ jobs:
       - name: Install core repo
         run: |
           pip install .
-      - name: Install licheck
+      - name: Get explicit and transitive dependencies
         run: |
-          pip install git+https://github.com/NeonJarbas/lichecker
-      - name: Install test dependencies
-        run: |
-          pip install pytest pytest-timeout pytest-cov
-      - name: Test Licenses
-        run: |
-          pytest test/license_tests.py
+          pip freeze > requirements-all.txt
+      - name: Check python
+        id: license_check_report
+        uses: pilosus/action-pip-license-checker@v0.5.0
+        with:
+          requirements: 'requirements-all.txt'
+          fail: 'Copyleft,Other,Error'
+          fails-only: true
+          exclude: '^(tqdm).*'
+          exclude-license: '^(Mozilla).*$'
+      - name: Print report
+        if: ${{ always() }}
+        run: echo "${{ steps.license_check_report.outputs.report }}"

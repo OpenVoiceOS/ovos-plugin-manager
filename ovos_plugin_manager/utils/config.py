@@ -68,9 +68,18 @@ def sort_plugin_configs(configs: dict) -> dict:
     @param configs: dict config name to valid configurations
     @return: dict of sorted lists with highest priority at the end of the list
     """
+    bad_plugs = []
     for plug_name, plug_configs in configs.items():
         LOG.debug(plug_configs)
-        configs[plug_name] = sorted(plug_configs,
-                                    key=lambda c: c.get("priority", 60))
+        try:
+            configs[plug_name] = sorted(plug_configs,
+                                        key=lambda c: c.get("priority", 60))
+        except:
+            LOG.exception(f"Invalid plugin data: {plug_name}")
+            bad_plugs.append(plug_name)
+
+    for plug_name in [p for p in bad_plugs if p in configs]:
+        configs.pop(plug_name)
+
     LOG.debug(configs)
     return {k: v for k, v in configs.items() if v}

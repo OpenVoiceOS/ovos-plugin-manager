@@ -89,3 +89,12 @@ class Grapheme2PhonemePlugin:
             arpa += phones + ["."]
         return [(VISIMES.get(pho.lower(), '4'), default_dur) for pho in arpa]
 
+    @property
+    def available_languages(self):
+        """Return languages supported by this G2P implementation in this state
+        This property should be overridden by the derived class to advertise
+        what languages that engine supports.
+        Returns:
+            set: supported languages
+        """
+        return set()
