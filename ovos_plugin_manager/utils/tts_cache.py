@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 from stat import S_ISREG, ST_MTIME, ST_MODE, ST_SIZE
 
-from ovos_utils.configuration import get_xdg_cache_save_path
+from ovos_config.locations import get_xdg_cache_save_path
 from ovos_utils.file_utils import get_cache_directory as get_tmp_cache_dir
 from ovos_utils.log import LOG
 
