@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a9...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a10...HEAD)
+
+**Fixed bugs:**
+
+- fix g2p [\#84](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/84) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.19a10](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.19a10) (2022-10-21)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a9...V0.0.19a10)
 
 **Implemented enhancements:**
 
