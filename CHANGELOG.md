@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a8...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a9...HEAD)
+
+**Implemented enhancements:**
+
+- feat/g2p\_per\_tts [\#82](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/82) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.19a9](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.19a9) (2022-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a8...V0.0.19a9)
 
 **Merged pull requests:**
 
