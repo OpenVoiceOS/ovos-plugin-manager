@@ -425,10 +425,10 @@ class TTS:
             )}
 
         cfg = Configuration()
-        cfg.setdefault("g2p", {})
         g2pm = self.config.get("g2p_module")
         if g2pm:
             if g2pm in find_g2p_plugins():
+                cfg.setdefault("g2p", {})
                 globl = cfg["g2p"].get("module") or g2pm
                 if globl != g2pm:
                     LOG.info(f"TTS requested {g2pm} explicitly, ignoring global module {globl} ")
