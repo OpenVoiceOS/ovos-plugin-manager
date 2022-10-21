@@ -45,7 +45,7 @@ from ovos_utils.metrics import Stopwatch
 from ovos_utils.signal import check_for_signal, create_signal
 from ovos_utils.sound import play_audio
 
-from ovos_plugin_manager.g2p import OVOSG2PFactory
+from ovos_plugin_manager.g2p import OVOSG2PFactory, find_g2p_plugins
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 from ovos_plugin_manager.utils.config import get_plugin_config
 
@@ -424,7 +424,18 @@ class TTS:
                 self.config, self.tts_id, self.audio_ext
             )}
 
-        self.g2p = OVOSG2PFactory.create(Configuration())
+        cfg = Configuration()
+        g2pm = self.config.get("g2p_module")
+        if g2pm:
+            if g2pm in find_g2p_plugins():
+                cfg.setdefault("g2p", {})
+                globl = cfg["g2p"].get("module") or g2pm
+                if globl != g2pm:
+                    LOG.info(f"TTS requested {g2pm} explicitly, ignoring global module {globl} ")
+                cfg["g2p"]["module"] = g2pm
+            else:
+                LOG.warning(f"TTS selected {g2pm}, but it is not available!")
+        self.g2p = OVOSG2PFactory.create(cfg)
         self.cache.curate()
 
         self.add_metric({"metric_type": "tts.init"})
