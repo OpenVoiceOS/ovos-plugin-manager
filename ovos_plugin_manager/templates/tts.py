@@ -46,6 +46,7 @@ from ovos_utils.signal import check_for_signal, create_signal
 from ovos_utils.sound import play_audio
 
 from ovos_plugin_manager.g2p import OVOSG2PFactory, find_g2p_plugins
+from ovos_plugin_manager.templates.g2p import OutOfVocabulary
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 from ovos_plugin_manager.utils.config import get_plugin_config
 
@@ -712,9 +713,20 @@ class TTS:
             if phonemes:
                 viseme = self.viseme(phonemes)
             else:
-                viseme = self.g2p.utterance2visemes(sentence, lang)
+                viseme = []
+                try:
+                    viseme = self.g2p.utterance2visemes(sentence, lang)
+                except OutOfVocabulary:
+                    pass
+                except:
+                    # this one is unplanned, let devs know all the info so they can fix it
+                    LOG.exception(f"Unexpected failure in G2P plugin: {self.g2p}")
 
             audio_ext = self._determine_ext(audio_file)
+
+            if not viseme:
+                # Debug level because this is expected in default installs
+                LOG.debug(f"no mouth movements available! unknown visemes for {sentence}")
 
             TTS.queue.put(
                 (audio_ext, str(audio_file), viseme, ident, l, tts_id)
