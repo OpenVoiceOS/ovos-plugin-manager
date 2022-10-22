@@ -69,7 +69,7 @@ class PluginUIHelper:
         return cfg
 
     @classmethod
-    def get_stt_display_options(cls, lang, blacklist=None, preferred=None, max_opts=20):
+    def get_stt_display_options(cls, lang, blacklist=None, preferred=None, max_opts=20, skip_setup=True):
         # NOTE: mycroft-gui will crash if theres more than 20 options according to @aiix
         try:
             blacklist = blacklist or []
@@ -79,6 +79,10 @@ class PluginUIHelper:
                 if engine in blacklist:
                     continue
                 for config in configs:
+                    config = cls._migrate_old_cfg(config)
+                    if config.get("meta", {}).get("extra_setup") and skip_setup:
+                        # this config requires additional manual setup, skip was requested
+                        continue
                     config["module"] = engine  # this one should be ensurec by get_lang_configs, but just in case
                     d = cls.config2option(config, PluginTypes.STT, lang)
                     if preferred and preferred not in blacklist and preferred == engine:
@@ -95,7 +99,7 @@ class PluginUIHelper:
             return []
 
     @classmethod
-    def get_tts_display_options(cls, lang, blacklist=None, preferred=None, max_opts=20):
+    def get_tts_display_options(cls, lang, blacklist=None, preferred=None, max_opts=20, skip_setup=True):
         # NOTE: mycroft-gui will crash if theres more than 20 options according to @aiix
         try:
             blacklist = blacklist or []
@@ -104,9 +108,13 @@ class PluginUIHelper:
             for engine, configs in cfgs.items():
                 if engine in blacklist:
                     continue
-                for voice in configs:
-                    voice["module"] = engine  # this one should be ensured by get_lang_configs, but just in case
-                    d = cls.config2option(voice, PluginTypes.TTS, lang)
+                for config in configs:
+                    config = cls._migrate_old_cfg(config)
+                    config["module"] = engine  # this one should be ensured by get_lang_configs, but just in case
+                    if config.get("meta", {}).get("extra_setup") and skip_setup:
+                        # this config requires additional manual setup, skip was requested
+                        continue
+                    d = cls.config2option(config, PluginTypes.TTS, lang)
                     if preferred and preferred not in blacklist and preferred == engine:
                         # Sort the list for UI to display the preferred TTS engine first
                         # allow images to set a preferred engine
