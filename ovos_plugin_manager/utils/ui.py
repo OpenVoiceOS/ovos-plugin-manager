@@ -51,6 +51,7 @@ class PluginUIHelper:
                 if engine in blacklist:
                     continue
                 for config in configs:
+                    config["module"] = engine
                     d = cls.stt_config2option(config, lang)
                     if preferred and preferred not in blacklist and preferred == engine:
                         # Sort the list for UI to display the preferred STT engine first
@@ -96,6 +97,7 @@ class PluginUIHelper:
                 if engine in blacklist:
                     continue
                 for voice in configs:
+                    voice["module"] = engine
                     d = cls.tts_config2option(voice, lang)
                     if preferred and preferred not in blacklist and preferred == engine:
                         # Sort the list for UI to display the preferred TTS engine first
