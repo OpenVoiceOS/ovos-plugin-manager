@@ -86,7 +86,7 @@ class PluginUIHelper:
                     continue
                 for config in configs:
                     config = cls._migrate_old_cfg(config)
-                    if config.get("meta", {}).get("extra_setup") and skip_setup:
+                    if config["meta"].get("extra_setup") and skip_setup:
                         # this config requires additional manual setup, skip was requested
                         continue
                     config["module"] = engine  # this one should be ensurec by get_lang_configs, but just in case
@@ -106,15 +106,14 @@ class PluginUIHelper:
 
     @classmethod
     def get_extra_setup(cls, opt, plugin_type):
-        """ this method is a placeholder and currently returns only a empty dict
-
-        skills already define a settingsmeta.json/yaml structure
-        that allows exposing arbitrary configurations to downstream UIs,
-        with selene being the reference consumer of that api
-        individual plugins should be able to provide a equivalent structure
+        """
+        individual plugins can provide a equivalent structure to skills settingsmeta.json/yaml
         this can be used to display an extra step for plugin configuration,
         such as required api keys that cant be pre-included by plugins
 
+        skills already define this data structure that allows exposing
+        arbitrary configurations to downstream UIs,
+        with selene being the reference consumer of that api
         """
         meta = cls.option2config(opt, plugin_type)["meta"]
         return meta.get("extra_setup") or {}
