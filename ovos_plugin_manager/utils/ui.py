@@ -1,7 +1,7 @@
 import json
 
 from ovos_utils.log import LOG
-
+from ovos_plugin_manager import PluginTypes
 from ovos_plugin_manager.stt import get_stt_lang_configs
 from ovos_plugin_manager.tts import get_tts_lang_configs
 
@@ -22,23 +22,51 @@ class PluginUIHelper:
     _tts_opts = {}
 
     @classmethod
-    def stt_option2config(cls, opt):
-        """ get the equivalent plugin config from a UI display model """
-        return cls._stt_opts.get(hash_dict(opt))
-
-    @classmethod
-    def stt_config2option(cls, cfg, lang=None):
+    def config2option(cls, cfg, plugin_type, lang=None):
         """ get the equivalent UI display model from a plugin config """
+        cfg = cls._migrate_old_cfg(cfg)
         engine = cfg["module"]
         lang = lang or cfg.get("lang")
+
         plugin_display_name = engine.replace("_", " ").replace("-", " ").title()
+        display_name = cfg["meta"].get("display_name", "?")
+        offline = cfg["meta"].get("offline", True)  # TODO consider better handling of missing "offline" key
+
         opt = {"plugin_name": plugin_display_name,
-               "display_name": cfg.get("display_name", " "),
-               "offline": cfg.get("offline", False),
+               "display_name": display_name,
+               "offline": offline,
                "lang": lang,
                "engine": engine}
-        cls._stt_opts[hash_dict(opt)] = cfg
+
+        if plugin_type == PluginTypes.STT:
+            cls._stt_opts[hash_dict(opt)] = cfg
+        elif plugin_type == PluginTypes.TTS:
+            opt["gender"] = cfg["meta"].get("gender", "?")
+            cls._tts_opts[hash_dict(opt)] = cfg
+        else:
+            raise NotImplementedError("only STT and TTS plugins are supported at this time")
         return opt
+
+    @classmethod
+    def option2config(cls, opt, plugin_type):
+        """ get the equivalent plugin config from a UI display model """
+        if plugin_type == PluginTypes.STT:
+            cfg = dict(cls._stt_opts.get(hash_dict(opt)))
+        elif plugin_type == PluginTypes.TTS:
+            cfg = dict(cls._tts_opts.get(hash_dict(opt)))
+        else:
+            raise NotImplementedError("only STT and TTS plugins are supported at this time")
+        return cfg
+
+    @staticmethod
+    def _migrate_old_cfg(cfg):
+        # TODO - until plugins are migrated to new "meta" subsection cleanup old keys
+        meta = {}
+        for k in ["display_name", "gender", "offline"]:
+            if k in cfg:
+                meta[k] = cfg.pop(k)
+        cfg["meta"] = meta
+        return cfg
 
     @classmethod
     def get_stt_display_options(cls, lang, blacklist=None, preferred=None, max_opts=20):
@@ -51,8 +79,8 @@ class PluginUIHelper:
                 if engine in blacklist:
                     continue
                 for config in configs:
-                    config["module"] = engine
-                    d = cls.stt_config2option(config, lang)
+                    config["module"] = engine  # this one should be ensurec by get_lang_configs, but just in case
+                    d = cls.config2option(config, PluginTypes.STT, lang)
                     if preferred and preferred not in blacklist and preferred == engine:
                         # Sort the list for UI to display the preferred STT engine first
                         # allow images to set a preferred engine
@@ -67,26 +95,6 @@ class PluginUIHelper:
             return []
 
     @classmethod
-    def tts_option2config(cls, opt):
-        """ get the equivalent plugin config from a UI display model"""
-        return cls._tts_opts.get(hash_dict(opt))
-
-    @classmethod
-    def tts_config2option(cls, cfg, lang=None):
-        """ get the equivalent UI display model from a tts plugin config"""
-        engine = cfg["module"]
-        lang = lang or cfg.get("lang")
-        plugin_display_name = engine.replace("_", " ").replace("-", " ").title()
-        opt = {"plugin_name": plugin_display_name,
-               "display_name": cfg.get("display_name", " "),
-               "gender": cfg.get("gender", " "),
-               "offline": cfg.get("offline", False),
-               "lang": lang,
-               "engine": engine}
-        cls._tts_opts[hash_dict(opt)] = cfg
-        return opt
-
-    @classmethod
     def get_tts_display_options(cls, lang, blacklist=None, preferred=None, max_opts=20):
         # NOTE: mycroft-gui will crash if theres more than 20 options according to @aiix
         try:
@@ -97,8 +105,8 @@ class PluginUIHelper:
                 if engine in blacklist:
                     continue
                 for voice in configs:
-                    voice["module"] = engine
-                    d = cls.tts_config2option(voice, lang)
+                    voice["module"] = engine  # this one should be ensured by get_lang_configs, but just in case
+                    d = cls.config2option(voice, PluginTypes.TTS, lang)
                     if preferred and preferred not in blacklist and preferred == engine:
                         # Sort the list for UI to display the preferred TTS engine first
                         # allow images to set a preferred engine
@@ -111,3 +119,22 @@ class PluginUIHelper:
             # Return an empty list if there is an error
             # UI will handle this and display an error message
             return []
+
+    @classmethod
+    def get_extra_settings(cls, opt, plugin_type):
+        """ this method is a placeholder and currently returns only a empty dict
+
+        TODO - skills already define a settingsmeta.json/yaml structure
+        that allows exposing arbitrary configurations to downstream UIs,
+        with selene being the reference consumer of that api
+        individual plugins should be able to provide a equivalent structure
+        this can be used to display an extra step for plugin configuration,
+        such as required api keys that cant be pre-included by plugins
+
+        """
+        engine = opt["engine"]
+        if plugin_type == PluginTypes.STT:
+            pass
+        elif plugin_type == PluginTypes.TTS:
+            pass
+        return {}
