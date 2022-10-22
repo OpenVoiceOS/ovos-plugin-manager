@@ -121,10 +121,10 @@ class PluginUIHelper:
             return []
 
     @classmethod
-    def get_extra_settings(cls, opt, plugin_type):
+    def get_extra_setup(cls, opt, plugin_type):
         """ this method is a placeholder and currently returns only a empty dict
 
-        TODO - skills already define a settingsmeta.json/yaml structure
+        skills already define a settingsmeta.json/yaml structure
         that allows exposing arbitrary configurations to downstream UIs,
         with selene being the reference consumer of that api
         individual plugins should be able to provide a equivalent structure
@@ -132,9 +132,5 @@ class PluginUIHelper:
         such as required api keys that cant be pre-included by plugins
 
         """
-        engine = opt["engine"]
-        if plugin_type == PluginTypes.STT:
-            pass
-        elif plugin_type == PluginTypes.TTS:
-            pass
-        return {}
+        meta = cls.option2config(opt, plugin_type)["meta"]
+        return meta.get("extra_setup") or {}
