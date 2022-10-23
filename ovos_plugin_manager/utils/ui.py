@@ -69,15 +69,16 @@ class PluginUIHelper:
         return cfg
 
     @classmethod
-    def get_display_options(cls, lang, plugin_type, blacklist=None, preferred=None, max_opts=20, skip_setup=True):
+    def get_display_options(cls, lang, plugin_type, blacklist=None, preferred=None,
+                            max_opts=20, skip_setup=True, include_dialects=True):
         # NOTE: mycroft-gui will crash if theres more than 20 options according to @aiix
         # TODO - validate that this is true and 20 is a real limit
         blacklist = blacklist or []
         opts = []
         if plugin_type == PluginTypes.STT:
-            cfgs = get_stt_lang_configs(lang=lang, include_dialects=True)
+            cfgs = get_stt_lang_configs(lang=lang, include_dialects=include_dialects)
         elif plugin_type == PluginTypes.TTS:
-            cfgs = get_tts_lang_configs(lang=lang, include_dialects=True)
+            cfgs = get_tts_lang_configs(lang=lang, include_dialects=include_dialects)
         else:
             raise NotImplementedError("only STT and TTS plugins are supported at this time")
 
