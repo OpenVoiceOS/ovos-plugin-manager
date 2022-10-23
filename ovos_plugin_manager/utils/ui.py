@@ -79,7 +79,7 @@ class PluginUIHelper:
         elif plugin_type == PluginTypes.TTS:
             cfgs = get_tts_lang_configs(lang=lang, include_dialects=True)
         else:
-            raise NotImplementedError
+            raise NotImplementedError("only STT and TTS plugins are supported at this time")
 
         for engine, configs in cfgs.items():
             if engine in blacklist:
