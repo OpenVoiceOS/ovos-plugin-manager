@@ -62,7 +62,7 @@ class PluginUIHelper:
     def _migrate_old_cfg(cfg):
         # TODO - until plugins are migrated to new "meta" subsection cleanup old keys
         meta = {}
-        for k in ["display_name", "gender", "offline"]:
+        for k in ["display_name", "gender", "offline", "priority"]:
             if k in cfg:
                 meta[k] = cfg.pop(k)
         cfg["meta"] = meta
@@ -71,38 +71,37 @@ class PluginUIHelper:
     @classmethod
     def get_display_options(cls, lang, plugin_type, blacklist=None, preferred=None, max_opts=20, skip_setup=True):
         # NOTE: mycroft-gui will crash if theres more than 20 options according to @aiix
-        try:
-            blacklist = blacklist or []
-            opts = []
-            if plugin_type == PluginTypes.STT:
-                cfgs = get_stt_lang_configs(lang=lang, include_dialects=True)
-            elif plugin_type == PluginTypes.TTS:
-                cfgs = get_tts_lang_configs(lang=lang, include_dialects=True)
-            else:
-                raise NotImplementedError
+        # TODO - validate that this is true and 20 is a real limit
+        blacklist = blacklist or []
+        opts = []
+        if plugin_type == PluginTypes.STT:
+            cfgs = get_stt_lang_configs(lang=lang, include_dialects=True)
+        elif plugin_type == PluginTypes.TTS:
+            cfgs = get_tts_lang_configs(lang=lang, include_dialects=True)
+        else:
+            raise NotImplementedError
 
-            for engine, configs in cfgs.items():
-                if engine in blacklist:
+        for engine, configs in cfgs.items():
+            if engine in blacklist:
+                continue
+            pref_opts = []
+            for config in configs:
+                config = cls._migrate_old_cfg(config)
+                if config["meta"].get("extra_setup") and skip_setup:
+                    # this config requires additional manual setup, skip was requested
                     continue
-                for config in configs:
-                    config = cls._migrate_old_cfg(config)
-                    if config["meta"].get("extra_setup") and skip_setup:
-                        # this config requires additional manual setup, skip was requested
-                        continue
-                    config["module"] = engine  # this one should be ensurec by get_lang_configs, but just in case
-                    d = cls.config2option(config, plugin_type, lang)
-                    if preferred and preferred not in blacklist and preferred == engine:
-                        # Sort the list for UI to display the preferred STT engine first
-                        # allow images to set a preferred engine
-                        opts.insert(0, d)
-                    else:
-                        opts.append(d)
+                config["module"] = engine  # this one should be ensurec by get_lang_configs, but just in case
+                d = cls.config2option(config, plugin_type, lang)
+                if preferred and preferred not in blacklist and preferred == engine:
+                    # Sort the list for UI to display the preferred STT engine first
+                    # allow images to set a preferred engine
+                    pref_opts.append(d)
+                else:
+                    opts.append(d)
+
+            # artificially send preferred engine entries to start of list
+            opts = pref_opts + opts
             return opts[:max_opts]
-        except Exception as e:
-            LOG.error(e)
-            # Return an empty list if there is an error
-            # UI will handle this and display an error message
-            return []
 
     @classmethod
     def get_extra_setup(cls, opt, plugin_type):
