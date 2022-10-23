@@ -39,8 +39,14 @@ class PluginUIHelper:
                "engine": engine}
 
         if plugin_type == PluginTypes.STT:
+            if not cls._stt_opts and lang:
+                # do initial scan
+                cls.get_display_options(lang, PluginTypes.STT)
             cls._stt_opts[hash_dict(opt)] = cfg
         elif plugin_type == PluginTypes.TTS:
+            if not cls._stt_opts and lang:
+                # do initial scan
+                cls.get_display_options(lang, PluginTypes.TTS)
             opt["gender"] = cfg["meta"].get("gender", "?")
             cls._tts_opts[hash_dict(opt)] = cfg
         else:
@@ -91,7 +97,7 @@ class PluginUIHelper:
                 if config["meta"].get("extra_setup") and skip_setup:
                     # this config requires additional manual setup, skip was requested
                     continue
-                config["module"] = engine  # this one should be ensurec by get_lang_configs, but just in case
+                config["module"] = engine  # this one should be ensured by get_lang_configs, but just in case
                 d = cls.config2option(config, plugin_type, lang)
                 if preferred and preferred not in blacklist and preferred == engine:
                     # Sort the list for UI to display the preferred STT engine first
