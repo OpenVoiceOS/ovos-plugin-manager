@@ -1,6 +1,5 @@
 import json
 
-from ovos_utils.log import LOG
 from ovos_plugin_manager import PluginTypes
 from ovos_plugin_manager.stt import get_stt_lang_configs
 from ovos_plugin_manager.tts import get_tts_lang_configs
@@ -77,6 +76,9 @@ class PluginUIHelper:
     @classmethod
     def get_display_options(cls, lang, plugin_type, blacklist=None, preferred=None,
                             max_opts=20, skip_setup=True, include_dialects=True):
+        """ return a list of dicts with metadata for downstream UIs
+        each option corresponds to a valid selectable plugin configuration, each plugin may report several options
+        """
         # NOTE: mycroft-gui will crash if theres more than 20 options according to @aiix
         # TODO - validate that this is true and 20 is a real limit
         blacklist = blacklist or []
@@ -109,6 +111,39 @@ class PluginUIHelper:
             # artificially send preferred engine entries to start of list
             opts = pref_opts + opts
             return opts[:max_opts]
+
+    @classmethod
+    def get_plugin_options(cls, lang, plugin_type):
+        """return a dict of {plugin_name: [options]} for UI display
+        each entry contains metadata about the plugin and its own options
+        """
+        plugs = {}
+        for entry in cls.get_display_options(lang, plugin_type):
+            engine = entry["engine"]
+            if engine not in plugs:
+                plugs[engine] = {"engine": entry["engine"],
+                                 "plugin_name": entry["plugin_name"],
+                                 "supports_offline_mode": False,
+                                 "supports_online_mode": False,
+                                 "options": []}
+                if plugin_type == PluginTypes.TTS:
+                    plugs[engine]["supports_male_voice"] = False
+                    plugs[engine]["supports_female_voice"] = False
+
+            if "offline" in entry:
+                if entry["offline"]:
+                    plugs[engine]["supports_offline_mode"] = True
+                else:
+                    plugs[engine]["supports_online_mode"] = True
+
+            if entry.get("gender", "?") == "male":
+                plugs[engine]["supports_male_voice"] = True
+            elif entry.get("gender", "?") == "female":
+                plugs[engine]["supports_female_voice"] = True
+
+            plugs[engine]["options"].append(entry)
+
+        return plugs
 
     @classmethod
     def get_extra_setup(cls, opt, plugin_type):
