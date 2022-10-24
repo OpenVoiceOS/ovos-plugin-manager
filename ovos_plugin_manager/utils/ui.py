@@ -36,7 +36,8 @@ class PluginUIHelper:
                "display_name": display_name,
                "offline": offline,
                "lang": lang,
-               "engine": engine}
+               "engine": engine,
+               "plugin_type": plugin_type}
 
         if plugin_type == PluginTypes.STT:
             if not cls._stt_opts and lang:
@@ -54,8 +55,11 @@ class PluginUIHelper:
         return opt
 
     @classmethod
-    def option2config(cls, opt, plugin_type):
+    def option2config(cls, opt, plugin_type=None):
         """ get the equivalent plugin config from a UI display model """
+        plugin_type = plugin_type or opt.get("plugin_type")
+        if not plugin_type:
+            raise ValueError("Unknown plugin type")
         if plugin_type == PluginTypes.STT:
             cfg = dict(cls._stt_opts.get(hash_dict(opt)))
         elif plugin_type == PluginTypes.TTS:
@@ -149,7 +153,7 @@ class PluginUIHelper:
         return flatten_list(plugs.values())
 
     @classmethod
-    def get_extra_setup(cls, opt, plugin_type):
+    def get_extra_setup(cls, opt, plugin_type=None):
         """
         individual plugins can provide a equivalent structure to skills settingsmeta.json/yaml
         this can be used to display an extra step for plugin configuration,
@@ -159,5 +163,8 @@ class PluginUIHelper:
         arbitrary configurations to downstream UIs,
         with selene being the reference consumer of that api
         """
+        plugin_type = plugin_type or opt.get("plugin_type")
+        if not plugin_type:
+            raise ValueError("Unknown plugin type")
         meta = cls.option2config(opt, plugin_type)["meta"]
         return meta.get("extra_setup") or {}
