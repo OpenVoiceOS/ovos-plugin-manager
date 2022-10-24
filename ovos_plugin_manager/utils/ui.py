@@ -80,7 +80,7 @@ class PluginUIHelper:
 
     @classmethod
     def get_config_options(cls, lang, plugin_type, blacklist=None, preferred=None,
-                           max_opts=20, skip_setup=True, include_dialects=True):
+                           max_opts=50, skip_setup=True, include_dialects=True):
         """ return a list of dicts with metadata for downstream UIs
         each option corresponds to a valid selectable plugin configuration, each plugin may report several options
         """
@@ -88,6 +88,9 @@ class PluginUIHelper:
         # TODO - validate that this is true and 20 is a real limit
         blacklist = blacklist or []
         opts = []
+        preferred = preferred or []
+        if isinstance(preferred, str):
+            preferred = [preferred]
         if plugin_type == PluginTypes.STT:
             cfgs = get_stt_lang_configs(lang=lang, include_dialects=include_dialects)
         elif plugin_type == PluginTypes.TTS:
@@ -108,7 +111,7 @@ class PluginUIHelper:
                         continue
                 config["module"] = engine  # this one should be ensured by get_lang_configs, but just in case
                 d = cls.config2option(config, plugin_type, lang)
-                if preferred and preferred not in blacklist and preferred == engine:
+                if engine in preferred:
                     # Sort the list for UI to display the preferred STT engine first
                     # allow images to set a preferred engine
                     pref_opts.append(d)
