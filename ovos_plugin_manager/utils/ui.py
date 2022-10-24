@@ -1,5 +1,5 @@
 import json
-
+from ovos_utils import flatten_list
 from ovos_plugin_manager import PluginTypes
 from ovos_plugin_manager.stt import get_stt_lang_configs
 from ovos_plugin_manager.tts import get_tts_lang_configs
@@ -10,7 +10,8 @@ def hash_dict(d):
 
 
 class PluginUIHelper:
-    """ Helper class to provide metadata for UI consumption
+    """
+    Helper class to provide metadata for UI consumption
     This allows all sorts of rich integrations by
     any downstream application wanting to provide a plugin store
 
@@ -143,7 +144,7 @@ class PluginUIHelper:
 
             plugs[engine]["options"].append(entry)
 
-        return list(plugs.values())
+        return flatten_list(plugs.values())
 
     @classmethod
     def get_extra_setup(cls, opt, plugin_type):
