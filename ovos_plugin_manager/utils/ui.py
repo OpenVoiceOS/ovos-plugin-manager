@@ -97,9 +97,11 @@ class PluginUIHelper:
             pref_opts = []
             for config in configs:
                 config = cls._migrate_old_cfg(config)
-                if config["meta"].get("extra_setup") and skip_setup:
-                    # this config requires additional manual setup, skip was requested
-                    continue
+                if config["meta"].get("extra_setup"):
+                    optional = config["meta"]["extra_setup"].get("optional")
+                    if not optional and skip_setup:
+                        # this config requires additional manual setup, skip was requested
+                        continue
                 config["module"] = engine  # this one should be ensured by get_lang_configs, but just in case
                 d = cls.config2option(config, plugin_type, lang)
                 if preferred and preferred not in blacklist and preferred == engine:
