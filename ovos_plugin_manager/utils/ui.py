@@ -40,12 +40,12 @@ class PluginUIHelper:
         if plugin_type == PluginTypes.STT:
             if not cls._stt_opts and lang:
                 # do initial scan
-                cls.get_display_options(lang, PluginTypes.STT)
+                cls.get_config_options(lang, PluginTypes.STT)
             cls._stt_opts[hash_dict(opt)] = cfg
         elif plugin_type == PluginTypes.TTS:
             if not cls._stt_opts and lang:
                 # do initial scan
-                cls.get_display_options(lang, PluginTypes.TTS)
+                cls.get_config_options(lang, PluginTypes.TTS)
             opt["gender"] = cfg["meta"].get("gender", "?")
             cls._tts_opts[hash_dict(opt)] = cfg
         else:
@@ -74,8 +74,8 @@ class PluginUIHelper:
         return cfg
 
     @classmethod
-    def get_display_options(cls, lang, plugin_type, blacklist=None, preferred=None,
-                            max_opts=20, skip_setup=True, include_dialects=True):
+    def get_config_options(cls, lang, plugin_type, blacklist=None, preferred=None,
+                           max_opts=20, skip_setup=True, include_dialects=True):
         """ return a list of dicts with metadata for downstream UIs
         each option corresponds to a valid selectable plugin configuration, each plugin may report several options
         """
@@ -118,7 +118,7 @@ class PluginUIHelper:
         each entry contains metadata about the plugin and its own options
         """
         plugs = {}
-        for entry in cls.get_display_options(lang, plugin_type):
+        for entry in cls.get_config_options(lang, plugin_type):
             engine = entry["engine"]
             if engine not in plugs:
                 plugs[engine] = {"engine": entry["engine"],
