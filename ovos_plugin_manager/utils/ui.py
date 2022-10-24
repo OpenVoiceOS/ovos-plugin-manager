@@ -114,7 +114,7 @@ class PluginUIHelper:
 
     @classmethod
     def get_plugin_options(cls, lang, plugin_type):
-        """return a dict of {plugin_name: [options]} for UI display
+        """return a list of dicts with individual plugin metadata for UI display
         each entry contains metadata about the plugin and its own options
         """
         plugs = {}
@@ -143,7 +143,7 @@ class PluginUIHelper:
 
             plugs[engine]["options"].append(entry)
 
-        return plugs
+        return list(plugs.values())
 
     @classmethod
     def get_extra_setup(cls, opt, plugin_type):
