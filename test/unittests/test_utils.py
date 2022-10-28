@@ -617,7 +617,7 @@ class TestUiUtils(unittest.TestCase):
         self.assertEqual(new_cfg, new_new_cfg)
 
     @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
-    def test_get_config_options(self, get_stt_lang_configs):
+    def test_plugin_ui_helper_get_config_options(self, get_stt_lang_configs):
         get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_PLUGINS_CONFIG)
         import importlib
         import ovos_plugin_manager.utils.ui
@@ -662,3 +662,32 @@ class TestUiUtils(unittest.TestCase):
         stt_opts = PluginUIHelper.get_config_options('en', PluginTypes.STT,
                                                      max_opts=5)
         self.assertEqual(len(stt_opts), 5)
+
+    @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
+    def test_plugin_ui_helper_get_plugin_options(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_PLUGINS_CONFIG)
+        import importlib
+        import ovos_plugin_manager.utils.ui
+        importlib.reload(ovos_plugin_manager.utils.ui)
+        from ovos_plugin_manager.utils.ui import PluginUIHelper, PluginTypes
+
+        stt_plugins = PluginUIHelper.get_plugin_options('en', PluginTypes.STT)
+        self.assertIsInstance(stt_plugins, list)
+        self.assertEqual(len(stt_plugins),
+                         len([p for p in _MOCK_VALID_PLUGINS_CONFIG.values()
+                              if p]))
+        for plug in stt_plugins:
+            self.assertEqual(set(plug.keys()), {'engine', 'plugin_name',
+                                                'supports_offline_mode',
+                                                'supports_online_mode',
+                                                'options'})
+            self.assertIsInstance(plug['engine'], str)
+            self.assertIsInstance(plug['plugin_name'], str)
+            self.assertIsInstance(plug['supports_offline_mode'], bool)
+            self.assertIsInstance(plug['supports_online_mode'], bool)
+            self.assertIsInstance(plug['options'], list)
+            for opt in plug['options']:
+                self.assertIsInstance(opt, dict)
+                self.assertEqual(set(opt.keys()),
+                                 {'plugin_name', 'display_name', 'offline',
+                                  'lang', 'engine', 'plugin_type'})

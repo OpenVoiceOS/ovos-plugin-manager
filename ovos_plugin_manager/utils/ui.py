@@ -176,9 +176,13 @@ class PluginUIHelper:
         return opts[:min(max_opts, len(opts))]
 
     @classmethod
-    def get_plugin_options(cls, lang, plugin_type):
-        """return a list of dicts with individual plugin metadata for UI display
-        each entry contains metadata about the plugin and its own options
+    def get_plugin_options(cls, lang: str, plugin_type: PluginTypes) -> list:
+        """
+        Get a list of dict metadata for downstream UIs.
+        Each option corresponds to a valid plugin and its capabilities
+        @param lang: Requested language (ISO 639-1 or BCP-47)
+        @param plugin_type: Type of plugins to return
+        @return: list of plugin specs with capabilities and config options
         """
         plugs = {}
         for entry in cls.get_config_options(lang, plugin_type):
@@ -206,7 +210,7 @@ class PluginUIHelper:
 
             plugs[engine]["options"].append(entry)
 
-        return flatten_list(plugs.values())
+        return flatten_list(list(plugs.values()))
 
     @classmethod
     def get_extra_setup(cls, opt, plugin_type=None):
