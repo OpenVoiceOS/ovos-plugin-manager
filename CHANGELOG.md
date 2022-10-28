@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19...HEAD)
+
+**Merged pull requests:**
+
+- Resolve setup skill errors [\#86](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/86) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.19](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.19) (2022-10-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a12...V0.0.19)
+
 ## [V0.0.19a12](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.19a12) (2022-10-24)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.19a11...V0.0.19a12)
