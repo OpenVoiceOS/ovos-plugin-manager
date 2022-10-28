@@ -1,4 +1,6 @@
 import unittest
+from copy import deepcopy
+from unittest.mock import patch
 
 _MOCK_CONFIG = {
     "lang": "global",
@@ -394,7 +396,7 @@ _MOCK_PLUGIN_CONFIG = {
                'offline': False,
                'priority': 60}]}
 
-_MOCK_VALID_PLUGINS_CONFIG = {
+_MOCK_VALID_STT_PLUGINS_CONFIG = {
     'deepspeech_stream_local': [{'display_name': 'English (en-US)',
                                  'lang': 'en-US',
                                  'offline': True,
@@ -504,7 +506,7 @@ _MOCK_VALID_PLUGINS_CONFIG = {
     'ovos-stt-plugin-vosk-streaming': []}
 
 
-class TestUtils(unittest.TestCase):
+class TestConfigUtils(unittest.TestCase):
     def test_get_plugin_config(self):
         from ovos_plugin_manager.utils.config import get_plugin_config
         tts_config = get_plugin_config(_MOCK_CONFIG, "tts")
@@ -554,7 +556,7 @@ class TestUtils(unittest.TestCase):
 
     def test_sort_plugin_configs(self):
         from ovos_plugin_manager.utils.config import sort_plugin_configs
-        sorted_configs = sort_plugin_configs(_MOCK_VALID_PLUGINS_CONFIG)
+        sorted_configs = sort_plugin_configs(_MOCK_VALID_STT_PLUGINS_CONFIG)
 
         self.assertEqual(sorted_configs['google_cloud_streaming'][-1],
                          {'display_name': 'English (United States)',
@@ -563,6 +565,8 @@ class TestUtils(unittest.TestCase):
                           'priority': 80}
                          )
 
+
+class TestTTSCacheUtils(unittest.TestCase):
     def test_hash_sentence(self):
         from ovos_plugin_manager.utils.tts_cache import hash_sentence
         test_sentence = "This is a test. Only UTF-8 Characters."
@@ -587,4 +591,192 @@ class TestUtils(unittest.TestCase):
         from ovos_plugin_manager.utils.tts_cache import mb_to_bytes
         self.assertEqual(mb_to_bytes(1), 1024 * 1024)
 
+
 # TODO: Write unit tests for classes in tts_cache
+
+
+class TestUiUtils(unittest.TestCase):
+    def test_hash_dict(self):
+        from ovos_plugin_manager.utils.ui import hash_dict
+        self.assertIsInstance(hash_dict({'test': 3,
+                                         'key': False,
+                                         'third': None}), str)
+
+    def test_plugin_ui_helper_migrate_old_cfg(self):
+        from ovos_plugin_manager.utils.ui import PluginUIHelper
+        old_cfg = _MOCK_VALID_STT_PLUGINS_CONFIG['deepspeech_stream_local'][0]
+        new_cfg = PluginUIHelper._migrate_old_cfg(old_cfg)
+        self.assertEqual(new_cfg, {'lang': 'en-US',
+                                   'meta': {
+                                       'display_name': 'English (en-US)',
+                                       'offline': True,
+                                       'priority': 85
+                                   }})
+        self.assertEqual(new_cfg, old_cfg)
+
+        new_new_cfg = PluginUIHelper._migrate_old_cfg(new_cfg)
+        self.assertEqual(new_cfg, new_new_cfg)
+
+    @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
+    def test_plugin_ui_helper_get_config_options_STT(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_STT_PLUGINS_CONFIG)
+        import importlib
+        import ovos_plugin_manager.utils.ui
+        importlib.reload(ovos_plugin_manager.utils.ui)
+        from ovos_plugin_manager.utils.ui import PluginUIHelper, PluginTypes, \
+            hash_dict
+
+        flat_valid_configs = list()
+        [flat_valid_configs.extend(cfg) for
+         cfg in _MOCK_VALID_STT_PLUGINS_CONFIG.values()]
+
+        self.assertFalse(PluginUIHelper._stt_init)
+        self.assertFalse(PluginUIHelper._tts_init)
+
+        # Test simple language no locale
+        stt_opts = PluginUIHelper.get_config_options('en', PluginTypes.STT)
+
+        # Check class variables
+        self.assertTrue(PluginUIHelper._stt_init)
+        self.assertFalse(PluginUIHelper._tts_init)
+
+        # Validate returned list
+        self.assertIsInstance(stt_opts, list)
+        self.assertEqual(len(stt_opts), len(flat_valid_configs))
+        for opt in stt_opts:
+            self.assertEqual(set(opt.keys()), {'plugin_name', 'display_name',
+                                               'offline', 'lang', 'engine',
+                                               'plugin_type'})
+            self.assertIsInstance(PluginUIHelper._stt_opts[hash_dict(opt)],
+                                  dict)
+
+        # Test blacklisted and preferred plugins
+        stt_opts = PluginUIHelper.get_config_options(
+            'en', PluginTypes.STT, ['ovos-stt-plugin-selene'],
+            ['deepspeech_stream_local'])
+        self.assertEqual(stt_opts[0]['plugin_name'], 'Deepspeech Stream Local')
+        for opt in stt_opts:
+            self.assertNotEqual(opt['plugin_name'].lower(),
+                                "ovos stt plugin selene")
+
+        # Test Max Options
+        stt_opts = PluginUIHelper.get_config_options('en', PluginTypes.STT,
+                                                     max_opts=5)
+        self.assertEqual(len(stt_opts), 5)
+
+    @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
+    def test_plugin_ui_helper_get_plugin_options_STT(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_STT_PLUGINS_CONFIG)
+        import importlib
+        import ovos_plugin_manager.utils.ui
+        importlib.reload(ovos_plugin_manager.utils.ui)
+        from ovos_plugin_manager.utils.ui import PluginUIHelper, PluginTypes
+
+        stt_plugins = PluginUIHelper.get_plugin_options('en', PluginTypes.STT)
+        self.assertIsInstance(stt_plugins, list)
+        self.assertEqual(len(stt_plugins),
+                         len([p for p in _MOCK_VALID_STT_PLUGINS_CONFIG.values()
+                              if p]))
+        for plug in stt_plugins:
+            self.assertEqual(set(plug.keys()), {'engine', 'plugin_name',
+                                                'supports_offline_mode',
+                                                'supports_online_mode',
+                                                'options'})
+            self.assertIsInstance(plug['engine'], str)
+            self.assertIsInstance(plug['plugin_name'], str)
+            self.assertIsInstance(plug['supports_offline_mode'], bool)
+            self.assertIsInstance(plug['supports_online_mode'], bool)
+            self.assertIsInstance(plug['options'], list)
+            for opt in plug['options']:
+                self.assertIsInstance(opt, dict)
+                self.assertEqual(set(opt.keys()),
+                                 {'plugin_name', 'display_name', 'offline',
+                                  'lang', 'engine', 'plugin_type'})
+
+    @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
+    def test_plugin_ui_helper_get_extra_setup_STT(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_STT_PLUGINS_CONFIG)
+        import importlib
+        import ovos_plugin_manager.utils.ui
+        importlib.reload(ovos_plugin_manager.utils.ui)
+        from ovos_plugin_manager.utils.ui import PluginUIHelper, PluginTypes
+
+        opts = PluginUIHelper.get_plugin_options('en', PluginTypes.STT)
+        for opt in opts:
+            self.assertIsInstance(
+                PluginUIHelper.get_extra_setup(opt, PluginTypes.STT), dict)
+
+    @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
+    def test_plugin_ui_helper_config2option_STT(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_STT_PLUGINS_CONFIG)
+        import importlib
+        import ovos_plugin_manager.utils.ui
+        importlib.reload(ovos_plugin_manager.utils.ui)
+        from ovos_plugin_manager.utils.ui import PluginUIHelper, PluginTypes, \
+            hash_dict
+
+        old_plugin_config = {'display_name': 'English (United States)',
+                             'lang': 'en-US',
+                             'offline': False,
+                             'priority': 75,
+                             "module": "google_cloud_streaming"}
+        plugin_config = {'lang': 'en-US',
+                         'module': 'google_cloud_streaming',
+                         'meta': {'display_name': 'English (United States)',
+                                  'offline': False,
+                                  'priority': 75}}
+
+        # Test config2option with migration
+        old_opt = PluginUIHelper.config2option(deepcopy(old_plugin_config),
+                                               PluginTypes.STT, 'en')
+        self.assertIsInstance(PluginUIHelper._stt_opts[hash_dict(old_opt)],
+                              dict)
+        self.assertEqual(set(old_opt.keys()), {'plugin_name', 'display_name',
+                                               'offline', 'lang', 'engine',
+                                               'plugin_type'})
+        # Migrated configuration
+        self.assertEqual(plugin_config,
+                         PluginUIHelper._stt_opts[hash_dict(old_opt)])
+
+        # Test config2option without migration
+        new_opt = PluginUIHelper.config2option(deepcopy(plugin_config),
+                                               PluginTypes.STT, 'en')
+        self.assertIsInstance(PluginUIHelper._stt_opts[hash_dict(old_opt)],
+                              dict)
+        self.assertIsInstance(PluginUIHelper._stt_opts[hash_dict(new_opt)],
+                              dict)
+        self.assertEqual(old_opt, new_opt)
+        self.assertEqual(plugin_config,
+                         PluginUIHelper._stt_opts[hash_dict(new_opt)])
+
+    @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
+    def test_plugin_ui_helper_option2config_STT(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_STT_PLUGINS_CONFIG)
+        import importlib
+        import ovos_plugin_manager.utils.ui
+        importlib.reload(ovos_plugin_manager.utils.ui)
+        from ovos_plugin_manager.utils.ui import PluginUIHelper, PluginTypes, \
+            hash_dict
+
+        valid_opt = {'plugin_name': 'Deepspeech Stream Local',
+                     'display_name': 'English (en-US)',
+                     'offline': True,
+                     'lang': 'en',
+                     'engine': 'deepspeech_stream_local',
+                     'plugin_type': PluginTypes.STT}
+
+        # Init STT configurations
+        opts = PluginUIHelper.get_config_options('en', PluginTypes.STT)
+        self.assertIn(valid_opt, opts)
+        self.assertTrue(PluginUIHelper._stt_init)
+        self.assertIsNotNone(PluginUIHelper._stt_opts)
+
+        # Validate config
+        self.assertIsInstance(PluginUIHelper._stt_opts[hash_dict(valid_opt)],
+                              dict)
+
+        # Get config out
+        config = PluginUIHelper.option2config(valid_opt, PluginTypes.STT)
+        self.assertEqual(set(config.keys()), {'lang', 'meta', 'module'})
+
+    # TODO: Duplicate STT tests for TTS
