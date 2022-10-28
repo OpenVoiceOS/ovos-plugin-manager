@@ -1,4 +1,6 @@
 import json
+from typing import Optional
+
 from ovos_utils import flatten_list
 from ovos_utils.log import LOG
 from ovos_plugin_manager import PluginTypes
@@ -55,13 +57,15 @@ class PluginUIHelper:
         # Init class dict config options for all plugins of this type
         if plugin_type == PluginTypes.STT:
             if lang and not cls._stt_init:
-                cls._stt_init = True
+                LOG.warning("requested STT options before call to "
+                            "`get_config_options`")
                 # do initial scan
                 cls.get_config_options(lang, PluginTypes.STT)
             cls._stt_opts[hash_dict(opt)] = cfg
         elif plugin_type == PluginTypes.TTS:
             if lang and not cls._tts_init:
-                cls._tts_init = True
+                LOG.warning("requested TTS options before call to "
+                            "`get_config_options`")
                 # do initial scan
                 cls.get_config_options(lang, PluginTypes.TTS)
             opt["gender"] = cfg["meta"].get("gender", "?")
@@ -110,10 +114,23 @@ class PluginUIHelper:
         return cfg
 
     @classmethod
-    def get_config_options(cls, lang, plugin_type, blacklist=None, preferred=None,
-                           max_opts=50, skip_setup=True, include_dialects=True):
-        """ return a list of dicts with metadata for downstream UIs
-        each option corresponds to a valid selectable plugin configuration, each plugin may report several options
+    def get_config_options(cls, lang: str, plugin_type: PluginTypes,
+                           blacklist: Optional[list] = None,
+                           preferred: Optional[list] = None,
+                           max_opts: int = 50, skip_setup: bool = True,
+                           include_dialects: bool = True) -> list:
+        """
+        Get a list of dict metadata for downstream UIs.
+        Each option corresponds to a valid selectable plugin configuration;
+        each plugin may report several options.
+        @param lang: Requested language (ISO 639-1 or BCP-47)
+        @param plugin_type: Type of plugins to return
+        @param blacklist: plugin names to ignore
+        @param preferred: preferred plugin names to prepend to returned list
+        @param max_opts: maximum length of the returned list
+        @param skip_setup: If True, exclude any plugins that require setup
+        @param include_dialects: If True, include any ISO 639-1 matched codes
+        @return: list of valid GUI-compatible config dicts
         """
         # NOTE: mycroft-gui will crash if theres more than 20 options according to @aiix
         # TODO - validate that this is true and 20 is a real limit
@@ -124,8 +141,10 @@ class PluginUIHelper:
             preferred = [preferred]
         if plugin_type == PluginTypes.STT:
             cfgs = get_stt_lang_configs(lang=lang, include_dialects=include_dialects)
+            cls._stt_init = True
         elif plugin_type == PluginTypes.TTS:
             cfgs = get_tts_lang_configs(lang=lang, include_dialects=include_dialects)
+            cls._tts_init = True
         else:
             raise NotImplementedError("only STT and TTS plugins are supported at this time")
 
