@@ -7,7 +7,8 @@ from ovos_plugin_manager.tts import get_tts_lang_configs
 
 
 def hash_dict(d):
-    return str(hash(json.dumps(d, indent=2, sort_keys=True, ensure_ascii=True)))
+    return str(hash(json.dumps(d, indent=2, sort_keys=True,
+                               ensure_ascii=True)))
 
 
 class PluginUIHelper:
@@ -25,23 +26,33 @@ class PluginUIHelper:
     _tts_init = False
 
     @classmethod
-    def config2option(cls, cfg, plugin_type, lang=None):
-        """ get the equivalent UI display model from a plugin config """
+    def config2option(cls, cfg: dict, plugin_type: PluginTypes,
+                      lang: str = None) -> dict:
+        """
+        Get the equivalent UI display model from a plugin config
+        @param cfg: Configuration from plugin entrypoint
+        @param plugin_type: Plugin type (stt/tts)
+        @param lang: BCP-47 language requested
+        @return: GUI-compatible plugin spec
+        """
         cfg = cls._migrate_old_cfg(cfg)
         engine = cfg["module"]
         lang = lang or cfg.get("lang")
 
-        plugin_display_name = engine.replace("_", " ").replace("-", " ").title()
+        plugin_display_name = engine.replace("_", " ").replace("-",
+                                                               " ").title()
         display_name = cfg["meta"].get("display_name", "?")
-        offline = cfg["meta"].get("offline", True)  # TODO consider better handling of missing "offline" key
+        # TODO consider better handling of missing "offline" key
+        offline = cfg["meta"].get("offline", False)
 
-        opt = {"plugin_name": plugin_display_name,
-               "display_name": display_name,
+        opt = {"plugin_name": plugin_display_name,  # Name of the plugin
+               "display_name": display_name,  # Name of this config option
                "offline": offline,
                "lang": lang,
                "engine": engine,
                "plugin_type": plugin_type}
 
+        # Init class dict config options for all plugins of this type
         if plugin_type == PluginTypes.STT:
             if lang and not cls._stt_init:
                 cls._stt_init = True
@@ -56,12 +67,18 @@ class PluginUIHelper:
             opt["gender"] = cfg["meta"].get("gender", "?")
             cls._tts_opts[hash_dict(opt)] = cfg
         else:
-            raise NotImplementedError("only STT and TTS plugins are supported at this time")
+            raise NotImplementedError(
+                "only STT and TTS plugins are supported at this time")
         return opt
 
     @classmethod
-    def option2config(cls, opt, plugin_type=None):
-        """ get the equivalent plugin config from a UI display model """
+    def option2config(cls, opt: dict, plugin_type: PluginTypes = None) -> dict:
+        """
+        Get the equivalent plugin config from a UI display model
+        @param opt: Configuration from GUI
+        @param plugin_type: Plugin type (stt/tts)
+        @return: default core configuration for requested opt
+        """
         plugin_type = plugin_type or opt.get("plugin_type")
         if not plugin_type:
             raise ValueError("Unknown plugin type")
@@ -70,12 +87,20 @@ class PluginUIHelper:
         elif plugin_type == PluginTypes.TTS:
             cfg = dict(cls._tts_opts.get(hash_dict(opt)))
         else:
-            raise NotImplementedError("only STT and TTS plugins are supported at this time")
+            raise NotImplementedError(
+                "only STT and TTS plugins are supported at this time")
         return cfg
 
     @staticmethod
-    def _migrate_old_cfg(cfg):
-        # TODO - until plugins are migrated to new "meta" subsection cleanup old keys
+    def _migrate_old_cfg(cfg: dict) -> dict:
+        """
+        Translate any old-style plugin configuration into new structure
+        @param cfg: Plugin config to check
+        @return: Validated plugin config
+        """
+        if cfg.get('meta'):
+            return cfg
+        LOG.info(f"Migrating old-style configuration: {cfg}")
         meta = {}
         for k in ["display_name", "gender", "offline", "priority"]:
             if k in cfg:
@@ -118,7 +143,7 @@ class PluginUIHelper:
                         LOG.debug(f"Extra setup required. Ignoring {engine}")
                         continue
                 config["module"] = engine  # this one should be ensured by get_lang_configs, but just in case
-                d = cls.config2option(config, plugin_type, lang)  # TODO: This is a recursive call??
+                d = cls.config2option(config, plugin_type, lang)
                 if engine in preferred:
                     # Sort the list for UI to display the preferred STT engine first
                     # allow images to set a preferred engine
@@ -167,7 +192,7 @@ class PluginUIHelper:
     @classmethod
     def get_extra_setup(cls, opt, plugin_type=None):
         """
-        individual plugins can provide a equivalent structure to skills settingsmeta.json/yaml
+        individual plugins can provide an equivalent structure to skills settingsmeta.json/yaml
         this can be used to display an extra step for plugin configuration,
         such as required api keys that cant be pre-included by plugins
 
