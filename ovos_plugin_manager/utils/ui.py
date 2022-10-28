@@ -83,7 +83,7 @@ class PluginUIHelper:
         This is the inverse of config2option.
         @param opt: Configuration from GUI
         @param plugin_type: Plugin type (stt/tts)
-        @return: default core configuration for requested opt
+        @return: plugin configuration for requested opt (lang, meta, module)
         """
         plugin_type = plugin_type or opt.get("plugin_type")
         if not plugin_type:

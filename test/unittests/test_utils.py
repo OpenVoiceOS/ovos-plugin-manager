@@ -758,20 +758,23 @@ class TestUiUtils(unittest.TestCase):
         from ovos_plugin_manager.utils.ui import PluginUIHelper, PluginTypes, \
             hash_dict
 
-        plugin_config = {'lang': 'en-US',
-                         'module': 'google_cloud_streaming',
-                         'meta': {'display_name': 'English (United States)',
-                                  'offline': False,
-                                  'priority': 75}}
+        valid_opt = {'plugin_name': 'Deepspeech Stream Local',
+                     'display_name': 'English (en-US)',
+                     'offline': True,
+                     'lang': 'en',
+                     'engine': 'deepspeech_stream_local',
+                     'plugin_type': PluginTypes.STT}
 
         # Init STT configurations
-        valid_opt = PluginUIHelper.config2option(deepcopy(plugin_config),
-                                                 PluginTypes.STT, 'en')
+        opts = PluginUIHelper.get_config_options('en', PluginTypes.STT)
+        self.assertIn(valid_opt, opts)
+        self.assertTrue(PluginUIHelper._stt_init)
+        self.assertIsNotNone(PluginUIHelper._stt_opts)
+
+        # Validate config
         self.assertIsInstance(PluginUIHelper._stt_opts[hash_dict(valid_opt)],
                               dict)
 
         # Get config out
         config = PluginUIHelper.option2config(valid_opt, PluginTypes.STT)
-        self.assertEqual(config, plugin_config)
-        config = PluginUIHelper.option2config(valid_opt)
-        self.assertEqual(config, plugin_config)
+        self.assertEqual(set(config.keys()), {'lang', 'meta', 'module'})
