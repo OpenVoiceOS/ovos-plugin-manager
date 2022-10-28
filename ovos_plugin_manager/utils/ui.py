@@ -1,5 +1,6 @@
 import json
 from ovos_utils import flatten_list
+from ovos_utils.log import LOG
 from ovos_plugin_manager import PluginTypes
 from ovos_plugin_manager.stt import get_stt_lang_configs
 from ovos_plugin_manager.tts import get_tts_lang_configs
@@ -98,6 +99,7 @@ class PluginUIHelper:
         else:
             raise NotImplementedError("only STT and TTS plugins are supported at this time")
 
+        LOG.debug(f"cfgs={cfgs}")
         for engine, configs in cfgs.items():
             if engine in blacklist:
                 continue
@@ -120,7 +122,8 @@ class PluginUIHelper:
 
             # artificially send preferred engine entries to start of list
             opts = pref_opts + opts
-            return opts[:max_opts]
+        LOG.debug(f"Got {len(opts)} opts")
+        return opts[:min(max_opts, len(opts))]
 
     @classmethod
     def get_plugin_options(cls, lang, plugin_type):
