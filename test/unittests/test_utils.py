@@ -591,6 +591,7 @@ class TestTTSCacheUtils(unittest.TestCase):
         from ovos_plugin_manager.utils.tts_cache import mb_to_bytes
         self.assertEqual(mb_to_bytes(1), 1024 * 1024)
 
+
 # TODO: Write unit tests for classes in tts_cache
 
 
@@ -622,7 +623,7 @@ class TestUiUtils(unittest.TestCase):
         import importlib
         import ovos_plugin_manager.utils.ui
         importlib.reload(ovos_plugin_manager.utils.ui)
-        from ovos_plugin_manager.utils.ui import PluginUIHelper, PluginTypes,\
+        from ovos_plugin_manager.utils.ui import PluginUIHelper, PluginTypes, \
             hash_dict
 
         flat_valid_configs = list()
@@ -691,3 +692,86 @@ class TestUiUtils(unittest.TestCase):
                 self.assertEqual(set(opt.keys()),
                                  {'plugin_name', 'display_name', 'offline',
                                   'lang', 'engine', 'plugin_type'})
+
+    @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
+    def test_plugin_ui_helper_get_extra_setup(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_PLUGINS_CONFIG)
+        import importlib
+        import ovos_plugin_manager.utils.ui
+        importlib.reload(ovos_plugin_manager.utils.ui)
+        from ovos_plugin_manager.utils.ui import PluginUIHelper, PluginTypes
+
+        opts = PluginUIHelper.get_plugin_options('en', PluginTypes.STT)
+        for opt in opts:
+            self.assertIsInstance(
+                PluginUIHelper.get_extra_setup(opt, PluginTypes.STT), dict)
+
+    @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
+    def test_plugin_ui_helper_config2option(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_PLUGINS_CONFIG)
+        import importlib
+        import ovos_plugin_manager.utils.ui
+        importlib.reload(ovos_plugin_manager.utils.ui)
+        from ovos_plugin_manager.utils.ui import PluginUIHelper, PluginTypes, \
+            hash_dict
+
+        old_plugin_config = {'display_name': 'English (United States)',
+                             'lang': 'en-US',
+                             'offline': False,
+                             'priority': 75,
+                             "module": "google_cloud_streaming"}
+        plugin_config = {'lang': 'en-US',
+                         'module': 'google_cloud_streaming',
+                         'meta': {'display_name': 'English (United States)',
+                                  'offline': False,
+                                  'priority': 75}}
+
+        # Test config2option with migration
+        old_opt = PluginUIHelper.config2option(deepcopy(old_plugin_config),
+                                               PluginTypes.STT, 'en')
+        self.assertIsInstance(PluginUIHelper._stt_opts[hash_dict(old_opt)],
+                              dict)
+        self.assertEqual(set(old_opt.keys()), {'plugin_name', 'display_name',
+                                               'offline', 'lang', 'engine',
+                                               'plugin_type'})
+        # Migrated configuration
+        self.assertEqual(plugin_config,
+                         PluginUIHelper._stt_opts[hash_dict(old_opt)])
+
+        # Test config2option without migration
+        new_opt = PluginUIHelper.config2option(deepcopy(plugin_config),
+                                               PluginTypes.STT, 'en')
+        self.assertIsInstance(PluginUIHelper._stt_opts[hash_dict(old_opt)],
+                              dict)
+        self.assertIsInstance(PluginUIHelper._stt_opts[hash_dict(new_opt)],
+                              dict)
+        self.assertEqual(old_opt, new_opt)
+        self.assertEqual(plugin_config,
+                         PluginUIHelper._stt_opts[hash_dict(new_opt)])
+
+    @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
+    def test_plugin_ui_helper_option2config(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_PLUGINS_CONFIG)
+        import importlib
+        import ovos_plugin_manager.utils.ui
+        importlib.reload(ovos_plugin_manager.utils.ui)
+        from ovos_plugin_manager.utils.ui import PluginUIHelper, PluginTypes, \
+            hash_dict
+
+        plugin_config = {'lang': 'en-US',
+                         'module': 'google_cloud_streaming',
+                         'meta': {'display_name': 'English (United States)',
+                                  'offline': False,
+                                  'priority': 75}}
+
+        # Init STT configurations
+        valid_opt = PluginUIHelper.config2option(deepcopy(plugin_config),
+                                                 PluginTypes.STT, 'en')
+        self.assertIsInstance(PluginUIHelper._stt_opts[hash_dict(valid_opt)],
+                              dict)
+
+        # Get config out
+        config = PluginUIHelper.option2config(valid_opt, PluginTypes.STT)
+        self.assertEqual(config, plugin_config)
+        config = PluginUIHelper.option2config(valid_opt)
+        self.assertEqual(config, plugin_config)

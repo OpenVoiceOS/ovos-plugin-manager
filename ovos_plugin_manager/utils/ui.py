@@ -31,10 +31,11 @@ class PluginUIHelper:
     def config2option(cls, cfg: dict, plugin_type: PluginTypes,
                       lang: str = None) -> dict:
         """
-        Get the equivalent UI display model from a plugin config
+        Get the equivalent UI display model from a plugin config.
+        This is the inverse of option2config.
         @param cfg: Configuration from plugin entrypoint
         @param plugin_type: Plugin type (stt/tts)
-        @param lang: BCP-47 language requested
+        @param lang: ISO 639-1 or BCP-47 language requested
         @return: GUI-compatible plugin spec
         """
         cfg = cls._migrate_old_cfg(cfg)
@@ -78,7 +79,8 @@ class PluginUIHelper:
     @classmethod
     def option2config(cls, opt: dict, plugin_type: PluginTypes = None) -> dict:
         """
-        Get the equivalent plugin config from a UI display model
+        Get the equivalent plugin config from a UI display model.
+        This is the inverse of config2option.
         @param opt: Configuration from GUI
         @param plugin_type: Plugin type (stt/tts)
         @return: default core configuration for requested opt
@@ -87,12 +89,13 @@ class PluginUIHelper:
         if not plugin_type:
             raise ValueError("Unknown plugin type")
         if plugin_type == PluginTypes.STT:
-            cfg = dict(cls._stt_opts.get(hash_dict(opt)))
+            cfg = cls._stt_opts.get(hash_dict(opt)) or dict()
         elif plugin_type == PluginTypes.TTS:
-            cfg = dict(cls._tts_opts.get(hash_dict(opt)))
+            cfg = cls._tts_opts.get(hash_dict(opt)) or dict()
         else:
             raise NotImplementedError(
                 "only STT and TTS plugins are supported at this time")
+        LOG.debug(f'cfg={cfg}')
         return cfg
 
     @staticmethod
@@ -213,18 +216,28 @@ class PluginUIHelper:
         return flatten_list(list(plugs.values()))
 
     @classmethod
-    def get_extra_setup(cls, opt, plugin_type=None):
+    def get_extra_setup(cls, opt: dict,
+                        plugin_type: Optional[PluginTypes] = None) -> dict:
         """
-        individual plugins can provide an equivalent structure to skills settingsmeta.json/yaml
-        this can be used to display an extra step for plugin configuration,
-        such as required api keys that cant be pre-included by plugins
+        Get a dict representation of plugin configuration options.
 
-        skills already define this data structure that allows exposing
+        Individual plugins can provide an equivalent structure to skills
+        settingsmeta.json/yaml.
+        This can be used to display an extra step for plugin configuration,
+        such as required api keys that cant be pre-included by plugins.
+
+        Skills already define this data structure that allows exposing
         arbitrary configurations to downstream UIs,
-        with selene being the reference consumer of that api
+        with selene being the reference consumer of that API.
+        @param opt: Configuration from GUI
+        @param plugin_type: Plugin type (stt/tts)
+        @return: dict `extra_setup` from plugin 'meta' config
         """
         plugin_type = plugin_type or opt.get("plugin_type")
         if not plugin_type:
             raise ValueError("Unknown plugin type")
-        meta = cls.option2config(opt, plugin_type)["meta"]
+        meta = cls.option2config(opt, plugin_type).get("meta")
+        if not meta:
+            LOG.warning(f'No meta config found for opt={opt}')
+            return {}
         return meta.get("extra_setup") or {}
