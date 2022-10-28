@@ -1,4 +1,5 @@
 import unittest
+from copy import deepcopy
 from unittest.mock import patch
 
 _MOCK_CONFIG = {
@@ -617,7 +618,7 @@ class TestUiUtils(unittest.TestCase):
 
     @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
     def test_get_config_options(self, get_stt_lang_configs):
-        get_stt_lang_configs.return_value = _MOCK_VALID_PLUGINS_CONFIG
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_PLUGINS_CONFIG)
         import importlib
         import ovos_plugin_manager.utils.ui
         importlib.reload(ovos_plugin_manager.utils.ui)
