@@ -21,6 +21,8 @@ class PluginUIHelper:
     """
     _stt_opts = {}
     _tts_opts = {}
+    _stt_init = False
+    _tts_init = False
 
     @classmethod
     def config2option(cls, cfg, plugin_type, lang=None):
@@ -41,12 +43,14 @@ class PluginUIHelper:
                "plugin_type": plugin_type}
 
         if plugin_type == PluginTypes.STT:
-            if lang and not cls._stt_opts:
+            if lang and not cls._stt_init:
+                cls._stt_init = True
                 # do initial scan
                 cls.get_config_options(lang, PluginTypes.STT)
             cls._stt_opts[hash_dict(opt)] = cfg
         elif plugin_type == PluginTypes.TTS:
-            if lang and not cls._tts_opts:
+            if lang and not cls._tts_init:
+                cls._tts_init = True
                 # do initial scan
                 cls.get_config_options(lang, PluginTypes.TTS)
             opt["gender"] = cfg["meta"].get("gender", "?")
@@ -77,6 +81,7 @@ class PluginUIHelper:
             if k in cfg:
                 meta[k] = cfg.pop(k)
         cfg["meta"] = meta
+        LOG.debug(f"Config migrated to: {cfg}")
         return cfg
 
     @classmethod
@@ -110,9 +115,10 @@ class PluginUIHelper:
                     optional = config["meta"]["extra_setup"].get("optional")
                     if not optional and skip_setup:
                         # this config requires additional manual setup, skip was requested
+                        LOG.debug(f"Extra setup required. Ignoring {engine}")
                         continue
                 config["module"] = engine  # this one should be ensured by get_lang_configs, but just in case
-                d = cls.config2option(config, plugin_type, lang)
+                d = cls.config2option(config, plugin_type, lang)  # TODO: This is a recursive call??
                 if engine in preferred:
                     # Sort the list for UI to display the preferred STT engine first
                     # allow images to set a preferred engine
