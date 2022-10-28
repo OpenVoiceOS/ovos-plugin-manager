@@ -213,7 +213,9 @@ class PluginUIHelper:
 
             plugs[engine]["options"].append(entry)
 
-        return flatten_list(list(plugs.values()))
+        opts = flatten_list(list(plugs.values()))
+        LOG.debug(opts)
+        return opts
 
     @classmethod
     def get_extra_setup(cls, opt: dict,

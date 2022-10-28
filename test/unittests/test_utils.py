@@ -396,7 +396,7 @@ _MOCK_PLUGIN_CONFIG = {
                'offline': False,
                'priority': 60}]}
 
-_MOCK_VALID_PLUGINS_CONFIG = {
+_MOCK_VALID_STT_PLUGINS_CONFIG = {
     'deepspeech_stream_local': [{'display_name': 'English (en-US)',
                                  'lang': 'en-US',
                                  'offline': True,
@@ -556,7 +556,7 @@ class TestConfigUtils(unittest.TestCase):
 
     def test_sort_plugin_configs(self):
         from ovos_plugin_manager.utils.config import sort_plugin_configs
-        sorted_configs = sort_plugin_configs(_MOCK_VALID_PLUGINS_CONFIG)
+        sorted_configs = sort_plugin_configs(_MOCK_VALID_STT_PLUGINS_CONFIG)
 
         self.assertEqual(sorted_configs['google_cloud_streaming'][-1],
                          {'display_name': 'English (United States)',
@@ -604,7 +604,7 @@ class TestUiUtils(unittest.TestCase):
 
     def test_plugin_ui_helper_migrate_old_cfg(self):
         from ovos_plugin_manager.utils.ui import PluginUIHelper
-        old_cfg = _MOCK_VALID_PLUGINS_CONFIG['deepspeech_stream_local'][0]
+        old_cfg = _MOCK_VALID_STT_PLUGINS_CONFIG['deepspeech_stream_local'][0]
         new_cfg = PluginUIHelper._migrate_old_cfg(old_cfg)
         self.assertEqual(new_cfg, {'lang': 'en-US',
                                    'meta': {
@@ -618,8 +618,8 @@ class TestUiUtils(unittest.TestCase):
         self.assertEqual(new_cfg, new_new_cfg)
 
     @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
-    def test_plugin_ui_helper_get_config_options(self, get_stt_lang_configs):
-        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_PLUGINS_CONFIG)
+    def test_plugin_ui_helper_get_config_options_STT(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_STT_PLUGINS_CONFIG)
         import importlib
         import ovos_plugin_manager.utils.ui
         importlib.reload(ovos_plugin_manager.utils.ui)
@@ -628,7 +628,7 @@ class TestUiUtils(unittest.TestCase):
 
         flat_valid_configs = list()
         [flat_valid_configs.extend(cfg) for
-         cfg in _MOCK_VALID_PLUGINS_CONFIG.values()]
+         cfg in _MOCK_VALID_STT_PLUGINS_CONFIG.values()]
 
         self.assertFalse(PluginUIHelper._stt_init)
         self.assertFalse(PluginUIHelper._tts_init)
@@ -665,8 +665,8 @@ class TestUiUtils(unittest.TestCase):
         self.assertEqual(len(stt_opts), 5)
 
     @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
-    def test_plugin_ui_helper_get_plugin_options(self, get_stt_lang_configs):
-        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_PLUGINS_CONFIG)
+    def test_plugin_ui_helper_get_plugin_options_STT(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_STT_PLUGINS_CONFIG)
         import importlib
         import ovos_plugin_manager.utils.ui
         importlib.reload(ovos_plugin_manager.utils.ui)
@@ -675,7 +675,7 @@ class TestUiUtils(unittest.TestCase):
         stt_plugins = PluginUIHelper.get_plugin_options('en', PluginTypes.STT)
         self.assertIsInstance(stt_plugins, list)
         self.assertEqual(len(stt_plugins),
-                         len([p for p in _MOCK_VALID_PLUGINS_CONFIG.values()
+                         len([p for p in _MOCK_VALID_STT_PLUGINS_CONFIG.values()
                               if p]))
         for plug in stt_plugins:
             self.assertEqual(set(plug.keys()), {'engine', 'plugin_name',
@@ -694,8 +694,8 @@ class TestUiUtils(unittest.TestCase):
                                   'lang', 'engine', 'plugin_type'})
 
     @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
-    def test_plugin_ui_helper_get_extra_setup(self, get_stt_lang_configs):
-        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_PLUGINS_CONFIG)
+    def test_plugin_ui_helper_get_extra_setup_STT(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_STT_PLUGINS_CONFIG)
         import importlib
         import ovos_plugin_manager.utils.ui
         importlib.reload(ovos_plugin_manager.utils.ui)
@@ -707,8 +707,8 @@ class TestUiUtils(unittest.TestCase):
                 PluginUIHelper.get_extra_setup(opt, PluginTypes.STT), dict)
 
     @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
-    def test_plugin_ui_helper_config2option(self, get_stt_lang_configs):
-        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_PLUGINS_CONFIG)
+    def test_plugin_ui_helper_config2option_STT(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_STT_PLUGINS_CONFIG)
         import importlib
         import ovos_plugin_manager.utils.ui
         importlib.reload(ovos_plugin_manager.utils.ui)
@@ -750,8 +750,8 @@ class TestUiUtils(unittest.TestCase):
                          PluginUIHelper._stt_opts[hash_dict(new_opt)])
 
     @patch("ovos_plugin_manager.stt.get_stt_lang_configs")
-    def test_plugin_ui_helper_option2config(self, get_stt_lang_configs):
-        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_PLUGINS_CONFIG)
+    def test_plugin_ui_helper_option2config_STT(self, get_stt_lang_configs):
+        get_stt_lang_configs.return_value = deepcopy(_MOCK_VALID_STT_PLUGINS_CONFIG)
         import importlib
         import ovos_plugin_manager.utils.ui
         importlib.reload(ovos_plugin_manager.utils.ui)
@@ -778,3 +778,5 @@ class TestUiUtils(unittest.TestCase):
         # Get config out
         config = PluginUIHelper.option2config(valid_opt, PluginTypes.STT)
         self.assertEqual(set(config.keys()), {'lang', 'meta', 'module'})
+
+    # TODO: Duplicate STT tests for TTS
