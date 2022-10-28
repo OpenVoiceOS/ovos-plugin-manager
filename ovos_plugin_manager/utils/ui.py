@@ -41,12 +41,12 @@ class PluginUIHelper:
                "plugin_type": plugin_type}
 
         if plugin_type == PluginTypes.STT:
-            if not cls._stt_opts and lang:
+            if lang and not cls._stt_opts:
                 # do initial scan
                 cls.get_config_options(lang, PluginTypes.STT)
             cls._stt_opts[hash_dict(opt)] = cfg
         elif plugin_type == PluginTypes.TTS:
-            if not cls._tts_opts and lang:
+            if lang and not cls._tts_opts:
                 # do initial scan
                 cls.get_config_options(lang, PluginTypes.TTS)
             opt["gender"] = cfg["meta"].get("gender", "?")
