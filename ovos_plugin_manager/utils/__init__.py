@@ -19,6 +19,7 @@ from langcodes import standardize_tag as _normalize_lang
 
 class PluginTypes(str, Enum):
     PHAL = "ovos.plugin.phal"
+    ADMIN = "ovos.plugin.phal.admin"
     SKILL = "ovos.plugin.skill"
     VAD = "ovos.plugin.VAD"
     PHONEME = "ovos.plugin.g2p"
@@ -41,6 +42,7 @@ class PluginTypes(str, Enum):
 
 class PluginConfigTypes(str, Enum):
     PHAL = "ovos.plugin.phal.config"
+    ADMIN = "ovos.plugin.phal.admin.config"
     SKILL = "ovos.plugin.skill.config"
     VAD = "ovos.plugin.VAD.config"
     PHONEME = "ovos.plugin.g2p.config"

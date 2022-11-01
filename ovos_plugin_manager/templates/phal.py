@@ -423,3 +423,8 @@ class PHALPlugin:
     def _deactivate_mouth_events(self, message=None):
         """Disable movement of the mouth with speech"""
         self._mouth_events = False
+
+
+# Just for api consistency
+AdminPlugin = PHALPlugin
+AdminValidator = PHALValidator
