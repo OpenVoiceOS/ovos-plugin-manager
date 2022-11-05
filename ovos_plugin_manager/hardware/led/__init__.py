@@ -33,8 +33,8 @@ from typing import Union
 
 class Color(Enum):
     """
-    Enum class for colors. In the future, this can support getting equivalent
-    colors in hex format, GRB format, etc.
+    Enum class for colors. For theme support, call Color.set_theme() with a
+    valid hex value.
     """
     BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)
@@ -53,12 +53,30 @@ class Color(Enum):
     NEON_ORANGE = (255, 134, 0)
     OVOS_RED = (255, 26, 26)
 
+    THEME = ()
+
     def as_rgb_tuple(self) -> tuple:
         """
-        Get an rgb tuple representation of the color.
+        Get an RGB tuple representation of the color.
         """
+        if self.name == Color.THEME.name:
+            if not hasattr(self, '_THEME'):
+                return Color.WHITE.as_rgb_tuple()
+            return self._THEME
         assert isinstance(self.value, tuple)
         return self.value
+
+    @staticmethod
+    def from_hex(hex_code: str) -> tuple:
+        """
+        Get a color RGB tuple from a hex code
+        @param hex_code: RGB hex code, optionally starting with '#'
+        @return: tuple RGB values
+        """
+        hex_code = hex_code.lstrip('#').strip()
+        if len(hex_code) != 6:
+            raise ValueError(f"Expected 6-character hex code, got: {hex_code}")
+        return tuple(int(hex_code[i:i + 2], 16) for i in (0, 2, 4))
 
     @classmethod
     def from_name(cls, color: str):
@@ -71,6 +89,13 @@ class Color(Enum):
             if c.name.lower() == color.lower():
                 return c
         raise ValueError(f'{color} is not a valid Color')
+
+    @classmethod
+    def set_theme(cls, color: str):
+        try:
+            cls._THEME = Color.from_hex(color)
+        except ValueError:
+            cls._THEME = Color.WHITE.as_rgb_tuple()
 
 
 class AbstractLed:
