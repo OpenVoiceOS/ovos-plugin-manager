@@ -31,7 +31,7 @@ from threading import Event
 from time import time, sleep
 from typing import Optional
 
-from abstract_hardware_interface.led import AbstractLed, Color
+from ovos_plugin_manager.hardware.led import AbstractLed, Color
 
 
 class LedAnimation:
@@ -111,7 +111,7 @@ class ChaseLedAnimation(LedAnimation):
         self.stopping.set()
 
 
-class LoopFillLedAnimation(LedAnimation):
+class FillLedAnimation(LedAnimation):
     def __init__(self, leds: AbstractLed, fill_color: Color,
                  reverse: bool = False):
         LedAnimation.__init__(self, leds)
@@ -131,8 +131,59 @@ class LoopFillLedAnimation(LedAnimation):
         pass
 
 
+class RefillLedAnimation(LedAnimation):
+    def __init__(self, leds: AbstractLed, fill_color: Color,
+                 reverse: bool = False):
+        LedAnimation.__init__(self, leds)
+        self.stopping = Event()
+        self.fill_color = fill_color
+        self.fill_animation = FillLedAnimation(leds, fill_color, reverse)
+
+    def start(self, timeout=None):
+        self.stopping.clear()
+        end_time = time() + timeout if timeout else None
+
+        while not self.stopping.is_set():
+            self.fill_animation.start()
+            self.fill_animation.fill_color_tuple = Color.BLACK.as_rgb_tuple()
+            self.fill_animation.start()
+            self.fill_animation.fill_color_tuple = self.fill_color.as_rgb_tuple()
+            if end_time and time() > end_time:
+                self.stopping.set()
+
+    def stop(self):
+        self.stopping.set()
+
+
+class BounceLedAnimation(LedAnimation):
+    def __init__(self, leds: AbstractLed, fill_color: Color,
+                 reverse: bool = False):
+        LedAnimation.__init__(self, leds)
+        self.stopping = Event()
+        self.fill_color = fill_color
+        self.fill_animation = FillLedAnimation(leds, fill_color, reverse)
+
+    def start(self, timeout=None):
+        self.stopping.clear()
+        end_time = time() + timeout if timeout else None
+
+        while not self.stopping.is_set():
+            self.fill_animation.start()
+            self.fill_animation.reverse = not self.fill_animation.reverse
+            self.fill_animation.fill_color_tuple = Color.BLACK.as_rgb_tuple()
+            self.fill_animation.reverse = not self.fill_animation.reverse
+            self.fill_animation.start()
+            self.fill_animation.fill_color_tuple = self.fill_color.as_rgb_tuple()
+            if end_time and time() > end_time:
+                self.stopping.set()
+
+    def stop(self):
+        self.stopping.set()
+
 animations = {
     'breathe': BreatheLedAnimation,
     'chase': ChaseLedAnimation,
-    'loop_fill': LoopFillLedAnimation
+    'fill': FillLedAnimation,
+    'refill': RefillLedAnimation,
+    'bounce': BounceLedAnimation
 }
