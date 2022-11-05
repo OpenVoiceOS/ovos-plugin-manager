@@ -117,7 +117,7 @@ class FillLedAnimation(LedAnimation):
         LedAnimation.__init__(self, leds)
         self.fill_color_tuple = fill_color.as_rgb_tuple()
         self.reverse = reverse
-        self.step_delay = 0.02
+        self.step_delay = 0.05
 
     def start(self, timeout=None):
         leds = list(range(0, self.leds.num_leds))
@@ -171,8 +171,8 @@ class BounceLedAnimation(LedAnimation):
             self.fill_animation.start()
             self.fill_animation.reverse = not self.fill_animation.reverse
             self.fill_animation.fill_color_tuple = Color.BLACK.as_rgb_tuple()
-            self.fill_animation.reverse = not self.fill_animation.reverse
             self.fill_animation.start()
+            self.fill_animation.reverse = not self.fill_animation.reverse
             self.fill_animation.fill_color_tuple = self.fill_color.as_rgb_tuple()
             if end_time and time() > end_time:
                 self.stopping.set()
