@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20a1...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20a2...HEAD)
+
+**Merged pull requests:**
+
+- Implement Hardware abstract classes [\#88](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/88) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.20a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.20a2) (2022-11-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20a1...V0.0.20a2)
 
 **Implemented enhancements:**
 
