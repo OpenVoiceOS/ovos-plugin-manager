@@ -22,11 +22,16 @@ class LedAnimation:
         """
         Stop the animation and reset LEDs to black.
         """
-        # TODO: Get state before animation and restore it here
 
 
 class BreatheLedAnimation(LedAnimation):
     def __init__(self, leds: AbstractLed, color: Color):
+        """
+        Breathing effect where all LEDs dim up and down until timing out
+        or being stopped. LEDs are turned off after animation.
+        @param leds: LED object to interact with
+        @param color: Base color of LEDs
+        """
         LedAnimation.__init__(self, leds)
         self.color_tuple = color.as_rgb_tuple()
         self.step = 0.05
@@ -49,16 +54,22 @@ class BreatheLedAnimation(LedAnimation):
             sleep(self.step_delay)
             if end_time and time() > end_time:
                 self.stopping.set()
+        self.leds.fill(Color.BLACK)
 
     def stop(self):
         self.stopping.set()
-        # TODO: Get LED state at start and restore it here
-        self.leds.fill(Color.BLACK)
 
 
 class ChaseLedAnimation(LedAnimation):
     def __init__(self, leds: AbstractLed, foreground_color: Color,
                  background_color: Color = Color.BLACK):
+        """
+        Chase effect where all LEDs are lit individually in order until timing
+        out or being stopped. LEDs are turned off after animation.
+        @param leds: LED object to interact with
+        @param foreground_color: Color of active LED
+        @param background_color: Color of inactive LEDs
+        """
         LedAnimation.__init__(self, leds)
         self.foreground_color_tuple: tuple = foreground_color.as_rgb_tuple()
         self.background_color_tuple: tuple = background_color.as_rgb_tuple()
@@ -78,6 +89,7 @@ class ChaseLedAnimation(LedAnimation):
                 self.leds.set_led(led, self.background_color_tuple)
             if end_time and time() > end_time:
                 self.stopping.set()
+        self.leds.fill(Color.BLACK)
 
     def stop(self):
         self.stopping.set()
@@ -86,6 +98,13 @@ class ChaseLedAnimation(LedAnimation):
 class FillLedAnimation(LedAnimation):
     def __init__(self, leds: AbstractLed, fill_color: Color,
                  reverse: bool = False):
+        """
+        Fill effect where LEDs are set to the same color in order. LEDs will
+        remain lit after the animation.
+        @param leds: LED object to interact with
+        @param fill_color: Color to fill LEDs
+        @param reverse: If true, fill in reverse order
+        """
         LedAnimation.__init__(self, leds)
         self.fill_color_tuple = fill_color.as_rgb_tuple()
         self.reverse = reverse
@@ -106,6 +125,14 @@ class FillLedAnimation(LedAnimation):
 class RefillLedAnimation(LedAnimation):
     def __init__(self, leds: AbstractLed, fill_color: Color,
                  reverse: bool = False):
+        """
+        Fill effect in the requested color, followed by fill effect in black.
+        Animation repeats until timing out or being stopped. LEDs are turned
+        off after animation.
+        @param leds: LED object to interact with
+        @param fill_color: Color to fill LEDs
+        @param reverse: If true, fill in reverse order
+        """
         LedAnimation.__init__(self, leds)
         self.stopping = Event()
         self.fill_color = fill_color
@@ -130,6 +157,14 @@ class RefillLedAnimation(LedAnimation):
 class BounceLedAnimation(LedAnimation):
     def __init__(self, leds: AbstractLed, fill_color: Color,
                  reverse: bool = False):
+        """
+        Fill effect in the requested color, followed by reversed fill effect
+        in black. Animation repeats until timing out or being stopped.
+        LEDs are turned off after animation.
+        @param leds: LED object to interact with
+        @param fill_color: Color to fill LEDs
+        @param reverse: If true, fill in reverse order
+        """
         LedAnimation.__init__(self, leds)
         self.stopping = Event()
         self.fill_color = fill_color
@@ -152,10 +187,50 @@ class BounceLedAnimation(LedAnimation):
     def stop(self):
         self.stopping.set()
 
+
+class BlinkLedAnimation(LedAnimation):
+    def __init__(self, leds: AbstractLed, color: Color,
+                 num_blinks: int = 2, repeat: bool = False):
+        """
+        Blink LEDs in the requested color, for the requested number of blinks.
+        If repeating, pause and repeat the effect until timeout or stop event.
+        @param leds: LED object to interact with
+        @param color: Color to blink LEDs
+        @param num_blinks: Number of times to blink LEDs
+        @param repeat: If true, repeat animation until timeout or stopped
+        """
+        LedAnimation.__init__(self, leds)
+        self.stopping = Event()
+        self.color = color
+        self.num_blinks = num_blinks
+        self.repeat = repeat
+
+    def start(self, timeout=None):
+        self.stopping.clear()
+        end_time = time() + timeout if timeout else None
+
+        while not self.stopping.is_set():
+            for i in range(self.num_blinks):
+                self.leds.fill(self.color)
+                sleep(0.1)
+                self.leds.fill(Color.BLACK.as_rgb_tuple())
+                sleep(0.25)
+            if self.repeat:
+                sleep(2)
+            else:
+                self.stopping.set()
+            if end_time and time() > end_time:
+                self.stopping.set()
+
+    def stop(self):
+        self.stopping.set()
+
+
 animations = {
     'breathe': BreatheLedAnimation,
     'chase': ChaseLedAnimation,
     'fill': FillLedAnimation,
     'refill': RefillLedAnimation,
-    'bounce': BounceLedAnimation
+    'bounce': BounceLedAnimation,
+    'blink': BlinkLedAnimation
 }
