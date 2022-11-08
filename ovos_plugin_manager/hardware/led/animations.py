@@ -210,13 +210,13 @@ class BlinkLedAnimation(LedAnimation):
         end_time = time() + timeout if timeout else None
 
         self.leds.fill(Color.BLACK.as_rgb_tuple())
-        sleep(0.25)
+        sleep(0.5)
         while not self.stopping.is_set():
             for i in range(self.num_blinks):
                 self.leds.fill(self.color.as_rgb_tuple())
-                sleep(0.1)
-                self.leds.fill(Color.BLACK.as_rgb_tuple())
                 sleep(0.25)
+                self.leds.fill(Color.BLACK.as_rgb_tuple())
+                sleep(0.5)
             if self.repeat:
                 sleep(2)
             else:
