@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20a2...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20a3...HEAD)
+
+**Merged pull requests:**
+
+- Blink LED animation [\#89](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/89) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.20a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.20a3) (2022-11-07)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20a2...V0.0.20a3)
 
 **Merged pull requests:**
 
