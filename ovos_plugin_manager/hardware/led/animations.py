@@ -54,7 +54,7 @@ class BreatheLedAnimation(LedAnimation):
             sleep(self.step_delay)
             if end_time and time() > end_time:
                 self.stopping.set()
-        self.leds.fill(Color.BLACK)
+        self.leds.fill(Color.BLACK.as_rgb_tuple())
 
     def stop(self):
         self.stopping.set()
@@ -89,7 +89,7 @@ class ChaseLedAnimation(LedAnimation):
                 self.leds.set_led(led, self.background_color_tuple)
             if end_time and time() > end_time:
                 self.stopping.set()
-        self.leds.fill(Color.BLACK)
+        self.leds.fill(Color.BLACK.as_rgb_tuple())
 
     def stop(self):
         self.stopping.set()
