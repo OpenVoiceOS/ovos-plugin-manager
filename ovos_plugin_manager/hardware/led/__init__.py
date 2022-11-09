@@ -45,8 +45,8 @@ class Color(Enum):
         @param hex_code: RGB hex code, optionally starting with '#'
         @return: tuple RGB values
         """
-        hex_code = hex_code.lstrip('#').strip()
-        if hex_code.startswith("FF") and len(hex_code) == 8:
+        hex_code = hex_code.lstrip('#').strip().lower()
+        if hex_code.startswith("ff") and len(hex_code) == 8:
             hex_code = hex_code[2:]
         if len(hex_code) != 6:
             raise ValueError(f"Expected 6-character hex code, got: {hex_code}")
