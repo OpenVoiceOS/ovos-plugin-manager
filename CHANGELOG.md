@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20a4...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20a5...HEAD)
+
+**Merged pull requests:**
+
+- Theme Support [\#91](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/91) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.20a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.20a5) (2022-11-09)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20a4...V0.0.20a5)
 
 **Fixed bugs:**
 
