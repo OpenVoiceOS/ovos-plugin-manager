@@ -37,3 +37,6 @@ class TestLed(unittest.TestCase):
 
         Color.set_theme('#aaaaaa')
         self.assertEqual(Color.THEME.as_rgb_tuple(), Color.from_hex('#aaaaaa'))
+
+        Color.set_theme('#FFFF0000')
+        self.assertEqual(Color.THEME.as_rgb_tuple(), (255, 0, 0))

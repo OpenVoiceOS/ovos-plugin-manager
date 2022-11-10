@@ -33,7 +33,7 @@ class BreatheLedAnimation(LedAnimation):
         @param color: Base color of LEDs
         """
         LedAnimation.__init__(self, leds)
-        self.color_tuple = color.as_rgb_tuple()
+        self.color = color
         self.step = 0.05
         self.step_delay = 0.05
         self.stopping = Event()
@@ -50,7 +50,8 @@ class BreatheLedAnimation(LedAnimation):
                 step = self.step
 
             brightness += step
-            self.leds.fill(tuple(brightness * part for part in self.color_tuple))
+            self.leds.fill(tuple(brightness * part for part in
+                                 self.color.as_rgb_tuple()))
             sleep(self.step_delay)
             if end_time and time() > end_time:
                 self.stopping.set()
@@ -71,8 +72,8 @@ class ChaseLedAnimation(LedAnimation):
         @param background_color: Color of inactive LEDs
         """
         LedAnimation.__init__(self, leds)
-        self.foreground_color_tuple: tuple = foreground_color.as_rgb_tuple()
-        self.background_color_tuple: tuple = background_color.as_rgb_tuple()
+        self.foreground_color = foreground_color
+        self.background_color = background_color
         self.step = 0.05
         self.step_delay = 0.1
         self.stopping = Event()
@@ -81,12 +82,12 @@ class ChaseLedAnimation(LedAnimation):
         self.stopping.clear()
         end_time = time() + timeout if timeout else None
 
-        self.leds.fill(self.background_color_tuple)
+        self.leds.fill(self.background_color.as_rgb_tuple())
         while not self.stopping.is_set():
             for led in range(0, self.leds.num_leds):
-                self.leds.set_led(led, self.foreground_color_tuple)
+                self.leds.set_led(led, self.foreground_color.as_rgb_tuple())
                 sleep(self.step_delay)
-                self.leds.set_led(led, self.background_color_tuple)
+                self.leds.set_led(led, self.background_color.as_rgb_tuple())
             if end_time and time() > end_time:
                 self.stopping.set()
         self.leds.fill(Color.BLACK.as_rgb_tuple())
@@ -106,7 +107,7 @@ class FillLedAnimation(LedAnimation):
         @param reverse: If true, fill in reverse order
         """
         LedAnimation.__init__(self, leds)
-        self.fill_color_tuple = fill_color.as_rgb_tuple()
+        self.fill_color = fill_color
         self.reverse = reverse
         self.step_delay = 0.05
 
@@ -115,7 +116,7 @@ class FillLedAnimation(LedAnimation):
         if self.reverse:
             leds.reverse()
         for led in leds:
-            self.leds.set_led(led, self.fill_color_tuple)
+            self.leds.set_led(led, self.fill_color.as_rgb_tuple())
             sleep(self.step_delay)
 
     def stop(self):
@@ -177,10 +178,10 @@ class BounceLedAnimation(LedAnimation):
         while not self.stopping.is_set():
             self.fill_animation.start()
             self.fill_animation.reverse = not self.fill_animation.reverse
-            self.fill_animation.fill_color_tuple = Color.BLACK.as_rgb_tuple()
+            self.fill_animation.fill_color = Color.BLACK
             self.fill_animation.start()
             self.fill_animation.reverse = not self.fill_animation.reverse
-            self.fill_animation.fill_color_tuple = self.fill_color.as_rgb_tuple()
+            self.fill_animation.fill_color = self.fill_color
             if end_time and time() > end_time:
                 self.stopping.set()
 
