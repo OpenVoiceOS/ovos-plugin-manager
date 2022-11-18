@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20...HEAD)
+
+**Fixed bugs:**
+
+- Fix typo in `RefillLedAnimation` [\#92](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/92) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.20](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.20) (2022-11-15)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20a6...V0.0.20)
+
 ## [V0.0.20a6](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.20a6) (2022-11-10)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20a5...V0.0.20a6)
