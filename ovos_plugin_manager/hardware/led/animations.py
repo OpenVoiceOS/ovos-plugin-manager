@@ -145,9 +145,9 @@ class RefillLedAnimation(LedAnimation):
 
         while not self.stopping.is_set():
             self.fill_animation.start()
-            self.fill_animation.fill_color_tuple = Color.BLACK.as_rgb_tuple()
+            self.fill_animation.fill_color = Color.BLACK
             self.fill_animation.start()
-            self.fill_animation.fill_color_tuple = self.fill_color.as_rgb_tuple()
+            self.fill_animation.fill_color = self.fill_color
             if end_time and time() > end_time:
                 self.stopping.set()
 
