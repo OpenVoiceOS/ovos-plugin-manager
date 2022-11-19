@@ -2,7 +2,19 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a1...HEAD)
+
+**Closed issues:**
+
+- Neon STT Support [\#1](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/1)
+
+**Merged pull requests:**
+
+- One-shot LED animations [\#93](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/93) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.21a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.21a1) (2022-11-18)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.20...V0.0.21a1)
 
 **Fixed bugs:**
 
