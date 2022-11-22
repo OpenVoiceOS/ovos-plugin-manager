@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a1...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a2...HEAD)
+
+**Merged pull requests:**
+
+- Fix typo in `get_tts_config` to get tts section from passed config [\#95](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/95) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.21a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.21a2) (2022-11-19)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a1...V0.0.21a2)
 
 **Closed issues:**
 
