@@ -146,7 +146,7 @@ class OVOSTTSFactory:
 
 def get_tts_config(config=None):
     from ovos_plugin_manager.utils.config import get_plugin_config
-    return get_plugin_config(config)
+    return get_plugin_config(config, 'tts')
 
 
 if __name__ == "__main__":
