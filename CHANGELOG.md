@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a2...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a3...HEAD)
+
+**Fixed bugs:**
+
+- fix - phal plugins should be threads [\#96](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/96) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.21a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.21a3) (2022-11-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a2...V0.0.21a3)
 
 **Merged pull requests:**
 
