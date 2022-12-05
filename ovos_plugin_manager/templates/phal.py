@@ -4,6 +4,7 @@ from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
 from ovos_config import Configuration
 from ovos_plugin_manager.utils.config import get_plugin_config
+from threading import Thread
 
 
 class PHALValidator:
@@ -15,7 +16,7 @@ class PHALValidator:
         return config.get("enabled", True)
 
 
-class PHALPlugin:
+class PHALPlugin(Thread):
     """
     This base class is intended to be used to interface with the hardware
     that is running Mycroft.  It exposes all possible commands which
@@ -25,6 +26,7 @@ class PHALPlugin:
     validator = PHALValidator
 
     def __init__(self, bus=None, name="", config=None):
+        super().__init__(daemon=True)
         self.config_core = Configuration()
         name = name or camel_case_split(self.__class__.__name__).replace(" ", "-").lower()
         self.config = config or get_plugin_config(self.config_core,
@@ -86,6 +88,7 @@ class PHALPlugin:
         self.bus.on("enclosure.notify.no_internet", self.on_no_internet)
 
         self._activate_mouth_events()
+        self.start()
 
     def emit(self, msg_type, msg_data=None):
         skill_id = f"ovos.PHAL.{self.name}"
@@ -137,9 +140,7 @@ class PHALPlugin:
 
     def run(self):
         ''' start enclosure '''
-        self._running = True
-        while self._running:
-            time.sleep(1)
+        pass
 
     # Audio Events
     def on_record_begin(self, message=None):
