@@ -268,6 +268,8 @@ class AlternatingLedAnimation(LedAnimation):
             for led in range(self.leds.num_leds):
                 if evens and led % 2 == 0:
                     self.leds.set_led(led, self.color.as_rgb_tuple(), False)
+                elif not evens and led % 2 == 1:
+                    self.leds.set_led(led, self.color.as_rgb_tuple(), False)
                 else:
                     self.leds.set_led(led, Color.BLACK.as_rgb_tuple(), False)
             self.leds.show()
