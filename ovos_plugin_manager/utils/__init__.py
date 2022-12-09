@@ -24,6 +24,7 @@ class PluginTypes(str, Enum):
     VAD = "ovos.plugin.VAD"
     PHONEME = "ovos.plugin.g2p"
     IOT = "ovos.plugin.iot"
+    IOT_DEVICE = "ovos.plugin.iot.device"
     AUDIO = 'mycroft.plugin.audioservice'
     STT = 'mycroft.plugin.stt'
     TTS = 'mycroft.plugin.tts'
@@ -48,6 +49,7 @@ class PluginConfigTypes(str, Enum):
     VAD = "ovos.plugin.VAD.config"
     PHONEME = "ovos.plugin.g2p.config"
     IOT = "ovos.plugin.iot.config"
+    IOT_DEVICE = "ovos.plugin.iot.device"
     AUDIO = 'mycroft.plugin.audioservice.config'
     STT = 'mycroft.plugin.stt.config'
     TTS = 'mycroft.plugin.tts.config'

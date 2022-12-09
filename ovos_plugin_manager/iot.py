@@ -1,6 +1,6 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
-from ovos_plugin_manager.templates.iot import IOTPlugin
+from ovos_plugin_manager.templates.iot import IOTDevicePlugin, IOTScannerPlugin
 
 
 def find_iot_plugins():
@@ -13,7 +13,7 @@ def load_iot_plugin(module_name):
     Arguments:
         module_name (str): iot module name from config
     Returns:
-        class: IOTPlugin plugin class
+        class: IOTScannerPlugin plugin class
     """
     return load_plugin(module_name, PluginTypes.IOT)
 
