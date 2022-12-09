@@ -4,11 +4,36 @@ import time
 from threading import Thread
 from time import sleep
 
-from ovos_utils.json_helper import merge_dict
+from ovos_config import Configuration
+from ovos_utils import camel_case_split
 from ovos_utils.colors import Color
+from ovos_utils.json_helper import merge_dict
+from ovos_utils.log import LOG
+from ovos_utils.messagebus import get_mycroft_bus
+
+from ovos_plugin_manager.utils.config import get_plugin_config
 
 
-class IOTPlugin:
+class IOTScannerPlugin:
+    def __init__(self, bus=None, name="", config=None):
+        self.config_core = Configuration()
+        name = name or camel_case_split(self.__class__.__name__).replace(" ", "-").lower()
+        self.config = config or get_plugin_config(self.config_core, "iot", name)
+        self.bus = bus or get_mycroft_bus()
+        self.log = LOG
+        self.name = name
+
+    def scan(self):
+        raise NotImplemented("scan method must be implemented by subclasses")
+
+    def get_device(self, ip):
+        for device in self.scan():
+            if device.host == ip:
+                return device
+        return None
+
+
+class IOTDevicePlugin:
     def __init__(self, device_id, host=None, name=None, raw_data=None):
         self._device_id = device_id
         self._name = name or self.__class__.__name__
@@ -76,7 +101,7 @@ class IOTPlugin:
         return self.name + ":" + self.host
 
 
-class Bulb(IOTPlugin):
+class Bulb(IOTDevicePlugin):
     def __init__(self, device_id, host=None, name="generic_bulb", raw_data=None):
         super().__init__(device_id, host, name, raw_data)
 
