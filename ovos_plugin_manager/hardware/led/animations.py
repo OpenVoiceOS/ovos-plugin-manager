@@ -44,8 +44,8 @@ class BreatheLedAnimation(LedAnimation):
     def start(self, timeout=None, one_shot=False):
         self.stopping.clear()
         end_time = time() + timeout if timeout else None
-        brightness = 1
-        step = -1 * self.step
+        brightness = 0
+        step = self.step
         ending = False
         while not self.stopping.is_set():
             if brightness >= 1:  # Going Down
@@ -247,11 +247,50 @@ class BlinkLedAnimation(LedAnimation):
         self.stopping.set()
 
 
+class AlternatingLedAnimation(LedAnimation):
+    def __init__(self, leds: AbstractLed, color: Color):
+        """
+        Show alternating even/odd LEDs
+        @param leds: LED object to interact with
+        @param color: Color to blink LEDs
+        """
+        LedAnimation.__init__(self, leds)
+        self.stopping = Event()
+        self.color = color
+        self.delay = 0.5
+
+    def start(self, timeout: Optional[int] = None, one_shot: bool = False):
+        evens = True
+        self.leds.fill(Color.BLACK.as_rgb_tuple())
+        self.stopping.clear()
+        end_time = time() + timeout if timeout else None
+        while not self.stopping.is_set():
+            for led in range(self.leds.num_leds):
+                if evens and led % 2 == 0:
+                    self.leds.set_led(led, self.color.as_rgb_tuple(), False)
+                elif not evens and led % 2 == 1:
+                    self.leds.set_led(led, self.color.as_rgb_tuple(), False)
+                else:
+                    self.leds.set_led(led, Color.BLACK.as_rgb_tuple(), False)
+            self.leds.show()
+            sleep(self.delay)
+            evens = not evens
+            if one_shot and evens:  # We did one animation
+                self.stopping.set()
+            elif end_time and time() > end_time:
+                self.stopping.set()
+        self.leds.fill(Color.BLACK.as_rgb_tuple())
+
+    def stop(self):
+        self.stopping.set()
+
+
 animations = {
     'breathe': BreatheLedAnimation,
     'chase': ChaseLedAnimation,
     'fill': FillLedAnimation,
     'refill': RefillLedAnimation,
     'bounce': BounceLedAnimation,
-    'blink': BlinkLedAnimation
+    'blink': BlinkLedAnimation,
+    'alternating': AlternatingLedAnimation
 }
