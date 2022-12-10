@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a3...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a4...HEAD)
+
+**Merged pull requests:**
+
+- Add alternating LED animation [\#98](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/98) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.21a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.21a4) (2022-12-05)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a3...V0.0.21a4)
 
 **Fixed bugs:**
 
