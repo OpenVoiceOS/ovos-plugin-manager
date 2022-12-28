@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a4...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a5...HEAD)
+
+**Implemented enhancements:**
+
+- Feat/ocp stream extractors [\#100](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/100) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.21a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.21a5) (2022-12-10)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a4...V0.0.21a5)
 
 **Merged pull requests:**
 
