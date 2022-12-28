@@ -38,6 +38,7 @@ class PluginTypes(str, Enum):
     UTTERANCE_SEGMENTATION = "intentbox.segmentation"
     TOKENIZATION = "intentbox.tokenization"
     POSTAG = "intentbox.postag"
+    STREAM_EXTRACTOR = "ovos.ocp.extractor"
 
 
 class PluginConfigTypes(str, Enum):
@@ -61,6 +62,7 @@ class PluginConfigTypes(str, Enum):
     UTTERANCE_SEGMENTATION = "intentbox.segmentation.config"
     TOKENIZATION = "intentbox.tokenization.config"
     POSTAG = "intentbox.postag.config"
+    STREAM_EXTRACTOR = "ovos.ocp.extractor.config"
 
 
 def find_plugins(plug_type=None):
@@ -122,3 +124,4 @@ def normalize_lang(lang):
         # this lang code is apparently not valid ?
         pass
     return lang
+
