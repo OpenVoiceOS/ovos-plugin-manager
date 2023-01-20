@@ -97,7 +97,7 @@ class OVOSWakeWordFactory:
     def create_hotword(cls, hotword="hey mycroft", config=None,
                        lang="en-us", loop=None):
         ww_configs = get_hotwords_config(config)
-        ww_config = ww_configs.get(hotword) or ww_configs.get("hey mycroft")
+        ww_config = ww_configs.get(hotword) or ww_configs.get("hey_mycroft")
         module = ww_config.get("module", "pocketsphinx")
         try:
             return cls.load_module(module, hotword, ww_config, lang, loop)
