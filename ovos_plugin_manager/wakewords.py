@@ -96,13 +96,17 @@ class OVOSWakeWordFactory:
     @classmethod
     def create_hotword(cls, hotword="hey mycroft", config=None,
                        lang="en-us", loop=None):
-        config = get_hotwords_config(config)
-        config = config.get(hotword) or config["hey mycroft"]
-        module = config.get("module", "pocketsphinx")
+        ww_configs = get_hotwords_config(config)
+        ww_config = ww_configs.get(hotword) or ww_configs.get("hey_mycroft")
+        module = ww_config.get("module", "pocketsphinx")
         try:
-            return cls.load_module(module, hotword, config, lang, loop)
+            return cls.load_module(module, hotword, ww_config, lang, loop)
         except:
-            LOG.error(f"failed to created hotword: {config}")
+            LOG.error(f"Failed to load hotword: {hotword} - {module}")
+            fallback_ww = ww_config.get("fallback_ww")
+            if fallback_ww in ww_configs and fallback_ww != hotword:
+                LOG.info(f"Attempting to load fallback ww instead: {fallback_ww}")
+                return cls.create_hotword(fallback_ww, config, lang, loop)
             raise
 
 
