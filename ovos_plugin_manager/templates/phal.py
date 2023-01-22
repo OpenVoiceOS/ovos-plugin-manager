@@ -2,6 +2,7 @@ import time
 from ovos_utils import camel_case_split
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
+from mycroft_bus_client.message import Message
 from ovos_config import Configuration
 from ovos_plugin_manager.utils.config import get_plugin_config
 from threading import Thread
@@ -92,7 +93,8 @@ class PHALPlugin(Thread):
 
     def emit(self, msg_type, msg_data=None):
         skill_id = f"ovos.PHAL.{self.name}"
-        self.bus.emit(f"{skill_id}.{msg_type}", msg_data, {"skill_id": skill_id})
+        LOG.info(f"{skill_id}.{msg_type}")
+        self.bus.emit(Message(f"{skill_id}.{msg_type}", msg_data, {"skill_id": skill_id}))
 
     def shutdown(self):
         self.bus.remove("enclosure.reset", self.on_reset)
