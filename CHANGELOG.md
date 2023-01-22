@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a6...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a7...HEAD)
+
+**Fixed bugs:**
+
+- fixed bug with 'emit' [\#103](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/103) ([builderjer](https://github.com/builderjer))
+
+## [V0.0.21a7](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.21a7) (2023-01-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.21a6...V0.0.21a7)
 
 **Implemented enhancements:**
 
