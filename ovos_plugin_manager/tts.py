@@ -139,7 +139,9 @@ class OVOSTTSFactory:
             else:
                 raise FileNotFoundError("unknown plugin")
         except Exception:
-            LOG.exception('The selected TTS plugin could not be loaded.')
+            plugins = find_tts_plugins()
+            modules = ",".join(plugins.keys())
+            LOG.exception(f'The TTS plugin "{tts_module}" could not be loaded.\nAvailable modules: {modules}')
             raise
         return tts
 
