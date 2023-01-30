@@ -82,12 +82,23 @@ def find_plugins(plug_type=None):
     else:
         plugs = plug_type
     for plug in plugs:
-        for entry_point in pkg_resources.iter_entry_points(plug):
+        for entry_point in _iter_entrypoints(plug):
             try:
                 entrypoints[entry_point.name] = entry_point.load()
+                LOG.debug(f"Loaded plugin entry point {entry_point.name}")
             except Exception as e:
                 LOG.exception(f"Failed to load plugin entry point {entry_point}")
     return entrypoints
+
+
+def _iter_entrypoints(plug_type):
+    try:
+        from importlib_metadata import entry_points
+        for entry_point in entry_points(group=plug_type):
+            yield entry_point
+    except ImportError:
+        for entry_point in pkg_resources.iter_entry_points(plug_type):
+            yield entry_point
 
 
 def load_plugin(plug_name, plug_type=None):
