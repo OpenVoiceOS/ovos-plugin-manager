@@ -1,8 +1,46 @@
+from ovos_utils import classproperty
+from ovos_utils.network_utils import NetworkRequirements
+
 
 class OCPStreamExtractor:
 
     def __init__(self, ocp_settings=None):
         self.ocp_settings = ocp_settings or {}
+
+    @classproperty
+    def network_requirements(self):
+        """ skill developers should override this if they do not require connectivity
+         some examples:
+         IOT plugin that controls devices via LAN could return:
+            scans_on_init = True
+            NetworkRequirements(internet_before_load=False,
+                                 network_before_load=scans_on_init,
+                                 requires_internet=False,
+                                 requires_network=True,
+                                 no_internet_fallback=True,
+                                 no_network_fallback=False)
+         online search plugin with a local cache:
+            has_cache = False
+            NetworkRequirements(internet_before_load=not has_cache,
+                                 network_before_load=not has_cache,
+                                 requires_internet=True,
+                                 requires_network=True,
+                                 no_internet_fallback=True,
+                                 no_network_fallback=True)
+         a fully offline plugin:
+            NetworkRequirements(internet_before_load=False,
+                                 network_before_load=False,
+                                 requires_internet=False,
+                                 requires_network=False,
+                                 no_internet_fallback=True,
+                                 no_network_fallback=True)
+        """
+        return NetworkRequirements(internet_before_load=False,
+                                   network_before_load=False,
+                                   requires_internet=True,
+                                   requires_network=True,
+                                   no_internet_fallback=True,
+                                   no_network_fallback=True)
 
     @property
     def supported_seis(self):
@@ -23,4 +61,3 @@ class OCPStreamExtractor:
     def extract_stream(self, uri, video=True):
         """ return the real uri that can be played by OCP """
         return None
-

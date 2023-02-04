@@ -1,4 +1,6 @@
 from mycroft_bus_client.message import dig_for_message
+from ovos_utils import classproperty
+from ovos_utils.network_utils import NetworkRequirements
 from quebra_frases import word_tokenize
 
 

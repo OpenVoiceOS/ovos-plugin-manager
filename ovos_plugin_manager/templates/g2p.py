@@ -1,6 +1,9 @@
 import enum
+
+from ovos_utils import classproperty
 from ovos_utils.lang.phonemes import arpabet2ipa, ipa2arpabet
 from ovos_utils.lang.visimes import VISIMES
+from ovos_utils.network_utils import NetworkRequirements
 
 
 class PhonemeAlphabet(str, enum.Enum):
@@ -39,16 +42,16 @@ class Grapheme2PhonemePlugin:
         # if arpa is implemented, use it and convert
         if self.arpa_is_implemented:
             arpa = self.get_arpa(word, lang)
-            norm = lambda k: k.replace("9", "")\
-                    .replace("8", "")\
-                    .replace("7", "")\
-                    .replace("6", "")\
-                    .replace("5", "")\
-                    .replace("4", "")\
-                    .replace("3", "")\
-                    .replace("2", "")\
-                    .replace("1", "")\
-                    .replace("0", "")
+            norm = lambda k: k.replace("9", "") \
+                .replace("8", "") \
+                .replace("7", "") \
+                .replace("6", "") \
+                .replace("5", "") \
+                .replace("4", "") \
+                .replace("3", "") \
+                .replace("2", "") \
+                .replace("1", "") \
+                .replace("0", "")
             return [arpabet2ipa[norm(p)] for p in arpa
                     if norm(p) in arpabet2ipa]
         if ignore_oov:
