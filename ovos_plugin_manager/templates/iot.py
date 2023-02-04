@@ -27,6 +27,11 @@ class IOTCapabilties(enum.Enum):
     REPORT_BRIGHTNESS = enum.auto()
     CHANGE_BRIGHTNESS = enum.auto()
     GET_PICTURE = enum.auto()
+    PAUSE_PLAYBACK = enum.auto()
+    RESUME_PLAYBACK = enum.auto()
+    STOP_PLAYBACK = enum.auto()
+    NEXT_PLAYBACK = enum.auto()
+    PREV_PLAYBACK = enum.auto()
 
 
 class IOTScannerPlugin:
@@ -501,6 +506,34 @@ class Camera(IOTSensorPlugin):
         return NotImplemented
 
 
+class MediaPlayer(IOTSensorPlugin):
+    capabilities = IOTDevicePlugin.capabilities + [
+        PAUSE_PLAYBACK,
+        RESUME_PLAYBACK,
+        STOP_PLAYBACK,
+        NEXT_PLAYBACK,
+        PREV_PLAYBACK
+    ]
+
+    def __init__(self, device_id, host=None, name="generic_camera", raw_data=None):
+        super().__init__(device_id, host, name, raw_data)
+
+    def resume(self):
+        raise NotImplemented
+
+    def stop(self):
+        raise NotImplemented
+
+    def pause(self):
+        raise NotImplemented
+
+    def play_next(self):
+        raise NotImplemented
+
+    def play_prev(self):
+        raise NotImplemented
+
+
 DEVICE_TYPES = {
     "generic_sensor": IOTSensorPlugin,
     "generic_device": IOTDevicePlugin,
@@ -513,5 +546,6 @@ DEVICE_TYPES = {
     "radio": Radio,
     "heater": Heater,
     "ac": AirConditioner,
-    "camera": Camera
+    "camera": Camera,
+    "media_player": MediaPlayer
 }
