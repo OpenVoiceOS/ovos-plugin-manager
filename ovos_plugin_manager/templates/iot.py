@@ -43,25 +43,18 @@ class IOTScannerPlugin:
         return None
 
 
-class IOTDevicePlugin:
+class IOTSensorPlugin:
     capabilities = [
-        IOTCapabilties.REPORT_STATUS,
-        IOTCapabilties.TURN_ON,
-        IOTCapabilties.TURN_OFF
+        IOTCapabilties.REPORT_STATUS
     ]
 
-    def __init__(self, device_id, host=None, name=None, raw_data=None):
+    def __init__(self, device_id, host=None, name="generic_sensor", raw_data=None):
         self._device_id = device_id
         self._name = name or self.__class__.__name__
         self._host = host
         self._raw = [raw_data] or [{"name": name, "host": host}]
         self.mode = ""
         self._timer = None
-
-    def reset(self):
-        self.mode = ""
-        self._timer = None
-        self.turn_on()
 
     @property
     def as_dict(self):
@@ -100,6 +93,30 @@ class IOTDevicePlugin:
     def is_off(self):
         return not self.is_on
 
+    def __repr__(self):
+        return self.name + ":" + self.host
+
+
+class IOTDevicePlugin(IOTSensorPlugin):
+    capabilities = IOTSensorPlugin.capabilities + [
+        IOTCapabilties.TURN_ON,
+        IOTCapabilties.TURN_OFF
+    ]
+
+    def __init__(self, device_id, host=None, name="generic_device", raw_data=None):
+        super().__init__(device_id, host, name, raw_data)
+        self._device_id = device_id
+        self._name = name or self.__class__.__name__
+        self._host = host
+        self._raw = [raw_data] or [{"name": name, "host": host}]
+        self.mode = ""
+        self._timer = None
+
+    def reset(self):
+        self.mode = ""
+        self._timer = None
+        self.turn_on()
+
     # status change
     def turn_on(self):
         pass
@@ -112,9 +129,6 @@ class IOTDevicePlugin:
             self.turn_on()
         else:
             self.turn_off()
-
-    def call_function(self, function_name, function_args):
-        raise NotImplemented
 
     def __repr__(self):
         return self.name + ":" + self.host
@@ -427,7 +441,8 @@ class RGBWBulb(RGBBulb):
 
 
 DEVICE_TYPES = {
-    "generic": IOTDevicePlugin,
+    "generic_sensor": IOTSensorPlugin,
+    "generic_device": IOTDevicePlugin,
     "bulb": Bulb,
     "bulbRGB": RGBBulb,
     "bulbRGBW": RGBWBulb
