@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 import enum
->>>>>>> d6b18447cb670b642413a438991659b1f2340fa0
 import itertools
 import random
 import time
@@ -18,9 +15,6 @@ from ovos_utils.messagebus import get_mycroft_bus
 from ovos_plugin_manager.utils.config import get_plugin_config
 
 
-<<<<<<< HEAD
-class IOTScannerPlugin:
-=======
 class IOTDeviceType(str, enum.Enum):
     """ recognized device types handled by commonIOT"""
     SENSOR = "sensor"
@@ -33,6 +27,8 @@ class IOTDeviceType(str, enum.Enum):
     RADIO = "radio"
     HEATER = "heater"
     AC = "ac"
+    VENT = "vent"
+    HUMIDIFIER = "humidifier"
     CAMERA = "camera"
     MEDIA_PLAYER = "media_player"
     VACUUM = "vacuum"
@@ -59,7 +55,6 @@ class IOTCapabilties(enum.Enum):
 
 class IOTScannerPlugin:
     """ this class is loaded by CommonIOT and yields IOTDevices"""
->>>>>>> d6b18447cb670b642413a438991659b1f2340fa0
     def __init__(self, bus=None, name="", config=None):
         self.config_core = Configuration()
         name = name or camel_case_split(self.__class__.__name__).replace(" ", "-").lower()
@@ -78,7 +73,6 @@ class IOTScannerPlugin:
         return None
 
 
-<<<<<<< HEAD
 class IOTDevicePlugin:
     def __init__(self, device_id, host=None, name=None, raw_data=None):
         self._device_id = device_id
@@ -93,7 +87,6 @@ class IOTDevicePlugin:
         self._timer = None
         self.turn_on()
 
-=======
 class IOTAbstractDevice:
     capabilities = []
 
@@ -111,27 +104,20 @@ class IOTAbstractDevice:
         self.mode = ""
         self._timer = None
 
->>>>>>> d6b18447cb670b642413a438991659b1f2340fa0
     @property
     def as_dict(self):
         return {
             "host": self.host,
-<<<<<<< HEAD
             "name": self.name,
-            "device_type": self.raw_data.get("device_type", "generic"),
-=======
             "device_id": self.device_id,
             "name": self.name,
             "area": self.device_area,
             "device_type": self.device_type,
->>>>>>> d6b18447cb670b642413a438991659b1f2340fa0
             "state": self.is_on,
             "raw": self.raw_data
         }
 
     @property
-<<<<<<< HEAD
-=======
     def device_id(self):
         return self._device_id
 
@@ -140,7 +126,6 @@ class IOTAbstractDevice:
         return self._device_type
 
     @property
->>>>>>> d6b18447cb670b642413a438991659b1f2340fa0
     def host(self):
         return self._host
 
@@ -150,14 +135,7 @@ class IOTAbstractDevice:
 
     @property
     def raw_data(self):
-<<<<<<< HEAD
-        data = {}
-        for x in self._raw:
-            merge_dict(data, x)
-        return data
-=======
         return self._raw
->>>>>>> d6b18447cb670b642413a438991659b1f2340fa0
 
     @property
     def is_online(self):
@@ -171,8 +149,6 @@ class IOTAbstractDevice:
     def is_off(self):
         return not self.is_on
 
-<<<<<<< HEAD
-=======
     @property
     def device_display_model(self):
         # for usage in GUI, TODO document format
@@ -212,7 +188,6 @@ class Plug(Sensor):
         self._timer = None
         self.turn_on()
 
->>>>>>> d6b18447cb670b642413a438991659b1f2340fa0
     # status change
     def turn_on(self):
         pass
@@ -230,11 +205,10 @@ class Plug(Sensor):
         return self.name + ":" + self.host
 
 
-<<<<<<< HEAD
 class Bulb(IOTDevicePlugin):
     def __init__(self, device_id, host=None, name="generic_bulb", raw_data=None):
         super().__init__(device_id, host, name, raw_data)
-=======
+
 class Switch(Plug):
     def __init__(self, device_id, host=None, name="generic_switch",
                  area=None, device_type=IOTDeviceType.SWITCH, raw_data=None):
@@ -331,6 +305,15 @@ class AirConditioner(Plug):
     # only has on/off for now
     # TODO - get temperature
 
+class Vent(Plug):
+    def __init__(self, device_id, host=None, name="generic_vent",
+                 area=None, device_type=IOTDeviceType.VENT, raw_data=None):
+        super().__init__(device_id, host, name, area, device_type, raw_data)
+
+class Humidifier(Plug):
+    def __init__(self, device_id, host=None, name="generic_humidifier",
+                 area=None, device_type=IOTDeviceType.HUMIDIFIER, raw_data=None):
+        super().__init__(device_id, host, name, area, device_type, raw_data)
 
 class Vacuum(Plug):
     def __init__(self, device_id, host=None, name="generic_vacuum",
@@ -352,7 +335,6 @@ class Bulb(Plug):
     def __init__(self, device_id, host=None, name="generic_bulb",
                  area=None, device_type=IOTDeviceType.BULB, raw_data=None):
         super().__init__(device_id, host, name, area, device_type, raw_data)
->>>>>>> d6b18447cb670b642413a438991659b1f2340fa0
 
     def change_color(self, color="white"):
         if isinstance(color, Color):
@@ -483,10 +465,7 @@ class Bulb(Plug):
 
 
 class RGBBulb(Bulb):
-<<<<<<< HEAD
-    def __init__(self, device_id, host=None, name="generic_rgb_bulb", raw_data=None):
-        super().__init__(device_id, host, name, raw_data)
-=======
+
     capabilities = Bulb.capabilities + [
         IOTCapabilties.REPORT_COLOR,
         IOTCapabilties.CHANGE_COLOR
@@ -495,7 +474,6 @@ class RGBBulb(Bulb):
     def __init__(self, device_id, host=None, name="generic_rgb_bulb",
                  area=None, device_type=IOTDeviceType.RGB_BULB, raw_data=None):
         super().__init__(device_id, host, name, area, device_type, raw_data)
->>>>>>> d6b18447cb670b642413a438991659b1f2340fa0
 
     def reset(self):
         super().reset()
@@ -641,14 +619,9 @@ class RGBBulb(Bulb):
 
 
 class RGBWBulb(RGBBulb):
-<<<<<<< HEAD
-    def __init__(self, device_id, host=None, name="generic_rgbw_bulb", raw_data=None):
-        super().__init__(device_id, host, name, raw_data)
-=======
     def __init__(self, device_id, host=None, name="generic_rgbw_bulb",
                  area=None, device_type=IOTDeviceType.RGBW_BULB, raw_data=None):
         super().__init__(device_id, host, name, area, device_type, raw_data)
->>>>>>> d6b18447cb670b642413a438991659b1f2340fa0
 
     @property
     def as_dict(self):
@@ -661,9 +634,6 @@ class RGBWBulb(RGBBulb):
             "state": self.is_on,
             "raw": self.raw_data
         }
-<<<<<<< HEAD
-=======
-
 
 class Camera(Sensor):
     capabilities = Sensor.capabilities + [
@@ -676,7 +646,3 @@ class Camera(Sensor):
 
     def get_picture(self):
         return NotImplemented
-
-
-
->>>>>>> d6b18447cb670b642413a438991659b1f2340fa0
