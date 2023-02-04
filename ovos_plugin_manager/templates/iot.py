@@ -15,9 +15,12 @@ from ovos_plugin_manager.utils.config import get_plugin_config
 
 
 class IOTCapabilties(enum.Enum):
+    """ actions recognized by commonIOT and exposed by voice intents """
     REPORT_STATUS = enum.auto()
     TURN_ON = enum.auto()
     TURN_OFF = enum.auto()
+    BLINK_LIGHT = enum.auto()
+    BEACON_LIGHT = enum.auto()
     REPORT_COLOR = enum.auto()
     CHANGE_COLOR = enum.auto()
     REPORT_BRIGHTNESS = enum.auto()
@@ -137,7 +140,9 @@ class IOTDevicePlugin(IOTSensorPlugin):
 class Bulb(IOTDevicePlugin):
     capabilities = IOTDevicePlugin.capabilities + [
         IOTCapabilties.REPORT_BRIGHTNESS,
-        IOTCapabilties.CHANGE_BRIGHTNESS
+        IOTCapabilties.CHANGE_BRIGHTNESS,
+        IOTCapabilties.BLINK_LIGHT,
+        IOTCapabilties.BEACON_LIGHT
     ]
 
     def __init__(self, device_id, host=None, name="generic_bulb", raw_data=None):
