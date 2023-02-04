@@ -137,6 +137,39 @@ class IOTDevicePlugin(IOTSensorPlugin):
         return self.name + ":" + self.host
 
 
+class Radio(IOTDevicePlugin):
+    def __init__(self, device_id, host=None, name="generic_radio", raw_data=None):
+        super().__init__(device_id, host, name, raw_data)
+
+    # TODO - basic radion actions, change_station etc
+    # only has on/off for now
+
+
+class TV(IOTDevicePlugin):
+    def __init__(self, device_id, host=None, name="generic_tv", raw_data=None):
+        super().__init__(device_id, host, name, raw_data)
+
+    # TODO - basic tv actions, change_channel etc
+    # only has on/off for now
+
+
+class Heater(IOTDevicePlugin):
+    def __init__(self, device_id, host=None, name="generic_heater", raw_data=None):
+        super().__init__(device_id, host, name, raw_data)
+
+    # only has on/off for now
+    # TODO - get temperature
+
+
+class AirConditioner(IOTDevicePlugin):
+    def __init__(self, device_id, host=None, name="generic_ac", raw_data=None):
+        super().__init__(device_id, host, name, raw_data)
+
+    # only has on/off for now
+    # TODO - get temperature
+
+
+
 class Bulb(IOTDevicePlugin):
     capabilities = IOTDevicePlugin.capabilities + [
         IOTCapabilties.REPORT_BRIGHTNESS,
@@ -450,5 +483,9 @@ DEVICE_TYPES = {
     "generic_device": IOTDevicePlugin,
     "bulb": Bulb,
     "bulbRGB": RGBBulb,
-    "bulbRGBW": RGBWBulb
+    "bulbRGBW": RGBWBulb,
+    "tv": TV,
+    "radio": Radio,
+    "heater": Heater,
+    "ac": AirConditioner
 }
