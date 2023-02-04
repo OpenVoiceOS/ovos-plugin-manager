@@ -39,8 +39,8 @@ class OCPStreamExtractor:
                                    network_before_load=False,
                                    requires_internet=True,
                                    requires_network=True,
-                                   no_internet_fallback=True,
-                                   no_network_fallback=True)
+                                   no_internet_fallback=False,
+                                   no_network_fallback=False)
 
     @property
     def supported_seis(self):
