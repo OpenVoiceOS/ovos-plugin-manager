@@ -26,6 +26,7 @@ class IOTCapabilties(enum.Enum):
     CHANGE_COLOR = enum.auto()
     REPORT_BRIGHTNESS = enum.auto()
     CHANGE_BRIGHTNESS = enum.auto()
+    GET_PICTURE = enum.auto()
 
 
 class IOTScannerPlugin:
@@ -489,6 +490,10 @@ class RGBWBulb(RGBBulb):
 
 
 class Camera(IOTSensorPlugin):
+    capabilities = IOTDevicePlugin.capabilities + [
+        IOTCapabilties.GET_PICTURE
+    ]
+
     def __init__(self, device_id, host=None, name="generic_camera", raw_data=None):
         super().__init__(device_id, host, name, raw_data)
 
