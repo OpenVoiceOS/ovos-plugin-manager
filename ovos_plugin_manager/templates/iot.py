@@ -138,6 +138,16 @@ class IOTDevicePlugin(IOTSensorPlugin):
         return self.name + ":" + self.host
 
 
+class Plug(IOTDevicePlugin):
+    def __init__(self, device_id, host=None, name="generic_plug", raw_data=None):
+        super().__init__(device_id, host, name, raw_data)
+
+
+class Switch(IOTDevicePlugin):
+    def __init__(self, device_id, host=None, name="generic_switch", raw_data=None):
+        super().__init__(device_id, host, name, raw_data)
+
+
 class Radio(IOTDevicePlugin):
     def __init__(self, device_id, host=None, name="generic_radio", raw_data=None):
         super().__init__(device_id, host, name, raw_data)
@@ -478,14 +488,25 @@ class RGBWBulb(RGBBulb):
         }
 
 
+class Camera(IOTSensorPlugin):
+    def __init__(self, device_id, host=None, name="generic_camera", raw_data=None):
+        super().__init__(device_id, host, name, raw_data)
+
+    def get_picture(self):
+        return NotImplemented
+
+
 DEVICE_TYPES = {
     "generic_sensor": IOTSensorPlugin,
     "generic_device": IOTDevicePlugin,
+    "plug": Plug,
+    "switch": Switch,
     "bulb": Bulb,
     "bulbRGB": RGBBulb,
     "bulbRGBW": RGBWBulb,
     "tv": TV,
     "radio": Radio,
     "heater": Heater,
-    "ac": AirConditioner
+    "ac": AirConditioner,
+    "camera": Camera
 }
