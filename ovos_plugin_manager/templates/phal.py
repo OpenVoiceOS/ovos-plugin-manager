@@ -123,7 +123,12 @@ class PHALPlugin(Thread):
                                  no_internet_fallback=True,
                                  no_network_fallback=True)
         """
-        return NetworkRequirements()
+        return NetworkRequirements(internet_before_load=False,
+                                   network_before_load=False,
+                                   requires_internet=False,
+                                   requires_network=False,
+                                   no_internet_fallback=True,
+                                   no_network_fallback=True)
 
     def emit(self, msg_type, msg_data=None):
         skill_id = f"ovos.PHAL.{self.name}"
