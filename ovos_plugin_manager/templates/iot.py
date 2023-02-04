@@ -1,9 +1,10 @@
+import enum
 import itertools
 import random
 import time
 from threading import Thread
 from time import sleep
-import enum
+
 from ovos_config import Configuration
 from ovos_utils import camel_case_split
 from ovos_utils.colors import Color
@@ -167,7 +168,6 @@ class AirConditioner(IOTDevicePlugin):
 
     # only has on/off for now
     # TODO - get temperature
-
 
 
 class Bulb(IOTDevicePlugin):
