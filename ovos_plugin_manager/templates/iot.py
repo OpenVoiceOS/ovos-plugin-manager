@@ -3,7 +3,7 @@ import random
 import time
 from threading import Thread
 from time import sleep
-
+import enum
 from ovos_config import Configuration
 from ovos_utils import camel_case_split
 from ovos_utils.colors import Color
@@ -12,6 +12,16 @@ from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
 
 from ovos_plugin_manager.utils.config import get_plugin_config
+
+
+class IOTCapabilties(enum.Enum):
+    REPORT_STATUS = enum.auto()
+    TURN_ON = enum.auto()
+    TURN_OFF = enum.auto()
+    REPORT_COLOR = enum.auto()
+    CHANGE_COLOR = enum.auto()
+    REPORT_BRIGHTNESS = enum.auto()
+    CHANGE_BRIGHTNESS = enum.auto()
 
 
 class IOTScannerPlugin:
@@ -34,6 +44,12 @@ class IOTScannerPlugin:
 
 
 class IOTDevicePlugin:
+    capabilities = [
+        IOTCapabilties.REPORT_STATUS,
+        IOTCapabilties.TURN_ON,
+        IOTCapabilties.TURN_OFF
+    ]
+
     def __init__(self, device_id, host=None, name=None, raw_data=None):
         self._device_id = device_id
         self._name = name or self.__class__.__name__
@@ -97,11 +113,19 @@ class IOTDevicePlugin:
         else:
             self.turn_off()
 
+    def call_function(self, function_name, function_args):
+        raise NotImplemented
+
     def __repr__(self):
         return self.name + ":" + self.host
 
 
 class Bulb(IOTDevicePlugin):
+    capabilities = IOTDevicePlugin.capabilities + [
+        IOTCapabilties.REPORT_BRIGHTNESS,
+        IOTCapabilties.CHANGE_BRIGHTNESS
+    ]
+
     def __init__(self, device_id, host=None, name="generic_bulb", raw_data=None):
         super().__init__(device_id, host, name, raw_data)
 
@@ -234,6 +258,11 @@ class Bulb(IOTDevicePlugin):
 
 
 class RGBBulb(Bulb):
+    capabilities = Bulb.capabilities + [
+        IOTCapabilties.REPORT_COLOR,
+        IOTCapabilties.CHANGE_COLOR
+    ]
+
     def __init__(self, device_id, host=None, name="generic_rgb_bulb", raw_data=None):
         super().__init__(device_id, host, name, raw_data)
 
@@ -395,3 +424,11 @@ class RGBWBulb(RGBBulb):
             "state": self.is_on,
             "raw": self.raw_data
         }
+
+
+DEVICE_TYPES = {
+    "generic": IOTDevicePlugin,
+    "bulb": Bulb,
+    "bulbRGB": RGBBulb,
+    "bulbRGBW": RGBWBulb
+}
