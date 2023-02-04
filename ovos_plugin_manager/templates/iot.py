@@ -186,6 +186,14 @@ class AirConditioner(IOTDevicePlugin):
     # TODO - get temperature
 
 
+class Vacuum(IOTDevicePlugin):
+    def __init__(self, device_id, host=None, name="generic_vacuum", raw_data=None):
+        super().__init__(device_id, host, name, raw_data)
+
+    # only has on/off for now
+    # TODO - vacuum stuff
+
+
 class Bulb(IOTDevicePlugin):
     capabilities = IOTDevicePlugin.capabilities + [
         IOTCapabilties.REPORT_BRIGHTNESS,
@@ -547,5 +555,6 @@ DEVICE_TYPES = {
     "heater": Heater,
     "ac": AirConditioner,
     "camera": Camera,
-    "media_player": MediaPlayer
+    "media_player": MediaPlayer,
+    "vacuum": Vacuum
 }
