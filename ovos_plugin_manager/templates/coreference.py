@@ -24,7 +24,7 @@ class CoreferenceSolverEngine:
         self.contexts = {}
 
     @classproperty
-    def network_requirements(self):
+    def runtime_requirements(self):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:

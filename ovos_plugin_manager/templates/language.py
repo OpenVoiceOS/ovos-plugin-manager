@@ -14,7 +14,7 @@ class LanguageDetector:
         self.boost = self.config.get("boost")
 
     @classproperty
-    def network_requirements(self):
+    def runtime_requirements(self):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:
@@ -79,7 +79,7 @@ class LanguageTranslator:
                                  self.default_language
 
     @classproperty
-    def network_requirements(self):
+    def runtime_requirements(self):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:
