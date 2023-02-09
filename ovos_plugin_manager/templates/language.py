@@ -1,4 +1,6 @@
 from ovos_config.config import Configuration
+from ovos_utils import classproperty
+from ovos_utils.process_utils import RuntimeRequirements
 
 
 class LanguageDetector:
@@ -7,9 +9,44 @@ class LanguageDetector:
         self.default_language = self.config.get("lang") or "en-us"
         # hint_language: str  E.g., 'it' boosts Italian
         self.hint_language = self.config.get("hint_lang") or \
-            self.config.get('user') or self.default_language
+                             self.config.get('user') or self.default_language
         # boost score for this language
         self.boost = self.config.get("boost")
+
+    @classproperty
+    def runtime_requirements(self):
+        """ skill developers should override this if they do not require connectivity
+         some examples:
+         IOT plugin that controls devices via LAN could return:
+            scans_on_init = True
+            RuntimeRequirements(internet_before_load=False,
+                                 network_before_load=scans_on_init,
+                                 requires_internet=False,
+                                 requires_network=True,
+                                 no_internet_fallback=True,
+                                 no_network_fallback=False)
+         online search plugin with a local cache:
+            has_cache = False
+            RuntimeRequirements(internet_before_load=not has_cache,
+                                 network_before_load=not has_cache,
+                                 requires_internet=True,
+                                 requires_network=True,
+                                 no_internet_fallback=True,
+                                 no_network_fallback=True)
+         a fully offline plugin:
+            RuntimeRequirements(internet_before_load=False,
+                                 network_before_load=False,
+                                 requires_internet=False,
+                                 requires_network=False,
+                                 no_internet_fallback=True,
+                                 no_network_fallback=True)
+        """
+        return RuntimeRequirements(internet_before_load=False,
+                                   network_before_load=False,
+                                   requires_internet=False,
+                                   requires_network=False,
+                                   no_internet_fallback=True,
+                                   no_network_fallback=True)
 
     def detect(self, text):
         # assume default language
@@ -39,7 +76,42 @@ class LanguageTranslator:
         # translate to
         self.internal_language = (Configuration().get('language') or
                                   dict()).get("internal") or \
-            self.default_language
+                                 self.default_language
+
+    @classproperty
+    def runtime_requirements(self):
+        """ skill developers should override this if they do not require connectivity
+         some examples:
+         IOT plugin that controls devices via LAN could return:
+            scans_on_init = True
+            RuntimeRequirements(internet_before_load=False,
+                                 network_before_load=scans_on_init,
+                                 requires_internet=False,
+                                 requires_network=True,
+                                 no_internet_fallback=True,
+                                 no_network_fallback=False)
+         online search plugin with a local cache:
+            has_cache = False
+            RuntimeRequirements(internet_before_load=not has_cache,
+                                 network_before_load=not has_cache,
+                                 requires_internet=True,
+                                 requires_network=True,
+                                 no_internet_fallback=True,
+                                 no_network_fallback=True)
+         a fully offline plugin:
+            RuntimeRequirements(internet_before_load=False,
+                                 network_before_load=False,
+                                 requires_internet=False,
+                                 requires_network=False,
+                                 no_internet_fallback=True,
+                                 no_network_fallback=True)
+        """
+        return RuntimeRequirements(internet_before_load=False,
+                                   network_before_load=False,
+                                   requires_internet=False,
+                                   requires_network=False,
+                                   no_internet_fallback=True,
+                                   no_network_fallback=True)
 
     def translate(self, text, target=None, source=None):
         return text

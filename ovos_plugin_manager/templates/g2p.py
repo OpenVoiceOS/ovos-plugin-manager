@@ -1,6 +1,9 @@
 import enum
+
+from ovos_utils import classproperty
 from ovos_utils.lang.phonemes import arpabet2ipa, ipa2arpabet
 from ovos_utils.lang.visimes import VISIMES
+from ovos_utils.process_utils import RuntimeRequirements
 
 
 class PhonemeAlphabet(str, enum.Enum):
@@ -15,6 +18,41 @@ class OutOfVocabulary(ValueError):
 class Grapheme2PhonemePlugin:
     def __init__(self, config=None):
         self.config = config or {}
+
+    @classproperty
+    def runtime_requirements(self):
+        """ skill developers should override this if they do not require connectivity
+         some examples:
+         IOT plugin that controls devices via LAN could return:
+            scans_on_init = True
+            RuntimeRequirements(internet_before_load=False,
+                                 network_before_load=scans_on_init,
+                                 requires_internet=False,
+                                 requires_network=True,
+                                 no_internet_fallback=True,
+                                 no_network_fallback=False)
+         online search plugin with a local cache:
+            has_cache = False
+            RuntimeRequirements(internet_before_load=not has_cache,
+                                 network_before_load=not has_cache,
+                                 requires_internet=True,
+                                 requires_network=True,
+                                 no_internet_fallback=True,
+                                 no_network_fallback=True)
+         a fully offline plugin:
+            RuntimeRequirements(internet_before_load=False,
+                                 network_before_load=False,
+                                 requires_internet=False,
+                                 requires_network=False,
+                                 no_internet_fallback=True,
+                                 no_network_fallback=True)
+        """
+        return RuntimeRequirements(internet_before_load=False,
+                                   network_before_load=False,
+                                   requires_internet=False,
+                                   requires_network=False,
+                                   no_internet_fallback=True,
+                                   no_network_fallback=True)
 
     @property
     def arpa_is_implemented(self):
@@ -39,16 +77,16 @@ class Grapheme2PhonemePlugin:
         # if arpa is implemented, use it and convert
         if self.arpa_is_implemented:
             arpa = self.get_arpa(word, lang)
-            norm = lambda k: k.replace("9", "")\
-                    .replace("8", "")\
-                    .replace("7", "")\
-                    .replace("6", "")\
-                    .replace("5", "")\
-                    .replace("4", "")\
-                    .replace("3", "")\
-                    .replace("2", "")\
-                    .replace("1", "")\
-                    .replace("0", "")
+            norm = lambda k: k.replace("9", "") \
+                .replace("8", "") \
+                .replace("7", "") \
+                .replace("6", "") \
+                .replace("5", "") \
+                .replace("4", "") \
+                .replace("3", "") \
+                .replace("2", "") \
+                .replace("1", "") \
+                .replace("0", "")
             return [arpabet2ipa[norm(p)] for p in arpa
                     if norm(p) in arpabet2ipa]
         if ignore_oov:
