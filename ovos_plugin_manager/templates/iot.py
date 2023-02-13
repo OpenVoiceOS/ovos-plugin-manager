@@ -27,6 +27,8 @@ class IOTDeviceType(str, enum.Enum):
     RADIO = "radio"
     HEATER = "heater"
     AC = "ac"
+    VENT = "vent"
+    HUMIDIFIER = "humidifier"
     CAMERA = "camera"
     MEDIA_PLAYER = "media_player"
     VACUUM = "vacuum"
@@ -92,6 +94,7 @@ class IOTAbstractDevice:
     def as_dict(self):
         return {
             "host": self.host,
+            "name": self.name,
             "device_id": self.device_id,
             "name": self.name,
             "area": self.device_area,
@@ -284,6 +287,15 @@ class AirConditioner(Plug):
     # only has on/off for now
     # TODO - get temperature
 
+class Vent(Plug):
+    def __init__(self, device_id, host=None, name="generic_vent",
+                 area=None, device_type=IOTDeviceType.VENT, raw_data=None):
+        super().__init__(device_id, host, name, area, device_type, raw_data)
+
+class Humidifier(Plug):
+    def __init__(self, device_id, host=None, name="generic_humidifier",
+                 area=None, device_type=IOTDeviceType.HUMIDIFIER, raw_data=None):
+        super().__init__(device_id, host, name, area, device_type, raw_data)
 
 class Vacuum(Plug):
     def __init__(self, device_id, host=None, name="generic_vacuum",
@@ -435,6 +447,7 @@ class Bulb(Plug):
 
 
 class RGBBulb(Bulb):
+
     capabilities = Bulb.capabilities + [
         IOTCapabilties.REPORT_COLOR,
         IOTCapabilties.CHANGE_COLOR
@@ -604,7 +617,6 @@ class RGBWBulb(RGBBulb):
             "raw": self.raw_data
         }
 
-
 class Camera(Sensor):
     capabilities = Sensor.capabilities + [
         IOTCapabilties.GET_PICTURE
@@ -616,6 +628,3 @@ class Camera(Sensor):
 
     def get_picture(self):
         return NotImplemented
-
-
-
