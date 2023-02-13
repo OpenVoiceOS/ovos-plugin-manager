@@ -73,20 +73,6 @@ class IOTScannerPlugin:
         return None
 
 
-class IOTDevicePlugin:
-    def __init__(self, device_id, host=None, name=None, raw_data=None):
-        self._device_id = device_id
-        self._name = name or self.__class__.__name__
-        self._host = host
-        self._raw = [raw_data] or [{"name": name, "host": host}]
-        self.mode = ""
-        self._timer = None
-
-    def reset(self):
-        self.mode = ""
-        self._timer = None
-        self.turn_on()
-
 class IOTAbstractDevice:
     capabilities = []
 
@@ -204,10 +190,6 @@ class Plug(Sensor):
     def __repr__(self):
         return self.name + ":" + self.host
 
-
-class Bulb(IOTDevicePlugin):
-    def __init__(self, device_id, host=None, name="generic_bulb", raw_data=None):
-        super().__init__(device_id, host, name, raw_data)
 
 class Switch(Plug):
     def __init__(self, device_id, host=None, name="generic_switch",
