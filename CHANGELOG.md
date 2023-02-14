@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
+## [V0.0.22a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.22a5) (2023-02-14)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a4...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a4...V0.0.22a5)
 
 **Fixed bugs:**
 
