@@ -30,6 +30,7 @@ class StreamHandler:
         for plugin, clazz in find_ocp_plugins().items():
             try:
                 self.extractors[plugin] = clazz()
+                LOG.info(f"Loaded OCP plugin: {plugin}")
             except:
                 LOG.error(f"Failed to load {plugin}")
                 continue
@@ -37,14 +38,20 @@ class StreamHandler:
     def extract_stream(self, uri, video=True):
         # attempt to use a dedicated stream extractor if requested
         for plug in self.extractors.values():
-            if any((uri.startswith(f"{sei}//")
-                    for sei in plug.supported_seis)):
-                return plug.extract_stream(uri, video)
+            try:
+                if any((uri.startswith(f"{sei}//")
+                        for sei in plug.supported_seis)):
+                    return plug.extract_stream(uri, video) or {"uri": uri}
+            except Exception as e:
+                LOG.exception(f"error extracting stream with {plug}")
 
         # let plugins parse the url and see if they can handle it
         for plug in self.extractors.values():
-            if plug.validate_uri(uri):
-                return plug.extract_stream(uri, video)
+            try:
+                if plug.validate_uri(uri):
+                    return plug.extract_stream(uri, video) or {"uri": uri}
+            except Exception as e:
+                LOG.exception(f"error extracting stream with {plug}")
 
         # not extractor available, return raw url
         return {"uri": uri}
