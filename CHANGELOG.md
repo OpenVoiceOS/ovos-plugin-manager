@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a3...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a4...HEAD)
+
+**Fixed bugs:**
+
+- fix/logspam [\#123](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/123) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.22a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.22a4) (2023-02-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a3...V0.0.22a4)
 
 **Fixed bugs:**
 
