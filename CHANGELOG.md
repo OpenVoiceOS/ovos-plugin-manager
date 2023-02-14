@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a2...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a3...HEAD)
+
+**Fixed bugs:**
+
+- feat/improve\_ocp\_plugin\_error\_handling [\#122](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/122) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.22a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.22a3) (2023-02-09)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a2...V0.0.22a3)
 
 **Implemented enhancements:**
 
