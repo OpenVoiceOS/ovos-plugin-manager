@@ -43,33 +43,31 @@ class StreamHandler:
         # attempt to use a dedicated stream extractor if requested
         for plug in self._get_sei_plugs(uri):
             try:
-                return plug.extract_stream(uri, video) or {"uri": uri}
+                return plug.extract_stream(uri, video)
             except Exception as e:
                 LOG.exception(f"error extracting stream with {plug}")
-        return {"uri": uri}
 
     def _extract_from_url(self, uri, video=True):
         for plug in self.extractors.values():
             try:
                 if plug.validate_uri(uri):
-                    return plug.extract_stream(uri, video) or {"uri": uri}
+                    return plug.extract_stream(uri, video)
             except Exception as e:
                 LOG.exception(f"error extracting stream with {plug}")
-        return {"uri": uri}
 
     def extract_stream(self, uri, video=True):
         # attempt to use a dedicated stream extractor if requested
         while len(self._get_sei_plugs(uri)):  # support chained extractions, where one plugin calls another
             meta = self._extract_from_sei(uri, video)
             if meta:
-                uri = meta["uri"]
+                uri = meta.get("uri") or uri
             else:
                 break
 
         # let plugins parse the raw url and see if they want to handle it
         meta = self._extract_from_url(uri, video)
 
-        # not extractor available, return raw url
+        # no extractor available, return raw url
         return meta or {"uri": uri}
 
 
