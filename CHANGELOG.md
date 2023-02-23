@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a6...HEAD)
+
+**Fixed bugs:**
+
+- fix/chained\_sei\_extract [\#124](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/124) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.22a6](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.22a6) (2023-02-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a5...V0.0.22a6)
+
 ## [V0.0.22a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.22a5) (2023-02-14)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a4...V0.0.22a5)
