@@ -35,26 +35,42 @@ class StreamHandler:
                 LOG.error(f"Failed to load {plugin}")
                 continue
 
-    def extract_stream(self, uri, video=True):
+    def _get_sei_plugs(self, uri):
+        return [plug for plug in self.extractors.values()
+                if any((uri.startswith(f"{sei}//") for sei in plug.supported_seis))]
+
+    def _extract_from_sei(self, uri, video=True):
         # attempt to use a dedicated stream extractor if requested
-        for plug in self.extractors.values():
+        for plug in self._get_sei_plugs(uri):
             try:
-                if any((uri.startswith(f"{sei}//")
-                        for sei in plug.supported_seis)):
-                    return plug.extract_stream(uri, video) or {"uri": uri}
+                return plug.extract_stream(uri, video)
             except Exception as e:
                 LOG.exception(f"error extracting stream with {plug}")
 
-        # let plugins parse the url and see if they can handle it
+    def _extract_from_url(self, uri, video=True):
         for plug in self.extractors.values():
             try:
                 if plug.validate_uri(uri):
-                    return plug.extract_stream(uri, video) or {"uri": uri}
+                    return plug.extract_stream(uri, video)
             except Exception as e:
                 LOG.exception(f"error extracting stream with {plug}")
 
-        # not extractor available, return raw url
-        return {"uri": uri}
+    def extract_stream(self, uri, video=True):
+        meta = {}
+
+        # attempt to use a dedicated stream extractor if requested
+        while len(self._get_sei_plugs(uri)):  # support chained extractions, where one plugin calls another
+            meta = self._extract_from_sei(uri, video) or {}
+            if meta.get("uri"):
+                uri = meta["uri"]
+            else:
+                break
+
+        # let plugins parse the raw url and see if they want to handle it
+        meta = self._extract_from_url(uri, video) or meta
+
+        # no extractor available, return raw url
+        return meta or {"uri": uri}
 
 
 if __name__ == "__main__":
