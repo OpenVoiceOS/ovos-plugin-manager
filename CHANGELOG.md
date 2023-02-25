@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a6...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a7...HEAD)
+
+**Merged pull requests:**
+
+- Update ovos\_utils dependency to stable release [\#127](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/127) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.22a7](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.22a7) (2023-02-23)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a6...V0.0.22a7)
 
 **Fixed bugs:**
 
