@@ -103,7 +103,7 @@ class OVOSPosTaggerFactory:
             clazz = OVOSPosTaggerFactory.get_class(config)
             return clazz(plugin_config)
         except Exception:
-            LOG.error(f'Postag plugin {plugin} could not be loaded!')
+            LOG.exception(f'Postag plugin {plugin} could not be loaded!')
             return PosTagger()
 
 

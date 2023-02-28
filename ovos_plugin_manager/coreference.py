@@ -102,7 +102,8 @@ class OVOSCoreferenceSolverFactory:
             clazz = OVOSCoreferenceSolverFactory.get_class(config)
             return clazz(plugin_config)
         except Exception:
-            LOG.error(f'CoreferenceSolver plugin {plugin} could not be loaded!')
+            LOG.exception(f'CoreferenceSolver plugin {plugin} '
+                          f'could not be loaded!')
             raise
 
 

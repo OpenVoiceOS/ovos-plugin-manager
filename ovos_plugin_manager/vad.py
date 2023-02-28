@@ -74,7 +74,7 @@ class OVOSVADFactory:
             clazz = OVOSVADFactory.get_class(config)
             return clazz(plugin_config)
         except Exception:
-            LOG.error(f'VAD plugin {plugin} could not be loaded!')
+            LOG.exception(f'VAD plugin {plugin} could not be loaded!')
             raise
 
 

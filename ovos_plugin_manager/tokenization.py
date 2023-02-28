@@ -103,7 +103,7 @@ class OVOSTokenizerFactory:
             clazz = OVOSTokenizerFactory.get_class(config)
             return clazz(plugin_config)
         except Exception:
-            LOG.error(f'Tokenizer plugin {plugin} could not be loaded!')
+            LOG.exception(f'Tokenizer plugin {plugin} could not be loaded!')
             return Tokenizer()
 
 

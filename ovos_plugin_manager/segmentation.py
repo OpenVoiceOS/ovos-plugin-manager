@@ -102,7 +102,8 @@ class OVOSUtteranceSegmenterFactory:
             clazz = OVOSUtteranceSegmenterFactory.get_class(config)
             return clazz(plugin_config)
         except Exception:
-            LOG.error(f'Utterance Segmentation plugin {plugin} could not be loaded!')
+            LOG.exception(f'Utterance Segmentation plugin {plugin} '
+                          f'could not be loaded!')
             return Segmenter()
 
 
