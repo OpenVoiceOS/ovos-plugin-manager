@@ -101,8 +101,9 @@ class OVOSWakeWordFactory:
         module = ww_config.get("module", "pocketsphinx")
         try:
             return cls.load_module(module, hotword, ww_config, lang, loop)
-        except:
+        except Exception as e:
             LOG.error(f"Failed to load hotword: {hotword} - {module}")
+            LOG.exception(e)
             fallback_ww = ww_config.get("fallback_ww")
             if fallback_ww in ww_configs and fallback_ww != hotword:
                 LOG.info(f"Attempting to load fallback ww instead: {fallback_ww}")

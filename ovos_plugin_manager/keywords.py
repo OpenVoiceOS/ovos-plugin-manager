@@ -100,7 +100,8 @@ class OVOSKeywordExtractorFactory:
             clazz = OVOSKeywordExtractorFactory.get_class(config)
             return clazz(plugin_config)
         except Exception:
-            LOG.error(f'Keyword extraction plugin {plugin} could not be loaded!')
+            LOG.exception(f'Keyword extraction plugin {plugin} '
+                          f'could not be loaded!')
             return KeywordExtractor()
 
 
