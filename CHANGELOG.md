@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a7...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a8...HEAD)
+
+**Merged pull requests:**
+
+- Update load exception logging [\#128](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/128) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.22a8](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.22a8) (2023-02-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.22a7...V0.0.22a8)
 
 **Merged pull requests:**
 
