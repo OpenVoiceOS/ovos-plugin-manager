@@ -99,7 +99,6 @@ class STT(metaclass=ABCMeta):
             return langs[0].lower() + "-" + langs[1].upper()
         return lang
 
-    @abstractmethod
     def execute(self, audio, language=None):
         pass
 
