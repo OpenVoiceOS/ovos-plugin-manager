@@ -1,7 +1,34 @@
-from ovos_plugin_manager.utils.config import get_valid_plugin_configs, sort_plugin_configs
-from ovos_utils.log import LOG
+import json
+import os
 from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, TextToSpeechCache, ConcatTTS, RemoteTTS
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, normalize_lang, PluginConfigTypes
+from ovos_plugin_manager.utils.config import get_valid_plugin_configs, sort_plugin_configs
+from ovos_utils.log import LOG
+from ovos_utils.xdg_utils import xdg_data_home
+
+
+def scan_voices():
+    voice_ids = []
+    LANGS = get_tts_supported_langs()
+    for LANG in LANGS:
+        VOICES_FOLDER = f"{xdg_data_home()}/OPM/voice_configs/{LANG}"
+        os.makedirs(VOICES_FOLDER, exist_ok=True)
+        for plug, voices in get_tts_lang_configs(LANG, include_dialects=True).items():
+            for voice in voices:
+                spkr = voice.get("speaker") or voice.get("lang") or "default"
+                name = voice.get("voice") or voice.get("model") or voice.get("gender") or LANG
+                voiceid = f"{plug}_{name}_{spkr}.json".replace("/", "_")
+                voice_ids.append(voiceid)
+                if "meta" not in voice:
+                    voice["meta"] = {}
+                noise = ["priority", "display_name", "offline", "gender"]
+                for k in noise:
+                    if k in voice:
+                        voice["meta"][k] = voice.pop(k)
+                voice["module"] = plug
+                with open(f"{VOICES_FOLDER}/{voiceid}", "w") as f:
+                    json.dump(voice, f, indent=4)
+    return voice_ids
 
 
 def find_tts_plugins():
@@ -152,6 +179,7 @@ def get_tts_config(config=None):
 
 
 if __name__ == "__main__":
+    print(scan_voices())
     configs = get_tts_module_configs('ovos-tts-plugin-mimic2')
     print(configs["en-US"])
     # {'de': [{'display_name': 'Dfki Pavoque Styles',
