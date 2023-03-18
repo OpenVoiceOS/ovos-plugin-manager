@@ -9,9 +9,9 @@ from ovos_utils.xdg_utils import xdg_data_home
 
 
 def get_voice_id(plugin_name, lang, tts_cfg):
-    spkr = tts_cfg.get("speaker") or tts_cfg.get("gender") or "default"
-    name = tts_cfg.get("voice") or tts_cfg.get("model") or "default"
-    voiceid = f"{plugin_name}_{lang}_{name}_{spkr}.json".replace("/", "_")
+    skip_keys = ["module"]
+    keys = sorted([f"{k}_{v}" for k, v in tts_cfg.items() if k not in skip_keys])
+    voiceid = f"{plugin_name}_{lang}_{keys}.json".replace("/", "_")
     return voiceid
 
 
