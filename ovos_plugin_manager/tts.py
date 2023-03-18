@@ -7,6 +7,14 @@ from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_data_home
 
 
+
+def get_voice_id(plugin_name, lang, tts_cfg):
+    spkr = tts_cfg.get("speaker") or tts_cfg.get("gender") or "default"
+    name = tts_cfg.get("voice") or tts_cfg.get("model") or "default"
+    voiceid = f"{plugin_name}_{lang}_{name}_{spkr}.json".replace("/", "_")
+    return voiceid
+
+
 def scan_voices():
     voice_ids = {}
     for lang in get_tts_supported_langs():
@@ -14,9 +22,7 @@ def scan_voices():
         os.makedirs(VOICES_FOLDER, exist_ok=True)
         for plug, voices in get_tts_lang_configs(lang, include_dialects=True).items():
             for voice in voices:
-                spkr = voice.get("speaker") or voice.get("gender") or "default"
-                name = voice.get("voice") or voice.get("model") or "default"
-                voiceid = f"{plug}_{lang}_{name}_{spkr}.json".replace("/", "_")
+                voiceid = get_voice_id(plug, lang, voice)
                 if "meta" not in voice:
                     voice["meta"] = {}
                 noise = ["priority", "display_name", "offline", "gender"]
