@@ -4,6 +4,30 @@ from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.hotwords import HotWordEngine
 
 
+def get_ww_id(plugin_name, ww_name, ww_config):
+    ww_hash = md5(json.dumps(ww_config, sort_keys=True).encode("utf-8")).hexdigest()
+    return f"{plugin_name}_{ww_name}_{ww_hash}"
+
+
+def scan_wws():
+    ww_ids = {}
+    raise NotImplementedError("plugin wake word metadata reporting is WIP")
+    return ww_ids
+
+
+def get_wws(scan=False):
+    if scan:
+        scan_wws()
+    ww_ids = {}
+    for lang in get_tts_supported_langs():
+        WW_FOLDER = f"{xdg_data_home()}/OPM/ww_configs/{lang}"
+        for voice in os.listdir(WW_FOLDER):
+            with open(f"{WW_FOLDER}/{voice}") as f:
+                ww_ids[voice] = json.load(f)
+    return ww_ids
+
+
+
 def find_wake_word_plugins():
     return find_plugins(PluginTypes.WAKEWORD)
 
@@ -114,3 +138,4 @@ class OVOSWakeWordFactory:
 def get_hotwords_config(config=None):
     from ovos_plugin_manager.utils.config import get_plugin_config
     return get_plugin_config(config, "hotwords")
+

@@ -8,11 +8,9 @@ from ovos_utils.xdg_utils import xdg_data_home
 
 
 
-def get_voice_id(plugin_name, lang, tts_cfg):
-    skip_keys = ["module"]
-    keys = sorted([f"{k}_{v}" for k, v in tts_cfg.items() if k not in skip_keys])
-    voiceid = f"{plugin_name}_{lang}_{keys}.json".replace("/", "_")
-    return voiceid
+def get_voice_id(plugin_name, lang, tts_config):
+    tts_hash = md5(json.dumps(tts_config, sort_keys=True).encode("utf-8")).hexdigest()
+    return f"{plugin_name}_{lang}_{tts_hash}"
 
 
 def scan_voices():
@@ -30,8 +28,8 @@ def scan_voices():
                     if k in voice:
                         voice["meta"][k] = voice.pop(k)
                 voice["module"] = plug
-                with open(f"{VOICES_FOLDER}/{voiceid}", "w") as f:
-                    json.dump(voice, f, indent=4)
+                with open(f"{VOICES_FOLDER}/{voiceid}.json", "w") as f:
+                    json.dump(voice, f, indent=4, ensure_ascii=False)
                 voice_ids[voiceid] = voice
     return voice_ids
 
