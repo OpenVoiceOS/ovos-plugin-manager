@@ -5,6 +5,7 @@ from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, no
 from ovos_plugin_manager.utils.config import get_valid_plugin_configs, sort_plugin_configs
 from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_data_home
+from hashlib import md5
 
 
 
