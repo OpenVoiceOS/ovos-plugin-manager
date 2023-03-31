@@ -6,7 +6,7 @@ from ovos_plugin_manager.utils.config import get_valid_plugin_configs, sort_plug
 from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_data_home
 from hashlib import md5
-
+import json
 
 
 def get_voice_id(plugin_name, lang, tts_config):

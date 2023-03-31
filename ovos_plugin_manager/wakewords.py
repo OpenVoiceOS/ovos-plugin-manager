@@ -3,7 +3,7 @@ from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.hotwords import HotWordEngine
 from hashlib import md5
-
+import json
 
 def get_ww_id(plugin_name, ww_name, ww_config):
     ww_hash = md5(json.dumps(ww_config, sort_keys=True).encode("utf-8")).hexdigest()
