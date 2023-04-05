@@ -1,5 +1,6 @@
-ovos_utils~=0.0,>=0.0.28
-ovos_config~=0.0,>=0.0.3
+ovos-utils~=0.0, >=0.0.31a3
+ovos-bus-client~=0.0, >=0.0.3a4
+ovos-config~=0.0,>=0.0.8a2
 combo_lock~=0.2
 requests~=2.26
 quebra_frases
