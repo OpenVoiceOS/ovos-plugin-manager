@@ -1,4 +1,4 @@
-from mycroft_bus_client.message import dig_for_message
+from ovos_bus_client.message import dig_for_message
 from ovos_utils import classproperty
 from ovos_utils.process_utils import RuntimeRequirements
 

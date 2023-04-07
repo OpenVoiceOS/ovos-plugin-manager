@@ -33,7 +33,7 @@ from threading import Thread
 from time import time, sleep
 
 import requests
-from mycroft_bus_client.message import Message, dig_for_message
+from ovos_bus_client.message import Message, dig_for_message
 from ovos_config import Configuration
 from ovos_utils import classproperty
 from ovos_utils import resolve_resource_file
