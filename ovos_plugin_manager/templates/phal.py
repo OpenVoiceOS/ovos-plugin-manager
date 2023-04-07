@@ -1,7 +1,6 @@
-import time
 from threading import Thread
 
-from mycroft_bus_client.message import Message
+from ovos_bus_client.message import Message
 from ovos_config import Configuration
 from ovos_utils import camel_case_split
 from ovos_utils import classproperty
