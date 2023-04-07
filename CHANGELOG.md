@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a5...HEAD)
+
+**Merged pull requests:**
+
+- migrate to ovos-bus-client [\#136](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/136) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.23a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a5) (2023-04-05)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a4...V0.0.23a5)
+
 ## [V0.0.23a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a4) (2023-03-31)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a3...V0.0.23a4)
