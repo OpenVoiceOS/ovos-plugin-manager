@@ -1,4 +1,4 @@
-ovos-utils~=0.0, >=0.0.31a5
+ovos-utils~=0.0, >=0.0.31a6
 ovos-bus-client~=0.0, >=0.0.3a10
 ovos-config~=0.0,>=0.0.8a3
 combo_lock~=0.2
