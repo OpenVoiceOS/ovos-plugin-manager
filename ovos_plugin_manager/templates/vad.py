@@ -1,6 +1,18 @@
+import abc
+import collections
+
 from ovos_config import Configuration
 from ovos_utils import classproperty
 from ovos_utils.process_utils import RuntimeRequirements
+
+
+class Frame:
+    """Represents a "frame" of audio data."""
+
+    def __init__(self, bytes, timestamp, duration):
+        self.bytes = bytes
+        self.timestamp = timestamp
+        self.duration = duration
 
 
 class VADEngine:
@@ -9,6 +21,11 @@ class VADEngine:
         self.config = config or {}
         self.sample_rate = sample_rate or \
                            self.config_core.get("listener", {}).get("sample_rate", 16000)
+
+        self.padding_duration_ms = self.config.get("padding_duration_ms", 300)
+        self.frame_duration_ms = self.config.get("frame_duration_ms", 30)
+        self.thresh = self.config.get("thresh", 0.8)
+        self.num_padding_frames = int(self.padding_duration_ms / self.frame_duration_ms)
 
     @classproperty
     def runtime_requirements(self):
@@ -45,6 +62,64 @@ class VADEngine:
                                    no_internet_fallback=True,
                                    no_network_fallback=True)
 
+    def frame_generator(self, audio):
+        """Generates audio frames from PCM audio data.
+        Takes the desired frame duration in milliseconds, the PCM data, and
+        the sample rate.
+        Yields Frames of the requested duration.
+        """
+        n = int(self.sample_rate * (self.frame_duration_ms / 1000.0) * 2)
+        offset = 0
+        timestamp = 0.0
+        duration = (float(n) / self.sample_rate) / 2.0
+
+        while offset + n <= len(audio):
+            yield Frame(audio[offset:offset + n], timestamp, duration)
+            timestamp += duration
+            offset += n
+
+    def extract_speech(self, audio):
+        # We use a deque for our sliding window/ring buffer.
+        ring_buffer = collections.deque(maxlen=self.num_padding_frames)
+        triggered = False
+        is_speech = False
+        voiced_frames = []
+
+        for frame in self.frame_generator(audio):
+
+            is_speech = not self.is_silence(frame.bytes)
+
+            if not triggered:
+                ring_buffer.append((frame, is_speech))
+                num_voiced = len([f for f, speech in ring_buffer if speech])
+                # If we're NOTTRIGGERED and more than 90% of the frames in
+                # the ring buffer are voiced frames, then enter the
+                # TRIGGERED state.
+                if num_voiced > self.thresh * ring_buffer.maxlen:
+                    triggered = True
+                    # We want to yield all the audio we see from now until
+                    # we are NOTTRIGGERED, but we have to start with the
+                    # audio that's already in the ring buffer.
+                    for f, s in ring_buffer:
+                        voiced_frames.append(f)
+                    ring_buffer.clear()
+            else:
+                # We're in the TRIGGERED state, so collect the audio data
+                # and add it to the ring buffer.
+                voiced_frames.append(frame)
+                ring_buffer.append((frame, is_speech))
+                num_unvoiced = len([f for f, speech in ring_buffer if not speech])
+
+                # If more than 90% of the frames in the ring buffer are
+                # unvoiced, then enter NOTTRIGGERED and yield whatever
+                # audio we've collected.
+                if num_unvoiced > self.thresh * ring_buffer.maxlen:
+                    return b''.join([f.bytes for f in voiced_frames])
+
+    @abc.abstractmethod
     def is_silence(self, chunk):
         # return True or False
         return False
+
+    def reset(self):
+        pass
