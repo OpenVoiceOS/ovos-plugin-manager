@@ -10,7 +10,7 @@ class MySolver(AbstractSolver):
         # this plugin only accepts and outputs english
         config = {"lang": "en"}
         super(MySolver, self).__init__(name="MySolver", priority=100,
-                                       config=config)
+                                       config=config, enable_tx=True, enable_cache=True)
 
     # expected solver methods to be implemented
     def get_data(self, query, context):
