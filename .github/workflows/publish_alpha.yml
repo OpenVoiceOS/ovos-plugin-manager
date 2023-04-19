@@ -14,60 +14,49 @@ on:
       - 'LICENSE'
       - 'CHANGELOG.md'
       - 'MANIFEST.in'
-      - 'README.md'
+      - 'readme.md'
       - 'scripts/**'
   workflow_dispatch:
 
 jobs:
+  update_version:
+    uses: neongeckocom/.github/.github/workflows/propose_semver_release.yml@master
+    with:
+      release_type: "alpha"
+      version_file: ovos_plugin_manager/version.py
+      alpha_var: VERSION_ALPHA
+      build_var: VERSION_BUILD
+      minor_var: VERSION_MINOR
+      major_var: VERSION_MAJOR
+      update_changelog: True
+      branch: dev
   build_and_publish:
     runs-on: ubuntu-latest
+    needs: update_version
     steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: dev
-          fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
-      - name: Setup Python
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.8
-      - name: Install Build Tools
-        run: |
-          python -m pip install build wheel
-      - name: Increment Version
-        run: |
-          VER=$(python setup.py --version)
-          python scripts/bump_alpha.py
-      - name: "Generate release changelog"
-        uses: heinrichreimer/github-changelog-generator-action@v2.3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-        id: changelog
-      - name: Commit to dev
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: Increment Version
-          branch: dev
-      - name: version
-        run: echo "::set-output name=version::$(python setup.py --version)"
-        id: version
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
-          tag_name: V${{ steps.version.outputs.version }}
-          release_name: Release ${{ steps.version.outputs.version }}
+          tag_name: V${{ needs.update_version.outputs.version }}
+          release_name: Release ${{ needs.update_version.outputs.version }}
           body: |
             Changes in this Release
-            ${{ steps.changelog.outputs.changelog }}
+            ${{ needs.update_version.outputs.changelog }}
           draft: false
           prerelease: true
           commitish: dev
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          ref: dev
+          fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
       - name: Build Distribution Packages
         run: |
-          python setup.py bdist_wheel
-      - name: Publish to Test PyPI
+          python setup.py sdist bdist_wheel
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{secrets.PYPI_TOKEN}}
