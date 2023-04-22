@@ -1,13 +1,14 @@
 import enum
 import re
-from collections import namedtuple
+from dataclasses import dataclass
+
+from ovos_bus_client.util import get_message_lang
 from ovos_config import Configuration
 from ovos_utils import flatten_list
 from ovos_utils.json_helper import merge_dict
 from ovos_utils.log import LOG
 from quebra_frases import word_tokenize, get_exclusive_tokens
 
-from ovos_bus_client.util import get_message_lang
 from ovos_plugin_manager.segmentation import OVOSUtteranceSegmenterFactory
 
 # optional imports, strongly recommended
@@ -15,16 +16,6 @@ try:
     from lingua_franca.parse import normalize as lf_normalize
 except ImportError:
     lf_normalize = None
-
-# Intent match response tuple containing
-# intent_service: Name of the service that matched the intent
-# intent_type: intent name
-# intent_data: data provided by the intent match
-# skill_id: the skill this handler belongs to
-IntentMatch = namedtuple('IntentMatch',
-                         ['intent_service', 'intent_type',
-                          'intent_data', 'skill_id']
-                         )
 
 
 class IntentDeterminationStrategy(str, enum.Enum):
@@ -55,22 +46,21 @@ class IntentPriority(enum.IntEnum):
     FALLBACK_LOW = 100
 
 
+@dataclass()
 class BaseDefinition:
-    def __init__(self, name, lang):
-        self.name = name
-        self.lang = lang
+    name: str
+    lang: str
+    skill_id: str
 
 
+@dataclass()
 class EntityDefinition(BaseDefinition):
-    def __init__(self, name, lang, samples=None):
-        super().__init__(name, lang)
-        self.samples = samples or [name]
+    samples: list
 
 
+@dataclass()
 class IntentDefinition(BaseDefinition):
-    def __init__(self, name, lang, samples=None):
-        super().__init__(name, lang)
-        self.samples = samples or [name]
+    samples: list
 
     def get_utterance_remainder(self, utterance, as_string=True):
         chunks = get_exclusive_tokens([utterance] + self.samples)
@@ -80,26 +70,31 @@ class IntentDefinition(BaseDefinition):
         return words
 
 
+@dataclass()
 class RegexEntityDefinition(BaseDefinition):
-    def __init__(self, name, lang, patterns):
-        super().__init__(name, lang)
-        self.patterns = patterns
+    patterns: list
 
 
+@dataclass()
 class RegexIntentDefinition(BaseDefinition):
-    def __init__(self, name, lang, patterns=None):
-        super().__init__(name, lang)
-        self.patterns = patterns or []
+    patterns: list
 
 
+@dataclass()
 class KeywordIntentDefinition(BaseDefinition):
-    def __init__(self, name, lang, requires,
-                 optional=None, at_least_one=None, excluded=None):
-        super().__init__(name, lang)
-        self.requires = requires
-        self.optional = optional or []
-        self.excluded = excluded or []
-        self.at_least_one = at_least_one or []
+    requires: list
+    optional: list
+    excluded: list
+    at_least_one: list
+
+
+@dataclass()
+class IntentMatch:
+    intent_service: str
+    intent_type: str
+    intent_data: dict
+    confidence: float
+    skill_id: str
 
 
 class IntentExtractor:
@@ -116,11 +111,21 @@ class IntentExtractor:
         self.registered_intents = []
         self.registered_entities = []
 
+    def get_intent_skill_id(self, intent_name):
+        for intent in self.registered_intents:
+            if intent.name == intent_name:
+                return intent.skill_id
+
+    def get_entity_skill_id(self, intent_name):
+        for entity in self.registered_entities:
+            if entity.name == intent_name:
+                return entity.skill_id
+
     @property
     def lang(self):
         return get_message_lang() or \
-               self.config.get("lang") or \
-               "en-us"
+            self.config.get("lang") or \
+            "en-us"
 
     def normalize_utterance(self, text, lang=None, remove_articles=False):
         lang = lang or self.lang
@@ -164,13 +169,13 @@ class IntentExtractor:
 
     # registering/unloading intents
     def detach_skill(self, skill_id):
-        for i in [e for e in self.registered_intents
-                  if e.name.startswith(skill_id)]:
-            self.detach_intent(i.name)
+        for intent in self.registered_intents:
+            if intent.skill_id == skill_id:
+                self.detach_intent(intent.name)
 
-        for i in [e for e in self.registered_entities
-                  if e.name.startswith(skill_id)]:
-            self.detach_entity(i.name)
+        for entity in self.registered_entities:
+            if entity.skill_id == skill_id:
+                self.detach_entity(entity.name)
 
     def detach_entity(self, entity_name):
         self.registered_entities = [e for e in self.registered_entities
@@ -434,6 +439,8 @@ class IntentExtractor:
 
 
 class IntentEngine:
+    """ A IntentExtractor bound to the messagebus"""
+
     def __init__(self, engine_id, config=None, bus=None, engine=None):
         self.engine_id = engine_id
         self.bus = bus
@@ -493,8 +500,7 @@ class IntentEngine:
         if self.engine:
             for utterance in utterances:
                 for intent in self.engine.calc(utterance, lang=lang):
-                    intent_type = intent["intent_type"]
-                    yield IntentMatch(self.engine_id, intent_type, intent)
+                    yield intent
                     good_utterance = True
                 if good_utterance:
                     break
