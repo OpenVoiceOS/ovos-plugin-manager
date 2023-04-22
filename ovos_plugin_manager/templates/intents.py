@@ -153,17 +153,17 @@ class IntentExtractor:
             return " ".join(words)
         return words
 
-    def get_intent_samples(self, intent_name, lang=None):
+    def get_intent_samples(self, skill_id, intent_name, lang=None):
         lang = lang or self.lang
         for e in [e for e in self.registered_intents if isinstance(e, IntentDefinition)]:
-            if e.name == intent_name and e.lang == lang:
+            if e.name == intent_name and e.lang == lang and e.skill_id == skill_id:
                 return e.samples
         return []
 
-    def get_entity_samples(self, entity_name, lang=None):
+    def get_entity_samples(self, skill_id, entity_name, lang=None):
         lang = lang or self.lang
         for e in [e for e in self.registered_entities if isinstance(e, EntityDefinition)]:
-            if e.name == entity_name and e.lang == lang:
+            if e.name == entity_name and e.lang == lang and e.skill_id == skill_id:
                 return e.samples
         return []
 
@@ -171,80 +171,80 @@ class IntentExtractor:
     def detach_skill(self, skill_id):
         for intent in self.registered_intents:
             if intent.skill_id == skill_id:
-                self.detach_intent(intent.name)
+                self.detach_intent(skill_id, intent.name)
 
         for entity in self.registered_entities:
             if entity.skill_id == skill_id:
-                self.detach_entity(entity.name)
+                self.detach_entity(skill_id, entity.name)
 
-    def detach_entity(self, entity_name):
+    def detach_entity(self, skill_id, entity_name):
         self.registered_entities = [e for e in self.registered_entities
-                                    if e.name != entity_name]
+                                    if e.name != entity_name and e.skill_id != skill_id]
 
-    def detach_intent(self, intent_name):
+    def detach_intent(self, skill_id, intent_name):
         self.registered_intents = [e for e in self.registered_intents
-                                   if e.name != intent_name]
+                                   if e.name != intent_name and e.skill_id != skill_id]
 
-    def register_entity(self, entity_name, samples=None, lang=None):
+    def register_entity(self, skill_id, entity_name, samples=None, lang=None):
         lang = lang or self.lang
-        entity = EntityDefinition(entity_name, lang, samples)
+        entity = EntityDefinition(entity_name, lang=lang, samples=samples, skill_id=skill_id)
         self.registered_entities.append(entity)
 
-    def register_intent(self, intent_name, samples=None, lang=None):
+    def register_intent(self, skill_id, intent_name, samples=None, lang=None):
         lang = lang or self.lang
-        intent = IntentDefinition(intent_name, lang, samples)
+        intent = IntentDefinition(intent_name, lang=lang, samples=samples, skill_id=skill_id)
         self.registered_intents.append(intent)
 
-    def register_keyword_intent(self, intent_name, keywords,
+    def register_keyword_intent(self, skill_id, intent_name, keywords,
                                 optional=None, at_least_one=None,
                                 excluded=None, lang=None):
         lang = lang or self.lang
-        intent = KeywordIntentDefinition(intent_name, lang,
+        intent = KeywordIntentDefinition(intent_name, lang=lang, skill_id=skill_id,
                                          requires=keywords, optional=optional,
                                          at_least_one=at_least_one, excluded=excluded)
         self.registered_intents.append(intent)
 
-    def register_regex_entity(self, entity_name, samples,
+    def register_regex_entity(self, skill_id, entity_name, samples,
                               lang=None):
         lang = lang or self.lang
-        entity = RegexEntityDefinition(entity_name, lang,
+        entity = RegexEntityDefinition(entity_name, lang=lang, skill_id=skill_id,
                                        patterns=[re.compile(pattern) for pattern in samples])
         self.registered_entities.append(entity)
 
-    def register_regex_intent(self, intent_name, samples,
+    def register_regex_intent(self, skill_id, intent_name, samples,
                               lang=None):
         lang = lang or self.lang
-        intent = RegexIntentDefinition(intent_name, lang,
+        intent = RegexIntentDefinition(intent_name, lang=lang, skill_id=skill_id,
                                        patterns=[re.compile(pattern) for pattern in samples])
         self.registered_intents.append(intent)
 
     # from file helper methods
-    def register_entity_from_file(self, entity_name, file_name,
+    def register_entity_from_file(self, skill_id, entity_name, file_name,
                                   lang=None):
         with open(file_name) as f:
             entities = f.read().split("\n")
-            self.register_entity(entity_name, entities,
+            self.register_entity(skill_id, entity_name, entities,
                                  lang=lang)
 
-    def register_intent_from_file(self, intent_name, file_name,
+    def register_intent_from_file(self, skill_id, intent_name, file_name,
                                   lang=None):
         with open(file_name) as f:
             intents = f.read().split("\n")
-            self.register_intent(intent_name, intents,
+            self.register_intent(skill_id, intent_name, intents,
                                  lang=lang)
 
-    def register_regex_entity_from_file(self, entity_name, file_name,
+    def register_regex_entity_from_file(self, skill_id, entity_name, file_name,
                                         lang=None):
         with open(file_name) as f:
             entities = f.read().split("\n")
-            self.register_regex_entity(entity_name, entities,
+            self.register_regex_entity(skill_id, entity_name, entities,
                                        lang=lang)
 
-    def register_regex_intent_from_file(self, intent_name, file_name,
+    def register_regex_intent_from_file(self, skill_id, intent_name, file_name,
                                         lang=None):
         with open(file_name) as f:
             intents = f.read().split("\n")
-            self.register_regex_intent(intent_name, intents,
+            self.register_regex_intent(skill_id, intent_name, intents,
                                        lang=lang)
 
     def train(self):
@@ -493,7 +493,7 @@ class IntentEngine:
         if self.engine:
             self.engine.train()
 
-    def handle_utterance_message(self, message):
+    def message2intent(self, message):
         utterances = message.data["utterances"]
         lang = get_message_lang(message)
         good_utterance = False
@@ -516,11 +516,11 @@ class IntentEngine:
                 samples = [l for l in f.read().split("\n")
                            if l and not l.startswith("#")]
         samples = samples or [name]
-
-        return name, samples, lang
+        skill_id = message.data.get("skill_id") or message.context.get("skill_id")
+        return name, samples, lang, skill_id
 
     def handle_register_intent(self, message):
-        intent_name, samples, lang = self._parse_message(message)
+        intent_name, samples, lang, skill_id = self._parse_message(message)
         if self.engine:
             self.engine.register_intent(intent_name, samples, lang)
 
@@ -537,12 +537,12 @@ class IntentEngine:
             self.engine.register_entity(entity_name, samples, lang)
 
     def handle_register_regex_intent(self, message):
-        intent_name, samples, lang = self._parse_message(message)
+        intent_name, samples, lang, skill_id = self._parse_message(message)
         if self.engine:
             self.engine.register_regex_intent(intent_name, samples, lang)
 
     def handle_register_regex_entity(self, message):
-        entity_name, samples, lang = self._parse_message(message)
+        entity_name, samples, lang, skill_id = self._parse_message(message)
         if self.engine:
             self.engine.register_regex_entity(entity_name, samples, lang)
 
