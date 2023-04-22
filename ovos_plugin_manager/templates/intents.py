@@ -484,7 +484,7 @@ class IntentEngine:
         good_utterance = False
         if self.engine:
             for utterance in utterances:
-                for intent in self.engine.calc(utterance):
+                for intent in self.engine.calc(utterance, lang=lang):
                     intent_type = intent["intent_type"]
                     yield IntentMatch(self.engine_id, intent_type, intent)
                     good_utterance = True
@@ -508,7 +508,7 @@ class IntentEngine:
     def handle_register_intent(self, message):
         intent_name, samples, lang = self._parse_message(message)
         if self.engine:
-            self.engine.register_intent(intent_name, samples)
+            self.engine.register_intent(intent_name, samples, lang)
 
     def handle_register_entity(self, message):
         entity_name = message.data["name"]
@@ -520,17 +520,17 @@ class IntentEngine:
                            if l and not l.startswith("#")]
         samples = samples or [entity_name]
         if self.engine:
-            self.engine.register_entity(entity_name, samples)
+            self.engine.register_entity(entity_name, samples, lang)
 
     def handle_register_regex_intent(self, message):
         intent_name, samples, lang = self._parse_message(message)
         if self.engine:
-            self.engine.register_regex_intent(intent_name, samples)
+            self.engine.register_regex_intent(intent_name, samples, lang)
 
     def handle_register_regex_entity(self, message):
         entity_name, samples, lang = self._parse_message(message)
         if self.engine:
-            self.engine.register_regex_entity(entity_name, samples)
+            self.engine.register_regex_entity(entity_name, samples, lang)
 
     def handle_register_keyword_intent(self, message):
         if self.engine:
