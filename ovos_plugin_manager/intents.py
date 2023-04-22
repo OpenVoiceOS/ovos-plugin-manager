@@ -1,7 +1,12 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
-from ovos_plugin_manager.templates.intents import IntentExtractor, IntentPriority,\
-    IntentDeterminationStrategy, IntentMatch, IntentEngine
+from collections import namedtuple
+
 from ovos_utils.log import LOG
+
+from ovos_plugin_manager.templates.intents import IntentExtractor, IntentPriority, \
+    IntentDeterminationStrategy
+from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
+
+IntentRange = namedtuple('IntentRange', ['start', 'stop'])
 
 
 def find_intent_plugins():
@@ -39,9 +44,10 @@ class IntentBox(IntentExtractor):
     def __init__(self, config=None,
                  strategy=IntentDeterminationStrategy.SEGMENT_REMAINDER,
                  priority=IntentPriority.LOW,
-                 segmenter=None):
+                 segmenter=None, intent_range=IntentRange(0, 100)):
         super().__init__(config, strategy, priority, segmenter)
         self.services = []
+        self.intent_range = intent_range
         self._load_intent_plugins()
 
     def _load_intent_plugins(self):
@@ -67,11 +73,13 @@ class IntentBox(IntentExtractor):
         lang = lang or self.lang
         matches = []
         for engine in self.services:  # sorted by engine priority
-            conf_modifier = max(100 - engine.priority, 1)  # engine weight from 0 - 100
             LOG.info(f"Matching {utterance} with {engine}")
             try:
                 for match in engine.calc(utterance, lang=lang, session=session):
-                    match.confidence = match.confidence * (conf_modifier / 100)
+                    match.confidence = match.confidence * engine.weight
+                    if match.confidence < self.intent_range.start or \
+                            match.confidence > self.intent_range.stop:
+                        continue
                     matches.append(match)
                     LOG.debug(f"intent candidate: {match}")
             except:

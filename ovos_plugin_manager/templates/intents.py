@@ -106,6 +106,8 @@ class IntentExtractor:
         self.config = config or Configuration().get("intents", {})
         self.segmenter = segmenter or OVOSUtteranceSegmenterFactory.create()
         self.strategy = strategy
+        # modifier to lower confidence of individual plugins
+        self.weight = self.config.get("weight", 1.0)
         self.priority = priority
         self.registered_intents = []
         self.registered_entities = []
