@@ -7,7 +7,7 @@ from ovos_utils.json_helper import merge_dict
 from ovos_utils.log import LOG
 from quebra_frases import word_tokenize, get_exclusive_tokens
 
-from ovos_bus_client.message import get_message_lang, dig_for_message
+from ovos_bus_client.util import get_message_lang
 from ovos_plugin_manager.segmentation import OVOSUtteranceSegmenterFactory
 
 # optional imports, strongly recommended
