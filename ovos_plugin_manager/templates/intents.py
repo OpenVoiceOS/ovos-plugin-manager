@@ -1,3 +1,4 @@
+import abc
 import enum
 import re
 from dataclasses import dataclass
@@ -255,6 +256,7 @@ class IntentExtractor:
                     entities = merge_dict(entities, match.groupdict())
         return entities
 
+    @abc.abstractmethod
     def calc_intent(self, utterance, min_conf=0.5, lang=None, session=None):
         """ return intent result for utterance
         UTTERANCE: tell me a joke and say hello
