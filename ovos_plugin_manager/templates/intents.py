@@ -72,6 +72,13 @@ class IntentDefinition(BaseDefinition):
         super().__init__(name, lang)
         self.samples = samples or [name]
 
+    def get_utterance_remainder(self, utterance, as_string=True):
+        chunks = get_exclusive_tokens([utterance] + self.samples)
+        words = [t for t in word_tokenize(utterance) if t in chunks]
+        if as_string:
+            return " ".join(words)
+        return words
+
 
 class RegexEntityDefinition(BaseDefinition):
     def __init__(self, name, lang, patterns):
