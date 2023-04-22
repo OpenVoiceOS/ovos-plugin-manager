@@ -255,14 +255,14 @@ class IntentExtractor:
                     entities = merge_dict(entities, match.groupdict())
         return entities
 
-    def calc_intent(self, utterance, min_conf=0.5, lang=None):
+    def calc_intent(self, utterance, min_conf=0.5, lang=None, session=None):
         """ return intent result for utterance
         UTTERANCE: tell me a joke and say hello
         {'name': 'joke', 'sent': 'tell me a joke and say hello', 'matches': {}, 'conf': 0.5634853146417653}
         """
         raise NotImplementedError
 
-    def calc_intents(self, utterance, min_conf=0.5, lang=None):
+    def calc_intents(self, utterance, min_conf=0.5, lang=None, session=None):
         """ segment utterance and return best intent for individual segments
         if confidence is below min_conf intent is None
 
@@ -273,11 +273,11 @@ class IntentExtractor:
         lang = lang or self.lang
         bucket = {}
         for ut in self.segmenter.segment(utterance):
-            intent = self.calc_intent(ut, min_conf=min_conf, lang=lang)
+            intent = self.calc_intent(ut, min_conf=min_conf, lang=lang, session=session)
             bucket[ut] = intent
         return bucket
 
-    def calc_intents_list(self, utterance, min_conf=0.5, lang=None):
+    def calc_intents_list(self, utterance, min_conf=0.5, lang=None, session=None):
         """ segment utterance and return all intents for individual segments
 
        UTTERANCE: tell me a joke and say hello
@@ -296,10 +296,10 @@ class IntentExtractor:
         utterance = utterance.strip().lower()
         bucket = {}
         for ut in self.segmenter.segment(utterance):
-            bucket[ut] = self.filter_intents(ut, min_conf=min_conf, lang=lang)
+            bucket[ut] = self.filter_intents(ut, min_conf=min_conf, lang=lang, session=session)
         return bucket
 
-    def intent_remainder(self, utterance, _prev="", min_conf=0.5, lang=None):
+    def intent_remainder(self, utterance, _prev="", min_conf=0.5, lang=None, session=None):
         """
         calc intent, remove matches from utterance, check for intent in leftover, repeat
 
@@ -311,13 +311,13 @@ class IntentExtractor:
         intent_bucket = []
         while _prev != utterance:
             _prev = utterance
-            intent = self.calc_intent(utterance, min_conf=min_conf, lang=lang)
+            intent = self.calc_intent(utterance, min_conf=min_conf, lang=lang, session=session)
             if intent:
                 intent_bucket += [intent]
                 utterance = intent['utterance_remainder']
         return intent_bucket
 
-    def intents_remainder(self, utterance, min_conf=0.5, lang=None):
+    def intents_remainder(self, utterance, min_conf=0.5, lang=None, session=None):
         """
         segment utterance and for each chunk recursively check for intents in utterance remainer
 
@@ -329,14 +329,14 @@ class IntentExtractor:
         utterances = self.segmenter.segment(utterance)
         bucket = []
         for utterance in utterances:
-            bucket += self.intent_remainder(utterance, min_conf=min_conf, lang=lang)
+            bucket += self.intent_remainder(utterance, min_conf=min_conf, lang=lang, session=session)
         return [b for b in bucket if b]
 
-    def intent_scores(self, utterance, lang=None):
+    def intent_scores(self, utterance, lang=None, session=None):
         lang = lang or self.lang
         utterance = utterance.strip().lower()
         intents = []
-        bucket = self.calc_intents(utterance, lang=lang)
+        bucket = self.calc_intents(utterance, lang=lang, session=session)
         for utt in bucket:
             intent = bucket[utt]
             if not intent:
@@ -344,7 +344,7 @@ class IntentExtractor:
             intents.append(intent)
         return intents
 
-    def filter_intents(self, utterance, min_conf=0.5, lang=None):
+    def filter_intents(self, utterance, min_conf=0.5, lang=None, session=None):
         """
         returns all intents above a minimum confidence, meant for disambiguation
 
@@ -355,10 +355,10 @@ class IntentExtractor:
          {'conf': 0.505765852348431, 'entities': {}, 'name': 'door_close'}]
         """
         lang = lang or self.lang
-        return [i for i in self.intent_scores(utterance, lang=lang) if
+        return [i for i in self.intent_scores(utterance, lang=lang, session=session) if
                 i["conf"] >= min_conf]
 
-    def calc(self, utterance, min_conf=0.5, lang=None):
+    def calc(self, utterance, min_conf=0.5, lang=None, session=None):
         """
         segment utterance and for each chunk recursively check for intents in utterance remainer
         """
@@ -375,14 +375,15 @@ class IntentExtractor:
             # calc intent + calc intent again in leftover text
             if self.strategy in [IntentDeterminationStrategy.REMAINDER,
                                  IntentDeterminationStrategy.SEGMENT_REMAINDER]:
-                intents = self.intent_remainder(utterance, min_conf=min_conf, lang=lang)  # up to 2 intents
+                intents = self.intent_remainder(utterance, min_conf=min_conf,
+                                                lang=lang, session=session)  # up to 2 intents
 
                 # use a bigger chunk of the utterance
                 if not intents and prev_ut:
                     # TODO ensure original utterance form
                     # TODO lang support
                     intents = self.intent_remainder(prev_ut + " " + utterance,
-                                                    min_conf=min_conf, lang=lang)
+                                                    min_conf=min_conf, lang=lang, session=session)
                     if intents:
                         # replace previous intent match with
                         # larger utterance segment match
@@ -396,7 +397,7 @@ class IntentExtractor:
             # if this strategy is selected the segmenter step is skipped
             # and there is only 1 utterance
             elif self.strategy == IntentDeterminationStrategy.SINGLE_INTENT:
-                bucket.append([self.calc_intent(utterance, min_conf=min_conf, lang=lang)])
+                bucket.append([self.calc_intent(utterance, min_conf=min_conf, lang=lang, session=session)])
 
             # calc multiple intents over full utterance
             # "segment+multi" is misleading in the sense that
@@ -405,7 +406,7 @@ class IntentExtractor:
             # and there is only 1 utterance
             else:
                 intents = [intent for ut, intent in
-                           self.calc_intents(utterance, min_conf=min_conf, lang=lang).items()]
+                           self.calc_intents(utterance, min_conf=min_conf, lang=lang, session=session).items()]
                 bucket.append(intents)
 
         return [i for i in flatten_list(bucket) if i]
@@ -581,8 +582,8 @@ class IntentEngine:
         lang = get_message_lang(message)
         if regex_str:
             if not entity_type:
-                # TODO mycroft does not send an entity_type when registering adapt regex
-                # the entity name is in the regex itself, how to extract from string ?
+                # mycroft does not send an entity_type when registering adapt regex
+                # the entity name is in the regex itself, need to extract from string
                 # is syntax always (?P<name>someregexhere)  ?
                 entity_type = regex_str.split("(?P<")[-1].split(">")[0]
             message.data["name"] = entity_type
