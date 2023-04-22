@@ -9,7 +9,6 @@ from quebra_frases import word_tokenize, get_exclusive_tokens
 
 from mycroft.messagebus.message import get_message_lang
 from ovos_plugin_manager.segmentation import OVOSUtteranceSegmenterFactory
-from ovos_plugin_manager.utils.intent_context import ContextManager
 
 # optional imports, strongly recommended
 try:
@@ -109,18 +108,6 @@ class IntentExtractor:
         # sample based
         self.registered_intents = []
         self.registered_entities = []
-
-        # Context related initializations
-        # the context manager is from adapt, however it can be used by any
-        # intent engine, in a future PR this will be generalized using
-        # ContextManager.get_context and ContextManager.inject_context in
-        # the self.calc methods
-        self.context_config = self.config.get('context', {})
-        self.context_keywords = self.context_config.get('keywords', [])
-        self.context_max_frames = self.context_config.get('max_frames', 3)
-        self.context_timeout = self.context_config.get('timeout', 2)
-        self.context_greedy = self.context_config.get('greedy', False)
-        self.context_manager = ContextManager(self.context_timeout)
 
     @property
     def lang(self):
@@ -470,10 +457,6 @@ class IntentEngine:
         self.bus.on(f'ovos.intentbox.get.intent.{self.engine_id}', self.handle_get_intent)
         self.bus.on(f'ovos.intentbox.get.manifest.{self.engine_id}', self.handle_get_manifest)
 
-        self.bus.on('ovos.intentbox.context.add', self.handle_add_context)
-        self.bus.on('ovos.intentbox.context.remove', self.handle_remove_context)
-        self.bus.on('ovos.intentbox.context.clear', self.handle_clear_context)
-
     def register_compat_bus_handlers(self):
         """mycroft compatible namespaces"""
         self.bus.on('detach_intent', self.handle_detach_intent)  # api compatible
@@ -484,12 +467,6 @@ class IntentEngine:
         # padatious api
         self.bus.on('padatious:register_intent', self.handle_register_intent)  # api compatible
         self.bus.on('padatious:register_entity', self.handle_register_entity)  # api compatible
-        # regex intent api (mark2)
-        self.bus.on("regex:register_intent", self.handle_register_mk2_regex_intent)
-        # Context api
-        self.bus.on('add_context', self.handle_add_context)  # api compatible
-        self.bus.on('remove_context', self.handle_remove_context)  # api compatible
-        self.bus.on('clear_context', self.handle_clear_context)  # api compatible
 
     @property
     def priority(self):
@@ -592,39 +569,6 @@ class IntentEngine:
         # TODO
         pass
 
-    def handle_add_context(self, message):
-        """Add context
-        Args:
-            message: data contains the 'context' item to add
-                     optionally can include 'word' to be injected as
-                     an alias for the context item.
-        """
-        entity = {'confidence': 1.0}
-        context = message.data.get('context')
-        word = message.data.get('word') or ''
-        origin = message.data.get('origin') or ''
-        # if not a string type try creating a string from it
-        if not isinstance(word, str):
-            word = str(word)
-        entity['data'] = [(word, context)]
-        entity['match'] = word
-        entity['key'] = word
-        entity['origin'] = origin
-        self.engine.context_manager.inject_context(entity)
-
-    def handle_remove_context(self, message):
-        """Remove specific context
-        Args:
-            message: data contains the 'context' item to remove
-        """
-        context = message.data.get('context')
-        if context:
-            self.engine.context_manager.remove_context(context)
-
-    def handle_clear_context(self, message):
-        """Clears all keywords from context """
-        self.engine.context_manager.clear_context()
-
     # backwards compat bus handlers
     def handle_register_adapt_vocab(self, message):
         if 'entity_value' not in message.data and 'start' in message.data:
@@ -649,10 +593,6 @@ class IntentEngine:
                 message.data["name"] = ent
                 message.data["samples"] = [entity_value]
                 self.handle_register_entity(message)
-
-    def handle_register_mk2_regex_intent(self, message):
-        message.data["samples"] = [message.data["pattern"]]
-        self.handle_register_regex_intent(message)
 
     def __str__(self):
         return self.engine_id
