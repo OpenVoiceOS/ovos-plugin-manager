@@ -106,20 +106,8 @@ class IntentExtractor:
         self.segmenter = segmenter or OVOSUtteranceSegmenterFactory.create()
         self.strategy = strategy
         self.priority = priority
-
-        # sample based
         self.registered_intents = []
         self.registered_entities = []
-
-    def get_intent_skill_id(self, intent_name):
-        for intent in self.registered_intents:
-            if intent.name == intent_name:
-                return intent.skill_id
-
-    def get_entity_skill_id(self, intent_name):
-        for entity in self.registered_entities:
-            if entity.name == intent_name:
-                return entity.skill_id
 
     @property
     def lang(self):
@@ -271,6 +259,7 @@ class IntentExtractor:
         """ return intent result for utterance
         UTTERANCE: tell me a joke and say hello
         {'name': 'joke', 'sent': 'tell me a joke and say hello', 'matches': {}, 'conf': 0.5634853146417653}
+        :return IntentMatch
         """
         raise NotImplementedError
 
@@ -281,6 +270,9 @@ class IntentExtractor:
        UTTERANCE: tell me a joke and say hello
         {'say hello': {'conf': 0.5750943775957492, 'matches': {}, 'name': 'hello'},
          'tell me a joke': {'conf': 1.0, 'matches': {}, 'name': 'joke'}}
+
+        returns dict of subutterances and respective matches
+          {"XXX": IntentMatch, "YYY": IntentMatch}
         """
         lang = lang or self.lang
         bucket = {}
@@ -303,6 +295,9 @@ class IntentExtractor:
                             {'conf': 0.0, 'matches': {}, 'name': 'name'},
                             {'conf': 1.0, 'matches': {}, 'name': 'joke'}]}
 
+
+        returns dict of subutterances and list of all matches
+          {"XXX": [IntentMatch], "YYY": [IntentMatch]}
         """
         lang = lang or self.lang
         utterance = utterance.strip().lower()
@@ -315,9 +310,7 @@ class IntentExtractor:
         """
         calc intent, remove matches from utterance, check for intent in leftover, repeat
 
-        :param utterance:
-        :param _prev:
-        :return:
+        :return: list [IntentMatch]
         """
         lang = lang or self.lang
         intent_bucket = []
@@ -331,11 +324,9 @@ class IntentExtractor:
 
     def intents_remainder(self, utterance, min_conf=0.5, lang=None, session=None):
         """
-        segment utterance and for each chunk recursively check for intents in utterance remainer
+        segment utterance and for each chunk recursively check for intents in utterance remainder
 
-        :param utterance:
-        :param min_conf:
-        :return:
+        :return: list [IntentMatch]
         """
         lang = lang or self.lang
         utterances = self.segmenter.segment(utterance)
@@ -345,6 +336,11 @@ class IntentExtractor:
         return [b for b in bucket if b]
 
     def intent_scores(self, utterance, lang=None, session=None):
+        """
+        calc_intents in list format
+
+        :return: list [IntentMatch]
+        """
         lang = lang or self.lang
         utterance = utterance.strip().lower()
         intents = []
@@ -365,14 +361,18 @@ class IntentExtractor:
         UTTERANCE: close the door turn off the lights
         [{'conf': 0.5311372507542608, 'entities': {}, 'name': 'lights_off'},
          {'conf': 0.505765852348431, 'entities': {}, 'name': 'door_close'}]
+
+        :return: list [IntentMatch]
         """
         lang = lang or self.lang
         return [i for i in self.intent_scores(utterance, lang=lang, session=session) if
-                i["conf"] >= min_conf]
+                i.confidence >= min_conf]
 
     def calc(self, utterance, min_conf=0.5, lang=None, session=None):
         """
-        segment utterance and for each chunk recursively check for intents in utterance remainer
+        segment utterance and for each chunk recursively check for intents in utterance remainder
+
+        :return: list [IntentMatch]
         """
         lang = lang or self.lang
         if self.strategy in [IntentDeterminationStrategy.SEGMENT_REMAINDER,
