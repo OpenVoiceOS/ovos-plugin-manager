@@ -100,7 +100,7 @@ class IntentExtractor:
                  strategy=IntentDeterminationStrategy.SEGMENT_REMAINDER,
                  priority=IntentPriority.LOW,
                  segmenter=None):
-        self.config = config or {}
+        self.config = config or Configuration().get("intents", {})
         self.segmenter = segmenter or OVOSUtteranceSegmenterFactory.create()
         self.strategy = strategy
         self.priority = priority
