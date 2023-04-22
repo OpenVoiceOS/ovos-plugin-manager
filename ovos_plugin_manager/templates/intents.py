@@ -1,13 +1,13 @@
 import enum
 import re
 from collections import namedtuple
-from mycroft_bus_client.message import dig_for_message
+from ovos_config import Configuration
 from ovos_utils import flatten_list
 from ovos_utils.json_helper import merge_dict
 from ovos_utils.log import LOG
 from quebra_frases import word_tokenize, get_exclusive_tokens
 
-from mycroft.messagebus.message import get_message_lang
+from ovos_bus_client.message import get_message_lang, dig_for_message
 from ovos_plugin_manager.segmentation import OVOSUtteranceSegmenterFactory
 
 # optional imports, strongly recommended
@@ -430,7 +430,7 @@ class IntentEngine:
         self.engine_id = engine_id
         self.bus = bus
         self.engine = engine
-        self.config = config or {}
+        self.config = config or Configuration().get("intents", {}).get(engine_id, {})
         if bus:
             self.bind(bus, engine)
 
