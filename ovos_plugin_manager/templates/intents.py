@@ -96,6 +96,8 @@ class IntentMatch:
     intent_data: dict
     confidence: float
     skill_id: str
+    utterance: str
+    utterance_remainder: str = ""
 
 
 class IntentExtractor:
