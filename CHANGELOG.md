@@ -2,7 +2,19 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a8...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a9...HEAD)
+
+**Fixed bugs:**
+
+- better translate fallback module handling [\#145](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/145) ([emphasize](https://github.com/emphasize))
+
+**Closed issues:**
+
+- translator: api key from configuration [\#143](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/143)
+
+## [V0.0.23a9](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a9) (2023-04-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a8...V0.0.23a9)
 
 **Implemented enhancements:**
 
