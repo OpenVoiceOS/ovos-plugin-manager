@@ -76,18 +76,20 @@ class OVOSLangDetectionFactory:
                 lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
 
             clazz = load_lang_detect_plugin(lang_module)
-            if clazz is None and lang_module != "libretranslate_detection_plug":
+            if clazz is None:
+                raise ValueError
+            LOG.info(f'Loaded the Language Detection plugin {lang_module}')
+            return clazz(config=get_plugin_config(config, "language", lang_module))
+        except Exception:
+            # The Language Detection backend failed to start, fall back if appropriate.
+            if lang_module != "libretranslate_detection_plug":
                 lang_module = "libretranslate_detection_plug"
                 LOG.error(f'Language Translation plugin {lang_module} not found\n'
                           f'Falling back to libretranslate plugin')
                 clazz = load_tx_plugin("libretranslate_detection_plug")
-            if clazz is None:
-                raise ValueError(f'Language Detection plugin {lang_module} not found')
-            LOG.info(f'Loaded the Language Detection plugin {lang_module}')
-            return clazz(config=get_plugin_config(config, "language", lang_module))
-        except Exception:
-            # The Language Detection backend failed to start.
-            LOG.exception('The selected Language Detection plugin could not be loaded!')
+                if clazz:
+                    return clazz(config=get_plugin_config(config, "language", lang_module))
+            
             raise
 
 
@@ -121,16 +123,18 @@ class OVOSLangTranslationFactory:
             if lang_module in OVOSLangTranslationFactory.MAPPINGS:
                 lang_module = OVOSLangTranslationFactory.MAPPINGS[lang_module]
             clazz = load_tx_plugin(lang_module)
-            if clazz is None and lang_module != "libretranslate_plug":
+            if clazz is None:
+                raise ValueError
+            LOG.info(f'Loaded the Language Translation plugin {lang_module}')
+            return clazz(config=get_plugin_config(config, "language", lang_module))
+        except Exception:
+            # The Language Detection backend failed to start, fall back if appropriate.
+            if lang_module != "libretranslate_plug":
                 lang_module = "libretranslate_plug"
                 LOG.error(f'Language Translation plugin {lang_module} not found\n'
                           f'Falling back to libretranslate plugin')
                 clazz = load_tx_plugin("libretranslate_plug")
-            if clazz is None:
-                raise ValueError(f'Language Translation plugin {lang_module} not found')
-            LOG.info(f'Loaded the Language Translation plugin {lang_module}')
-            return clazz(config=get_plugin_config(config, "language", lang_module))
-        except Exception:
-            # The Language Detection backend failed to start.
-            LOG.exception('The selected Language Translation plugin could not be loaded!')
+                if clazz:
+                    return clazz(config=get_plugin_config(config, "language", lang_module))
+
             raise
