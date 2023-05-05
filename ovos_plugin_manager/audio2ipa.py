@@ -15,10 +15,10 @@ class OVOSAudio2IPAFactory:
 
     @staticmethod
     def get_class(config=None):
-        """Factory method to get a G2P engine class based on configuration.
+        """Factory method to get a Audio2IPA engine class based on configuration.
 
         The configuration file ``mycroft.conf`` contains a ``audio2ipa`` section with
-        the name of a G2P module to be read by this method.
+        the name of a Audio2IPA module to be read by this method.
 
         "audio2ipa": {
             "module": <engine_name>
@@ -30,10 +30,10 @@ class OVOSAudio2IPAFactory:
 
     @staticmethod
     def create(config=None):
-        """Factory method to create a G2P engine based on configuration.
+        """Factory method to create a Audio2IPA engine based on configuration.
 
         The configuration file ``mycroft.conf`` contains a ``audio2ipa`` section with
-        the name of a G2P module to be read by this method.
+        the name of a Audio2IPA module to be read by this method.
 
         "audio2ipa": {
             "module": <engine_name>
@@ -46,7 +46,7 @@ class OVOSAudio2IPAFactory:
             audio2ipa = clazz(audio2ipa_config)
             LOG.debug(f'Loaded plugin {audio2ipa_module}')
         except Exception:
-            LOG.exception('The selected G2P plugin could not be loaded.')
+            LOG.debug('The selected Audio2IPA plugin could not be loaded.')
             raise
         return audio2ipa
 
