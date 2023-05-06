@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a9...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a10...HEAD)
+
+**Implemented enhancements:**
+
+- feat/audio2ipa [\#147](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/147) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.23a10](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a10) (2023-04-29)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a9...V0.0.23a10)
 
 **Fixed bugs:**
 
