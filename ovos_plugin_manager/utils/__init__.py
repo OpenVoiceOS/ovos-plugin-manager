@@ -26,6 +26,7 @@ class PluginTypes(str, Enum):
     SKILL = "ovos.plugin.skill"
     VAD = "ovos.plugin.VAD"
     PHONEME = "ovos.plugin.g2p"
+    AUDIO2IPA = "ovos.plugin.audio2ipa"
     AUDIO = 'mycroft.plugin.audioservice'
     STT = 'mycroft.plugin.stt'
     TTS = 'mycroft.plugin.tts'
@@ -50,6 +51,7 @@ class PluginConfigTypes(str, Enum):
     SKILL = "ovos.plugin.skill.config"
     VAD = "ovos.plugin.VAD.config"
     PHONEME = "ovos.plugin.g2p.config"
+    AUDIO2IPA = "ovos.plugin.audio2ipa.config"
     AUDIO = 'mycroft.plugin.audioservice.config'
     STT = 'mycroft.plugin.stt.config'
     TTS = 'mycroft.plugin.tts.config'
@@ -91,7 +93,7 @@ def find_plugins(plug_type=None):
                 if entry_point.name not in entrypoints:
                     LOG.debug(f"Loaded plugin entry point {entry_point.name}")
             except Exception as e:
-                LOG.exception(f"Failed to load plugin entry point {entry_point}")
+                LOG.debug(f"Failed to load plugin entry point {entry_point}: {e}")
     return entrypoints
 
 
