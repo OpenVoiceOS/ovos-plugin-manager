@@ -16,17 +16,6 @@ class AbstractSolver:
             self.supported_langs.insert(0, self.default_lang)
         self.priority = priority
         self.translator = OVOSLangTranslationFactory.create()
-        if self.enable_cache:
-            # cache contains raw data
-            self.cache = JsonStorageXDG(name + "_data",
-                                        xdg_folder=xdg_cache_home(),
-                                        subfolder="neon_solvers")
-            # spoken cache contains dialogs
-            self.spoken_cache = JsonStorageXDG(name,
-                                               xdg_folder=xdg_cache_home(),
-                                               subfolder="neon_solvers")
-        else:
-            self.cache = self.spoken_cache = {}
 
     @staticmethod
     def sentence_split(text, max_sentences=25):
@@ -59,27 +48,53 @@ class AbstractSolver:
 
         return query, context, lang
 
+
+    def shutdown(self):
+        """ module specific shutdown method """
+        pass
+
+
+
+class QuestionSolver(AbstractSolver):
+    """free form unscontrained spoken question solver
+    handling automatic translation back and forth as needed"""
+    def __init__(self, name, priority=50, config=None,
+                 enable_cache=False, enable_tx=False):
+        super().__init__(name, priority, config, enable_cache, enable_tx)
+        if self.enable_cache:
+            # cache contains raw data
+            self.cache = JsonStorageXDG(name + "_data",
+                                        xdg_folder=xdg_cache_home(),
+                                        subfolder="neon_solvers")
+            # spoken cache contains dialogs
+            self.spoken_cache = JsonStorageXDG(name,
+                                               xdg_folder=xdg_cache_home(),
+                                               subfolder="neon_solvers")
+        else:
+            self.cache = self.spoken_cache = {}
+
+
     # plugin methods to override
     def get_spoken_answer(self, query, context):
         """
         query assured to be in self.default_lang
         return a single sentence text response
         """
-        return ""
+        raise NotImplementedError
 
     def get_data(self, query, context):
         """
         query assured to be in self.default_lang
         return a dict response
         """
-        return {"short_answer": self.get_spoken_answer(query, context)}
+        raise NotImplementedError
 
     def get_image(self, query, context=None):
         """
         query assured to be in self.default_lang
         return path/url to a single image to acompany spoken_answer
         """
-        return None
+        raise NotImplementedError
 
     def get_expanded_answer(self, query, context=None):
         """
@@ -92,11 +107,7 @@ class AbstractSolver:
         }
         :return:
         """
-        return []
-
-    def shutdown(self):
-        """ module specific shutdown method """
-        pass
+        raise NotImplementedError
 
     # user facing methods
     def search(self, query, context=None, lang=None):
@@ -188,3 +199,88 @@ class AbstractSolver:
         if self.enable_tx and user_lang not in self.supported_langs:
             return self.translator.translate_list(steps, user_lang, lang)
         return steps
+
+
+class TldrSolver(AbstractSolver):
+    """perform NLP summarization task,
+    handling automatic translation back and forth as needed"""
+
+    # plugin methods to override
+    def get_tldr(self, document, context):
+        """
+        document assured to be in self.default_lang
+         returns summary of provided document
+        """
+        raise NotImplementedError
+
+    # user facing methods
+    def tldr(self, document, context=None, lang=None):
+        """
+        cache and auto translate query if needed
+        returns summary of provided document
+        """
+        user_lang = self._get_user_lang(context, lang)
+        document, context, lang = self._tx_query(document, context, lang)
+
+        # summarize
+        tldr = self.get_tldr(document, context)
+
+        # translate output to user lang
+        if self.enable_tx and user_lang not in self.supported_langs:
+            return self.translator.translate(tldr, user_lang, lang)
+        return tldr
+
+
+class MultipleChoiceSolver(AbstractSolver):
+    """ select best answer from question + multiple choice
+    handling automatic translation back and forth as needed"""
+
+    # plugin methods to override
+    def select_answer(self, query, options, context):
+        """
+        query and options assured to be in self.default_lang
+        return best answer from options list
+        """
+        raise NotImplementedError
+
+    # user facing methods
+    def solve(self, query, options, context=None, lang=None):
+        """
+        cache and auto translate query and options if needed
+        returns best answer from provided options
+        """
+        user_lang = self._get_user_lang(context, lang)
+        query, context, lang = self._tx_query(query, context, lang)
+        opts = [self.translator.translate(opt, lang, user_lang)
+                for opt in options]
+
+        # select best answer
+        ans = self.select_answer(query, opts, context)
+
+        idx = opts.index(ans)
+        return options[idx]
+
+
+class EntailmentSolver(AbstractSolver):
+    """ select best answer from question + multiple choice
+    handling automatic translation back and forth as needed"""
+
+    # plugin methods to override
+    def check_entailment(self, premise, hypothesis, context):
+        """
+        premise and hyopithesis assured to be in self.default_lang
+        return Bool, True if premise entails the hypothesis False otherwise
+        """
+        raise NotImplementedError
+
+    # user facing methods
+    def entails(self, premise, hypothesis, context=None, lang=None):
+        """
+        cache and auto translate premise and hypothesis if needed
+        return Bool, True if premise entails the hypothesis False otherwise
+        """
+        user_lang = self._get_user_lang(context, lang)
+        query, context, lang = self._tx_query(query, context, lang)
+
+        # summarize
+        return self.check_entailment(premise, hypothesis)
