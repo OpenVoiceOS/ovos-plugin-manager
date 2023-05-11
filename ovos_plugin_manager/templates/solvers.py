@@ -231,6 +231,37 @@ class TldrSolver(AbstractSolver):
         return tldr
 
 
+class EvidenceSolver(AbstractSolver):
+    """perform NLP reading comprehension task,
+    handling automatic translation back and forth as needed"""
+
+    # plugin methods to override
+    def get_best_passage(self, evidence, question, context):
+        """
+        evidence and question assured to be in self.default_lang
+         returns summary of provided document
+        """
+        raise NotImplementedError
+
+    # user facing methods
+    def extract_answer(self, evidence, question, context=None, lang=None):
+        """
+        cache and auto translate evidence and question if needed
+        returns passage from evidence that answers question
+        """
+        user_lang = self._get_user_lang(context, lang)
+        evidence, context, lang = self._tx_query(evidence, context, lang)
+        question, context, lang = self._tx_query(question, context, lang)
+
+        # extract answer from doc
+        ans = self.get_best_passage(evidence, question, context)
+
+        # translate output to user lang
+        if self.enable_tx and user_lang not in self.supported_langs:
+            return self.translator.translate(ans, user_lang, lang)
+        return ans
+
+
 class MultipleChoiceSolver(AbstractSolver):
     """ select best answer from question + multiple choice
     handling automatic translation back and forth as needed"""
