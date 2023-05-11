@@ -1,10 +1,10 @@
 import unittest
 from unittest.mock import Mock
 
-from ovos_plugin_manager.templates.solvers import AbstractSolver
+from ovos_plugin_manager.templates.solvers import QuestionSolver
 
 
-class MySolver(AbstractSolver):
+class MySolver(QuestionSolver):
     def __init__(self):
         # set the "internal" language, defined by dev, not user
         # this plugin only accepts and outputs english
