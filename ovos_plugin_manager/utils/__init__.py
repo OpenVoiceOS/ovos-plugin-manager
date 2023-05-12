@@ -37,6 +37,10 @@ class PluginTypes(str, Enum):
     METADATA_TRANSFORMER = "neon.plugin.metadata"
     AUDIO_TRANSFORMER = "neon.plugin.audio"
     QUESTION_SOLVER = "neon.plugin.solver"
+    TLDR_SOLVER = "opm.solver.summarization"
+    ENTAILMENT_SOLVER = "opm.solver.entailment"
+    MULTIPLE_CHOICE_SOLVER = "opm.solver.multiple_choice"
+    READING_COMPREHENSION_SOLVER = "opm.solver.reading_comprehension"
     COREFERENCE_SOLVER = "intentbox.coreference"
     KEYWORD_EXTRACTION = "intentbox.keywords"
     UTTERANCE_SEGMENTATION = "intentbox.segmentation"
@@ -62,6 +66,10 @@ class PluginConfigTypes(str, Enum):
     METADATA_TRANSFORMER = "neon.plugin.metadata.config"
     AUDIO_TRANSFORMER = "neon.plugin.audio.config"
     QUESTION_SOLVER = "neon.plugin.solver.config"
+    TLDR_SOLVER = "opm.solver.summarization.config"
+    ENTAILMENT_SOLVER = "opm.solver.entailment.config"
+    MULTIPLE_CHOICE_SOLVER = "opm.solver.multiple_choice.config"
+    READING_COMPREHENSION_SOLVER = "opm.solver.reading_comprehension.config"
     COREFERENCE_SOLVER = "intentbox.coreference.config"
     KEYWORD_EXTRACTION = "intentbox.keywords.config"
     UTTERANCE_SEGMENTATION = "intentbox.segmentation.config"
@@ -120,8 +128,8 @@ def load_plugin(plug_name, plug_type=None):
     plugins = find_plugins(plug_type)
     if plug_name in plugins:
         return plugins[plug_name]
-    LOG.warning('Could not find the plugin {}.{}'.format(
-        plug_type or "all plugin types", plug_name))
+    plug_type = plug_type or "all plugin types"
+    LOG.warning(f'Could not find the plugin {plug_type}.{plug_name}')
     return None
 
 
