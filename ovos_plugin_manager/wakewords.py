@@ -1,9 +1,12 @@
-from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
-from ovos_config import Configuration
-from ovos_utils.log import LOG
-from ovos_plugin_manager.templates.hotwords import HotWordEngine
-from hashlib import md5
 import json
+import os
+from hashlib import md5
+from ovos_utils.log import LOG
+from ovos_utils.xdg_utils import xdg_data_home
+
+from ovos_plugin_manager.templates.hotwords import HotWordEngine
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+
 
 def get_ww_id(plugin_name, ww_name, ww_config):
     ww_hash = md5(json.dumps(ww_config, sort_keys=True).encode("utf-8")).hexdigest()
@@ -20,13 +23,12 @@ def get_wws(scan=False):
     if scan:
         scan_wws()
     ww_ids = {}
-    for lang in get_tts_supported_langs():
+    for lang in get_ww_supported_langs():
         WW_FOLDER = f"{xdg_data_home()}/OPM/ww_configs/{lang}"
         for voice in os.listdir(WW_FOLDER):
             with open(f"{WW_FOLDER}/{voice}") as f:
                 ww_ids[voice] = json.load(f)
     return ww_ids
-
 
 
 def find_wake_word_plugins():
@@ -108,14 +110,10 @@ class OVOSWakeWordFactory:
     @staticmethod
     def load_module(module, hotword, config, lang, loop):
         LOG.info(f'Loading "{hotword}" wake word via {module}')
-        if module in OVOSWakeWordFactory.MAPPINGS:
-            module = OVOSWakeWordFactory.MAPPINGS[module]
-
-        clazz = load_wake_word_plugin(module)
+        clazz = OVOSWakeWordFactory.get_class(module, config)
         if clazz is None:
-            raise ValueError(f'Wake Word plugin {module} not found')
+            raise ImportError(f'Wake Word plugin {module} failed to load')
         LOG.info(f'Loaded the Wake Word plugin {module}')
-
         return clazz(hotword, config, lang=lang)
 
     @classmethod
@@ -139,4 +137,3 @@ class OVOSWakeWordFactory:
 def get_hotwords_config(config=None):
     from ovos_plugin_manager.utils.config import get_plugin_config
     return get_plugin_config(config, "hotwords")
-
