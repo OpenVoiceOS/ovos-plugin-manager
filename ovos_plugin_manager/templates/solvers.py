@@ -1,20 +1,22 @@
 from json_database import JsonStorageXDG
-from ovos_plugin_manager.language import OVOSLangTranslationFactory
 from ovos_utils.xdg_utils import xdg_cache_home
 from quebra_frases import sentence_tokenize
 
+from ovos_plugin_manager.language import OVOSLangTranslationFactory
+
 
 class AbstractSolver:
-    def __init__(self, name, priority=50, config=None,
-                 enable_cache=False, enable_tx=False):
+    # these are defined by the plugin developer
+    priority = 50
+    enable_tx = False
+    enable_cache = False
+
+    def __init__(self, config=None):
         self.config = config or {}
-        self.enable_cache = enable_cache
-        self.enable_tx = enable_tx
         self.supported_langs = self.config.get("supported_langs") or []
         self.default_lang = self.config.get("lang", "en")
         if self.default_lang not in self.supported_langs:
             self.supported_langs.insert(0, self.default_lang)
-        self.priority = priority
         self.translator = OVOSLangTranslationFactory.create()
 
     @staticmethod
@@ -48,19 +50,18 @@ class AbstractSolver:
 
         return query, context, lang
 
-
     def shutdown(self):
         """ module specific shutdown method """
         pass
 
 
-
 class QuestionSolver(AbstractSolver):
     """free form unscontrained spoken question solver
     handling automatic translation back and forth as needed"""
-    def __init__(self, name, priority=50, config=None,
-                 enable_cache=False, enable_tx=False):
-        super().__init__(name, priority, config, enable_cache, enable_tx)
+
+    def __init__(self, config=None):
+        super().__init__(config)
+        name = self.__class__.__name__
         if self.enable_cache:
             # cache contains raw data
             self.cache = JsonStorageXDG(name + "_data",
@@ -72,7 +73,6 @@ class QuestionSolver(AbstractSolver):
                                                subfolder="neon_solvers")
         else:
             self.cache = self.spoken_cache = {}
-
 
     # plugin methods to override
     def get_spoken_answer(self, query, context):
