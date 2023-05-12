@@ -15,6 +15,11 @@ class AbstractSolver:
         if args or kwargs:
             LOG.warning("solver plugins init signature changed, please update to accept a single config kwarg. "
                         "an exception will be raised in next stable release")
+            for arg in args:
+                if isinstance(arg, str):
+                    kwargs["name"] = arg
+                if isinstance(arg, int):
+                    kwargs["priority"] = arg
             if "priority" in kwargs:
                 self.priority = kwargs["priority"]
             if "enable_tx" in kwargs:
