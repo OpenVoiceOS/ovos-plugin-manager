@@ -15,6 +15,12 @@ class AbstractSolver:
         if args or kwargs:
             LOG.warning("solver plugins init signature changed, please update to accept a single config kwarg. "
                         "an exception will be raised in next stable release")
+            if "priority" in kwargs:
+                self.priority = kwargs["priority"]
+            if "enable_tx" in kwargs:
+                self.enable_tx = kwargs["enable_tx"]
+            if "enable_cache" in kwargs:
+                self.enable_cache = kwargs["enable_cache"]
         self.config = config or {}
         self.supported_langs = self.config.get("supported_langs") or []
         self.default_lang = self.config.get("lang", "en")
@@ -63,11 +69,8 @@ class QuestionSolver(AbstractSolver):
     handling automatic translation back and forth as needed"""
 
     def __init__(self, config=None, *args, **kwargs):
-        if args or kwargs:
-            LOG.warning("solver plugins init signature changed, please update to accept a single config kwarg. "
-                        "an exception will be raised in next stable release")
-        super().__init__(config)
-        name = self.__class__.__name__
+        super().__init__(config, *args, **kwargs)
+        name = kwargs.get("name") or self.__class__.__name__
         if self.enable_cache:
             # cache contains raw data
             self.cache = JsonStorageXDG(name + "_data",
