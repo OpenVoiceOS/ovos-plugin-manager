@@ -1,7 +1,7 @@
 from json_database import JsonStorageXDG
 from ovos_utils.xdg_utils import xdg_cache_home
 from quebra_frases import sentence_tokenize
-
+from ovos_utils.log import LOG
 from ovos_plugin_manager.language import OVOSLangTranslationFactory
 
 
@@ -11,7 +11,10 @@ class AbstractSolver:
     enable_tx = False
     enable_cache = False
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, *args, **kwargs):
+        if args or kwargs:
+            LOG.warning("solver plugins init signature changed, please update to accept a single config kwarg. "
+                        "an exception will be raised in next stable release")
         self.config = config or {}
         self.supported_langs = self.config.get("supported_langs") or []
         self.default_lang = self.config.get("lang", "en")
@@ -59,7 +62,10 @@ class QuestionSolver(AbstractSolver):
     """free form unscontrained spoken question solver
     handling automatic translation back and forth as needed"""
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, *args, **kwargs):
+        if args or kwargs:
+            LOG.warning("solver plugins init signature changed, please update to accept a single config kwarg. "
+                        "an exception will be raised in next stable release")
         super().__init__(config)
         name = self.__class__.__name__
         if self.enable_cache:
