@@ -42,10 +42,10 @@ class GUIExtension:
                 # raise exception as usual if this fails
                 from ovos_gui.homescreen import HomescreenManager
                 homescreen = HomescreenManager(self.bus, self.gui)
+                homescreen.daemon = True
+                homescreen.start()
 
             self.homescreen_manager = homescreen
-            self.homescreen_manager.daemon = True
-            self.homescreen_manager.start()
 
     def handle_remove_namespace(self, message):
         LOG.info("Got Clear Namespace Event In Skill")

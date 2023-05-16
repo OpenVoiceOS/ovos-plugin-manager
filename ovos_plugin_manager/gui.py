@@ -31,7 +31,7 @@ class OVOSGuiFactory:
         the name of a gui module to be read by this method.
 
         "gui": {
-            "module": <engine_name>
+            "extension": <engine_name>
         }
         """
         config = get_gui_config(config)
@@ -48,7 +48,7 @@ class OVOSGuiFactory:
         the name of a gui module to be read by this method.
 
         "gui": {
-            "module": <engine_name>
+            "extension": <engine_name>
         }
         """
         gui_config = get_gui_config(config)
