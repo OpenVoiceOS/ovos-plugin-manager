@@ -1,4 +1,6 @@
 from ovos_bus_client import Message
+from ovos_bus_client import MessageBusClient
+from ovos_utils.gui import GUIInterface
 from ovos_utils.log import LOG
 
 
@@ -17,11 +19,15 @@ class GUIExtension:
         permanent (bool): disable unloading of GUI skills on gui client disconnections
     """
 
-    def __init__(self, bus, gui, config,
+    def __init__(self, config, bus=None, gui=None,
                  preload_gui=False, permanent=False):
 
+        if not bus:
+            bus = MessageBusClient()
+            bus.run_in_thread()
+            bus.connected_event.wait()
         self.bus = bus
-        self.gui = gui
+        self.gui = gui or GUIInterface("ovos.shell", bus=self.bus)
         self.preload_gui = preload_gui
         self.permanent = permanent
         self.config = config
