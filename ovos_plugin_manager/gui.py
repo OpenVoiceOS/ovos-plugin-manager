@@ -41,7 +41,7 @@ class OVOSGuiFactory:
         return load_gui_plugin(gui_module)
 
     @staticmethod
-    def create(config=None):
+    def create(config=None, bus=None, gui=None):
         """Factory method to create a gui engine based on configuration.
 
         The configuration file ``mycroft.conf`` contains a ``gui`` section with
@@ -55,7 +55,7 @@ class OVOSGuiFactory:
         gui_module = gui_config.get('extension', 'generic')
         try:
             clazz = OVOSGuiFactory.get_class(gui_config)
-            gui = clazz(gui_config)
+            gui = clazz(gui_config, bus=bus, gui=gui)
             LOG.debug(f'Loaded plugin {gui_module}')
         except Exception:
             LOG.exception('The selected gui plugin could not be loaded.')
