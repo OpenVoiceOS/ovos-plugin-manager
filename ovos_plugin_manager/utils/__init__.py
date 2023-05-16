@@ -21,6 +21,7 @@ from ovos_utils.log import LOG
 
 
 class PluginTypes(str, Enum):
+    GUI = "ovos.plugin.gui"
     PHAL = "ovos.plugin.phal"
     ADMIN = "ovos.plugin.phal.admin"
     SKILL = "ovos.plugin.skill"
@@ -50,6 +51,7 @@ class PluginTypes(str, Enum):
 
 
 class PluginConfigTypes(str, Enum):
+    GUI = "ovos.plugin.gui.config"
     PHAL = "ovos.plugin.phal.config"
     ADMIN = "ovos.plugin.phal.admin.config"
     SKILL = "ovos.plugin.skill.config"
