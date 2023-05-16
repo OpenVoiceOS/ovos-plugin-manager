@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a13...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a14...HEAD)
+
+**Implemented enhancements:**
+
+- :tada: - GUI plugin [\#151](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/151) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.23a14](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a14) (2023-05-12)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a13...V0.0.23a14)
 
 **Fixed bugs:**
 
