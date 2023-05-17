@@ -25,6 +25,7 @@ class PluginTypes(str, Enum):
     PHAL = "ovos.plugin.phal"
     ADMIN = "ovos.plugin.phal.admin"
     SKILL = "ovos.plugin.skill"
+    MIC = "ovos.plugin.microphone"
     VAD = "ovos.plugin.VAD"
     PHONEME = "ovos.plugin.g2p"
     AUDIO2IPA = "ovos.plugin.audio2ipa"
@@ -56,6 +57,7 @@ class PluginConfigTypes(str, Enum):
     ADMIN = "ovos.plugin.phal.admin.config"
     SKILL = "ovos.plugin.skill.config"
     VAD = "ovos.plugin.VAD.config"
+    MIC = "ovos.plugin.microphone.config"
     PHONEME = "ovos.plugin.g2p.config"
     AUDIO2IPA = "ovos.plugin.audio2ipa.config"
     AUDIO = 'mycroft.plugin.audioservice.config'
