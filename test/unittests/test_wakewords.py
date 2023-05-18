@@ -64,4 +64,24 @@ class TestWakeWordFactory(unittest.TestCase):
 
     def test_load_module(self):
         from ovos_plugin_manager.wakewords import OVOSWakeWordFactory
-        # TODO
+        real_get_class = OVOSWakeWordFactory.get_class
+        mock_get_class = Mock()
+        OVOSWakeWordFactory.get_class = mock_get_class
+
+        # Test valid return
+        mock_return = Mock()
+        mock_get_class.return_value = mock_return
+        module = OVOSWakeWordFactory.load_module(
+            "precise", "hey_mycroft", _TEST_CONFIG['hotwords']['hey_mycroft'],
+            'en-us')
+        mock_get_class.assert_called_once_with(
+            "hey_mycroft", {"lang": "en-us", "hotwords": {
+                "hey_mycroft": _TEST_CONFIG['hotwords']['hey_mycroft']}})
+        self.assertEqual(module, mock_return())
+
+        # Test no return
+        mock_get_class.return_value = None
+        with self.assertRaises(ImportError):
+            OVOSWakeWordFactory.load_module("dummy", "test", {}, "en-us")
+
+        OVOSWakeWordFactory.get_class = real_get_class

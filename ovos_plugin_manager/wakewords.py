@@ -136,8 +136,9 @@ class OVOSWakeWordFactory:
         config = {"lang": lang, "hotwords": {hotword: hotword_config}}
         clazz = OVOSWakeWordFactory.get_class(hotword, config)
         if clazz is None:
-            raise ImportError(f'Wake Word plugin {module} failed to load')
-        LOG.info(f'Loaded the Wake Word plugin {module}')
+            raise ImportError(f'Wake Word {hotword} with module {module} '
+                              f'failed to load')
+        LOG.info(f'Loaded the Wake Word {hotword} with module {module}')
         return clazz(hotword, hotword_config, lang=lang)
 
     @classmethod
