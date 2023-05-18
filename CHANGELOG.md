@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a15...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a16...HEAD)
+
+**Fixed bugs:**
+
+- Fix Hotword Plugin Load Compat [\#153](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/153) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.23a16](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a16) (2023-05-17)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a15...V0.0.23a16)
 
 **Implemented enhancements:**
 
