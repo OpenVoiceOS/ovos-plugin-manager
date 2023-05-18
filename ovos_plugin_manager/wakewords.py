@@ -99,31 +99,36 @@ class OVOSWakeWordFactory:
 
     @staticmethod
     def get_class(hotword, config=None):
-        config = get_hotwords_config(config)
-        hotword = OVOSWakeWordFactory.MAPPINGS.get(hotword) or hotword
-        if hotword not in config:
-            LOG.warning(f"{hotword} not in {config}! "
+        hotword_config = get_hotwords_config(config)
+        if hotword not in hotword_config:
+            LOG.warning(f"{hotword} not in {hotword_config}! "
                         f"Returning base HotWordEngine")
             return HotWordEngine
-        ww_module = config["module"]
+        ww_module = hotword_config[hotword]["module"]
         if ww_module in OVOSWakeWordFactory.MAPPINGS:
             ww_module = OVOSWakeWordFactory.MAPPINGS[ww_module]
         return load_wake_word_plugin(ww_module)
 
     @staticmethod
-    def load_module(module, hotword, config, lang, loop):
-        LOG.info(f'Loading "{hotword}" wake word via {module}')
+    def load_module(module, hotword, hotword_config, lang, loop):
+        # config here is config['hotwords'][module]
+        LOG.info(f'Loading "{hotword}" wake word via {module} with '
+                 f'config: {hotword_config}')
+        config = {"lang": lang, "hotwords": {hotword: hotword_config}}
         clazz = OVOSWakeWordFactory.get_class(module, config)
         if clazz is None:
             raise ImportError(f'Wake Word plugin {module} failed to load')
         LOG.info(f'Loaded the Wake Word plugin {module}')
-        return clazz(hotword, config, lang=lang)
+        return clazz(hotword, hotword_config, lang=lang)
 
     @classmethod
     def create_hotword(cls, hotword="hey mycroft", config=None,
                        lang="en-us", loop=None):
         ww_configs = get_hotwords_config(config)
-        ww_config = ww_configs.get(hotword) or ww_configs.get("hey_mycroft")
+        if hotword not in ww_configs:
+            LOG.warning(f"replace ` ` in {hotword} with `_`")
+            hotword = hotword.replace(' ', '_')
+        ww_config = ww_configs.get(hotword)
         module = ww_config.get("module", "pocketsphinx")
         try:
             return cls.load_module(module, hotword, ww_config, lang, loop)
