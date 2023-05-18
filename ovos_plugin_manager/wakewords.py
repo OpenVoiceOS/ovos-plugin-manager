@@ -100,7 +100,10 @@ class OVOSWakeWordFactory:
     @staticmethod
     def get_class(hotword, config=None):
         config = get_hotwords_config(config)
+        hotword = OVOSWakeWordFactory.MAPPINGS.get(hotword) or hotword
         if hotword not in config:
+            LOG.warning(f"{hotword} not in {config}! "
+                        f"Returning base HotWordEngine")
             return HotWordEngine
         ww_module = config["module"]
         if ww_module in OVOSWakeWordFactory.MAPPINGS:
