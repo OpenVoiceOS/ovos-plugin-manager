@@ -6,10 +6,10 @@ from typing import Optional
 
 @dataclass
 class Microphone:
-    sample_rate: int
-    sample_width: int
-    sample_channels: int
-    chunk_size: int
+    sample_rate: int = 16000
+    sample_width: int = 2
+    sample_channels: int = 1
+    chunk_size: int = 4096
 
     @property
     def frames_per_chunk(self) -> int:
