@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, Mock
-
+from copy import copy
 from ovos_plugin_manager import PluginTypes
 
 _TEST_CONFIG = {
@@ -47,16 +47,20 @@ class TestMicrophoneFactory(unittest.TestCase):
 
     def test_get_microphone_config(self):
         from ovos_plugin_manager.microphone import get_microphone_config
-        config = dict(_TEST_CONFIG)
+        config = copy(_TEST_CONFIG)
         dummy_config = get_microphone_config(config)
         self.assertEqual(dummy_config, {**_TEST_CONFIG['microphone']['dummy'],
-                                        **{'module': 'dummy'}})
-        config['module'] = 'ovos-microphone-plugin-alsa'
+                                        **{'module': 'dummy',
+                                           'lang': 'en-us'}})
+        config = copy(_TEST_CONFIG)
+        config['microphone']['module'] = 'ovos-microphone-plugin-alsa'
         alsa_config = get_microphone_config(config)
         self.assertEqual(alsa_config,
                          {**_TEST_CONFIG['microphone']
                           ['ovos-microphone-plugin-alsa'],
-                          **{'module': 'ovos-microphone-plugin-alsa'}})
-        config['module'] = 'fake'
+                          **{'module': 'ovos-microphone-plugin-alsa',
+                             'lang': 'en-us'}})
+        config = copy(_TEST_CONFIG)
+        config['microphone']['module'] = 'fake'
         fake_config = get_microphone_config(config)
-        self.assertEqual(fake_config, {'module': 'fake'})
+        self.assertEqual(fake_config, {'module': 'fake', 'lang': 'en-us'})
