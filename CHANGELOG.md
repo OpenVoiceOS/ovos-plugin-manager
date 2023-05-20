@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a16...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a17...HEAD)
+
+**Implemented enhancements:**
+
+- Dinkum listener compat fixes with tests [\#154](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/154) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.23a17](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a17) (2023-05-18)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a16...V0.0.23a17)
 
 **Fixed bugs:**
 
