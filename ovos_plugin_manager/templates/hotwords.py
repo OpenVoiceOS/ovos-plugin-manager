@@ -102,6 +102,12 @@ class HotWordEngine:
         """
         return False
 
+    def reset(self):
+        """
+        Reset the WW engine to prepare for a new detection
+        """
+        pass
+
     def update(self, chunk):
         """Updates the hotword engine with new audio data.
 
