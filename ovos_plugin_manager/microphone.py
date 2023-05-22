@@ -42,6 +42,10 @@ class OVOSMicrophoneFactory:
         microphone_module = microphone_config.get('module')
         try:
             clazz = OVOSMicrophoneFactory.get_class(microphone_config)
+            # Note that configuration is expanded for this class of plugins
+            # since they are dataclasses and don't have the same init signature
+            # as other plugin types
+            microphone_config.pop('lang')
             microphone = clazz(**microphone_config)
             LOG.debug(f'Loaded microphone plugin {microphone_module}')
         except Exception:
