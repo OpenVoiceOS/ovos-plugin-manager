@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a17...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a18...HEAD)
+
+**Merged pull requests:**
+
+- Fix MicrophoneFactory config handling [\#155](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/155) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.23a18](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a18) (2023-05-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a17...V0.0.23a18)
 
 **Implemented enhancements:**
 
