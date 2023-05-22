@@ -48,9 +48,9 @@ class TestVADFactory(unittest.TestCase):
         self.assertEqual(VADEngine, module)
 
         # Test valid module
-        config = copy(_TEST_CONFIG)
+        config = deepcopy(_TEST_CONFIG)
         config['listener']['VAD']['module'] = 'ovos-vad-plugin-webrtcvad'
-        module = OVOSVADFactory.get_class(_TEST_CONFIG)
+        module = OVOSVADFactory.get_class(config)
         load_plugin.assert_called_once_with('ovos-vad-plugin-webrtcvad',
                                             PluginTypes.VAD)
         self.assertEqual(module, mock)
@@ -64,8 +64,8 @@ class TestVADFactory(unittest.TestCase):
                           **{'module': 'dummy'}})
         config = copy(_TEST_CONFIG)
         config['listener']['VAD']['module'] = 'ovos-vad-plugin-webrtcvad'
-        alsa_config = get_vad_config(config)
-        self.assertEqual(alsa_config,
+        webrtc_config = get_vad_config(config)
+        self.assertEqual(webrtc_config,
                          {**_TEST_CONFIG['listener']['VAD']
                           ['ovos-vad-plugin-webrtcvad'],
                           **{'module': 'ovos-vad-plugin-webrtcvad'}})
