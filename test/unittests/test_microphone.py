@@ -1,9 +1,10 @@
 import unittest
 from unittest.mock import patch, Mock
-from copy import copy
+from copy import copy, deepcopy
 from ovos_plugin_manager import PluginTypes
 
 _TEST_CONFIG = {
+    "lang": "en-us",
     "microphone": {
         "module": "dummy",
         "dummy": {
@@ -25,13 +26,22 @@ class TestMicrophoneFactory(unittest.TestCase):
         from ovos_plugin_manager.microphone import OVOSMicrophoneFactory
         real_get_class = OVOSMicrophoneFactory.get_class
         mock_class = Mock()
-        mock_get_class = Mock(return_value=mock_class)
+        call_args = None
+
+        def _copy_args(*args):
+            nonlocal call_args
+            call_args = deepcopy(args)
+            return mock_class
+
+        mock_get_class = Mock(side_effect=_copy_args)
         OVOSMicrophoneFactory.get_class = mock_get_class
 
         OVOSMicrophoneFactory.create(config=_TEST_CONFIG)
-        mock_get_class.assert_called_once_with(
-            {**_TEST_CONFIG['microphone']['dummy'], **{"module": "dummy"}})
-        mock_class.assert_called_once_with(_TEST_CONFIG['microphone']['dummy'])
+        mock_get_class.assert_called_once()
+        self.assertEqual(call_args, ({**_TEST_CONFIG['microphone']['dummy'],
+                                      **{"module": "dummy",
+                                         "lang": "en-us"}},))
+        mock_class.assert_called_once_with(**_TEST_CONFIG['microphone']['dummy'])
         OVOSMicrophoneFactory.get_class = real_get_class
 
     @patch("ovos_plugin_manager.microphone.load_plugin")
