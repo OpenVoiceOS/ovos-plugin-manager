@@ -31,7 +31,7 @@ class TestMicrophoneFactory(unittest.TestCase):
         OVOSMicrophoneFactory.create(config=_TEST_CONFIG)
         mock_get_class.assert_called_once_with(
             {**_TEST_CONFIG['microphone']['dummy'], **{"module": "dummy"}})
-        mock_class.assert_called_once_with(_TEST_CONFIG['microphone']['dummy'])
+        mock_class.assert_called_once_with(**_TEST_CONFIG['microphone']['dummy'])
         OVOSMicrophoneFactory.get_class = real_get_class
 
     @patch("ovos_plugin_manager.microphone.load_plugin")

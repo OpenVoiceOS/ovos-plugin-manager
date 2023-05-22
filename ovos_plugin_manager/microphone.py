@@ -42,7 +42,7 @@ class OVOSMicrophoneFactory:
         microphone_module = microphone_config.get('module')
         try:
             clazz = OVOSMicrophoneFactory.get_class(microphone_config)
-            microphone = clazz(microphone_config)
+            microphone = clazz(**microphone_config)
             LOG.debug(f'Loaded microphone plugin {microphone_module}')
         except Exception:
             LOG.exception('The selected microphone plugin could not be loaded.')
