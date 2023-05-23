@@ -49,8 +49,9 @@ class OVOSVADFactory:
         }
         """
         config = get_vad_config(config)
-        config.setdefault("module", "dummy")
-        vad_module = config["module"]
+        vad_module = config.get("module")
+        if not vad_module:
+            raise ValueError(f"VAD Plugin not configured in: {config}")
         if vad_module == "dummy":
             return VADEngine
         if vad_module in OVOSVADFactory.MAPPINGS:
@@ -69,8 +70,9 @@ class OVOSVADFactory:
         }
         """
         vad_config = get_vad_config(config)
-        vad_config.setdefault("module", "dummy")
-        plugin = vad_config["module"]
+        plugin = vad_config.get("module")
+        if not plugin:
+            raise ValueError(f"VAD Plugin not configured in: {vad_config}")
         try:
             clazz = OVOSVADFactory.get_class(vad_config)
             return clazz(vad_config)
