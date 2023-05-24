@@ -19,8 +19,9 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
     module = module or config.get('module')
     if module:
         module_config = config.get(module) or dict()
-        module_config.setdefault('lang', lang)
         module_config.setdefault('module', module)
+        if section not in ["hotwords", "VAD", "listener"]:
+            module_config.setdefault('lang', lang)
         return module_config
     if section not in ["hotwords", "VAD", "listener"]:
         config.setdefault('lang', lang)

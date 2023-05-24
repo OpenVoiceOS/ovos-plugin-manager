@@ -44,12 +44,14 @@ class OVOSVADFactory:
         The configuration file ``mycroft.conf`` contains a ``vad`` section with
         the name of a VAD module to be read by this method.
 
-        "vad": {
+        "VAD": {
             "module": <engine_name>
         }
         """
         config = get_vad_config(config)
-        vad_module = config.get("module", "dummy")
+        vad_module = config.get("module")
+        if not vad_module:
+            raise ValueError(f"VAD Plugin not configured in: {config}")
         if vad_module == "dummy":
             return VADEngine
         if vad_module in OVOSVADFactory.MAPPINGS:
@@ -60,29 +62,36 @@ class OVOSVADFactory:
     def create(config=None):
         """Factory method to create a VAD engine based on configuration.
 
-        The configuration file ``mycroft.conf`` contains a ``vad`` section with
+        The configuration file ``mycroft.conf`` contains a ``VAD`` section with
         the name of a VAD module to be read by this method.
 
-        "vad": {
+        "VAD": {
             "module": <engine_name>
         }
         """
-        config = config or get_vad_config()
-        plugin = config.get("module") or "dummy"
-        plugin_config = config.get(plugin) or {}
+        vad_config = get_vad_config(config)
+        plugin = vad_config.get("module")
+        if not plugin:
+            raise ValueError(f"VAD Plugin not configured in: {vad_config}")
         try:
-            clazz = OVOSVADFactory.get_class(config)
-            return clazz(plugin_config)
+            clazz = OVOSVADFactory.get_class(vad_config)
+            return clazz(vad_config)
         except Exception:
             LOG.exception(f'VAD plugin {plugin} could not be loaded!')
             raise
 
 
 def get_vad_config(config=None):
+    """
+    Get the VAD configuration, including `module` and module-specific config
+    @param config: Configuration dict to parse (default Configuration())
+    @return: dict containing `module` and module-specific configuration
+    """
     from ovos_plugin_manager.utils.config import get_plugin_config
     config = config or Configuration()
     if "listener" in config and "VAD" not in config:
-        return get_plugin_config(config, "listener")
-    else:
-        return get_plugin_config(config, "VAD")
+        config = get_plugin_config(config, "listener")
+    if "VAD" in config:
+        config = get_plugin_config(config, "VAD")
+    return config
 
