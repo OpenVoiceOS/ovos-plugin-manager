@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a18...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a19...HEAD)
+
+**Merged pull requests:**
+
+- Add VAD module tests with bugfixes and doc updates [\#156](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/156) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.23a19](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a19) (2023-05-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a18...V0.0.23a19)
 
 **Merged pull requests:**
 
