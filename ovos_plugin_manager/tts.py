@@ -67,8 +67,8 @@ def get_tts_configs() -> dict:
     Get a dict of plugin names to valid TTS configuration
     @return: dict plugin name to dict of str lang to list of dict valid configs
     """
-    return {plug: get_tts_module_configs(plug)
-            for plug in find_tts_plugins()}
+    from ovos_plugin_manager.utils import load_configs_for_plugin_type
+    return load_configs_for_plugin_type(PluginTypes.TTS)
 
 
 def get_tts_module_configs(module_name: str) -> dict:
@@ -77,8 +77,8 @@ def get_tts_module_configs(module_name: str) -> dict:
     @param module_name: name of plugin to get configurations for
     @return: {lang: [list of config dicts]}
     """
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.TTS) or {}
-    configs = {normalize_lang(lang): v for lang, v in cfgs.items()}
+    from ovos_plugin_manager.utils import load_plugin_configs
+    configs = load_plugin_configs(module_name, PluginConfigTypes.TTS)
     # let's sort by priority key
     for k, v in configs.items():
         configs[k] = sorted(v, key=lambda c: c.get("priority", 60))
@@ -93,14 +93,8 @@ def get_tts_lang_configs(lang, include_dialects=False):
         (i.e. include en-GB configs for lang=en-US)
     @return: dict plugin name to list of valid configs sorted by priority
     """
-    lang = normalize_lang(lang)
-    matched_configs = {}
-    for plug in find_tts_plugins():
-        matched_configs[plug] = []
-        confs = get_tts_module_configs(plug)
-        matched_configs[plug] = get_valid_plugin_configs(confs, lang,
-                                                         include_dialects)
-    return sort_plugin_configs(matched_configs)
+    from ovos_plugin_manager.utils import get_plugin_language_configs
+    return get_plugin_language_configs(PluginTypes.TTS, lang, include_dialects)
 
 
 def get_tts_supported_langs():
@@ -108,15 +102,8 @@ def get_tts_supported_langs():
     Get a dict of languages to valid configuration options
     @return: dict lang to list of plugins that support that lang
     """
-    configs = {}
-    for plug in find_tts_plugins():
-        confs = get_tts_module_configs(plug)
-        for lang, cfgs in confs.items():
-            if confs:
-                if lang not in configs:
-                    configs[lang] = []
-                configs[lang].append(plug)
-    return configs
+    from ovos_plugin_manager.utils import get_plugin_supported_languages
+    return get_plugin_supported_languages(PluginTypes.TTS)
 
 
 class OVOSTTSFactory:

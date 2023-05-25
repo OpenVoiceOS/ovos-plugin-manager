@@ -1,4 +1,5 @@
-from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes, \
+    load_configs_for_plugin_type, load_plugin_configs
 
 
 def find_metadata_transformer_plugins():
@@ -6,13 +7,12 @@ def find_metadata_transformer_plugins():
 
 
 def get_metadata_transformer_configs():
-    return {plug: get_metadata_transformer_module_configs(plug)
-            for plug in find_metadata_transformer_plugins()}
+    return load_configs_for_plugin_type(PluginTypes.METADATA_TRANSFORMER)
 
 
 def get_metadata_transformer_module_configs(module_name):
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.METADATA_TRANSFORMER) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+    return load_plugin_configs(module_name,
+                               PluginConfigTypes.METADATA_TRANSFORMER, True)
 
 
 def get_metadata_transformer_lang_configs(lang, include_dialects=False):

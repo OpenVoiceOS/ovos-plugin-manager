@@ -71,10 +71,3 @@ class StreamHandler:
 
         # no extractor available, return raw url
         return meta or {"uri": uri}
-
-
-# if __name__ == "__main__":
-#     s = StreamHandler()
-#     print(s.supported_seis)
-#     # ['rss', 'bandcamp', 'youtube', 'ydl', 'youtube.channel.live',
-#     # 'pytube', 'invidious', 'm3u', 'pls']

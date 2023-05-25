@@ -1,4 +1,5 @@
-from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes, \
+    load_plugin_configs, load_configs_for_plugin_type
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.coreference import CoreferenceSolverEngine, replace_coreferences
@@ -9,13 +10,12 @@ def find_coref_plugins():
 
 
 def get_coref_configs():
-    return {plug: get_coref_module_configs(plug)
-            for plug in find_coref_plugins()}
+    return load_configs_for_plugin_type(PluginTypes.COREFERENCE_SOLVER)
 
 
 def get_coref_module_configs(module_name):
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.COREFERENCE_SOLVER) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+    return load_plugin_configs(module_name,
+                               PluginConfigTypes.COREFERENCE_SOLVER, True)
 
 
 def get_coref_lang_configs(lang, include_dialects=False):

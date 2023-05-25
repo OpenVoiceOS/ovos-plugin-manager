@@ -1,4 +1,5 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes, \
+    load_configs_for_plugin_type, load_plugin_configs
 from ovos_plugin_manager.templates.gui import GUIExtension
 from ovos_utils.log import LOG
 
@@ -8,13 +9,12 @@ def find_gui_plugins():
 
 
 def get_gui_configs():
-    return {plug: get_gui_module_configs(plug)
-            for plug in find_gui_plugins()}
+    return load_configs_for_plugin_type(PluginTypes.GUI)
 
 
 def get_gui_module_configs(module_name):
     # GUI plugins return [list of config dicts] or {module_name: [list of config dicts]}
-    cfgs = load_plugin(module_name + ".config",  PluginConfigTypes.GUI)
+    cfgs = load_plugin_configs(module_name, PluginConfigTypes.GUI)
     return {module_name: cfgs} if isinstance(cfgs, list) else cfgs
 
 

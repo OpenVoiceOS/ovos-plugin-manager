@@ -1,4 +1,5 @@
-from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes, \
+    load_configs_for_plugin_type, load_plugin_configs
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.postag import PosTagger
@@ -9,13 +10,11 @@ def find_postag_plugins():
 
 
 def get_postag_configs():
-    return {plug: get_postag_module_configs(plug)
-            for plug in find_postag_plugins()}
+    return load_configs_for_plugin_type(PluginConfigTypes.POSTAG)
 
 
 def get_postag_module_configs(module_name):
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.POSTAG) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+    return load_plugin_configs(module_name, PluginConfigTypes.POSTAG, True)
 
 
 def get_postag_lang_configs(lang, include_dialects=False):
@@ -46,7 +45,6 @@ def get_postag_supported_langs():
                     configs[lang] = []
                 configs[lang].append(plug)
     return configs
-
 
 
 def load_postag_plugin(module_name):

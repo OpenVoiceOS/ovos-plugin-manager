@@ -1,4 +1,5 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, \
+    load_configs_for_plugin_type, load_plugin_configs, PluginConfigTypes
 
 
 def find_audio_transformer_plugins():
@@ -6,12 +7,11 @@ def find_audio_transformer_plugins():
 
 
 def get_audio_transformer_configs():
-    return {plug: get_audio_transformer_module_configs(plug)
-            for plug in find_audio_transformer_plugins()}
+    return load_configs_for_plugin_type(PluginTypes.AUDIO_TRANSFORMER)
 
 
 def get_audio_transformer_module_configs(module_name):
-    return load_plugin(module_name + ".config", PluginConfigTypes.AUDIO_TRANSFORMER)
+    return load_plugin_configs(module_name, PluginConfigTypes.AUDIO_TRANSFORMER)
 
 
 def load_audio_transformer_plugin(module_name):

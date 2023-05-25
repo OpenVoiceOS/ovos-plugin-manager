@@ -1,4 +1,5 @@
-from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes, \
+    load_configs_for_plugin_type, load_plugin_configs
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.keywords import KeywordExtractor
@@ -7,13 +8,14 @@ from ovos_plugin_manager.templates.keywords import KeywordExtractor
 def find_keyword_extract_plugins():
     return find_plugins(PluginTypes.KEYWORD_EXTRACTION)
 
+
 def get_keyword_extract_configs():
-    return {plug: get_keyword_extract_module_configs(plug)
-            for plug in find_keyword_extract_plugins()}
+    return load_configs_for_plugin_type(PluginTypes.KEYWORD_EXTRACTION)
+
 
 def get_keyword_extract_module_configs(module_name):
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.KEYWORD_EXTRACTION) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+    return load_plugin_configs(module_name,
+                               PluginConfigTypes.KEYWORD_EXTRACTION, True)
 
 
 def get_keyword_extract_lang_configs(lang, include_dialects=False):

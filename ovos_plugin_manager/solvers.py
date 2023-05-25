@@ -1,4 +1,5 @@
-from ovos_plugin_manager.utils import load_plugin, normalize_lang, find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import load_plugin, normalize_lang, find_plugins, PluginTypes, PluginConfigTypes, \
+    load_configs_for_plugin_type, load_plugin_configs
 
 
 def find_question_solver_plugins():
@@ -6,44 +7,24 @@ def find_question_solver_plugins():
 
 
 def get_question_solver_configs():
-    return {plug: get_question_solver_module_configs(plug)
-            for plug in find_question_solver_plugins()}
+    return load_configs_for_plugin_type(PluginTypes.QUESTION_SOLVER)
 
 
 def get_question_solver_module_configs(module_name):
     # solver plugins return {lang: [list of config dicts]}
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.QUESTION_SOLVER) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+    return load_plugin_configs(module_name, PluginConfigTypes.QUESTION_SOLVER,
+                               True)
 
 
 def get_question_solver_lang_configs(lang, include_dialects=False):
-    lang = normalize_lang(lang)
-    configs = {}
-    for plug in find_question_solver_plugins():
-        configs[plug] = []
-        confs = get_question_solver_module_configs(plug)
-        if include_dialects:
-            lang = lang.split("-")[0]
-            for l in confs:
-                if l.startswith(lang):
-                    configs[plug] += confs[l]
-        elif lang in confs:
-            configs[plug] += confs[lang]
-        elif f"{lang}-{lang}" in confs:
-            configs[plug] += confs[f"{lang}-{lang}"]
-    return {k: v for k, v in configs.items() if v}
+    from ovos_plugin_manager.utils import get_plugin_language_configs
+    return get_plugin_language_configs(PluginTypes.QUESTION_SOLVER, lang,
+                                       include_dialects)
 
 
 def get_question_solver_supported_langs():
-    configs = {}
-    for plug in find_question_solver_plugins():
-        confs = get_question_solver_module_configs(plug)
-        for lang, cfgs in confs.items():
-            if confs:
-                if lang not in configs:
-                    configs[lang] = []
-                configs[lang].append(plug)
-    return configs
+    from ovos_plugin_manager.utils import get_plugin_supported_languages
+    return get_plugin_supported_languages(PluginTypes.QUESTION_SOLVER)
 
 
 def load_question_solver_plugin(module_name):
@@ -62,44 +43,22 @@ def find_tldr_solver_plugins():
 
 
 def get_tldr_solver_configs():
-    return {plug: get_tldr_solver_module_configs(plug)
-            for plug in find_tldr_solver_plugins()}
+    return load_configs_for_plugin_type(PluginTypes.TLDR_SOLVER)
 
 
 def get_tldr_solver_module_configs(module_name):
     # solver plugins return {lang: [list of config dicts]}
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.TLDR_SOLVER) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+    return load_plugin_configs(module_name, PluginConfigTypes.TLDR_SOLVER, True)
 
 
 def get_tldr_solver_lang_configs(lang, include_dialects=False):
-    lang = normalize_lang(lang)
-    configs = {}
-    for plug in find_tldr_solver_plugins():
-        configs[plug] = []
-        confs = get_tldr_solver_module_configs(plug)
-        if include_dialects:
-            lang = lang.split("-")[0]
-            for l in confs:
-                if l.startswith(lang):
-                    configs[plug] += confs[l]
-        elif lang in confs:
-            configs[plug] += confs[lang]
-        elif f"{lang}-{lang}" in confs:
-            configs[plug] += confs[f"{lang}-{lang}"]
-    return {k: v for k, v in configs.items() if v}
+    from ovos_plugin_manager.utils import get_plugin_language_configs
+    return get_plugin_language_configs(PluginTypes.TLDR_SOLVER, lang, include_dialects)
 
 
 def get_tldr_solver_supported_langs():
-    configs = {}
-    for plug in find_tldr_solver_plugins():
-        confs = get_tldr_solver_module_configs(plug)
-        for lang, cfgs in confs.items():
-            if confs:
-                if lang not in configs:
-                    configs[lang] = []
-                configs[lang].append(plug)
-    return configs
+    from ovos_plugin_manager.utils import get_plugin_supported_languages
+    return get_plugin_supported_languages(PluginTypes.TLDR_SOLVER)
 
 
 def load_tldr_solver_plugin(module_name):
@@ -118,44 +77,24 @@ def find_entailment_solver_plugins():
 
 
 def get_entailment_solver_configs():
-    return {plug: get_entailment_solver_module_configs(plug)
-            for plug in find_entailment_solver_plugins()}
+    return load_configs_for_plugin_type(PluginTypes.ENTAILMENT_SOLVER)
 
 
 def get_entailment_solver_module_configs(module_name):
     # solver plugins return {lang: [list of config dicts]}
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.ENTAILMENT_SOLVER) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+    return load_plugin_configs(module_name, PluginConfigTypes.ENTAILMENT_SOLVER,
+                               True)
 
 
 def get_entailment_solver_lang_configs(lang, include_dialects=False):
-    lang = normalize_lang(lang)
-    configs = {}
-    for plug in find_entailment_solver_plugins():
-        configs[plug] = []
-        confs = get_entailment_solver_module_configs(plug)
-        if include_dialects:
-            lang = lang.split("-")[0]
-            for l in confs:
-                if l.startswith(lang):
-                    configs[plug] += confs[l]
-        elif lang in confs:
-            configs[plug] += confs[lang]
-        elif f"{lang}-{lang}" in confs:
-            configs[plug] += confs[f"{lang}-{lang}"]
-    return {k: v for k, v in configs.items() if v}
+    from ovos_plugin_manager.utils import get_plugin_language_configs
+    return get_plugin_language_configs(PluginTypes.ENTAILMENT_SOLVER, lang,
+                                       include_dialects)
 
 
 def get_entailment_solver_supported_langs():
-    configs = {}
-    for plug in find_entailment_solver_plugins():
-        confs = get_entailment_solver_module_configs(plug)
-        for lang, cfgs in confs.items():
-            if confs:
-                if lang not in configs:
-                    configs[lang] = []
-                configs[lang].append(plug)
-    return configs
+    from ovos_plugin_manager.utils import get_plugin_supported_languages
+    return get_plugin_supported_languages(PluginTypes.ENTAILMENT_SOLVER)
 
 
 def load_entailment_solver_plugin(module_name):
@@ -174,44 +113,24 @@ def find_multiple_choice_solver_plugins():
 
 
 def get_multiple_choice_solver_configs():
-    return {plug: get_multiple_choice_solver_module_configs(plug)
-            for plug in find_multiple_choice_solver_plugins()}
+    return load_configs_for_plugin_type(PluginTypes.MULTIPLE_CHOICE_SOLVER)
 
 
 def get_multiple_choice_solver_module_configs(module_name):
     # solver plugins return {lang: [list of config dicts]}
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.MULTIPLE_CHOICE_SOLVER) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+    return load_plugin_configs(module_name,
+                               PluginConfigTypes.MULTIPLE_CHOICE_SOLVER, True)
 
 
 def get_multiple_choice_solver_lang_configs(lang, include_dialects=False):
-    lang = normalize_lang(lang)
-    configs = {}
-    for plug in find_multiple_choice_solver_plugins():
-        configs[plug] = []
-        confs = get_multiple_choice_solver_module_configs(plug)
-        if include_dialects:
-            lang = lang.split("-")[0]
-            for l in confs:
-                if l.startswith(lang):
-                    configs[plug] += confs[l]
-        elif lang in confs:
-            configs[plug] += confs[lang]
-        elif f"{lang}-{lang}" in confs:
-            configs[plug] += confs[f"{lang}-{lang}"]
-    return {k: v for k, v in configs.items() if v}
+    from ovos_plugin_manager.utils import get_plugin_language_configs
+    return get_plugin_language_configs(PluginTypes.MULTIPLE_CHOICE_SOLVER, lang,
+                                       include_dialects)
 
 
 def get_multiple_choice_solver_supported_langs():
-    configs = {}
-    for plug in find_multiple_choice_solver_plugins():
-        confs = get_multiple_choice_solver_module_configs(plug)
-        for lang, cfgs in confs.items():
-            if confs:
-                if lang not in configs:
-                    configs[lang] = []
-                configs[lang].append(plug)
-    return configs
+    from ovos_plugin_manager.utils import get_plugin_supported_languages
+    return get_plugin_supported_languages(PluginTypes.MULTIPLE_CHOICE_SOLVER)
 
 
 def load_multiple_choice_solver_plugin(module_name):
@@ -230,44 +149,25 @@ def find_reading_comprehension_solver_plugins():
 
 
 def get_reading_comprehension_solver_configs():
-    return {plug: get_reading_comprehension_solver_module_configs(plug)
-            for plug in find_reading_comprehension_solver_plugins()}
+    return load_configs_for_plugin_type(PluginTypes.READING_COMPREHENSION_SOLVER)
 
 
 def get_reading_comprehension_solver_module_configs(module_name):
     # solver plugins return {lang: [list of config dicts]}
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.READING_COMPREHENSION_SOLVER) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+    return load_plugin_configs(module_name,
+                               PluginConfigTypes.READING_COMPREHENSION_SOLVER,
+                               True)
 
 
 def get_reading_comprehension_solver_lang_configs(lang, include_dialects=False):
-    lang = normalize_lang(lang)
-    configs = {}
-    for plug in find_reading_comprehension_solver_plugins():
-        configs[plug] = []
-        confs = get_reading_comprehension_solver_module_configs(plug)
-        if include_dialects:
-            lang = lang.split("-")[0]
-            for l in confs:
-                if l.startswith(lang):
-                    configs[plug] += confs[l]
-        elif lang in confs:
-            configs[plug] += confs[lang]
-        elif f"{lang}-{lang}" in confs:
-            configs[plug] += confs[f"{lang}-{lang}"]
-    return {k: v for k, v in configs.items() if v}
+    from ovos_plugin_manager.utils import get_plugin_language_configs
+    return get_plugin_language_configs(PluginTypes.READING_COMPREHENSION_SOLVER,
+                                       lang, include_dialects)
 
 
 def get_reading_comprehension_solver_supported_langs():
-    configs = {}
-    for plug in find_reading_comprehension_solver_plugins():
-        confs = get_reading_comprehension_solver_module_configs(plug)
-        for lang, cfgs in confs.items():
-            if confs:
-                if lang not in configs:
-                    configs[lang] = []
-                configs[lang].append(plug)
-    return configs
+    from ovos_plugin_manager.utils import get_plugin_supported_languages
+    return get_plugin_supported_languages(PluginTypes.READING_COMPREHENSION_SOLVER)
 
 
 def load_reading_comprehension_solver_plugin(module_name):

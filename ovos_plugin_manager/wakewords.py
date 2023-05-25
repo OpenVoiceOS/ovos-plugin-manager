@@ -46,38 +46,19 @@ def get_ww_configs():
 
 def get_ww_module_configs(module_name):
     # WW plugins return {ww_name: [list of config dicts]}
-    return load_plugin(module_name + ".config", PluginConfigTypes.WAKEWORD) or {}
+    from ovos_plugin_manager.utils import load_plugin_configs
+    return load_plugin_configs(module_name, PluginConfigTypes.WAKEWORD)
 
 
 def get_ww_lang_configs(lang, include_dialects=False):
-    lang = normalize_lang(lang)
-    configs = {}
-    for plug in find_wake_word_plugins():
-        configs[plug] = []
-        confs = get_ww_module_configs(plug)
-        for ww_name, ww_conf in confs.items():
-            ww_lang = ww_conf.get("lang")
-            if not ww_lang:
-                continue
-            if include_dialects:
-                lang = lang.split("-")[0]
-                if ww_lang.startswith(lang):
-                    configs[plug] += ww_conf
-            elif lang == ww_lang or f"{lang}-{lang}" == ww_lang:
-                configs[plug] += ww_conf
-    return {k: v for k, v in configs.items() if v}
+    from ovos_plugin_manager.utils import get_plugin_language_configs
+    return get_plugin_language_configs(PluginTypes.WAKEWORD, lang,
+                                       include_dialects)
 
 
 def get_ww_supported_langs():
-    configs = {}
-    for plug in find_wake_word_plugins():
-        confs = get_ww_module_configs(plug)
-        for lang, cfgs in confs.items():
-            if confs:
-                if lang not in configs:
-                    configs[lang] = []
-                configs[lang].append(plug)
-    return configs
+    from ovos_plugin_manager.utils import get_plugin_supported_languages
+    return get_plugin_supported_languages(PluginTypes.WAKEWORD)
 
 
 def load_wake_word_plugin(module_name):

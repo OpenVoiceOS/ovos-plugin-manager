@@ -9,44 +9,26 @@ def find_tokenization_plugins():
 
 
 def get_tokenization_configs():
-    return {plug: get_tokenization_module_configs(plug)
-            for plug in find_tokenization_plugins()}
+    from ovos_plugin_manager.utils import load_configs_for_plugin_type
+    return load_configs_for_plugin_type(PluginTypes.TOKENIZATION)
 
 
 def get_tokenization_module_configs(module_name):
     # TOKENIZATION plugins return {lang: [list of config dicts]}
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.TOKENIZATION) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
+    from ovos_plugin_manager.utils import load_plugin_configs
+    return load_plugin_configs(module_name,
+                               PluginConfigTypes.TOKENIZATION, True)
 
 
 def get_tokenization_lang_configs(lang, include_dialects=False):
-    lang = normalize_lang(lang)
-    configs = {}
-    for plug in find_tokenization_plugins():
-        configs[plug] = []
-        confs = get_tokenization_module_configs(plug)
-        if include_dialects:
-            lang = lang.split("-")[0]
-            for l in confs:
-                if l.startswith(lang):
-                    configs[plug] += confs[l]
-        elif lang in confs:
-            configs[plug] += confs[lang]
-        elif f"{lang}-{lang}" in confs:
-            configs[plug] += confs[f"{lang}-{lang}"]
-    return {k: v for k, v in configs.items() if v}
+    from ovos_plugin_manager.utils import get_plugin_language_configs
+    return get_plugin_language_configs(PluginTypes.TOKENIZATION, lang,
+                                       include_dialects)
 
 
 def get_tokenization_supported_langs():
-    configs = {}
-    for plug in find_tokenization_plugins():
-        confs = get_tokenization_module_configs(plug)
-        for lang, cfgs in confs.items():
-            if confs:
-                if lang not in configs:
-                    configs[lang] = []
-                configs[lang].append(plug)
-    return configs
+    from ovos_plugin_manager.utils import get_plugin_supported_languages
+    return get_plugin_supported_languages(PluginTypes.TOKENIZATION)
 
 
 def load_tokenization_plugin(module_name):
