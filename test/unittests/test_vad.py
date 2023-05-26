@@ -27,7 +27,7 @@ class TestVADTemplate(unittest.TestCase):
 class TestVAD(unittest.TestCase):
     PLUGIN_TYPE = PluginTypes.VAD
     CONFIG_TYPE = PluginConfigTypes.VAD
-    TEST_CONFIG = {"test": True}
+    TEST_CONFIG = _TEST_CONFIG['listener']
     CONFIG_SECTION = "VAD"
     TEST_LANG = "en-us"
 
