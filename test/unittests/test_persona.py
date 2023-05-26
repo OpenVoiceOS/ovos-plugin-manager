@@ -61,8 +61,3 @@ class TestPersona(unittest.TestCase):
         get_persona_config(self.TEST_CONFIG)
         get_config.assert_called_once_with(self.TEST_CONFIG,
                                            self.CONFIG_SECTION)
-
-
-class TestPersonaFactory(unittest.TestCase):
-    from ovos_plugin_manager.persona import OVOSPersonaFactory
-    # TODO
