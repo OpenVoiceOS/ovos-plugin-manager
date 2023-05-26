@@ -9,6 +9,77 @@ from hashlib import md5
 import json
 
 
+def find_tts_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
+    return find_plugins(PluginTypes.TTS)
+
+
+def load_tts_plugin(module_name: str) -> type(TTS):
+    """
+    Get an uninstantiated class for the requested module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
+    return load_plugin(module_name, PluginTypes.TTS)
+
+
+def get_tts_configs() -> dict:
+    """
+    Get a dict of plugin names to valid TTS configuration
+    @return: dict plugin name to dict of str lang to list of dict valid configs
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
+    return load_configs_for_plugin_type(PluginTypes.TTS)
+
+
+def get_tts_module_configs(module_name: str) -> dict:
+    """
+    Get a dict of lang to list of valid config dicts for a specific plugin
+    @param module_name: name of plugin to get configurations for
+    @return: {lang: [list of config dicts]}
+    """
+    from ovos_plugin_manager.utils.config import load_plugin_configs
+    configs = load_plugin_configs(module_name, PluginConfigTypes.TTS)
+    # let's sort by priority key
+    for k, v in configs.items():
+        configs[k] = sorted(v, key=lambda c: c.get("priority", 60))
+    return configs
+
+
+def get_tts_lang_configs(lang, include_dialects=False):
+    """
+    Get a dict of plugins names to sorted list of valid configurations
+    @param lang: language to get configurations for (i.e. en, en-US)
+    @param include_dialects: If true, include configs for other locales
+        (i.e. include en-GB configs for lang=en-US)
+    @return: dict plugin name to list of valid configs sorted by priority
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_language_configs
+    return get_plugin_language_configs(PluginTypes.TTS, lang, include_dialects)
+
+
+def get_tts_supported_langs():
+    """
+    Get a dict of languages to valid configuration options
+    @return: dict lang to list of plugins that support that lang
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_supported_languages
+    return get_plugin_supported_languages(PluginTypes.TTS)
+
+
+def get_tts_config(config: dict = None) -> dict:
+    """
+    Get relevant configuration for factory methods
+    @param config: global Configuration OR plugin class-specific configuration
+    @return: plugin class-specific configuration
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_config
+    return get_plugin_config(config, 'tts')
+
+
 def get_voice_id(plugin_name, lang, tts_config):
     tts_hash = md5(json.dumps(tts_config, sort_keys=True).encode("utf-8")).hexdigest()
     return f"{plugin_name}_{lang}_{tts_hash}"
@@ -45,78 +116,6 @@ def get_voices(scan=False):
             with open(f"{VOICES_FOLDER}/{voice}") as f:
                 voice_ids[voice] = json.load(f)
     return voice_ids
-
-
-def find_tts_plugins():
-    return find_plugins(PluginTypes.TTS)
-
-
-def load_tts_plugin(module_name):
-    """Wrapper function for loading tts plugin.
-
-    Arguments:
-        (str) Mycroft tts module name from config
-    Returns:
-        class: found tts plugin class
-    """
-    return load_plugin(module_name, PluginTypes.TTS)
-
-
-def get_tts_configs() -> dict:
-    """
-    Get a dict of plugin names to valid TTS configuration
-    @return: dict plugin name to dict of str lang to list of dict valid configs
-    """
-    return {plug: get_tts_module_configs(plug)
-            for plug in find_tts_plugins()}
-
-
-def get_tts_module_configs(module_name: str) -> dict:
-    """
-    Get a dict of lang to list of valid config dicts for a specific plugin
-    @param module_name: name of plugin to get configurations for
-    @return: {lang: [list of config dicts]}
-    """
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.TTS) or {}
-    configs = {normalize_lang(lang): v for lang, v in cfgs.items()}
-    # let's sort by priority key
-    for k, v in configs.items():
-        configs[k] = sorted(v, key=lambda c: c.get("priority", 60))
-    return configs
-
-
-def get_tts_lang_configs(lang, include_dialects=False):
-    """
-    Get a dict of plugins names to sorted list of valid configurations
-    @param lang: language to get configurations for (i.e. en, en-US)
-    @param include_dialects: If true, include configs for other locales
-        (i.e. include en-GB configs for lang=en-US)
-    @return: dict plugin name to list of valid configs sorted by priority
-    """
-    lang = normalize_lang(lang)
-    matched_configs = {}
-    for plug in find_tts_plugins():
-        matched_configs[plug] = []
-        confs = get_tts_module_configs(plug)
-        matched_configs[plug] = get_valid_plugin_configs(confs, lang,
-                                                         include_dialects)
-    return sort_plugin_configs(matched_configs)
-
-
-def get_tts_supported_langs():
-    """
-    Get a dict of languages to valid configuration options
-    @return: dict lang to list of plugins that support that lang
-    """
-    configs = {}
-    for plug in find_tts_plugins():
-        confs = get_tts_module_configs(plug)
-        for lang, cfgs in confs.items():
-            if confs:
-                if lang not in configs:
-                    configs[lang] = []
-                configs[lang].append(plug)
-    return configs
 
 
 class OVOSTTSFactory:
@@ -187,13 +186,3 @@ class OVOSTTSFactory:
             LOG.exception(f'The TTS plugin "{tts_module}" could not be loaded.\nAvailable modules: {modules}')
             raise
         return tts
-
-
-def get_tts_config(config=None):
-    from ovos_plugin_manager.utils.config import get_plugin_config
-    return get_plugin_config(config, 'tts')
-
-
-if __name__ == "__main__":
-    print(get_voices())
-

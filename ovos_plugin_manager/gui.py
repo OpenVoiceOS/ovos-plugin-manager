@@ -1,25 +1,53 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from typing import List, Optional
+
+from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, \
+    PluginConfigTypes
 from ovos_plugin_manager.templates.gui import GUIExtension
 from ovos_utils.log import LOG
 
 
-def find_gui_plugins():
+def find_gui_plugins() -> dict:
+
     return find_plugins(PluginTypes.GUI)
 
 
-def get_gui_configs():
-    return {plug: get_gui_module_configs(plug)
-            for plug in find_gui_plugins()}
+def load_gui_plugin(module_name: str) -> type(GUIExtension):
+    """
+    Get an uninstantiated class for the requested module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
+    return load_plugin(module_name, PluginTypes.GUI)
 
 
-def get_gui_module_configs(module_name):
-    # GUI plugins return [list of config dicts] or {module_name: [list of config dicts]}
-    cfgs = load_plugin(module_name + ".config",  PluginConfigTypes.GUI)
+def get_gui_configs() -> dict:
+    """
+    Get valid plugin configurations by plugin name
+    @return: dict plugin names to list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
+    return load_configs_for_plugin_type(PluginTypes.GUI)
+
+
+def get_gui_module_configs(module_name: str) -> List[dict]:
+    """
+    Get valid configurations for the specified plugin
+    @param module_name: plugin to get configuration for
+    @return: list of dict configurations (if provided)
+    """
+    from ovos_plugin_manager.utils.config import load_plugin_configs
+    cfgs = load_plugin_configs(module_name, PluginConfigTypes.GUI)
     return {module_name: cfgs} if isinstance(cfgs, list) else cfgs
 
 
-def load_gui_plugin(module_name):
-    return load_plugin(module_name, PluginTypes.GUI)
+def get_gui_config(config: Optional[dict] = None) -> dict:
+    """
+    Get relevant configuration for factory methods
+    @param config: global Configuration OR plugin class-specific configuration
+    @return: plugin class-specific configuration
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_config
+    return get_plugin_config(config, "gui")
 
 
 class OVOSGuiFactory:
@@ -61,8 +89,3 @@ class OVOSGuiFactory:
             LOG.exception('The selected gui plugin could not be loaded.')
             raise
         return gui
-
-
-def get_gui_config(config=None):
-    from ovos_plugin_manager.utils.config import get_plugin_config
-    return get_plugin_config(config, "gui")

@@ -3,7 +3,11 @@ from ovos_plugin_manager.templates.ocp import OCPStreamExtractor
 from ovos_utils.log import LOG
 
 
-def find_ocp_plugins():
+def find_ocp_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
     return find_plugins(PluginTypes.STREAM_EXTRACTOR)
 
 
@@ -71,10 +75,3 @@ class StreamHandler:
 
         # no extractor available, return raw url
         return meta or {"uri": uri}
-
-
-# if __name__ == "__main__":
-#     s = StreamHandler()
-#     print(s.supported_seis)
-#     # ['rss', 'bandcamp', 'youtube', 'ydl', 'youtube.channel.live',
-#     # 'pytube', 'invidious', 'm3u', 'pls']

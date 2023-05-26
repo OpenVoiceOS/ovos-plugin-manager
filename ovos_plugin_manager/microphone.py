@@ -1,13 +1,33 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
+from ovos_plugin_manager.templates.microphone import Microphone
 from ovos_utils.log import LOG
 
 
-def find_microphone_plugins():
+def find_microphone_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
     return find_plugins(PluginTypes.MIC)
 
 
-def load_microphone_plugin(module_name):
+def load_microphone_plugin(module_name: str) -> type(Microphone):
+    """
+    Get an uninstantiated class for the requested module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
     return load_plugin(module_name, PluginTypes.MIC)
+
+
+def get_microphone_config(config=None):
+    """
+    Get relevant configuration for factory methods
+    @param config: global Configuration OR plugin class-specific configuration
+    @return: plugin class-specific configuration
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_config
+    return get_plugin_config(config, "microphone")
 
 
 class OVOSMicrophoneFactory:
@@ -53,8 +73,3 @@ class OVOSMicrophoneFactory:
             LOG.exception('The selected microphone plugin could not be loaded.')
             raise
         return microphone
-
-
-def get_microphone_config(config=None):
-    from ovos_plugin_manager.utils.config import get_plugin_config
-    return get_plugin_config(config, "microphone")

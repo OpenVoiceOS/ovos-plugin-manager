@@ -1,20 +1,17 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, \
+    PluginConfigTypes
+from ovos_plugin_manager.templates.transformers import AudioTransformer
 
 
-def find_audio_transformer_plugins():
+def find_audio_transformer_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
     return find_plugins(PluginTypes.AUDIO_TRANSFORMER)
 
 
-def get_audio_transformer_configs():
-    return {plug: get_audio_transformer_module_configs(plug)
-            for plug in find_audio_transformer_plugins()}
-
-
-def get_audio_transformer_module_configs(module_name):
-    return load_plugin(module_name + ".config", PluginConfigTypes.AUDIO_TRANSFORMER)
-
-
-def load_audio_transformer_plugin(module_name):
+def load_audio_transformer_plugin(module_name: str) -> type(AudioTransformer):
     """Wrapper function for loading audio_transformer plugin.
 
     Arguments:
@@ -24,3 +21,21 @@ def load_audio_transformer_plugin(module_name):
     """
     return load_plugin(module_name, PluginTypes.AUDIO_TRANSFORMER)
 
+
+def get_audio_transformer_configs() -> dict:
+    """
+    Get valid plugin configurations by plugin name
+    @return: dict plugin names to list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
+    return load_configs_for_plugin_type(PluginTypes.AUDIO_TRANSFORMER)
+
+
+def get_audio_transformer_module_configs(module_name: str):
+    """
+    Get valid configuration for the specified plugin
+    @param module_name: plugin to get configuration for
+    @return: dict configuration (if provided) (TODO: Validate return type)
+    """
+    from ovos_plugin_manager.utils.config import load_plugin_configs
+    return load_plugin_configs(module_name, PluginConfigTypes.AUDIO_TRANSFORMER)

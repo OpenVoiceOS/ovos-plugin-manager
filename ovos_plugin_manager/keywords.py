@@ -1,60 +1,79 @@
-from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, \
+    find_plugins, PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.keywords import KeywordExtractor
 
 
-def find_keyword_extract_plugins():
+def find_keyword_extract_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
     return find_plugins(PluginTypes.KEYWORD_EXTRACTION)
 
-def get_keyword_extract_configs():
-    return {plug: get_keyword_extract_module_configs(plug)
-            for plug in find_keyword_extract_plugins()}
 
-def get_keyword_extract_module_configs(module_name):
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.KEYWORD_EXTRACTION) or {}
-    return {normalize_lang(lang): v for lang, v in cfgs.items()}
-
-
-def get_keyword_extract_lang_configs(lang, include_dialects=False):
-    lang = normalize_lang(lang)
-    configs = {}
-    for plug in find_keyword_extract_plugins():
-        configs[plug] = []
-        confs = get_keyword_extract_module_configs(plug)
-        if include_dialects:
-            lang = lang.split("-")[0]
-            for l in confs:
-                if l.startswith(lang):
-                    configs[plug] += confs[l]
-        elif lang in confs:
-            configs[plug] += confs[lang]
-        elif f"{lang}-{lang}" in confs:
-            configs[plug] += confs[f"{lang}-{lang}"]
-    return {k: v for k, v in configs.items() if v}
-
-
-def get_keyword_extract_supported_langs():
-    configs = {}
-    for plug in find_keyword_extract_plugins():
-        confs = get_keyword_extract_module_configs(plug)
-        for lang, cfgs in confs.items():
-            if confs:
-                if lang not in configs:
-                    configs[lang] = []
-                configs[lang].append(plug)
-    return configs
-
-
-def load_keyword_extract_plugin(module_name):
-    """Wrapper function for loading keyword_extract plugin.
-
-    Arguments:
-        module_name (str): keyword_extract module name from config
-    Returns:
-        class: KeywordExtractor plugin class
+def load_keyword_extract_plugin(module_name: str) -> type(KeywordExtractor):
+    """
+    Get an uninstantiated class for the requested module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
     """
     return load_plugin(module_name, PluginTypes.KEYWORD_EXTRACTION)
+
+
+def get_keyword_extract_configs() -> dict:
+    """
+    Get valid plugin configurations by plugin name
+    @return: dict plugin names to list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
+    return load_configs_for_plugin_type(PluginTypes.KEYWORD_EXTRACTION)
+
+
+def get_keyword_extract_module_configs(module_name: str) -> dict:
+    """
+    Get valid configurations for the specified plugin
+    @param module_name: plugin to get configuration for
+    @return: dict configurations by language (if provided)
+    """
+    from ovos_plugin_manager.utils.config import load_plugin_configs
+    return load_plugin_configs(module_name,
+                               PluginConfigTypes.KEYWORD_EXTRACTION, True)
+
+
+def get_keyword_extract_lang_configs(lang: str,
+                                     include_dialects: bool = False) -> dict:
+    """
+    Get a dict of plugin names to list valid configurations for the requested
+    lang.
+    @param lang: Language to get configurations for
+    @param include_dialects: consider configurations in different locales
+    @return: dict {`plugin_name`: `valid_configs`]}
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_language_configs
+    return get_plugin_language_configs(PluginTypes.KEYWORD_EXTRACTION, lang,
+                                       include_dialects)
+
+
+def get_keyword_extract_supported_langs() -> dict:
+    """
+    Return a dict of plugin names to list supported languages
+    @return: dict plugin names to list supported languages
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_supported_languages
+    return get_plugin_supported_languages(PluginTypes.KEYWORD_EXTRACTION)
+
+
+def get_keyword_extract_config(config: dict = None) -> dict:
+    """
+    Get relevant configuration for factory methods
+    @param config: global Configuration OR plugin class-specific configuration
+    @return: plugin class-specific configuration
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_config
+    config = config or Configuration()
+    return get_plugin_config(config, "keyword_extract")
 
 
 class OVOSKeywordExtractorFactory:
@@ -103,11 +122,3 @@ class OVOSKeywordExtractorFactory:
             LOG.exception(f'Keyword extraction plugin {plugin} '
                           f'could not be loaded!')
             return KeywordExtractor()
-
-
-def get_keyword_extract_config(config=None):
-    from ovos_plugin_manager.utils.config import get_plugin_config
-    config = config or Configuration()
-    return get_plugin_config(config, "keyword_extract")
-
-

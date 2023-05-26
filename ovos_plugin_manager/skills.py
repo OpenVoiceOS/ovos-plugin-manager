@@ -2,7 +2,11 @@ from ovos_plugin_manager.utils import find_plugins, PluginTypes
 from ovos_utils.log import LOG
 
 
-def find_skill_plugins():
+def find_skill_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
     return find_plugins(PluginTypes.SKILL)
 
 

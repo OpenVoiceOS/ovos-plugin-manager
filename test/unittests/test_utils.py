@@ -506,6 +506,37 @@ _MOCK_VALID_STT_PLUGINS_CONFIG = {
     'ovos-stt-plugin-vosk-streaming': []}
 
 
+class TestUtils(unittest.TestCase):
+    def test_plugin_types(self):
+        from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
+        self.assertEqual(len(PluginTypes), len(PluginConfigTypes))
+        for plug_type in PluginTypes:
+            self.assertIsInstance(plug_type, PluginTypes)
+            self.assertIsInstance(plug_type, str)
+            self.assertIsInstance(PluginConfigTypes(f"{plug_type}.config"),
+                                  PluginConfigTypes)
+        for cfg_type in PluginConfigTypes:
+            self.assertIsInstance(cfg_type, PluginConfigTypes)
+            self.assertIsInstance(cfg_type, str)
+            self.assertTrue(cfg_type.value.endswith('.config'))
+
+    def test_find_plugins(self):
+        from ovos_plugin_manager.utils import find_plugins
+        # TODO
+
+    def test_load_plugins(self):
+        from ovos_plugin_manager.utils import load_plugin
+        # TODO
+
+    def test_normalize_lang(self):
+        from ovos_plugin_manager.utils import normalize_lang
+        # TODO
+
+    def test_read_write_stream(self):
+        from ovos_plugin_manager.utils import ReadWriteStream
+        # TODO
+
+
 class TestConfigUtils(unittest.TestCase):
     def test_get_plugin_config(self):
         from ovos_plugin_manager.utils.config import get_plugin_config
@@ -564,6 +595,22 @@ class TestConfigUtils(unittest.TestCase):
                           'offline': False,
                           'priority': 80}
                          )
+
+    def test_load_plugin_configs(self):
+        from ovos_plugin_manager.utils.config import load_plugin_configs
+        # TODO
+
+    def test_load_configs_for_plugin_type(self):
+        from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
+        # TODO
+
+    def test_get_plugin_supported_languages(self):
+        from ovos_plugin_manager.utils.config import get_plugin_supported_languages
+        # TODO
+
+    def test_get_plugin_language_configs(self):
+        from ovos_plugin_manager.utils.config import get_plugin_language_configs
+        # TODO
 
 
 class TestTTSCacheUtils(unittest.TestCase):

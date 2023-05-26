@@ -11,6 +11,8 @@
 # limitations under the License.
 #
 """Common functions for loading plugins."""
+from typing import Optional
+
 import time
 from enum import Enum
 from threading import Event
@@ -82,8 +84,9 @@ class PluginConfigTypes(str, Enum):
     STREAM_EXTRACTOR = "ovos.ocp.extractor.config"
 
 
-def find_plugins(plug_type=None):
-    """Finds all plugins matching specific entrypoint type.
+def find_plugins(plug_type: PluginTypes = None) -> dict:
+    """
+    Finds all plugins matching specific entrypoint type.
 
     Arguments:
         plug_type (str): plugin entrypoint string to retrieve
@@ -105,11 +108,17 @@ def find_plugins(plug_type=None):
                 if entry_point.name not in entrypoints:
                     LOG.debug(f"Loaded plugin entry point {entry_point.name}")
             except Exception as e:
-                LOG.debug(f"Failed to load plugin entry point {entry_point}: {e}")
+                LOG.debug(f"Failed to load plugin entry point {entry_point}: "
+                          f"{e}")
     return entrypoints
 
 
-def _iter_entrypoints(plug_type):
+def _iter_entrypoints(plug_type: Optional[str]):
+    """
+    Return an iterator containing all entrypoints of the requested type
+    @param plug_type: entrypoint name to load
+    @return: iterator of all entrypoints
+    """
     try:
         from importlib_metadata import entry_points
         for entry_point in entry_points(group=plug_type):
@@ -119,12 +128,12 @@ def _iter_entrypoints(plug_type):
             yield entry_point
 
 
-def load_plugin(plug_name, plug_type=None):
+def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
     """Load a specific plugin from a specific plugin type.
 
     Arguments:
         plug_type: (str) plugin type name. Ex. "mycroft.plugin.tts".
-        plug_name: (str) specific plugin name
+        plug_name: (str) specific plugin name (else consider all plugin types)
 
     Returns:
         Loaded plugin Object or None if no matching object was found.

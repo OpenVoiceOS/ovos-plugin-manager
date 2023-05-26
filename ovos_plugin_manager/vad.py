@@ -4,30 +4,58 @@ from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.vad import VADEngine
 
 
-def find_vad_plugins():
+def find_vad_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
     return find_plugins(PluginTypes.VAD)
 
 
-def get_vad_configs():
-    return {plug: get_vad_module_configs(plug)
-            for plug in find_vad_plugins()}
+def load_vad_plugin(module_name: str) -> type(VADEngine):
+    """
+    Get an uninstantiated class for the requested module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
+    return load_plugin(module_name, PluginTypes.VAD)
 
 
-def get_vad_module_configs(module_name):
+def get_vad_configs() -> dict:
+    """
+    Get valid plugin configurations by plugin name
+    @return: dict plugin names to list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
+    return load_configs_for_plugin_type(PluginTypes.VAD)
+
+
+def get_vad_module_configs(module_name: str) -> dict:
+    """
+    Get valid configurations for the specified plugin
+    @param module_name: plugin to get configuration for
+    @return: dict configurations by language (if provided)
+    """
     # VAD plugins return [list of config dicts] or {module_name: [list of config dicts]}
-    cfgs = load_plugin(module_name + ".config", PluginConfigTypes.VAD)
+    from ovos_plugin_manager.utils.config import load_plugin_configs
+    cfgs = load_plugin_configs(module_name,
+                               PluginConfigTypes.UTTERANCE_TRANSFORMER)
     return {module_name: cfgs} if isinstance(cfgs, list) else cfgs
 
 
-def load_vad_plugin(module_name):
-    """Wrapper function for loading vad plugin.
-
-    Arguments:
-        module_name (str): vad module name from config
-    Returns:
-        class: VAD plugin class
+def get_vad_config(config: dict = None) -> dict:
     """
-    return load_plugin(module_name, PluginTypes.VAD)
+    Get relevant configuration for factory methods
+    @param config: global Configuration OR plugin class-specific configuration
+    @return: plugin class-specific configuration
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_config
+    config = config or Configuration()
+    if "listener" in config and "VAD" not in config:
+        config = get_plugin_config(config, "listener")
+    if "VAD" in config:
+        config = get_plugin_config(config, "VAD")
+    return config
 
 
 class OVOSVADFactory:
@@ -79,19 +107,3 @@ class OVOSVADFactory:
         except Exception:
             LOG.exception(f'VAD plugin {plugin} could not be loaded!')
             raise
-
-
-def get_vad_config(config=None):
-    """
-    Get the VAD configuration, including `module` and module-specific config
-    @param config: Configuration dict to parse (default Configuration())
-    @return: dict containing `module` and module-specific configuration
-    """
-    from ovos_plugin_manager.utils.config import get_plugin_config
-    config = config or Configuration()
-    if "listener" in config and "VAD" not in config:
-        config = get_plugin_config(config, "listener")
-    if "VAD" in config:
-        config = get_plugin_config(config, "VAD")
-    return config
-
