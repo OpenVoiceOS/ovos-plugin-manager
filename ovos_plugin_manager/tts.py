@@ -1,12 +1,30 @@
 import json
 import os
-from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, TextToSpeechCache, ConcatTTS, RemoteTTS
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, normalize_lang, PluginConfigTypes
-from ovos_plugin_manager.utils.config import get_valid_plugin_configs, sort_plugin_configs
+from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, \
+    TextToSpeechCache, ConcatTTS, RemoteTTS
+from ovos_plugin_manager.utils import PluginTypes, normalize_lang, \
+    PluginConfigTypes
+from ovos_plugin_manager.utils.config import get_valid_plugin_configs, \
+    sort_plugin_configs
 from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_data_home
 from hashlib import md5
-import json
+
+
+def find_plugins(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(*args, **kwargs)
+
+
+def load_plugin(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(*args, **kwargs)
 
 
 def find_tts_plugins() -> dict:
@@ -14,6 +32,7 @@ def find_tts_plugins() -> dict:
     Find all installed plugins
     @return: dict plugin names to entrypoints
     """
+    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.TTS)
 
 
@@ -23,6 +42,7 @@ def load_tts_plugin(module_name: str) -> type(TTS):
     @param module_name: Plugin entrypoint name to load
     @return: Uninstantiated class
     """
+    from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.TTS)
 
 

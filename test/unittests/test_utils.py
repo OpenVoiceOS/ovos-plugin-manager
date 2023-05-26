@@ -524,7 +524,7 @@ class TestUtils(unittest.TestCase):
         from ovos_plugin_manager.utils import find_plugins
         # TODO
 
-    def test_load_plugins(self):
+    def test_load_plugin(self):
         from ovos_plugin_manager.utils import load_plugin
         # TODO
 
@@ -638,8 +638,29 @@ class TestTTSCacheUtils(unittest.TestCase):
         from ovos_plugin_manager.utils.tts_cache import mb_to_bytes
         self.assertEqual(mb_to_bytes(1), 1024 * 1024)
 
+    def test_get_cache_entries(self):
+        from ovos_plugin_manager.utils.tts_cache import _get_cache_entries
+        # TODO
 
-# TODO: Write unit tests for classes in tts_cache
+    def test_delete_oldest(self):
+        from ovos_plugin_manager.utils.tts_cache import _delete_oldest
+        # TODO
+
+    def test_curate_cache(self):
+        from ovos_plugin_manager.utils.tts_cache import curate_cache
+        # TODO
+
+    def test_audio_file(self):
+        from ovos_plugin_manager.utils.tts_cache import AudioFile
+        # TODO
+
+    def test_phoneme_file(self):
+        from ovos_plugin_manager.utils.tts_cache import PhonemeFile
+        # TODO
+
+    def test_tts_cache(self):
+        from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache
+        # TODO
 
 
 class TestUiUtils(unittest.TestCase):

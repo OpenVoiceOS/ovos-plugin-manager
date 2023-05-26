@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, Mock
 from copy import copy, deepcopy
-from ovos_plugin_manager import PluginTypes
+from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 _TEST_CONFIG = {
     "lang": "en-us",
@@ -17,6 +17,51 @@ _TEST_CONFIG = {
         }
     }
 }
+
+
+class TestVADTemplate(unittest.TestCase):
+    from ovos_plugin_manager.templates.vad import VADEngine
+    # TODO
+
+
+class TestVAD(unittest.TestCase):
+    PLUGIN_TYPE = PluginTypes.VAD
+    CONFIG_TYPE = PluginConfigTypes.VAD
+    TEST_CONFIG = {"test": True}
+    CONFIG_SECTION = "VAD"
+    TEST_LANG = "en-us"
+
+    @patch("ovos_plugin_manager.utils.find_plugins")
+    def test_find_plugins(self, find_plugins):
+        from ovos_plugin_manager.vad import find_vad_plugins
+        find_vad_plugins()
+        find_plugins.assert_called_once_with(self.PLUGIN_TYPE)
+
+    @patch("ovos_plugin_manager.utils.load_plugin")
+    def test_load_plugin(self, load_plugin):
+        from ovos_plugin_manager.vad import load_vad_plugin
+        load_vad_plugin("test_mod")
+        load_plugin.assert_called_once_with("test_mod", self.PLUGIN_TYPE)
+
+    @patch("ovos_plugin_manager.utils.config.load_configs_for_plugin_type")
+    def test_get_configs(self, load_configs):
+        from ovos_plugin_manager.vad import get_vad_configs
+        get_vad_configs()
+        load_configs.assert_called_once_with(self.PLUGIN_TYPE)
+
+    @patch("ovos_plugin_manager.utils.config.load_plugin_configs")
+    def test_get_module_configs(self, load_plugin_configs):
+        from ovos_plugin_manager.vad import get_vad_module_configs
+        get_vad_module_configs("test_mod")
+        load_plugin_configs.assert_called_once_with("test_mod",
+                                                    self.CONFIG_TYPE)
+
+    @patch("ovos_plugin_manager.utils.config.get_plugin_config")
+    def test_get_config(self, get_config):
+        from ovos_plugin_manager.vad import get_vad_config
+        get_vad_config(self.TEST_CONFIG)
+        get_config.assert_called_once_with(self.TEST_CONFIG,
+                                           self.CONFIG_SECTION)
 
 
 class TestVADFactory(unittest.TestCase):
