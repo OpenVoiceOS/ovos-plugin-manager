@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a20...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a21...HEAD)
+
+**Implemented enhancements:**
+
+- Outline Unit Tests [\#158](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/158) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.23a21](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a21) (2023-05-26)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a20...V0.0.23a21)
 
 **Implemented enhancements:**
 
