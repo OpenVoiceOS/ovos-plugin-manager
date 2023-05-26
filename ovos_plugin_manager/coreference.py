@@ -16,7 +16,7 @@ def find_coref_plugins() -> dict:
     return find_plugins(PluginTypes.COREFERENCE_SOLVER)
 
 
-def load_coref_plugin(module_name: str) -> CoreferenceSolverEngine:
+def load_coref_plugin(module_name: str) -> type(CoreferenceSolverEngine):
     """
     Get an uninstantiated class for the requested module_name
     @param module_name: Plugin entrypoint name to load

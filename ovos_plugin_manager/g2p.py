@@ -56,6 +56,15 @@ def get_g2p_lang_configs(lang: str, include_dialects: bool = False) -> dict:
                                        include_dialects)
 
 
+def get_g2p_supported_langs() -> dict:
+    """
+    Return a dict of plugin names to list supported languages
+    @return: dict plugin names to list supported languages
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_supported_languages
+    return get_plugin_supported_languages(PluginTypes.PHONEME)
+
+
 def get_g2p_config(config: Optional[dict] = None) -> dict:
     """
     Get relevant configuration for factory methods
@@ -65,14 +74,6 @@ def get_g2p_config(config: Optional[dict] = None) -> dict:
     from ovos_plugin_manager.utils.config import get_plugin_config
     return get_plugin_config(config, "g2p")
 
-
-def get_g2p_supported_langs() -> dict:
-    """
-    Return a dict of plugin names to list supported languages
-    @return: dict plugin names to list supported languages
-    """
-    from ovos_plugin_manager.utils.config import get_plugin_supported_languages
-    return get_plugin_supported_languages(PluginTypes.PHONEME)
 
 
 class OVOSG2PFactory:

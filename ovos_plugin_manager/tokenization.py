@@ -4,42 +4,76 @@ from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.tokenization import Tokenizer
 
 
-def find_tokenization_plugins():
+def find_tokenization_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
     return find_plugins(PluginTypes.TOKENIZATION)
 
 
-def get_tokenization_configs():
-    from ovos_plugin_manager.utils import load_configs_for_plugin_type
+def load_tokenization_plugin(module_name: str) -> type(Tokenizer):
+    """
+    Get an uninstantiated class for the requested module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
+    return load_plugin(module_name, PluginTypes.TOKENIZATION)
+
+
+def get_tokenization_configs() -> dict:
+    """
+    Get valid plugin configurations by plugin name
+    @return: dict plugin names to list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
     return load_configs_for_plugin_type(PluginTypes.TOKENIZATION)
 
 
-def get_tokenization_module_configs(module_name):
+def get_tokenization_module_configs(module_name: str) -> dict:
+    """
+    Get valid configurations for the specified plugin
+    @param module_name: plugin to get configuration for
+    @return: dict configurations by language (if provided)
+    """
     # TOKENIZATION plugins return {lang: [list of config dicts]}
-    from ovos_plugin_manager.utils import load_plugin_configs
+    from ovos_plugin_manager.utils.config import load_plugin_configs
     return load_plugin_configs(module_name,
                                PluginConfigTypes.TOKENIZATION, True)
 
 
-def get_tokenization_lang_configs(lang, include_dialects=False):
-    from ovos_plugin_manager.utils import get_plugin_language_configs
+def get_tokenization_lang_configs(lang: str,
+                                  include_dialects: bool = False) -> dict:
+    """
+    Get a dict of plugin names to list valid configurations for the requested
+    lang.
+    @param lang: Language to get configurations for
+    @param include_dialects: consider configurations in different locales
+    @return: dict {`plugin_name`: `valid_configs`]}
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_language_configs
     return get_plugin_language_configs(PluginTypes.TOKENIZATION, lang,
                                        include_dialects)
 
 
-def get_tokenization_supported_langs():
-    from ovos_plugin_manager.utils import get_plugin_supported_languages
+def get_tokenization_supported_langs() -> dict:
+    """
+    Return a dict of plugin names to list supported languages
+    @return: dict plugin names to list supported languages
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_supported_languages
     return get_plugin_supported_languages(PluginTypes.TOKENIZATION)
 
 
-def load_tokenization_plugin(module_name):
-    """Wrapper function for loading tokenization plugin.
-
-    Arguments:
-        module_name (str): tokenization module name from config
-    Returns:
-        class: Tokenizer plugin class
+def get_tokenization_config(config: dict = None) -> dict:
     """
-    return load_plugin(module_name, PluginTypes.TOKENIZATION)
+    Get relevant configuration for factory methods
+    @param config: global Configuration OR plugin class-specific configuration
+    @return: plugin class-specific configuration
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_config
+    config = config or Configuration()
+    return get_plugin_config(config, "tokenization")
 
 
 class OVOSTokenizerFactory:
@@ -87,12 +121,3 @@ class OVOSTokenizerFactory:
         except Exception:
             LOG.exception(f'Tokenizer plugin {plugin} could not be loaded!')
             return Tokenizer()
-
-
-def get_tokenization_config(config=None):
-    from ovos_plugin_manager.utils.config import get_plugin_config
-    config = config or Configuration()
-    return get_plugin_config(config, "tokenization")
-
-
-

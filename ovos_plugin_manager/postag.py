@@ -1,61 +1,77 @@
-from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes, \
-    load_configs_for_plugin_type, load_plugin_configs
+from ovos_plugin_manager.utils import normalize_lang, load_plugin, \
+    find_plugins, PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.postag import PosTagger
 
 
-def find_postag_plugins():
+def find_postag_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
     return find_plugins(PluginTypes.POSTAG)
 
 
-def get_postag_configs():
+def load_postag_plugin(module_name: str) -> type(PosTagger):
+    """
+    Get an uninstantiated class for the requested module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
+    return load_plugin(module_name, PluginTypes.POSTAG)
+
+
+def get_postag_configs() -> dict:
+    """
+    Get valid plugin configurations by plugin name
+    @return: dict plugin names to list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
     return load_configs_for_plugin_type(PluginConfigTypes.POSTAG)
 
 
-def get_postag_module_configs(module_name):
+def get_postag_module_configs(module_name: str) -> dict:
+    """
+    Get valid configurations for the specified plugin
+    @param module_name: plugin to get configuration for
+    @return: dict configurations by language (if provided)
+    """
+    from ovos_plugin_manager.utils.config import load_plugin_configs
     return load_plugin_configs(module_name, PluginConfigTypes.POSTAG, True)
 
 
-def get_postag_lang_configs(lang, include_dialects=False):
-    lang = normalize_lang(lang)
-    configs = {}
-    for plug in find_postag_plugins():
-        configs[plug] = []
-        confs = get_postag_module_configs(plug)
-        if include_dialects:
-            lang = lang.split("-")[0]
-            for l in confs:
-                if l.startswith(lang):
-                    configs[plug] += confs[l]
-        elif lang in confs:
-            configs[plug] += confs[lang]
-        elif f"{lang}-{lang}" in confs:
-            configs[plug] += confs[f"{lang}-{lang}"]
-    return {k: v for k, v in configs.items() if v}
-
-
-def get_postag_supported_langs():
-    configs = {}
-    for plug in find_postag_plugins():
-        confs = get_postag_module_configs(plug)
-        for lang, cfgs in confs.items():
-            if confs:
-                if lang not in configs:
-                    configs[lang] = []
-                configs[lang].append(plug)
-    return configs
-
-
-def load_postag_plugin(module_name):
-    """Wrapper function for loading postag plugin.
-
-    Arguments:
-        module_name (str): postag module name from config
-    Returns:
-        class: PosTagger plugin class
+def get_postag_lang_configs(lang: str, include_dialects: bool = False) -> dict:
     """
-    return load_plugin(module_name, PluginTypes.POSTAG)
+    Get a dict of plugin names to list valid configurations for the requested
+    lang.
+    @param lang: Language to get configurations for
+    @param include_dialects: consider configurations in different locales
+    @return: dict {`plugin_name`: `valid_configs`]}
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_language_configs
+    return get_plugin_language_configs(PluginTypes.POSTAG, lang,
+                                       include_dialects)
+
+
+def get_postag_supported_langs() -> dict:
+    """
+    Return a dict of plugin names to list supported languages
+    @return: dict plugin names to list supported languages
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_supported_languages
+    return get_plugin_supported_languages(PluginTypes.POSTAG)
+
+
+def get_postag_config(config: dict = None) -> dict:
+    """
+    Get relevant configuration for factory methods
+    @param config: global Configuration OR plugin class-specific configuration
+    @return: plugin class-specific configuration
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_config
+    config = config or Configuration()
+    return get_plugin_config(config, "postag")
 
 
 class OVOSPosTaggerFactory:
@@ -103,11 +119,3 @@ class OVOSPosTaggerFactory:
         except Exception:
             LOG.exception(f'Postag plugin {plugin} could not be loaded!')
             return PosTagger()
-
-
-def get_postag_config(config=None):
-    from ovos_plugin_manager.utils.config import get_plugin_config
-    config = config or Configuration()
-    return get_plugin_config(config, "postag")
-
-

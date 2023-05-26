@@ -1,5 +1,6 @@
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, \
     PluginConfigTypes
+from ovos_plugin_manager.templates.transformers import AudioTransformer
 
 
 def find_audio_transformer_plugins() -> dict:
@@ -10,7 +11,7 @@ def find_audio_transformer_plugins() -> dict:
     return find_plugins(PluginTypes.AUDIO_TRANSFORMER)
 
 
-def load_audio_transformer_plugin(module_name: str) -> type:
+def load_audio_transformer_plugin(module_name: str) -> type(AudioTransformer):
     """Wrapper function for loading audio_transformer plugin.
 
     Arguments:

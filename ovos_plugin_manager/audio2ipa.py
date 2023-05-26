@@ -12,7 +12,7 @@ def find_audio2ipa_plugins() -> dict:
     return find_plugins(PluginTypes.AUDIO2IPA)
 
 
-def load_audio2ipa_plugin(module_name: str) -> Audio2IPA:
+def load_audio2ipa_plugin(module_name: str) -> type(Audio2IPA):
     """
     Get an uninstantiated class for the requested module_name
     @param module_name: Plugin entrypoint name to load

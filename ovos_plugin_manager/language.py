@@ -2,40 +2,82 @@ from ovos_plugin_manager.utils.config import get_plugin_config
 from ovos_utils.log import LOG
 
 from ovos_config import Configuration
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes, \
-    load_configs_for_plugin_type, load_plugin_configs
+from ovos_plugin_manager.templates.language import LanguageTranslator, \
+    LanguageDetector
+from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, \
+    PluginConfigTypes
 
 
-def find_tx_plugins():
+def find_tx_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
     return find_plugins(PluginTypes.TRANSLATE)
 
 
-def get_tx_configs():
-    return load_configs_for_plugin_type(PluginTypes.TRANSLATE)
-
-
-def get_tx_module_configs(module_name):
-    return load_plugin_configs(module_name, PluginConfigTypes.TRANSLATE)
-
-
-def load_tx_plugin(module_name):
+def load_tx_plugin(module_name: str) -> type(LanguageTranslator):
+    """
+    Get an uninstantiated class for the requested module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
     return load_plugin(module_name, PluginTypes.TRANSLATE)
 
 
+def get_tx_configs() -> dict:
+    """
+    Get valid plugin configurations by plugin name
+    @return: dict plugin names to list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
+    return load_configs_for_plugin_type(PluginTypes.TRANSLATE)
+
+
+def get_tx_module_configs(module_name: str):
+    """
+    Get valid configurations for the specified plugin
+    @param module_name: plugin to get configuration for
+    @return: list of dict configurations (if provided)  TODO Validate type
+    """
+    from ovos_plugin_manager.utils.config import load_plugin_configs
+    return load_plugin_configs(module_name, PluginConfigTypes.TRANSLATE)
+
+
 def find_lang_detect_plugins():
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
     return find_plugins(PluginTypes.LANG_DETECT)
 
 
-def get_lang_detect_configs():
+def load_lang_detect_plugin(module_name: str) -> type(LanguageDetector):
+    """
+    Get an uninstantiated class for the requested module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
+    return load_plugin(module_name, PluginTypes.LANG_DETECT)
+
+
+def get_lang_detect_configs() -> dict:
+    """
+    Get valid plugin configurations by plugin name
+    @return: dict plugin names to list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
     return load_configs_for_plugin_type(PluginTypes.LANG_DETECT)
 
 
-def get_lang_detect_module_configs(module_name):
+def get_lang_detect_module_configs(module_name: str):
+    """
+    Get valid configurations for the specified plugin
+    @param module_name: plugin to get configuration for
+    @return: list of dict configurations (if provided)  TODO Validate type
+    """
+    from ovos_plugin_manager.utils.config import load_plugin_configs
     return load_plugin_configs(module_name, PluginConfigTypes.LANG_DETECT)
-
-
-def load_lang_detect_plugin(module_name):
-    return load_plugin(module_name, PluginTypes.LANG_DETECT)
 
 
 class OVOSLangDetectionFactory:
