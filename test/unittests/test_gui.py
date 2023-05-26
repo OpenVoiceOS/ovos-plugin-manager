@@ -40,7 +40,7 @@ class TestGui(unittest.TestCase):
         from ovos_plugin_manager.gui import get_gui_module_configs
         get_gui_module_configs("test_mod")
         load_plugin_configs.assert_called_once_with("test_mod",
-                                                    self.CONFIG_TYPE, True)
+                                                    self.CONFIG_TYPE)
 
     @patch("ovos_plugin_manager.utils.config.get_plugin_config")
     def test_get_config(self, get_config):
