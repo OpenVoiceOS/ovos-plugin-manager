@@ -118,8 +118,14 @@ class HotWordEngine:
         """
 
     def stop(self):
-        """Perform any actions needed to shut down the wake word engine.
-
-        This may include things such as unloading data or shutdown
-        external processess.
         """
+        Perform any actions needed to shut down the wake word engine.
+        This may include things such as unloading data or shutdown
+        external processes.
+        """
+
+    def shutdown(self):
+        """
+        Compatibility wrapper for `self.stop`
+        """
+        self.stop()
