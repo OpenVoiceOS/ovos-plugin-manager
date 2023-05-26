@@ -51,6 +51,7 @@ class PluginTypes(str, Enum):
     TOKENIZATION = "intentbox.tokenization"
     POSTAG = "intentbox.postag"
     STREAM_EXTRACTOR = "ovos.ocp.extractor"
+    PERSONA = "opm.plugin.persona"
 
 
 class PluginConfigTypes(str, Enum):
@@ -82,6 +83,7 @@ class PluginConfigTypes(str, Enum):
     TOKENIZATION = "intentbox.tokenization.config"
     POSTAG = "intentbox.postag.config"
     STREAM_EXTRACTOR = "ovos.ocp.extractor.config"
+    PERSONA = "opm.plugin.persona.config"
 
 
 def find_plugins(plug_type: PluginTypes = None) -> dict:
