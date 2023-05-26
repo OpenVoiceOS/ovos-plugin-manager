@@ -48,7 +48,7 @@ class TestPHAL(unittest.TestCase):
         from ovos_plugin_manager.phal import get_phal_module_configs
         get_phal_module_configs("test_mod")
         load_plugin_configs.assert_called_once_with("test_mod",
-                                                    self.CONFIG_TYPE, True)
+                                                    self.CONFIG_TYPE)
 
 
 class TestAdminPHAL(unittest.TestCase):
@@ -75,4 +75,4 @@ class TestAdminPHAL(unittest.TestCase):
         from ovos_plugin_manager.phal import get_admin_module_configs
         get_admin_module_configs("test_mod")
         load_plugin_configs.assert_called_once_with("test_mod",
-                                                    self.CONFIG_TYPE, True)
+                                                    self.CONFIG_TYPE)
