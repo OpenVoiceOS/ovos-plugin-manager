@@ -1,37 +1,78 @@
+from typing import Optional
+
 from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.g2p import Grapheme2PhonemePlugin, PhonemeAlphabet
 from ovos_utils.log import LOG
 from ovos_config import Configuration
 
 
-def find_g2p_plugins():
+def find_g2p_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
     return find_plugins(PluginTypes.PHONEME)
 
 
-def get_g2p_configs():
-    from ovos_plugin_manager.utils import load_configs_for_plugin_type
+def load_g2p_plugin(module_name: str) -> Grapheme2PhonemePlugin:
+    """
+    Get an uninstantiated class for the requested module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
+    return load_plugin(module_name, PluginTypes.PHONEME)
+
+
+def get_g2p_configs() -> dict:
+    """
+    Get valid plugin configurations by plugin name
+    @return: dict plugin names to list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
     return load_configs_for_plugin_type(PluginTypes.PHONEME)
 
 
-def get_g2p_module_configs(module_name):
-    from ovos_plugin_manager.utils import load_plugin_configs
+def get_g2p_module_configs(module_name: str):
+    """
+    Get valid configurations for the specified plugin
+    @param module_name: plugin to get configuration for
+    @return: dict configuration (if provided) (TODO: Validate return type)
+    """
+    from ovos_plugin_manager.utils.config import load_plugin_configs
     return load_plugin_configs(module_name,
                                PluginConfigTypes.PHONEME, True)
 
 
-def get_g2p_lang_configs(lang, include_dialects=False):
-    from ovos_plugin_manager.utils import get_plugin_language_configs
+def get_g2p_lang_configs(lang: str, include_dialects: bool = False) -> dict:
+    """
+    Get a dict of plugin names to list valid configurations for the requested
+    lang.
+    @param lang: Language to get configurations for
+    @param include_dialects: consider configurations in different locales
+    @return: dict {`plugin_name`: [`valid_configs`]}
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_language_configs
     return get_plugin_language_configs(PluginTypes.PHONEME, lang,
                                        include_dialects)
 
 
-def get_g2p_supported_langs():
-    from ovos_plugin_manager.utils import get_plugin_supported_languages
+def get_g2p_config(config: Optional[dict] = None) -> dict:
+    """
+    Get relevant configuration for factory methods
+    @param config: global Configuration OR plugin class-specific configuration
+    @return: plugin class-specific configuration
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_config
+    return get_plugin_config(config, "g2p")
+
+
+def get_g2p_supported_langs() -> dict:
+    """
+    Return a dict of plugin names to list supported languages
+    @return: dict plugin names to list supported languages
+    """
+    from ovos_plugin_manager.utils.config import get_plugin_supported_languages
     return get_plugin_supported_languages(PluginTypes.PHONEME)
-
-
-def load_g2p_plugin(module_name):
-    return load_plugin(module_name, PluginTypes.PHONEME)
 
 
 class OVOSG2PFactory:
@@ -82,8 +123,3 @@ class OVOSG2PFactory:
             LOG.exception('The selected G2P plugin could not be loaded.')
             raise
         return g2p
-
-
-def get_g2p_config(config=None):
-    from ovos_plugin_manager.utils.config import get_plugin_config
-    return get_plugin_config(config, "g2p")

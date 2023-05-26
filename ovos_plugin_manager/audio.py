@@ -1,8 +1,34 @@
-from ovos_plugin_manager.utils import PluginConfigTypes, find_plugins, PluginTypes, load_plugin_configs, \
-    load_configs_for_plugin_type
+from ovos_plugin_manager.utils import PluginConfigTypes, find_plugins, PluginTypes
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
 from ovos_config import Configuration
+
+
+def find_audio_service_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
+    return find_plugins(PluginTypes.AUDIO)
+
+
+def get_audio_service_configs() -> dict:
+    """
+    Get valid plugin configurations by plugin name
+    @return: dict plugin names to list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
+    return load_configs_for_plugin_type(PluginTypes.AUDIO)
+
+
+def get_audio_service_module_configs(module_name: str) -> dict:
+    """
+    Get valid configuration for the specified plugin
+    @param module_name: plugin to get configuration for
+    @return: dict configuration (if provided)
+    """
+    from ovos_plugin_manager.utils.config import load_plugin_configs
+    return load_plugin_configs(module_name, PluginConfigTypes.AUDIO)
 
 
 def setup_audio_service(service_module, config=None, bus=None):
@@ -30,18 +56,6 @@ def setup_audio_service(service_module, config=None, bus=None):
             LOG.error('Failed to load audio service. ' + repr(e))
     else:
         return None
-
-
-def find_audio_service_plugins():
-    return find_plugins(PluginTypes.AUDIO)
-
-
-def get_audio_service_configs():
-    return load_configs_for_plugin_type(PluginTypes.AUDIO)
-
-
-def get_audio_service_module_configs(module_name):
-    return load_plugin_configs(module_name, PluginConfigTypes.AUDIO)
 
 
 def load_audio_service_plugins(config=None, bus=None):

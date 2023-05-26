@@ -108,7 +108,8 @@ def find_plugins(plug_type: PluginTypes = None) -> dict:
                 if entry_point.name not in entrypoints:
                     LOG.debug(f"Loaded plugin entry point {entry_point.name}")
             except Exception as e:
-                LOG.debug(f"Failed to load plugin entry point {entry_point}: {e}")
+                LOG.debug(f"Failed to load plugin entry point {entry_point}: "
+                          f"{e}")
     return entrypoints
 
 
@@ -143,83 +144,6 @@ def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
     plug_type = plug_type or "all plugin types"
     LOG.warning(f'Could not find the plugin {plug_type}.{plug_name}')
     return None
-
-
-def load_plugin_configs(plug_name: str,
-                        plug_type: Optional[PluginConfigTypes] = None,
-                        normalize_language_keys: bool = False) -> dict:
-    """
-    Load a specific plugin's valid configurations.
-
-    Arguments:
-        plug_type: (str) plugin type name. Ex. "mycroft.plugin.tts".
-        plug_name: (str) specific plugin name
-        normalize_language_keys: (bool) If true, normalize dict keys as langs
-    Returns:
-        Loaded configuration dict or None if no matching object was found.
-    """
-    config = load_plugin(plug_name + ".config", plug_type)
-    if normalize_language_keys:
-        return {normalize_lang(lang): v for lang, v in config.items()}
-    return config
-
-
-def load_configs_for_plugin_type(plug_type: PluginTypes) -> dict:
-    """
-    Load all valid configuration options for the specified plug_type
-    @param plug_type: Plugin type to get configs for
-    @return: dict plugin name to list configurations
-    """
-    return {plug: load_plugin_configs(plug,
-                                      PluginConfigTypes(f"{plug_type.value}.config"))
-            for plug in find_plugins(plug_type)} or dict()
-
-
-def get_plugin_supported_languages(plug_type: PluginTypes) -> dict:
-    """
-    Return a dict of plugin names to list supported languages
-    @param plug_type: plugin type to get plugins/configuration for
-    @return: dict plugin names to list supported languages
-    """
-    lang_configs = dict()
-    for plug in find_plugins(plug_type):
-        configs = load_plugin_configs(plug,
-                                      PluginConfigTypes(f"{plug_type.value}.config"))
-        for lang, config in configs:
-            lang = normalize_lang(lang)
-            lang_configs.setdefault(lang, list())
-            lang_configs[lang].append(plug)
-    return lang_configs
-
-
-def get_plugin_language_configs(plug_type: PluginTypes, lang: str,
-                                include_dialects: bool = False) -> dict:
-    """
-    Return a dict of plugin names to list of valid (dict) configurations
-    @param plug_type: plugin type to get configurations for
-    @param lang: BCP-47 language code to get configurations for
-    @param include_dialects: consider configurations in different locales
-    @return: dict {`plugin_name`: [`valid_configs`]}
-    """
-    lang = normalize_lang(lang)
-    plugin_configs = dict()
-    for plug in find_plugins(plug_type):
-        plugin_configs[plug] = list()
-        valid_configs = \
-            load_plugin_configs(plug,
-                                PluginConfigTypes(f"{plug_type.value}.config"))
-        valid_configs = {normalize_lang(lang): conf
-                         for lang, conf in valid_configs.items()}
-        if include_dialects:
-            lang = lang.split('-')[0]
-            for language in valid_configs:
-                if language.startswith(lang):
-                    plugin_configs[plug] += valid_configs[language]
-        elif lang in valid_configs:
-            plugin_configs[plug] += valid_configs[lang]
-        elif f"{lang}-{lang}" in valid_configs:
-            plugin_configs += valid_configs[f"{lang}-{lang}"]
-    return {lang: configs for lang, configs in valid_configs.items() if configs}
 
 
 def normalize_lang(lang):
