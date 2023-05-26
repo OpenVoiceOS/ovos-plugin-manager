@@ -113,7 +113,7 @@ class TestWakeWordFactory(unittest.TestCase):
                                      ['hey_neon'], "en-us", None)
         OVOSWakeWordFactory.load_module = real_load_module
 
-    @patch("ovos_plugin_manager.wakewords.load_plugin")
+    @patch("ovos_plugin_manager.utils.load_plugin")
     def test_get_class(self, load_plugin):
         mock = Mock()
         load_plugin.return_value = mock

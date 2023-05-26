@@ -57,7 +57,7 @@ def get_vad_module_configs(module_name: str) -> dict:
     # VAD plugins return [list of config dicts] or {module_name: [list of config dicts]}
     from ovos_plugin_manager.utils.config import load_plugin_configs
     cfgs = load_plugin_configs(module_name,
-                               PluginConfigTypes.UTTERANCE_TRANSFORMER)
+                               PluginConfigTypes.VAD)
     return {module_name: cfgs} if isinstance(cfgs, list) else cfgs
 
 

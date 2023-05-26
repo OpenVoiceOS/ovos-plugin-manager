@@ -170,7 +170,7 @@ class TestTTS(unittest.TestCase):
         from ovos_plugin_manager.tts import get_tts_module_configs
         get_tts_module_configs("test_mod")
         load_plugin_configs.assert_called_once_with("test_mod",
-                                                    self.CONFIG_TYPE, True)
+                                                    self.CONFIG_TYPE)
 
     @patch("ovos_plugin_manager.utils.config.get_plugin_language_configs")
     def test_get_lang_configs(self, get_language_configs):

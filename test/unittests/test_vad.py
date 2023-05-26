@@ -85,7 +85,7 @@ class TestVADFactory(unittest.TestCase):
 
         OVOSVADFactory.get_class = real_get_class
 
-    @patch("ovos_plugin_manager.vad.load_plugin")
+    @patch("ovos_plugin_manager.utils.load_plugin")
     def test_get_class(self, load_plugin):
         mock = Mock()
         load_plugin.return_value = mock
