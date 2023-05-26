@@ -45,7 +45,7 @@ class TestLanguageTranslator(unittest.TestCase):
             get_tx_module_configs
         get_tx_module_configs("test_mod")
         load_plugin_configs.assert_called_once_with("test_mod",
-                                                    self.CONFIG_TYPE, True)
+                                                    self.CONFIG_TYPE)
 
 
 class TestLanguageDetector(unittest.TestCase):
@@ -79,7 +79,7 @@ class TestLanguageDetector(unittest.TestCase):
             get_lang_detect_module_configs
         get_lang_detect_module_configs("test_mod")
         load_plugin_configs.assert_called_once_with("test_mod",
-                                                    self.CONFIG_TYPE, True)
+                                                    self.CONFIG_TYPE)
 
 
 class TestLangTranslationFactory(unittest.TestCase):
