@@ -1,6 +1,22 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import PluginTypes
 from ovos_plugin_manager.templates.microphone import Microphone
 from ovos_utils.log import LOG
+
+
+def find_plugins(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(*args, **kwargs)
+
+
+def load_plugin(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(*args, **kwargs)
 
 
 def find_microphone_plugins() -> dict:
@@ -8,6 +24,7 @@ def find_microphone_plugins() -> dict:
     Find all installed plugins
     @return: dict plugin names to entrypoints
     """
+    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.MIC)
 
 
@@ -17,6 +34,7 @@ def load_microphone_plugin(module_name: str) -> type(Microphone):
     @param module_name: Plugin entrypoint name to load
     @return: Uninstantiated class
     """
+    from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.MIC)
 
 

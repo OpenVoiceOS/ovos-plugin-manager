@@ -1,6 +1,4 @@
 import unittest
-from copy import deepcopy
-from unittest.mock import patch
 
 
 class TestLed(unittest.TestCase):
@@ -40,3 +38,62 @@ class TestLed(unittest.TestCase):
 
         Color.set_theme('#FFFF0000')
         self.assertEqual(Color.THEME.as_rgb_tuple(), (255, 0, 0))
+
+    def test_abstract_led(self):
+        from ovos_plugin_manager.hardware.led import AbstractLed
+        # TODO
+
+    def test_led_animation(self):
+        from ovos_plugin_manager.hardware.led.animations import LedAnimation
+        # TODO
+
+    def test_breathe_led_animation(self):
+        from ovos_plugin_manager.hardware.led.animations import \
+            BreatheLedAnimation
+        # TODO
+
+    def test_chase_led_animation(self):
+        from ovos_plugin_manager.hardware.led.animations import \
+            ChaseLedAnimation
+        # TODO
+
+    def test_fill_led_animation(self):
+        from ovos_plugin_manager.hardware.led.animations import FillLedAnimation
+        # TODO
+
+    def test_refill_led_animation(self):
+        from ovos_plugin_manager.hardware.led.animations import \
+            RefillLedAnimation
+        # TODO
+
+    def test_bounce_led_animation(self):
+        from ovos_plugin_manager.hardware.led.animations import \
+            BounceLedAnimation
+        # TODO
+
+    def test_Blink_led_animation(self):
+        from ovos_plugin_manager.hardware.led.animations import \
+            BlinkLedAnimation
+        # TODO
+
+    def test_alternating_led_animation(self):
+        from ovos_plugin_manager.hardware.led.animations import \
+            AlternatingLedAnimation
+        # TODO
+
+    def test_animations(self):
+        from ovos_plugin_manager.hardware.led.animations import animations, \
+            LedAnimation
+        for key, val in animations.items():
+            self.assertIsInstance(key, str)
+            self.assertTrue(issubclass(val, LedAnimation))
+
+
+class TestFan(unittest.TestCase):
+    from ovos_plugin_manager.hardware.fan import AbstractFan
+    # TODO
+
+
+class TestSwitches(unittest.TestCase):
+    from ovos_plugin_manager.hardware.switches import AbstractSwitches
+    # TODO

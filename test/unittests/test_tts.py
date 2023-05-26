@@ -1,16 +1,17 @@
 # write your first unittest!
 import unittest
+from unittest.mock import patch
+from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.tts import TTS
-from ovos_utils.messagebus import FakeBus
 
 
-class TestSSML(unittest.TestCase):
+class TestTTSTemplate(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         tts = TTS()  # dummy engine
        # bus = FakeBus()
        # tts.init(bus)
-        self.tts = tts
+        cls.tts = tts
 
     def test_ssml(self):
         sentence = "<speak>Prosody can be used to change the way words " \
@@ -117,4 +118,94 @@ class TestSSML(unittest.TestCase):
 
         tagged_with_exclusion = TTS.format_speak_tags("Don't<speak>Speak This.</speak>But Not this.", False)
         self.assertEqual(tagged_with_exclusion, valid_output)
+
+    def test_playback_thread(self):
+        from ovos_plugin_manager.templates.tts import PlaybackThread
+        # TODO
+    
+    def test_tts_context(self):
+        from ovos_plugin_manager.templates.tts import TTSContext
+        # TODO
+    
+    def test_tts_validator(self):
+        from ovos_plugin_manager.templates.tts import TTSValidator
+        # TODO
+    
+    def test_concat_tts(self):
+        from ovos_plugin_manager.templates.tts import ConcatTTS
+        # TODO
+    
+    def test_remote_tt(self):
+        from ovos_plugin_manager.templates.tts import RemoteTTS
+        # TODO
+
+
+class TestTTS(unittest.TestCase):
+    PLUGIN_TYPE = PluginTypes.TTS
+    CONFIG_TYPE = PluginConfigTypes.TTS
+    TEST_CONFIG = {"test": True}
+    CONFIG_SECTION = "tts"
+    TEST_LANG = "en-us"
+
+    @patch("ovos_plugin_manager.utils.find_plugins")
+    def test_find_plugins(self, find_plugins):
+        from ovos_plugin_manager.tts import find_tts_plugins
+        find_tts_plugins()
+        find_plugins.assert_called_once_with(self.PLUGIN_TYPE)
+
+    @patch("ovos_plugin_manager.utils.load_plugin")
+    def test_load_plugin(self, load_plugin):
+        from ovos_plugin_manager.tts import load_tts_plugin
+        load_tts_plugin("test_mod")
+        load_plugin.assert_called_once_with("test_mod", self.PLUGIN_TYPE)
+
+    @patch("ovos_plugin_manager.utils.config.load_configs_for_plugin_type")
+    def test_get_configs(self, load_configs):
+        from ovos_plugin_manager.tts import get_tts_configs
+        get_tts_configs()
+        load_configs.assert_called_once_with(self.PLUGIN_TYPE)
+
+    @patch("ovos_plugin_manager.utils.config.load_plugin_configs")
+    def test_get_module_configs(self, load_plugin_configs):
+        from ovos_plugin_manager.tts import get_tts_module_configs
+        get_tts_module_configs("test_mod")
+        load_plugin_configs.assert_called_once_with("test_mod",
+                                                    self.CONFIG_TYPE)
+
+    @patch("ovos_plugin_manager.utils.config.get_plugin_language_configs")
+    def test_get_lang_configs(self, get_language_configs):
+        from ovos_plugin_manager.tts import get_tts_lang_configs
+        get_tts_lang_configs(self.TEST_LANG)
+        get_language_configs.assert_called_once_with(self.PLUGIN_TYPE,
+                                                     self.TEST_LANG, False)
+
+    @patch("ovos_plugin_manager.utils.config.get_plugin_supported_languages")
+    def test_get_supported_langs(self, get_supported_languages):
+        from ovos_plugin_manager.tts import get_tts_supported_langs
+        get_tts_supported_langs()
+        get_supported_languages.assert_called_once_with(self.PLUGIN_TYPE)
+
+    @patch("ovos_plugin_manager.utils.config.get_plugin_config")
+    def test_get_config(self, get_config):
+        from ovos_plugin_manager.tts import get_tts_config
+        get_tts_config(self.TEST_CONFIG)
+        get_config.assert_called_once_with(self.TEST_CONFIG,
+                                           self.CONFIG_SECTION)
+
+    def test_get_voice_id(self):
+        from ovos_plugin_manager.tts import get_voice_id
+        # TODO
+
+    def test_scan_voices(self):
+        from ovos_plugin_manager.tts import scan_voices
+        # TODO
+
+    def test_get_voices(self):
+        from ovos_plugin_manager.tts import get_voices
+        # TODO
+
+
+class TestTTSFactory(unittest.TestCase):
+    from ovos_plugin_manager.tts import OVOSTTSFactory
+    # TODO
 

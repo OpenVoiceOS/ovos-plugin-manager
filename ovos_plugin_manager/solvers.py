@@ -1,7 +1,24 @@
-from ovos_plugin_manager.utils import load_plugin, normalize_lang, \
-    find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import normalize_lang, \
+    PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.solvers import QuestionSolver, TldrSolver, \
     EntailmentSolver, MultipleChoiceSolver, EvidenceSolver
+from ovos_utils.log import LOG
+
+
+def find_plugins(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(*args, **kwargs)
+
+
+def load_plugin(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(*args, **kwargs)
 
 
 def find_question_solver_plugins() -> dict:
@@ -9,6 +26,7 @@ def find_question_solver_plugins() -> dict:
     Find all installed plugins
     @return: dict plugin names to entrypoints
     """
+    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.QUESTION_SOLVER)
 
 
@@ -18,6 +36,7 @@ def load_question_solver_plugin(module_name: str) -> type(QuestionSolver):
     @param module_name: Plugin entrypoint name to load
     @return: Uninstantiated class
     """
+    from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.QUESTION_SOLVER)
 
 
@@ -70,6 +89,7 @@ def find_tldr_solver_plugins() -> dict:
     Find all installed plugins
     @return: dict plugin names to entrypoints
     """
+    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.TLDR_SOLVER)
 
 
@@ -79,6 +99,7 @@ def load_tldr_solver_plugin(module_name: str) -> type(TldrSolver):
     @param module_name: Plugin entrypoint name to load
     @return: Uninstantiated class
     """
+    from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.TLDR_SOLVER)
 
 
@@ -130,6 +151,7 @@ def find_entailment_solver_plugins() -> dict:
     Find all installed plugins
     @return: dict plugin names to entrypoints
     """
+    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.ENTAILMENT_SOLVER)
 
 
@@ -139,6 +161,7 @@ def load_entailment_solver_plugin(module_name: str) -> type(EntailmentSolver):
     @param module_name: Plugin entrypoint name to load
     @return: Uninstantiated class
     """
+    from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.ENTAILMENT_SOLVER)
 
 
@@ -191,6 +214,7 @@ def find_multiple_choice_solver_plugins() -> dict:
     Find all installed plugins
     @return: dict plugin names to entrypoints
     """
+    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.MULTIPLE_CHOICE_SOLVER)
 
 
@@ -201,6 +225,7 @@ def load_multiple_choice_solver_plugin(module_name: str) -> \
     @param module_name: Plugin entrypoint name to load
     @return: Uninstantiated class
     """
+    from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.MULTIPLE_CHOICE_SOLVER)
 
 
@@ -254,6 +279,7 @@ def find_reading_comprehension_solver_plugins() -> dict:
     Find all installed plugins
     @return: dict plugin names to entrypoints
     """
+    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.READING_COMPREHENSION_SOLVER)
 
 
@@ -264,6 +290,7 @@ def load_reading_comprehension_solver_plugin(module_name: str) -> \
     @param module_name: Plugin entrypoint name to load
     @return: Uninstantiated class
     """
+    from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.READING_COMPREHENSION_SOLVER)
 
 

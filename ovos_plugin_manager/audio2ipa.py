@@ -1,7 +1,23 @@
 from typing import Optional
-from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import normalize_lang, PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.audio2ipa import Audio2IPA
 from ovos_utils.log import LOG
+
+
+def find_plugins(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(*args, **kwargs)
+
+
+def load_plugin(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(*args, **kwargs)
 
 
 def find_audio2ipa_plugins() -> dict:
@@ -9,6 +25,7 @@ def find_audio2ipa_plugins() -> dict:
     Find all installed plugins
     @return: dict plugin names to entrypoints
     """
+    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.AUDIO2IPA)
 
 
@@ -18,6 +35,7 @@ def load_audio2ipa_plugin(module_name: str) -> type(Audio2IPA):
     @param module_name: Plugin entrypoint name to load
     @return: Uninstantiated class
     """
+    from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.AUDIO2IPA)
 
 

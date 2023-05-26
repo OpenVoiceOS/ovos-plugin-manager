@@ -1,9 +1,25 @@
 from typing import Optional
 
-from ovos_plugin_manager.utils import normalize_lang, load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import normalize_lang, PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.g2p import Grapheme2PhonemePlugin, PhonemeAlphabet
 from ovos_utils.log import LOG
 from ovos_config import Configuration
+
+
+def find_plugins(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(*args, **kwargs)
+
+
+def load_plugin(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(*args, **kwargs)
 
 
 def find_g2p_plugins() -> dict:
@@ -11,6 +27,7 @@ def find_g2p_plugins() -> dict:
     Find all installed plugins
     @return: dict plugin names to entrypoints
     """
+    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.PHONEME)
 
 
@@ -20,6 +37,7 @@ def load_g2p_plugin(module_name: str) -> Grapheme2PhonemePlugin:
     @param module_name: Plugin entrypoint name to load
     @return: Uninstantiated class
     """
+    from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.PHONEME)
 
 
@@ -73,7 +91,6 @@ def get_g2p_config(config: Optional[dict] = None) -> dict:
     """
     from ovos_plugin_manager.utils.config import get_plugin_config
     return get_plugin_config(config, "g2p")
-
 
 
 class OVOSG2PFactory:
