@@ -1,7 +1,15 @@
-from ovos_plugin_manager.utils import PluginConfigTypes, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import PluginConfigTypes, PluginTypes
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
 from ovos_config import Configuration
+
+
+def find_plugins(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(*args, **kwargs)
 
 
 def find_audio_service_plugins() -> dict:
@@ -9,6 +17,7 @@ def find_audio_service_plugins() -> dict:
     Find all installed plugins
     @return: dict plugin names to entrypoints
     """
+    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.AUDIO)
 
 
