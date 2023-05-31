@@ -22,6 +22,10 @@ class TestOCP(unittest.TestCase):
         find_ocp_plugins()
         find_plugins.assert_called_once_with(self.PLUGIN_TYPE)
 
-    def test_stream_handler(self):
+    @patch("ovos_plugin_manager.utils.find_plugins")
+    def test_stream_handler(self, find_plugins):
         from ovos_plugin_manager.ocp import StreamHandler
-        # TODO
+        handler = StreamHandler()
+        self.assertIsInstance(handler.extractors, dict)
+        find_plugins.assert_called_once_with(PluginTypes.STREAM_EXTRACTOR)
+        # TODO: More tests
