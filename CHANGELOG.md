@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.23a23](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.23a23) (2023-05-31)
+## [0.0.23a24](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.23a24) (2023-05-31)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a22...0.0.23a23)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a23...0.0.23a24)
+
+**Implemented enhancements:**
+
+- Add persona plugins [\#159](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/159) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.23a23](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a23) (2023-05-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a22...V0.0.23a23)
 
 **Merged pull requests:**
 
