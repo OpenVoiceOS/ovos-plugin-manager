@@ -96,7 +96,7 @@ def get_stt_config(config: dict = None) -> dict:
     """
     from ovos_plugin_manager.utils.config import get_plugin_config
     stt_config = get_plugin_config(config, "stt")
-    stt_config.setdefault("lang", "en-us")
+    assert stt_config.get('lang') is not None, "expected lang but got None"
     return stt_config
 
 
