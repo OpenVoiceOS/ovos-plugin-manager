@@ -509,12 +509,13 @@ _MOCK_VALID_STT_PLUGINS_CONFIG = {
 class TestUtils(unittest.TestCase):
     def test_plugin_types(self):
         from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
-        self.assertEqual(len(PluginTypes), len(PluginConfigTypes) - 1)  # persona plugs do not have configs by design
         for plug_type in PluginTypes:
             self.assertIsInstance(plug_type, PluginTypes)
             self.assertIsInstance(plug_type, str)
-            self.assertIsInstance(PluginConfigTypes(f"{plug_type}.config"),
-                                  PluginConfigTypes)
+            # Handle plugins without associated config entrypoint
+            if plug_type not in (PluginTypes.PERSONA,):
+                self.assertIsInstance(PluginConfigTypes(f"{plug_type}.config"),
+                                      PluginConfigTypes)
         for cfg_type in PluginConfigTypes:
             self.assertIsInstance(cfg_type, PluginConfigTypes)
             self.assertIsInstance(cfg_type, str)
