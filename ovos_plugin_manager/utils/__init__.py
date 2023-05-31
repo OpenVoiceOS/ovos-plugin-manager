@@ -51,6 +51,7 @@ class PluginTypes(str, Enum):
     TOKENIZATION = "intentbox.tokenization"
     POSTAG = "intentbox.postag"
     STREAM_EXTRACTOR = "ovos.ocp.extractor"
+    PERSONA = "opm.plugin.persona"  # personas are a dict, they have no config because they ARE a config
 
 
 class PluginConfigTypes(str, Enum):
