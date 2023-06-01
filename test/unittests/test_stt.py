@@ -1,4 +1,5 @@
 import unittest
+from copy import copy
 
 from unittest.mock import patch
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
@@ -82,9 +83,11 @@ class TestSTT(unittest.TestCase):
     @patch("ovos_plugin_manager.utils.config.get_plugin_config")
     def test_get_config(self, get_config):
         from ovos_plugin_manager.stt import get_stt_config
+        config = copy(self.TEST_CONFIG)
         get_stt_config(self.TEST_CONFIG)
         get_config.assert_called_once_with(self.TEST_CONFIG,
                                            self.CONFIG_SECTION)
+        self.assertEqual(config, self.TEST_CONFIG)
 
 
 class TestSTTFactory(unittest.TestCase):
