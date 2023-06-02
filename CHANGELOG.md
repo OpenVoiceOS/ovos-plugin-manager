@@ -1,8 +1,17 @@
 # Changelog
 
-## [0.0.23a25](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.23a25) (2023-06-02)
+## [0.0.23a26](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.23a26) (2023-06-02)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a24...0.0.23a25)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a25...0.0.23a26)
+
+**Fixed bugs:**
+
+- Logged exception when cache directory doesn't exist [\#133](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/133)
+- Add error handling and tests to cache curation [\#162](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/162) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.23a25](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a25) (2023-06-02)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a24...V0.0.23a25)
 
 **Merged pull requests:**
 
