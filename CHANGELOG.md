@@ -1,8 +1,17 @@
 # Changelog
 
-## [0.0.23a24](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.23a24) (2023-05-31)
+## [0.0.23a25](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.23a25) (2023-06-02)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a23...0.0.23a24)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a24...0.0.23a25)
+
+**Merged pull requests:**
+
+- Troubleshoot default STT config handling [\#161](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/161) ([NeonDaniel](https://github.com/NeonDaniel))
+- Add trivial test case to `test_ocp` [\#160](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/160) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.23a24](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a24) (2023-05-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a23...V0.0.23a24)
 
 **Implemented enhancements:**
 
