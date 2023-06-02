@@ -71,6 +71,11 @@ def get_gui_config(config: Optional[dict] = None) -> dict:
 
 
 class OVOSGuiFactory:
+    MAPPINGS = {
+        "smartspeaker": "ovos-gui-plugin-shell-companion",
+        "bigscreen": "ovos-gui-plugin-bigscreen"
+    }
+
     @staticmethod
     def get_class(config=None):
         """Factory method to get a gui engine class based on configuration.
@@ -84,6 +89,8 @@ class OVOSGuiFactory:
         """
         config = get_gui_config(config)
         gui_module = config.get("module") or 'generic'
+        if gui_module in OVOSGuiFactory.MAPPINGS:
+            gui_module = OVOSGuiFactory.MAPPINGS[gui_module]
         if gui_module == 'generic':
             return GUIExtension
         return load_gui_plugin(gui_module)
