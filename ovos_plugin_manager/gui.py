@@ -100,7 +100,7 @@ class OVOSGuiFactory:
         }
         """
         gui_config = get_gui_config(config)
-        gui_module = gui_config.get('extension', 'generic')
+        gui_module = gui_config.get('module', 'generic')
         try:
             clazz = OVOSGuiFactory.get_class(gui_config)
             gui = clazz(gui_config, bus=bus, gui=gui)

@@ -46,6 +46,8 @@ class GUIExtension:
                 homescreen.start()
 
             self.homescreen_manager = homescreen
+        else:
+            LOG.info("Homescreen support not configured")
 
     def handle_remove_namespace(self, message):
         LOG.info("Got Clear Namespace Event In Skill")

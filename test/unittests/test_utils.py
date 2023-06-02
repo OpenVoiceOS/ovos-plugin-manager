@@ -39,6 +39,12 @@ _MOCK_CONFIG = {
                 "valid": True
             }
         }
+    },
+    "gui": {
+        "module": "ovos-gui-plugin-shell-companion",
+        "generic": {"homescreen_supported": True},
+        "idle_display_skill": "skill-ovos-homescreen",
+        "run_gui_file_server": False
     }
 }
 
@@ -555,6 +561,7 @@ class TestConfigUtils(unittest.TestCase):
                                                 "tts-module")
         seg_config = get_plugin_config(_MOCK_CONFIG, "segmentation")
         pos_config = get_plugin_config(_MOCK_CONFIG, "postag")
+        gui_config = get_plugin_config(_MOCK_CONFIG, "gui")
 
         self.assertEqual(tts_config,
                          {"lang": "global",
@@ -581,12 +588,19 @@ class TestConfigUtils(unittest.TestCase):
                           "module": "right-module",
                           "valid": True})
 
+        self.assertEqual(gui_config,
+                         {"module": "ovos-gui-plugin-shell-companion",
+                          "idle_display_skill": "skill-ovos-homescreen",
+                          "run_gui_file_server": False
+                          })
+
         # Test for same behavior with global config
         self.assertEqual(tts_config, get_plugin_config(section="tts"))
         self.assertEqual(stt_config, get_plugin_config(section="stt"))
         self.assertEqual(keyword_config, get_plugin_config(section="keywords"))
         self.assertEqual(pos_config, get_plugin_config(section="postag"))
         self.assertEqual(seg_config, get_plugin_config(section="segmentation"))
+        self.assertEqual(gui_config, get_plugin_config(section="gui"))
 
         self.assertEqual(_MOCK_CONFIG, start_config)
 

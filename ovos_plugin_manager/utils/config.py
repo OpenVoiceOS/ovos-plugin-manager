@@ -8,7 +8,11 @@ from ovos_plugin_manager.utils import load_plugin, find_plugins, \
 def get_plugin_config(config: Optional[dict] = None, section: str = None,
                       module: Optional[str] = None) -> dict:
     """
-    Get a configuration dict for the specified plugin
+    Get a configuration dict for the specified plugin. Configuration is applied
+    such that:
+    - module-specific configurations take priority
+    - section-specific configuration is appended (new keys only)
+    - global `lang` configuration is appended (if not already set)
     @param config: Base configuration to parse, defaults to `Configuration()`
     @param section: Config section for the plugin (i.e. TTS, STT, language)
     @param module: Module/plugin to get config for, default reads from config
@@ -20,13 +24,16 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
               or config) if section else config
     module = module or config.get('module')
     if module:
-        module_config = config.get(module) or dict()
+        module_config = dict(config.get(module) or dict())
         module_config.setdefault('module', module)
-        if section not in ["hotwords", "VAD", "listener"]:
-            module_config.setdefault('lang', lang)
-        LOG.debug(f"Loaded configuration: {module_config}")
-        return module_config
-    if section not in ["hotwords", "VAD", "listener"]:
+        for key, val in config.items():
+            if key == "module":
+                continue
+            elif isinstance(val, dict):
+                continue
+            module_config.setdefault(key, val)
+        config = module_config
+    if section not in ["hotwords", "VAD", "listener", "gui"]:
         config.setdefault('lang', lang)
     LOG.debug(f"Loaded configuration: {config}")
     return config
