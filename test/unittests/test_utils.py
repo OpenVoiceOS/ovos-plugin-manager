@@ -41,7 +41,7 @@ _MOCK_CONFIG = {
         }
     },
     "gui": {
-        "extension": "ovos-gui-plugin-shell-companion",
+        "module": "ovos-gui-plugin-shell-companion",
         "generic": {"homescreen_supported": True},
         "idle_display_skill": "skill-ovos-homescreen",
         "run_gui_file_server": False

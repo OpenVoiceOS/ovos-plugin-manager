@@ -22,10 +22,6 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
     lang = config.get('lang') or Configuration().get('lang')
     config = (config.get('intentBox', {}).get(section) or config.get(section)
               or config) if section else config
-    if section == "gui" and config.get("extension"):
-        LOG.warning(f"`extension` config is deprecated; update config key to "
-                    f"`module`")
-        config.setdefault("module", config.pop('extension'))
     module = module or config.get('module')
     if module:
         module_config = dict(config.get(module) or dict())
