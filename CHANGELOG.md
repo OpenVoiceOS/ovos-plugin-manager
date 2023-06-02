@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.23a26](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.23a26) (2023-06-02)
+## [0.0.23a27](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.23a27) (2023-06-02)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a25...0.0.23a26)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a26...0.0.23a27)
+
+**Fixed bugs:**
+
+- Update `get_plugin_config` and tests for GUI support [\#163](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/163) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.23a26](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.23a26) (2023-06-02)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23a25...V0.0.23a26)
 
 **Fixed bugs:**
 
