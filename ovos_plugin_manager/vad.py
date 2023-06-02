@@ -121,6 +121,7 @@ class OVOSVADFactory:
             raise ValueError(f"VAD Plugin not configured in: {vad_config}")
         try:
             clazz = OVOSVADFactory.get_class(vad_config)
+            vad_config.pop("module")  # module name not expected in config
             return clazz(vad_config)
         except Exception:
             LOG.exception(f'VAD plugin {plugin} could not be loaded!')
