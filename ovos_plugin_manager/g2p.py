@@ -114,10 +114,11 @@ class OVOSG2PFactory:
         """
         config = get_g2p_config(config)
         g2p_module = config.get("module") or 'dummy'
-        if g2p_module == 'dummy':
-            return Grapheme2PhonemePlugin
         if g2p_module in OVOSG2PFactory.MAPPINGS:
             g2p_module = OVOSG2PFactory.MAPPINGS[g2p_module]
+        if g2p_module == 'ovos-g2p-plugin-dummy':
+            return Grapheme2PhonemePlugin
+
         return load_g2p_plugin(g2p_module)
 
     @staticmethod

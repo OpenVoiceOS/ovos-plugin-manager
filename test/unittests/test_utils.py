@@ -1,4 +1,8 @@
+import shutil
 import unittest
+from os import makedirs
+
+from os.path import join, dirname, isfile
 from copy import deepcopy, copy
 from unittest.mock import patch
 
@@ -661,7 +665,35 @@ class TestTTSCacheUtils(unittest.TestCase):
 
     def test_curate_cache(self):
         from ovos_plugin_manager.utils.tts_cache import curate_cache
-        # TODO
+        test_dir = join(dirname(__file__), "mock_cache")
+        test_file = join(test_dir, "file.bin")
+        # curate cache directory not found
+        with self.assertRaises(NotADirectoryError):
+            curate_cache(test_dir)
+
+        makedirs(test_dir, exist_ok=True)
+        with open(test_file, 'wb+') as f:
+            f.write(b'12345678')
+
+        # curate cache passed file
+        with self.assertRaises(NotADirectoryError):
+            curate_cache(test_file)
+
+        # curate cache sufficient free percent
+        files = curate_cache(test_dir, 0.0, 10000000.0)
+        self.assertEqual(files, list())
+
+        # Curate cache sufficient free disk
+        files = curate_cache(test_dir, 100.0, 0.0)
+        self.assertEqual(files, list())
+
+        # Curate cache remove files
+        self.assertTrue(isfile(test_file))
+        files = curate_cache(test_dir, 100.0, 10000000.0)
+        self.assertEqual(files, [test_file])
+        self.assertFalse(isfile(test_file))
+
+        shutil.rmtree(test_dir)
 
     def test_audio_file(self):
         from ovos_plugin_manager.utils.tts_cache import AudioFile
