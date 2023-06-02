@@ -1,4 +1,3 @@
-# write your first unittest!
 import unittest
 from unittest.mock import patch
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
@@ -6,12 +5,7 @@ from ovos_plugin_manager.templates.tts import TTS
 
 
 class TestTTSTemplate(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        tts = TTS()  # dummy engine
-       # bus = FakeBus()
-       # tts.init(bus)
-        cls.tts = tts
+    tts = TTS()  # dummy engine
 
     def test_ssml(self):
         sentence = "<speak>Prosody can be used to change the way words " \
