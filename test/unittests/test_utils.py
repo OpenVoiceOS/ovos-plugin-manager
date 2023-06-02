@@ -1,5 +1,5 @@
 import unittest
-from copy import deepcopy
+from copy import deepcopy, copy
 from unittest.mock import patch
 
 _MOCK_CONFIG = {
@@ -539,8 +539,11 @@ class TestUtils(unittest.TestCase):
 
 
 class TestConfigUtils(unittest.TestCase):
-    def test_get_plugin_config(self):
+    @patch("ovos_plugin_manager.utils.config.Configuration")
+    def test_get_plugin_config(self, config):
+        config.return_value = _MOCK_CONFIG
         from ovos_plugin_manager.utils.config import get_plugin_config
+        start_config = copy(_MOCK_CONFIG)
         tts_config = get_plugin_config(_MOCK_CONFIG, "tts")
         stt_config = get_plugin_config(_MOCK_CONFIG, "stt")
         keyword_config = get_plugin_config(_MOCK_CONFIG, "keywords")
@@ -573,6 +576,15 @@ class TestConfigUtils(unittest.TestCase):
                          {"lang": "global",
                           "module": "right-module",
                           "valid": True})
+
+        # Test for same behavior with global config
+        self.assertEqual(tts_config, get_plugin_config(section="tts"))
+        self.assertEqual(stt_config, get_plugin_config(section="stt"))
+        self.assertEqual(keyword_config, get_plugin_config(section="keywords"))
+        self.assertEqual(pos_config, get_plugin_config(section="postag"))
+        self.assertEqual(seg_config, get_plugin_config(section="segmentation"))
+
+        self.assertEqual(_MOCK_CONFIG, start_config)
 
     def test_get_valid_plugin_configs(self):
         from ovos_plugin_manager.utils.config import get_valid_plugin_configs
