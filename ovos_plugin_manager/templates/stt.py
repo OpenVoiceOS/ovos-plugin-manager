@@ -99,7 +99,6 @@ class STT(metaclass=ABCMeta):
             return langs[0].lower() + "-" + langs[1].upper()
         return lang
 
-    @abstractmethod
     def execute(self, audio, language=None):
         pass
 
@@ -177,7 +176,7 @@ class StreamThread(Thread, metaclass=ABCMeta):
 
 class StreamingSTT(STT, metaclass=ABCMeta):
     """
-        ABC class for threaded streaming STT implemenations.
+        ABC class for threaded streaming STT implementations.
     """
 
     def __init__(self, config=None):

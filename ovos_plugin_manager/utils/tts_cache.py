@@ -1,7 +1,7 @@
 import hashlib
 import json
 import os
-from os.path import join
+from os.path import join, isdir
 import shutil
 from pathlib import Path
 from stat import S_ISREG, ST_MTIME, ST_MODE, ST_SIZE
@@ -116,6 +116,9 @@ def curate_cache(directory, min_free_percent=5.0, min_free_disk=50):
     # disk available.
     # TODO: Would be easy to add more options, like whitelisted files, etc.
     deleted_files = []
+
+    if not isdir(directory):
+        raise NotADirectoryError(directory)
 
     # Get the disk usage statistics bout the given path
     space = shutil.disk_usage(directory)
@@ -291,8 +294,12 @@ class TextToSpeechCache:
 
     def curate(self):
         """Remove cache data if disk space is running low."""
-        files_removed = curate_cache(str(self.temporary_cache_dir),
-                                     min_free_percent=self.min_free_percent)
+        try:
+            files_removed = curate_cache(str(self.temporary_cache_dir),
+                                         min_free_percent=self.min_free_percent)
+        except NotADirectoryError:
+            LOG.info(f"Nothing to curate")
+            return
         hashes = set([hash_from_path(Path(path)) for path in files_removed])
         for sentence_hash in hashes:
             if sentence_hash in self.cached_sentences:

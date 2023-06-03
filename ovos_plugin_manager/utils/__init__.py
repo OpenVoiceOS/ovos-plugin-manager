@@ -11,18 +11,26 @@
 # limitations under the License.
 #
 """Common functions for loading plugins."""
-import pkg_resources
+from typing import Optional
+
+import time
 from enum import Enum
-from ovos_utils.log import LOG
+from threading import Event
+
+import pkg_resources
 from langcodes import standardize_tag as _normalize_lang
+from ovos_utils.log import LOG
 
 
 class PluginTypes(str, Enum):
+    GUI = "ovos.plugin.gui"
     PHAL = "ovos.plugin.phal"
     ADMIN = "ovos.plugin.phal.admin"
     SKILL = "ovos.plugin.skill"
+    MIC = "ovos.plugin.microphone"
     VAD = "ovos.plugin.VAD"
     PHONEME = "ovos.plugin.g2p"
+    AUDIO2IPA = "ovos.plugin.audio2ipa"
     AUDIO = 'mycroft.plugin.audioservice'
     STT = 'mycroft.plugin.stt'
     TTS = 'mycroft.plugin.tts'
@@ -33,20 +41,28 @@ class PluginTypes(str, Enum):
     METADATA_TRANSFORMER = "neon.plugin.metadata"
     AUDIO_TRANSFORMER = "neon.plugin.audio"
     QUESTION_SOLVER = "neon.plugin.solver"
+    TLDR_SOLVER = "opm.solver.summarization"
+    ENTAILMENT_SOLVER = "opm.solver.entailment"
+    MULTIPLE_CHOICE_SOLVER = "opm.solver.multiple_choice"
+    READING_COMPREHENSION_SOLVER = "opm.solver.reading_comprehension"
     COREFERENCE_SOLVER = "intentbox.coreference"
     KEYWORD_EXTRACTION = "intentbox.keywords"
     UTTERANCE_SEGMENTATION = "intentbox.segmentation"
     TOKENIZATION = "intentbox.tokenization"
     POSTAG = "intentbox.postag"
     STREAM_EXTRACTOR = "ovos.ocp.extractor"
+    PERSONA = "opm.plugin.persona"  # personas are a dict, they have no config because they ARE a config
 
 
 class PluginConfigTypes(str, Enum):
+    GUI = "ovos.plugin.gui.config"
     PHAL = "ovos.plugin.phal.config"
     ADMIN = "ovos.plugin.phal.admin.config"
     SKILL = "ovos.plugin.skill.config"
     VAD = "ovos.plugin.VAD.config"
+    MIC = "ovos.plugin.microphone.config"
     PHONEME = "ovos.plugin.g2p.config"
+    AUDIO2IPA = "ovos.plugin.audio2ipa.config"
     AUDIO = 'mycroft.plugin.audioservice.config'
     STT = 'mycroft.plugin.stt.config'
     TTS = 'mycroft.plugin.tts.config'
@@ -57,6 +73,10 @@ class PluginConfigTypes(str, Enum):
     METADATA_TRANSFORMER = "neon.plugin.metadata.config"
     AUDIO_TRANSFORMER = "neon.plugin.audio.config"
     QUESTION_SOLVER = "neon.plugin.solver.config"
+    TLDR_SOLVER = "opm.solver.summarization.config"
+    ENTAILMENT_SOLVER = "opm.solver.entailment.config"
+    MULTIPLE_CHOICE_SOLVER = "opm.solver.multiple_choice.config"
+    READING_COMPREHENSION_SOLVER = "opm.solver.reading_comprehension.config"
     COREFERENCE_SOLVER = "intentbox.coreference.config"
     KEYWORD_EXTRACTION = "intentbox.keywords.config"
     UTTERANCE_SEGMENTATION = "intentbox.segmentation.config"
@@ -65,8 +85,9 @@ class PluginConfigTypes(str, Enum):
     STREAM_EXTRACTOR = "ovos.ocp.extractor.config"
 
 
-def find_plugins(plug_type=None):
-    """Finds all plugins matching specific entrypoint type.
+def find_plugins(plug_type: PluginTypes = None) -> dict:
+    """
+    Finds all plugins matching specific entrypoint type.
 
     Arguments:
         plug_type (str): plugin entrypoint string to retrieve
@@ -88,11 +109,17 @@ def find_plugins(plug_type=None):
                 if entry_point.name not in entrypoints:
                     LOG.debug(f"Loaded plugin entry point {entry_point.name}")
             except Exception as e:
-                LOG.exception(f"Failed to load plugin entry point {entry_point}")
+                LOG.debug(f"Failed to load plugin entry point {entry_point}: "
+                          f"{e}")
     return entrypoints
 
 
-def _iter_entrypoints(plug_type):
+def _iter_entrypoints(plug_type: Optional[str]):
+    """
+    Return an iterator containing all entrypoints of the requested type
+    @param plug_type: entrypoint name to load
+    @return: iterator of all entrypoints
+    """
     try:
         from importlib_metadata import entry_points
         for entry_point in entry_points(group=plug_type):
@@ -102,12 +129,12 @@ def _iter_entrypoints(plug_type):
             yield entry_point
 
 
-def load_plugin(plug_name, plug_type=None):
+def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
     """Load a specific plugin from a specific plugin type.
 
     Arguments:
         plug_type: (str) plugin type name. Ex. "mycroft.plugin.tts".
-        plug_name: (str) specific plugin name
+        plug_name: (str) specific plugin name (else consider all plugin types)
 
     Returns:
         Loaded plugin Object or None if no matching object was found.
@@ -115,8 +142,8 @@ def load_plugin(plug_name, plug_type=None):
     plugins = find_plugins(plug_type)
     if plug_name in plugins:
         return plugins[plug_name]
-    LOG.warning('Could not find the plugin {}.{}'.format(
-        plug_type or "all plugin types", plug_name))
+    plug_type = plug_type or "all plugin types"
+    LOG.warning(f'Could not find the plugin {plug_type}.{plug_name}')
     return None
 
 
@@ -137,3 +164,45 @@ def normalize_lang(lang):
         pass
     return lang
 
+
+class ReadWriteStream:
+    """
+    Class used to support writing binary audio data at any pace,
+    optionally chopping when the buffer gets too large
+    """
+
+    def __init__(self, s=b'', chop_samples=-1):
+        self.buffer = s
+        self.write_event = Event()
+        self.chop_samples = chop_samples
+
+    def __len__(self):
+        return len(self.buffer)
+
+    def read(self, n=-1, timeout=None):
+        if n == -1:
+            n = len(self.buffer)
+        if 0 < self.chop_samples < len(self.buffer):
+            samples_left = len(self.buffer) % self.chop_samples
+            self.buffer = self.buffer[-samples_left:]
+        return_time = 1e10 if timeout is None else (
+                timeout + time.time()
+        )
+        while len(self.buffer) < n:
+            self.write_event.clear()
+            if not self.write_event.wait(return_time - time.time()):
+                return b''
+        chunk = self.buffer[:n]
+        self.buffer = self.buffer[n:]
+        return chunk
+
+    def write(self, s):
+        self.buffer += s
+        self.write_event.set()
+
+    def flush(self):
+        """Makes compatible with sys.stdout"""
+        pass
+
+    def clear(self):
+        self.buffer = b''

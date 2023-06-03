@@ -1,7 +1,43 @@
-from ovos_plugin_manager.utils import PluginConfigTypes, load_plugin, find_plugins, PluginTypes
+from ovos_plugin_manager.utils import PluginConfigTypes, PluginTypes
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
 from ovos_config import Configuration
+
+
+def find_plugins(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(*args, **kwargs)
+
+
+def find_audio_service_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(PluginTypes.AUDIO)
+
+
+def get_audio_service_configs() -> dict:
+    """
+    Get valid plugin configurations by plugin name
+    @return: dict plugin names to list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
+    return load_configs_for_plugin_type(PluginTypes.AUDIO)
+
+
+def get_audio_service_module_configs(module_name: str) -> dict:
+    """
+    Get valid configuration for the specified plugin
+    @param module_name: plugin to get configuration for
+    @return: dict configuration (if provided)
+    """
+    from ovos_plugin_manager.utils.config import load_plugin_configs
+    return load_plugin_configs(module_name, PluginConfigTypes.AUDIO)
 
 
 def setup_audio_service(service_module, config=None, bus=None):
@@ -29,19 +65,6 @@ def setup_audio_service(service_module, config=None, bus=None):
             LOG.error('Failed to load audio service. ' + repr(e))
     else:
         return None
-
-
-def find_audio_service_plugins():
-    return find_plugins(PluginTypes.AUDIO)
-
-
-def get_audio_service_configs():
-    return {plug: get_audio_service_module_configs(plug)
-            for plug in find_audio_service_plugins()}
-
-
-def get_audio_service_module_configs(module_name):
-    return load_plugin(module_name + ".config", PluginConfigTypes.AUDIO)
 
 
 def load_audio_service_plugins(config=None, bus=None):

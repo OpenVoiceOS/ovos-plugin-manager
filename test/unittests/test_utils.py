@@ -1,5 +1,9 @@
+import shutil
 import unittest
-from copy import deepcopy
+from os import makedirs
+
+from os.path import join, dirname, isfile
+from copy import deepcopy, copy
 from unittest.mock import patch
 
 _MOCK_CONFIG = {
@@ -35,6 +39,12 @@ _MOCK_CONFIG = {
                 "valid": True
             }
         }
+    },
+    "gui": {
+        "module": "ovos-gui-plugin-shell-companion",
+        "generic": {"homescreen_supported": True},
+        "idle_display_skill": "skill-ovos-homescreen",
+        "run_gui_file_server": False
     }
 }
 
@@ -506,9 +516,44 @@ _MOCK_VALID_STT_PLUGINS_CONFIG = {
     'ovos-stt-plugin-vosk-streaming': []}
 
 
+class TestUtils(unittest.TestCase):
+    def test_plugin_types(self):
+        from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
+        for plug_type in PluginTypes:
+            self.assertIsInstance(plug_type, PluginTypes)
+            self.assertIsInstance(plug_type, str)
+            # Handle plugins without associated config entrypoint
+            if plug_type not in (PluginTypes.PERSONA,):
+                self.assertIsInstance(PluginConfigTypes(f"{plug_type}.config"),
+                                      PluginConfigTypes)
+        for cfg_type in PluginConfigTypes:
+            self.assertIsInstance(cfg_type, PluginConfigTypes)
+            self.assertIsInstance(cfg_type, str)
+            self.assertTrue(cfg_type.value.endswith('.config'))
+
+    def test_find_plugins(self):
+        from ovos_plugin_manager.utils import find_plugins
+        # TODO
+
+    def test_load_plugin(self):
+        from ovos_plugin_manager.utils import load_plugin
+        # TODO
+
+    def test_normalize_lang(self):
+        from ovos_plugin_manager.utils import normalize_lang
+        # TODO
+
+    def test_read_write_stream(self):
+        from ovos_plugin_manager.utils import ReadWriteStream
+        # TODO
+
+
 class TestConfigUtils(unittest.TestCase):
-    def test_get_plugin_config(self):
+    @patch("ovos_plugin_manager.utils.config.Configuration")
+    def test_get_plugin_config(self, config):
+        config.return_value = _MOCK_CONFIG
         from ovos_plugin_manager.utils.config import get_plugin_config
+        start_config = copy(_MOCK_CONFIG)
         tts_config = get_plugin_config(_MOCK_CONFIG, "tts")
         stt_config = get_plugin_config(_MOCK_CONFIG, "stt")
         keyword_config = get_plugin_config(_MOCK_CONFIG, "keywords")
@@ -516,6 +561,7 @@ class TestConfigUtils(unittest.TestCase):
                                                 "tts-module")
         seg_config = get_plugin_config(_MOCK_CONFIG, "segmentation")
         pos_config = get_plugin_config(_MOCK_CONFIG, "postag")
+        gui_config = get_plugin_config(_MOCK_CONFIG, "gui")
 
         self.assertEqual(tts_config,
                          {"lang": "global",
@@ -542,6 +588,22 @@ class TestConfigUtils(unittest.TestCase):
                           "module": "right-module",
                           "valid": True})
 
+        self.assertEqual(gui_config,
+                         {"module": "ovos-gui-plugin-shell-companion",
+                          "idle_display_skill": "skill-ovos-homescreen",
+                          "run_gui_file_server": False
+                          })
+
+        # Test for same behavior with global config
+        self.assertEqual(tts_config, get_plugin_config(section="tts"))
+        self.assertEqual(stt_config, get_plugin_config(section="stt"))
+        self.assertEqual(keyword_config, get_plugin_config(section="keywords"))
+        self.assertEqual(pos_config, get_plugin_config(section="postag"))
+        self.assertEqual(seg_config, get_plugin_config(section="segmentation"))
+        self.assertEqual(gui_config, get_plugin_config(section="gui"))
+
+        self.assertEqual(_MOCK_CONFIG, start_config)
+
     def test_get_valid_plugin_configs(self):
         from ovos_plugin_manager.utils.config import get_valid_plugin_configs
         valid_en_us = get_valid_plugin_configs(_MOCK_PLUGIN_CONFIG,
@@ -564,6 +626,22 @@ class TestConfigUtils(unittest.TestCase):
                           'offline': False,
                           'priority': 80}
                          )
+
+    def test_load_plugin_configs(self):
+        from ovos_plugin_manager.utils.config import load_plugin_configs
+        # TODO
+
+    def test_load_configs_for_plugin_type(self):
+        from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
+        # TODO
+
+    def test_get_plugin_supported_languages(self):
+        from ovos_plugin_manager.utils.config import get_plugin_supported_languages
+        # TODO
+
+    def test_get_plugin_language_configs(self):
+        from ovos_plugin_manager.utils.config import get_plugin_language_configs
+        # TODO
 
 
 class TestTTSCacheUtils(unittest.TestCase):
@@ -591,8 +669,57 @@ class TestTTSCacheUtils(unittest.TestCase):
         from ovos_plugin_manager.utils.tts_cache import mb_to_bytes
         self.assertEqual(mb_to_bytes(1), 1024 * 1024)
 
+    def test_get_cache_entries(self):
+        from ovos_plugin_manager.utils.tts_cache import _get_cache_entries
+        # TODO
 
-# TODO: Write unit tests for classes in tts_cache
+    def test_delete_oldest(self):
+        from ovos_plugin_manager.utils.tts_cache import _delete_oldest
+        # TODO
+
+    def test_curate_cache(self):
+        from ovos_plugin_manager.utils.tts_cache import curate_cache
+        test_dir = join(dirname(__file__), "mock_cache")
+        test_file = join(test_dir, "file.bin")
+        # curate cache directory not found
+        with self.assertRaises(NotADirectoryError):
+            curate_cache(test_dir)
+
+        makedirs(test_dir, exist_ok=True)
+        with open(test_file, 'wb+') as f:
+            f.write(b'12345678')
+
+        # curate cache passed file
+        with self.assertRaises(NotADirectoryError):
+            curate_cache(test_file)
+
+        # curate cache sufficient free percent
+        files = curate_cache(test_dir, 0.0, 10000000.0)
+        self.assertEqual(files, list())
+
+        # Curate cache sufficient free disk
+        files = curate_cache(test_dir, 100.0, 0.0)
+        self.assertEqual(files, list())
+
+        # Curate cache remove files
+        self.assertTrue(isfile(test_file))
+        files = curate_cache(test_dir, 100.0, 10000000.0)
+        self.assertEqual(files, [test_file])
+        self.assertFalse(isfile(test_file))
+
+        shutil.rmtree(test_dir)
+
+    def test_audio_file(self):
+        from ovos_plugin_manager.utils.tts_cache import AudioFile
+        # TODO
+
+    def test_phoneme_file(self):
+        from ovos_plugin_manager.utils.tts_cache import PhonemeFile
+        # TODO
+
+    def test_tts_cache(self):
+        from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache
+        # TODO
 
 
 class TestUiUtils(unittest.TestCase):

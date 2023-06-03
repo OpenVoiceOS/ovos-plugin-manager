@@ -1,9 +1,30 @@
-from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.ocp import OCPStreamExtractor
 from ovos_utils.log import LOG
 
 
-def find_ocp_plugins():
+def find_plugins(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(*args, **kwargs)
+
+
+def load_plugin(*args, **kwargs):
+    # TODO: Deprecate in 0.1.0
+    LOG.warning("This reference is deprecated. "
+                "Import from ovos_plugin_manager.utils directly")
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(*args, **kwargs)
+
+
+def find_ocp_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
+    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.STREAM_EXTRACTOR)
 
 
@@ -71,10 +92,3 @@ class StreamHandler:
 
         # no extractor available, return raw url
         return meta or {"uri": uri}
-
-
-# if __name__ == "__main__":
-#     s = StreamHandler()
-#     print(s.supported_seis)
-#     # ['rss', 'bandcamp', 'youtube', 'ydl', 'youtube.channel.live',
-#     # 'pytube', 'invidious', 'm3u', 'pls']

@@ -102,6 +102,12 @@ class HotWordEngine:
         """
         return False
 
+    def reset(self):
+        """
+        Reset the WW engine to prepare for a new detection
+        """
+        pass
+
     def update(self, chunk):
         """Updates the hotword engine with new audio data.
 
@@ -112,8 +118,14 @@ class HotWordEngine:
         """
 
     def stop(self):
-        """Perform any actions needed to shut down the wake word engine.
-
-        This may include things such as unloading data or shutdown
-        external processess.
         """
+        Perform any actions needed to shut down the wake word engine.
+        This may include things such as unloading data or shutdown
+        external processes.
+        """
+
+    def shutdown(self):
+        """
+        Compatibility wrapper for `self.stop`
+        """
+        self.stop()

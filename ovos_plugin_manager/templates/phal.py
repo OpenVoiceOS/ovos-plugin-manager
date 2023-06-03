@@ -1,7 +1,6 @@
-import time
 from threading import Thread
 
-from mycroft_bus_client.message import Message
+from ovos_bus_client.message import Message
 from ovos_config import Configuration
 from ovos_utils import camel_case_split
 from ovos_utils import classproperty
@@ -14,11 +13,15 @@ from ovos_plugin_manager.utils.config import get_plugin_config
 
 class PHALValidator:
     @staticmethod
-    def validate(config=None):
-        """ this method is called before loading the plugin.
-        If it returns False the plugin is not loaded.
-        This allows a plugin to run platform checks"""
-        return config.get("enabled", True)
+    def validate(config: dict = None) -> bool:
+        """
+        This method is called before loading the plugin. If it returns False,
+        the plugin is not loaded. This allows a plugin to run platform checks
+        @param config: dict configuration for this plugin
+        @return: True if plugin is enabled, else False
+        """
+        config = config or dict()
+        return config.get("enabled", True) is True
 
 
 class PHALPlugin(Thread):
