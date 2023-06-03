@@ -14,7 +14,7 @@ jobs:
     uses: neongeckocom/.github/.github/workflows/propose_semver_release.yml@master
     with:
       release_type: ${{ inputs.release_type }}
-      version_file: ovos_utils/version.py
+      version_file: ovos_plugin_manager/version.py
       alpha_var: VERSION_ALPHA
       build_var: VERSION_BUILD
       minor_var: VERSION_MINOR
