@@ -196,7 +196,6 @@ class PlaybackThread(Thread):
     def _play(self):
         try:
             data, visemes, ident, listen, tts_id, message = self._now_playing
-            message = message or Message("speak", context={"session": {"session_id": ident}})
             self.activate_tts(tts_id)
             self.on_start(message)
             self.p = play_audio(data)
