@@ -187,7 +187,6 @@ class PlaybackThread(Thread):
         if self._processing_queue:
             self.end_audio(listen, message)
             self._processing_queue = False
-
         # Clear cache for all attached tts objects
         # This is basically the only safe time
         for tts in self.attached_tts:
@@ -195,30 +194,9 @@ class PlaybackThread(Thread):
         self.blink(0.2)
 
     def _play(self):
-        listen = False
-        message = None
-        tts_id = None
         try:
-            # TODO - deprecate this handling
-            # this is here to account for direct usages of PlaybackThread
-            # internally TTS always passes the expected data
-            if len(self._now_playing) == 7:
-                # TODO - we dont care about snd_type or ident...
-                # opm style with tts_id + src_message
-                _, data, visemes, ident, listen, tts_id, message = self._now_playing
-            elif len(self._now_playing) == 6:
-                # opm style with tts_id
-                _, data, visemes, ident, listen, tts_id = self._now_playing
-            elif len(self._now_playing) == 5:
-                # new mycroft style
-                _, data, visemes, ident, listen = self._now_playing
-            else:
-                # old mycroft style  TODO can this be deprecated? its very old
-                _, data, visemes, ident = self._now_playing
-
-
-            message = message or dig_for_message() or Message("speak", context={"session": {"session_id": ident}})
-
+            data, visemes, ident, listen, tts_id, message = self._now_playing
+            message = message or Message("speak", context={"session": {"session_id": ident}})
             self.activate_tts(tts_id)
             self.on_start(message)
             self.p = play_audio(data)
@@ -235,7 +213,7 @@ class PlaybackThread(Thread):
         except Exception as e:
             LOG.exception(e)
             if self._processing_queue:
-                self.on_end(listen)
+                self.on_end()
         self._now_playing = None
 
     def run(self, cb=None):
@@ -260,7 +238,29 @@ class PlaybackThread(Thread):
             while self._paused:
                 sleep(0.2)
             try:
-                self._now_playing = self.queue.get(timeout=2)
+                # HACK: we do these check to account for direct usages of TTS.queue singletons
+                speech_data = self.queue.get(timeout=2)
+                if len(speech_data) == 6 and isinstance(speech_data[-1], Message):
+                    data, visemes, ident, listen, tts_id, message = speech_data
+                else:
+                    LOG.warning("it seems you interfacing with TTS.queue directly, this is not recommended!\n"
+                                "new expected TTS.queue contents -> data, visemes, ident, listen, tts_id, message")
+                    if len(speech_data) == 6:
+                        # old ovos backwards compat
+                        _, data, visemes, ident, listen, tts_id = speech_data
+                    elif len(speech_data) == 5:
+                        # mycroft style
+                        tts_id = None
+                        _, data, visemes, ident, listen = speech_data
+                    else:
+                        # old mycroft style  TODO can this be deprecated? its very very old
+                        listen = False
+                        tts_id = None
+                        _, data, visemes, ident = speech_data
+
+                    message =  Message("speak", context={"session": {"session_id": ident}})
+
+                self._now_playing = (data, visemes, ident, listen, tts_id, message)
                 self._play()
             except Exception as e:
                 pass
@@ -757,28 +757,15 @@ class TTS:
                     # this one is unplanned, let devs know all the info so they can fix it
                     LOG.exception(f"Unexpected failure in G2P plugin: {self.g2p}")
 
-            audio_ext = self._determine_ext(audio_file)
-
             if not viseme:
                 # Debug level because this is expected in default installs
                 LOG.debug(f"no mouth movements available! unknown visemes for {sentence}")
 
             message = kwargs.get("message") or dig_for_message()
             TTS.queue.put(
-                (audio_ext, str(audio_file), viseme, ident, l, tts_id, message)
+                (str(audio_file), viseme, ident, l, tts_id, message)
             )
             self.add_metric({"metric_type": "tts.queued"})
-
-    def _determine_ext(self, audio_file):
-        # determine audio_ext on the fly
-        # do not use the ext defined in the plugin since it might not match
-        # some plugins support multiple extensions
-        # or have caches in different extensions
-        try:
-            _, audio_ext = splitext(str(audio_file))
-            return audio_ext[1:] or self.audio_ext
-        except Exception as e:
-            return self.audio_ext
 
     def synth(self, sentence, **kwargs):
         """ This method wraps get_tts
