@@ -195,7 +195,7 @@ class PlaybackThread(Thread):
 
     def _play(self):
         try:
-            data, visemes, ident, listen, tts_id, message = self._now_playing
+            data, visemes, listen, tts_id, message = self._now_playing
             self.activate_tts(tts_id)
             self.on_start(message)
             self.p = play_audio(data)
@@ -238,13 +238,12 @@ class PlaybackThread(Thread):
                 sleep(0.2)
             try:
                 # HACK: we do these check to account for direct usages of TTS.queue singletons
-                message = None
                 speech_data = self.queue.get(timeout=2)
-                if len(speech_data) == 6 and isinstance(speech_data[-1], Message):
-                    data, visemes, ident, listen, tts_id, message = speech_data
+                if len(speech_data) == 5 and isinstance(speech_data[-1], Message):
+                    data, visemes, listen, tts_id, message = speech_data
                 else:
                     LOG.warning("it seems you interfacing with TTS.queue directly, this is not recommended!\n"
-                                "new expected TTS.queue contents -> data, visemes, ident, listen, tts_id, message")
+                                "new expected TTS.queue contents -> data, visemes, listen, tts_id, message")
                     if len(speech_data) == 6:
                         # old ovos backwards compat
                         _, data, visemes, ident, listen, tts_id = speech_data
@@ -258,9 +257,9 @@ class PlaybackThread(Thread):
                         tts_id = None
                         _, data, visemes, ident = speech_data
 
-                message = message or Message("speak", context={"session": {"session_id": ident}})
+                    message = Message("speak", context={"session": {"session_id": ident}})
 
-                self._now_playing = (data, visemes, ident, listen, tts_id, message)
+                self._now_playing = (data, visemes, listen, tts_id, message)
                 self._play()
             except Exception as e:
                 pass
@@ -761,9 +760,11 @@ class TTS:
                 # Debug level because this is expected in default installs
                 LOG.debug(f"no mouth movements available! unknown visemes for {sentence}")
 
-            message = kwargs.get("message") or dig_for_message()
+            message = kwargs.get("message") or \
+                      dig_for_message() or \
+                      Message("speak", context={"session": {"session_id": ident}})
             TTS.queue.put(
-                (str(audio_file), viseme, ident, l, tts_id, message)
+                (str(audio_file), viseme, l, tts_id, message)
             )
             self.add_metric({"metric_type": "tts.queued"})
 
