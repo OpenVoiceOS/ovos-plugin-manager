@@ -44,7 +44,6 @@ from ovos_utils.log import LOG
 from ovos_utils.messagebus import FakeBus as BUS
 from ovos_utils.metrics import Stopwatch
 from ovos_utils.process_utils import RuntimeRequirements
-from ovos_utils.signal import check_for_signal, create_signal
 from ovos_utils.sound import play_audio
 
 from ovos_plugin_manager.g2p import OVOSG2PFactory, find_g2p_plugins
@@ -154,19 +153,15 @@ class PlaybackThread(Thread):
         except Exception:
             pass
 
-    def begin_audio(self):
+    def begin_audio(self, message=None):
         """Perform beginning of speech actions."""
-        # This check will clear the "signal", in case it is still there for some reasons
-        check_for_signal("isSpeaking")
-        # this will create it again
-        create_signal("isSpeaking")
-        # Create signals informing start of speech
         if self.bus:
-            self.bus.emit(Message("recognizer_loop:audio_output_start"))
+            message = message or Message("speak")
+            self.bus.emit(message.forward("recognizer_loop:audio_output_start"))
         else:
             LOG.warning("Speech started before bus was attached.")
 
-    def end_audio(self, listen):
+    def end_audio(self, listen, message=None):
         """Perform end of speech output actions.
         Will inform the system that speech has ended and trigger the TTS's
         cache checks. Listening will be triggered if requested.
@@ -175,26 +170,23 @@ class PlaybackThread(Thread):
         """
         if self.bus:
             # Send end of speech signals to the system
-            self.bus.emit(Message("recognizer_loop:audio_output_end"))
+            message = message or Message("speak")
+            self.bus.emit(message.forward("recognizer_loop:audio_output_end"))
             if listen:
-                self.bus.emit(Message('mycroft.mic.listen'))
+                self.bus.emit(message.forward('mycroft.mic.listen'))
         else:
             LOG.warning("Speech started before bus was attached.")
 
-        # This check will clear the filesystem IPC "signal"
-        check_for_signal("isSpeaking")
-
-    def on_start(self):
+    def on_start(self, message=None):
         self.blink(0.5)
         if not self._processing_queue:
             self._processing_queue = True
-            self.begin_audio()
+            self.begin_audio(message)
 
-    def on_end(self, listen=False):
+    def on_end(self, listen=False, message=None):
         if self._processing_queue:
-            self.end_audio(listen)
+            self.end_audio(listen, message)
             self._processing_queue = False
-
         # Clear cache for all attached tts objects
         # This is basically the only safe time
         for tts in self.attached_tts:
@@ -202,21 +194,10 @@ class PlaybackThread(Thread):
         self.blink(0.2)
 
     def _play(self):
-        listen = False
-        tts_id = None
         try:
-            if len(self._now_playing) == 6:
-                # opm style with tts_id
-                snd_type, data, visemes, ident, listen, tts_id = self._now_playing
-            elif len(self._now_playing) == 5:
-                # new mycroft style
-                snd_type, data, visemes, ident, listen = self._now_playing
-            else:
-                # old mycroft style  TODO can this be deprecated? its very old
-                snd_type, data, visemes, ident = self._now_playing
-
+            data, visemes, listen, tts_id, message = self._now_playing
             self.activate_tts(tts_id)
-            self.on_start()
+            self.on_start(message)
             self.p = play_audio(data)
             if visemes:
                 self.show_visemes(visemes)
@@ -225,13 +206,13 @@ class PlaybackThread(Thread):
                 self.p.wait()
             self.deactivate_tts()
             if self.queue.empty():
-                self.on_end(listen)
+                self.on_end(listen, message)
         except Empty:
             pass
         except Exception as e:
             LOG.exception(e)
             if self._processing_queue:
-                self.on_end(listen)
+                self.on_end()
         self._now_playing = None
 
     def run(self, cb=None):
@@ -256,7 +237,29 @@ class PlaybackThread(Thread):
             while self._paused:
                 sleep(0.2)
             try:
-                self._now_playing = self.queue.get(timeout=2)
+                # HACK: we do these check to account for direct usages of TTS.queue singletons
+                speech_data = self.queue.get(timeout=2)
+                if len(speech_data) == 5 and isinstance(speech_data[-1], Message):
+                    data, visemes, listen, tts_id, message = speech_data
+                else:
+                    LOG.warning("it seems you interfacing with TTS.queue directly, this is not recommended!\n"
+                                "new expected TTS.queue contents -> data, visemes, listen, tts_id, message")
+                    if len(speech_data) == 6:
+                        # old ovos backwards compat
+                        _, data, visemes, ident, listen, tts_id = speech_data
+                    elif len(speech_data) == 5:
+                        # mycroft style
+                        tts_id = None
+                        _, data, visemes, ident, listen = speech_data
+                    else:
+                        # old mycroft style  TODO can this be deprecated? its very very old
+                        listen = False
+                        tts_id = None
+                        _, data, visemes, ident = speech_data
+
+                    message = Message("speak", context={"session": {"session_id": ident}})
+
+                self._now_playing = (data, visemes, listen, tts_id, message)
                 self._play()
             except Exception as e:
                 pass
@@ -706,13 +709,12 @@ class TTS:
 
         Arguments:
             sentence: (str) Sentence to be spoken
-            ident: (str) Id reference to current interaction
+            ident: (str) session_id from Message
             listen: (bool) True if listen should be triggered at the end
                     of the utterance.
         """
         sentence = self.validate_ssml(sentence)
         self.add_metric({"metric_type": "tts.ssml.validated"})
-        create_signal("isSpeaking")
         self._execute(sentence, ident, listen, **kwargs)
 
     def _replace_phonetic_spellings(self, sentence):
@@ -754,27 +756,17 @@ class TTS:
                     # this one is unplanned, let devs know all the info so they can fix it
                     LOG.exception(f"Unexpected failure in G2P plugin: {self.g2p}")
 
-            audio_ext = self._determine_ext(audio_file)
-
             if not viseme:
                 # Debug level because this is expected in default installs
                 LOG.debug(f"no mouth movements available! unknown visemes for {sentence}")
 
+            message = kwargs.get("message") or \
+                      dig_for_message() or \
+                      Message("speak", context={"session": {"session_id": ident}})
             TTS.queue.put(
-                (audio_ext, str(audio_file), viseme, ident, l, tts_id)
+                (str(audio_file), viseme, l, tts_id, message)
             )
             self.add_metric({"metric_type": "tts.queued"})
-
-    def _determine_ext(self, audio_file):
-        # determine audio_ext on the fly
-        # do not use the ext defined in the plugin since it might not match
-        # some plugins support multiple extensions
-        # or have caches in different extensions
-        try:
-            _, audio_ext = splitext(str(audio_file))
-            return audio_ext[1:] or self.audio_ext
-        except Exception as e:
-            return self.audio_ext
 
     def synth(self, sentence, **kwargs):
         """ This method wraps get_tts
