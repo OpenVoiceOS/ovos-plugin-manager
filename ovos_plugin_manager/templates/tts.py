@@ -238,6 +238,7 @@ class PlaybackThread(Thread):
                 sleep(0.2)
             try:
                 # HACK: we do these check to account for direct usages of TTS.queue singletons
+                message = None
                 speech_data = self.queue.get(timeout=2)
                 if len(speech_data) == 6 and isinstance(speech_data[-1], Message):
                     data, visemes, ident, listen, tts_id, message = speech_data
@@ -257,7 +258,7 @@ class PlaybackThread(Thread):
                         tts_id = None
                         _, data, visemes, ident = speech_data
 
-                    message =  Message("speak", context={"session": {"session_id": ident}})
+                message = message or Message("speak", context={"session": {"session_id": ident}})
 
                 self._now_playing = (data, visemes, ident, listen, tts_id, message)
                 self._play()
