@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.24a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a2) (2023-07-04)
+## [0.0.24a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a3) (2023-07-04)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a1...0.0.24a2)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a2...0.0.24a3)
+
+**Fixed bugs:**
+
+- feat/optional\_g2p [\#169](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/169) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.24a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.24a2) (2023-07-04)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a1...V0.0.24a2)
 
 **Fixed bugs:**
 
