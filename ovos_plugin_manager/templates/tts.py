@@ -441,7 +441,13 @@ class TTS:
                 cfg["g2p"]["module"] = g2pm
             else:
                 LOG.warning(f"TTS selected {g2pm}, but it is not available!")
-        self.g2p = OVOSG2PFactory.create(cfg)
+
+        try:
+            self.g2p = OVOSG2PFactory.create(cfg)
+        except:
+            LOG.exception("G2P plugin not loaded, there will be no mouth movements")
+            self.g2p = None
+
         self.cache.curate()
 
         self.add_metric({"metric_type": "tts.init"})
@@ -744,10 +750,10 @@ class TTS:
             audio_file, phonemes = self.synth(sentence, **kwargs)
 
             # get visemes/mouth movements
+            viseme = []
             if phonemes:
                 viseme = self.viseme(phonemes)
-            else:
-                viseme = []
+            elif self.g2p is not None:
                 try:
                     viseme = self.g2p.utterance2visemes(sentence, lang)
                 except OutOfVocabulary:
@@ -811,7 +817,7 @@ class TTS:
 
     def _cache_phonemes(self, sentence, phonemes=None, sentence_hash=None):
         sentence_hash = sentence_hash or hash_sentence(sentence)
-        if not phonemes:
+        if not phonemes and self.g2p is not None:
             try:
                 phonemes = self.g2p.utterance2arpa(sentence, self.lang)
                 self.add_metric({"metric_type": "tts.phonemes.g2p"})
