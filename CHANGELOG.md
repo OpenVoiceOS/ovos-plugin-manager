@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.24a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a1) (2023-06-21)
+## [0.0.24a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a2) (2023-07-04)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23...0.0.24a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a1...0.0.24a2)
+
+**Fixed bugs:**
+
+- fix/on\_mouth\_viseme\_list [\#168](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/168) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.24a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.24a1) (2023-06-21)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.23...V0.0.24a1)
 
 **Implemented enhancements:**
 
