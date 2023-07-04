@@ -397,7 +397,7 @@ class PHALPlugin(Thread):
                                  6 = shape for sounds like 'oy' or 'ao'
         """
         if self.mouth_events_active:
-            self.on_viseme(message)
+            self.on_viseme_list(message)
 
     def _on_mouth_text(self, message=None):
         """Display text (scrolling as needed)
