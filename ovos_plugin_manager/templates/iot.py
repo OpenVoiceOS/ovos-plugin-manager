@@ -5,10 +5,9 @@ import time
 from threading import Thread
 from time import sleep
 
+from lingua_franca.util.colors import Color
 from ovos_config import Configuration
 from ovos_utils import camel_case_split
-from ovos_utils.colors import Color
-from ovos_utils.json_helper import merge_dict
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import get_mycroft_bus
 
@@ -53,15 +52,43 @@ class IOTCapabilties(enum.Enum):
     PREV_PLAYBACK = enum.auto()
 
 
-class IOTScannerPlugin:
+class IOTScannerPlugin(Thread):
     """ this class is loaded by CommonIOT and yields IOTDevices"""
-    def __init__(self, bus=None, name="", config=None):
+
+    def __init__(self, bus=None, name="", config=None,
+                 new_device_callback=None,
+                 lost_device_callback=None,
+                 aliases=None):
+        super().__init__(daemon=True)
         self.config_core = Configuration()
         name = name or camel_case_split(self.__class__.__name__).replace(" ", "-").lower()
         self.config = config or get_plugin_config(self.config_core, "iot", name)
         self.bus = bus or get_mycroft_bus()
         self.log = LOG
         self.name = name
+        self.new_device_callback = new_device_callback
+        self.lost_device_callback = lost_device_callback
+        self.timestamps = {}
+        self.aliases = aliases or {}
+        self.ttl = 30  # if not seen for 30 seconds, consider device lost
+
+    def run(self):
+        while True:
+            for dev in self.scan():
+                dev._raw["last_seen"] = time.time()
+                if dev.device_id not in self.timestamps:
+                    print(f"found device: {dev.device_id}")
+                    if self.new_device_callback:
+                        self.new_device_callback(dev)
+                self.timestamps[dev.device_id] = dev  # update last seen
+
+            for device_id, dev in dict(self.timestamps).items():
+                if time.time() - dev.raw_data.get("last_seen", 0) > self.ttl:
+                    # based on last_seen timestamp
+                    print(f"lost device: {device_id}")
+                    self.timestamps.pop(device_id)
+                    if self.lost_device_callback:
+                        self.lost_device_callback(dev)
 
     def scan(self):
         raise NotImplemented("scan method must be implemented by subclasses")
@@ -96,16 +123,15 @@ class IOTAbstractDevice:
             "host": self.host,
             "name": self.name,
             "device_id": self.device_id,
-            "name": self.name,
             "area": self.device_area,
             "device_type": self.device_type,
-            "state": self.is_on,
-            "raw": self.raw_data
+            "device_class": self.__class__.__name__,
+            "state": self.is_on
         }
 
     @property
     def device_id(self):
-        return self._device_id
+        return self._device_id or self.raw_data.get("device_id")
 
     @property
     def device_type(self):
@@ -199,11 +225,11 @@ class Switch(Plug):
 
 class MediaPlayer(Plug):
     capabilities = Plug.capabilities + [
-        PAUSE_PLAYBACK,
-        RESUME_PLAYBACK,
-        STOP_PLAYBACK,
-        NEXT_PLAYBACK,
-        PREV_PLAYBACK
+        IOTCapabilties.PAUSE_PLAYBACK,
+        IOTCapabilties.RESUME_PLAYBACK,
+        IOTCapabilties.STOP_PLAYBACK,
+        IOTCapabilties.NEXT_PLAYBACK,
+        IOTCapabilties.PREV_PLAYBACK
     ]
 
     def __init__(self, device_id, host=None, name="generic_media_player",
@@ -272,7 +298,7 @@ class TV(MediaPlayer):
 
 class Heater(Plug):
     def __init__(self, device_id, host=None, name="generic_heater",
-                 area=None, device_type=IOTDeviceType.HEATERT, raw_data=None):
+                 area=None, device_type=IOTDeviceType.HEATER, raw_data=None):
         super().__init__(device_id, host, name, area, device_type, raw_data)
 
     # only has on/off for now
@@ -287,15 +313,18 @@ class AirConditioner(Plug):
     # only has on/off for now
     # TODO - get temperature
 
+
 class Vent(Plug):
     def __init__(self, device_id, host=None, name="generic_vent",
                  area=None, device_type=IOTDeviceType.VENT, raw_data=None):
         super().__init__(device_id, host, name, area, device_type, raw_data)
 
+
 class Humidifier(Plug):
     def __init__(self, device_id, host=None, name="generic_humidifier",
                  area=None, device_type=IOTDeviceType.HUMIDIFIER, raw_data=None):
         super().__init__(device_id, host, name, area, device_type, raw_data)
+
 
 class Vacuum(Plug):
     def __init__(self, device_id, host=None, name="generic_vacuum",
@@ -447,7 +476,6 @@ class Bulb(Plug):
 
 
 class RGBBulb(Bulb):
-
     capabilities = Bulb.capabilities + [
         IOTCapabilties.REPORT_COLOR,
         IOTCapabilties.CHANGE_COLOR
@@ -616,6 +644,7 @@ class RGBWBulb(RGBBulb):
             "state": self.is_on,
             "raw": self.raw_data
         }
+
 
 class Camera(Sensor):
     capabilities = Sensor.capabilities + [
