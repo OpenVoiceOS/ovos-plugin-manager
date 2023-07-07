@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.24a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a3) (2023-07-04)
+## [0.0.24a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a4) (2023-07-07)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a2...0.0.24a3)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a3...0.0.24a4)
+
+**Merged pull requests:**
+
+- Replace `sleep` with `Event.wait` [\#170](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/170) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.24a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.24a3) (2023-07-04)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a2...V0.0.24a3)
 
 **Fixed bugs:**
 
