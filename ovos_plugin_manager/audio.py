@@ -50,8 +50,9 @@ def setup_audio_service(service_module, config=None, bus=None):
     Returns:
         (list) List of created services.
     """
-    config = config or Configuration()
+    config = config or Configuration().get("Audio", {})
     bus = bus or get_mycroft_bus()
+
     if (hasattr(service_module, 'autodetect') and
             callable(service_module.autodetect)):
         try:
