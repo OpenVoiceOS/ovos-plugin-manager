@@ -6,7 +6,7 @@ from ovos_utils import classproperty
 from ovos_utils.process_utils import RuntimeRequirements
 
 
-class Frame:
+class AudioFrame:
     """Represents a "frame" of audio data."""
 
     def __init__(self, audio: bytes, timestamp: float, duration: int):
@@ -62,7 +62,7 @@ class VADEngine:
                                    no_internet_fallback=True,
                                    no_network_fallback=True)
 
-    def frame_generator(self, audio: bytes):
+    def _frame_generator(self, audio: bytes):
         """Generates audio frames from PCM audio data.
         Takes the desired frame duration in milliseconds, the PCM data, and
         the sample rate.
@@ -74,7 +74,7 @@ class VADEngine:
         duration = (float(n) / self.sample_rate) / 2.0
 
         while offset + n <= len(audio):
-            yield Frame(audio[offset:offset + n], timestamp, duration)
+            yield AudioFrame(audio[offset:offset + n], timestamp, duration)
             timestamp += duration
             offset += n
 
@@ -86,7 +86,7 @@ class VADEngine:
         is_speech = False
         voiced_frames = []
 
-        for frame in self.frame_generator(audio):
+        for frame in self._frame_generator(audio):
 
             is_speech = not self.is_silence(frame.bytes)
 
