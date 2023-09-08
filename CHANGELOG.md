@@ -1,8 +1,20 @@
 # Changelog
 
-## [0.0.24a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a5) (2023-07-07)
+## [0.0.24a6](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a6) (2023-09-08)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a4...0.0.24a5)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a5...0.0.24a6)
+
+**Implemented enhancements:**
+
+- feat/extract\_speech [\#139](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/139) ([JarbasAl](https://github.com/JarbasAl))
+
+**Fixed bugs:**
+
+- fix/audio\_config [\#174](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/174) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.24a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.24a5) (2023-07-07)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a4...V0.0.24a5)
 
 **Merged pull requests:**
 
