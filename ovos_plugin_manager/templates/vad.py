@@ -9,8 +9,8 @@ from ovos_utils.process_utils import RuntimeRequirements
 class Frame:
     """Represents a "frame" of audio data."""
 
-    def __init__(self, bytes, timestamp, duration):
-        self.bytes = bytes
+    def __init__(self, audio: bytes, timestamp: float, duration: int):
+        self.bytes = audio
         self.timestamp = timestamp
         self.duration = duration
 
@@ -62,7 +62,7 @@ class VADEngine:
                                    no_internet_fallback=True,
                                    no_network_fallback=True)
 
-    def frame_generator(self, audio):
+    def frame_generator(self, audio: bytes):
         """Generates audio frames from PCM audio data.
         Takes the desired frame duration in milliseconds, the PCM data, and
         the sample rate.
@@ -78,7 +78,8 @@ class VADEngine:
             timestamp += duration
             offset += n
 
-    def extract_speech(self, audio):
+    def extract_speech(self, audio: bytes):
+        """returns the audio data with speech only, removing all noise before and after speech"""
         # We use a deque for our sliding window/ring buffer.
         ring_buffer = collections.deque(maxlen=self.num_padding_frames)
         triggered = False
