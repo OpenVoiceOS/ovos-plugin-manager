@@ -27,7 +27,7 @@ import re
 import subprocess
 import threading
 from distutils.spawn import find_executable
-from os.path import isfile, join
+from os.path import isfile, join, exists
 from pathlib import Path
 from queue import Queue, Empty
 from threading import Thread
@@ -2103,7 +2103,7 @@ class TTSMutator:
         """
         # TODO auto gen profile file
         LOG.info("noisered")
-        if not os.path.exists(profile_path):
+        if not exists(profile_path):
             raise IOError(
                 "profile_path {} does not exist.".format(profile_path))
 
