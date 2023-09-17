@@ -108,7 +108,7 @@ def find_plugins(plug_type: PluginTypes = None) -> dict:
                 if entry_point.name not in entrypoints:
                     LOG.debug(f"Loaded plugin entry point {entry_point.name}")
             except Exception as e:
-                LOG.debug(f"Failed to load plugin entry point {entry_point}: "
+                LOG.error(f"Failed to load plugin entry point {entry_point}: "
                           f"{e}")
     return entrypoints
 
