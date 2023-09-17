@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.24a6](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a6) (2023-09-08)
+## [0.0.24a8](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a8) (2023-09-17)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a5...0.0.24a6)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a6...0.0.24a8)
+
+**Merged pull requests:**
+
+- Don't swallow plugin load errors [\#176](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/176) ([strugee](https://github.com/strugee))
+
+## [V0.0.24a6](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.24a6) (2023-09-08)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a5...V0.0.24a6)
 
 **Implemented enhancements:**
 
