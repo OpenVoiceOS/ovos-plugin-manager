@@ -35,6 +35,15 @@ class PipelinePlugin:
             self.config.get("lang") or \
             "en-us"
 
+    @property
+    def valid_languages(self):
+        core_config = Configuration()
+        lang = core_config.get("lang", "en-us")
+        langs = core_config.get('secondary_langs') or []
+        if lang not in langs:
+            langs.insert(0, lang)
+        return langs
+
     @classproperty
     def matcher_id(self):
         raise NotImplementedError
