@@ -110,6 +110,55 @@ class IntentPipelinePlugin(PipelinePlugin):
         self.bus.on('detach_skill', self._handle_detach_skill)
 
     # default bus handlers
+    def handle_register_keyword_intent(self, message):
+        skill_id = message.data.get("skill_id") or message.context.get("skill_id")
+        name = message.data["name"]
+        requires = message.data["requires"]
+        at_least_one = message.data.get("at_least_one", [])
+        optional = message.data.get("optional", [])
+        excludes = message.data.get("excludes", [])
+        self.register_keyword_intent(skill_id=skill_id, intent_name=name, required=requires,
+                                     at_least_one=at_least_one, optional=optional,
+                                     excluded=excludes)
+
+    def handle_register_intent(self, message):
+        """Register intents
+
+        message.data:
+            samples: list of natural language spoken utterances
+            name: the type/tag of an entity instance
+
+        Args:
+            message (Message): message containing intent info
+        """
+        skill_id = message.data.get("skill_id") or message.context.get("skill_id")
+        samples = message.data["samples"]
+        intent_type = message.data.get('name')
+
+        self.register_intent(skill_id=skill_id,
+                             intent_name=intent_type,
+                             samples=samples,
+                             lang=self.lang)
+
+    def handle_register_regex_intent(self, message):
+        """Register intents
+
+        message.data:
+            samples: regex patterns to match the intent
+            name: the type/tag of an entity instance
+
+        Args:
+            message (Message): message containing intent info
+        """
+        skill_id = message.data.get("skill_id") or message.context.get("skill_id")
+        samples = message.data["samples"]
+        intent_type = message.data.get('name')
+
+        self.register_regex_intent(skill_id=skill_id,
+                                   intent_name=intent_type,
+                                   samples=samples,
+                                   lang=self.lang)
+
     def handle_register_entity(self, message):
         """Register entities.
 
@@ -150,13 +199,13 @@ class IntentPipelinePlugin(PipelinePlugin):
 
     def handle_detach_entity(self, message):
         skill_id = message.data["skill_id"]
-        entity_name = message.data["entity_name"]
+        entity_name = message.data["name"]
         self.detach_entity(skill_id, entity_name)
         self.train()
 
     def handle_detach_intent(self, message):
         skill_id = message.data["skill_id"]
-        intent_name = message.data["intent_name"]
+        intent_name = message.data["name"]
         self.detach_intent(skill_id, intent_name)
         self.train()
 
@@ -297,12 +346,12 @@ class IntentPipelinePlugin(PipelinePlugin):
             intent = IntentDefinition(intent_name, lang=lang, samples=samples, skill_id=skill_id)
             self.registered_intents.append(intent)
 
-    def register_keyword_intent(self, skill_id, intent_name, keywords,
+    def register_keyword_intent(self, skill_id, intent_name, required,
                                 optional=None, at_least_one=None,
                                 excluded=None, lang=None):
         lang = lang or self.lang
         intent = KeywordIntentDefinition(intent_name, lang=lang, skill_id=skill_id,
-                                         requires=keywords, optional=optional,
+                                         requires=required, optional=optional,
                                          at_least_one=at_least_one, excluded=excluded)
         # NOTE - no merging here, we allow multiple variations of same intent with different rules to match
         self.registered_intents.append(intent)
