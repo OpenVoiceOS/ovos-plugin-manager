@@ -91,19 +91,82 @@ class IntentPipelinePlugin(PipelinePlugin):
 
     def register_intent_bus_handlers(self):
         # WIP WIP WIP WIP
-        # TODO - intent registering messages
-        self.bus.on('detach_intent', self.handle_detach_intent)
-        self.bus.on('detach_skill', self.handle_detach_skill)
+        self.bus.on('intent.service:detach_intent', self.handle_detach_intent)
+        self.bus.on('intent.service:detach_entity', self.handle_detach_entity)
+        self.bus.on('intent.service:detach_skill', self.handle_detach_skill)
+        self.bus.on('intent.service.register_intent', self.handle_register_intent)
+        self.bus.on('intent.service.register_keyword_intent', self.handle_register_keyword_intent)
+        self.bus.on('intent.service.register_regex_intent', self.handle_register_regex_intent)
+        self.bus.on('intent.service:register_entity', self.handle_register_entity)
+        self.bus.on('intent.service:register_regex_entity', self.handle_register_regex_entity)
 
         # backwards compat handlers with adapt/padatious namespace
-        # TODO - deprecate in 0.1.0
-        self.bus.on('padatious:register_intent', self.handle_register_intent)
-        self.bus.on('padatious:register_entity', self.handle_register_entity)
-        self.bus.on('register_vocab', self.handle_register_vocab)
-        self.bus.on('register_intent', self.handle_register_keyword_intent)
+        # TODO - deprecate in ovos-core 0.1.0
+        self.bus.on('padatious:register_intent', self._handle_padatious_intent)
+        self.bus.on('padatious:register_entity', self._handle_padatious_entity)
+        self.bus.on('register_vocab', self._handle_adapt_vocab)
+        self.bus.on('register_intent', self._handle_adapt_intent)
+        self.bus.on('detach_intent', self._handle_detach_intent)
+        self.bus.on('detach_skill', self._handle_detach_skill)
 
     # default bus handlers
-    def handle_register_vocab(self, message):
+    def handle_register_entity(self, message):
+        """Register entities.
+
+        message.data:
+            samples: list of natural language words / entity examples
+            name: the type/tag of an entity instance
+
+        Args:
+            message (Message): message containing vocab info
+        """
+        skill_id = message.data.get("skill_id") or message.context.get("skill_id")
+        samples = message.data["samples"]
+        entity_type = message.data.get('name')
+
+        self.register_entity(skill_id=skill_id,
+                             entity_name=entity_type,
+                             samples=samples,
+                             lang=self.lang)
+
+    def handle_register_regex_entity(self, message):
+        """Register regex entities.
+
+        message.data:
+            samples: list of regex expressions that extract the entity
+            name: the type/tag of an entity instance
+
+        Args:
+            message (Message): message containing vocab info
+        """
+        skill_id = message.data.get("skill_id") or message.context.get("skill_id")
+        samples = message.data["samples"]
+        entity_type = message.data.get('name')
+
+        self.register_regex_entity(skill_id=skill_id,
+                                   entity_name=entity_type,
+                                   samples=samples,
+                                   lang=self.lang)
+
+    def handle_detach_entity(self, message):
+        skill_id = message.data["skill_id"]
+        entity_name = message.data["entity_name"]
+        self.detach_entity(skill_id, entity_name)
+        self.train()
+
+    def handle_detach_intent(self, message):
+        skill_id = message.data["skill_id"]
+        intent_name = message.data["intent_name"]
+        self.detach_intent(skill_id, intent_name)
+        self.train()
+
+    def handle_detach_skill(self, message):
+        skill_id = message.data["skill_id"]
+        self.detach_skill(skill_id)
+        self.train()
+
+    # backwards compat bus handlers to keep around until ovos-core 0.1.0
+    def _handle_adapt_vocab(self, message):
         """Register adapt-like vocabulary.
 
          This will handle both regex registration and registration of normal
@@ -132,7 +195,6 @@ class IntentPipelinePlugin(PipelinePlugin):
             samples = [entity_value]
 
         entity_type = message.data.get('entity_type')
-
         alias_of = message.data.get('alias_of')
 
         if is_r:  # regex
@@ -157,26 +219,10 @@ class IntentPipelinePlugin(PipelinePlugin):
                                      samples=samples,
                                      lang=self.lang)
 
-    def handle_detach_entity(self, message):
-        skill_id = message.data["skill_id"]
-        entity_name = message.data["entity_name"]
-        self.detach_entity(skill_id, entity_name)
-        self.train()
-
-    def handle_detach_intent(self, message):
-        skill_id = message.data["skill_id"]
-        intent_name = message.data["intent_name"]
-        self.detach_intent(skill_id, intent_name)
-        self.train()
-
-    def handle_detach_skill(self, message):
-        skill_id = message.data["skill_id"]
-        self.detach_skill(skill_id)
-        self.train()
-
     # helpers to navigate registered intent data
     @property
     def manifest(self):
+        # ovos-core uses this property to expose the data via messagebus
         # TODO - munge/unmmunge skill_id in name ?
         return {
             "intent_names": [e.name for e in self.registered_intents
