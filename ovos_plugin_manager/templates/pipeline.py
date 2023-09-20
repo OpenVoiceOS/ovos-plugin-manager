@@ -90,7 +90,6 @@ class IntentPipelinePlugin(PipelinePlugin):
         self.register_intent_bus_handlers()
 
     def register_intent_bus_handlers(self):
-        # WIP WIP WIP WIP
         self.bus.on('intent.service:detach_intent', self.handle_detach_intent)
         self.bus.on('intent.service:detach_entity', self.handle_detach_entity)
         self.bus.on('intent.service:detach_skill', self.handle_detach_skill)
@@ -102,12 +101,12 @@ class IntentPipelinePlugin(PipelinePlugin):
 
         # backwards compat handlers with adapt/padatious namespace
         # TODO - deprecate in ovos-core 0.1.0
-        self.bus.on('padatious:register_intent', self._handle_padatious_intent)
-        self.bus.on('padatious:register_entity', self._handle_padatious_entity)
+        self.bus.on('padatious:register_intent', self.handle_register_intent)
+        self.bus.on('padatious:register_entity', self.handle_register_entity)
         self.bus.on('register_vocab', self._handle_adapt_vocab)
-        self.bus.on('register_intent', self._handle_adapt_intent)
-        self.bus.on('detach_intent', self._handle_detach_intent)
-        self.bus.on('detach_skill', self._handle_detach_skill)
+        self.bus.on('register_intent', self.handle_register_keyword_intent)
+        self.bus.on('detach_intent', self.handle_detach_intent)
+        self.bus.on('detach_skill', self.handle_detach_skill)
 
     # default bus handlers
     def handle_register_keyword_intent(self, message):
@@ -205,7 +204,8 @@ class IntentPipelinePlugin(PipelinePlugin):
 
     def handle_detach_intent(self, message):
         skill_id = message.data["skill_id"]
-        intent_name = message.data["name"]
+        intent_name = message.data.get("name") or \
+                      message.data.get('intent_name')  # adapt/padatious compat
         self.detach_intent(skill_id, intent_name)
         self.train()
 
