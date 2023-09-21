@@ -105,8 +105,10 @@ class IntentPipelinePlugin(PipelinePlugin):
         self.bus.on('intent.service.register_intent', self.handle_register_intent)
         self.bus.on('intent.service.register_keyword_intent', self.handle_register_keyword_intent)
         self.bus.on('intent.service.register_regex_intent', self.handle_register_regex_intent)
+        self.bus.on('intent.service:register_keyword', self.handle_register_keyword)
         self.bus.on('intent.service:register_entity', self.handle_register_entity)
         self.bus.on('intent.service:register_regex_entity', self.handle_register_regex_entity)
+        self.bus.on('intent.service:train', self.handle_train)
 
         # backwards compat handlers with adapt/padatious namespace
         # TODO - deprecate in ovos-core 0.1.0
@@ -116,8 +118,12 @@ class IntentPipelinePlugin(PipelinePlugin):
         self.bus.on('register_intent', self.handle_register_keyword_intent)
         self.bus.on('detach_intent', self.handle_detach_intent)
         self.bus.on('detach_skill', self.handle_detach_skill)
+        self.bus.on('mycroft.skills.initialized', self.handle_train)
 
     # default bus handlers
+    def handle_train(self, message):
+        self.train()
+
     def handle_register_keyword_intent(self, message):
         skill_id = message.data.get("skill_id") or message.context.get("skill_id")
         name = message.data["name"]
@@ -125,9 +131,10 @@ class IntentPipelinePlugin(PipelinePlugin):
         at_least_one = message.data.get("at_least_one", [])
         optional = message.data.get("optional", [])
         excludes = message.data.get("excludes", [])
+        lang = message.data.get("lang") or message.context.get("lang") or self.lang
         self.register_keyword_intent(skill_id=skill_id, intent_name=name, required=requires,
                                      at_least_one=at_least_one, optional=optional,
-                                     excluded=excludes)
+                                     excluded=excludes, lang=lang)
 
     def handle_register_intent(self, message):
         """Register intents
@@ -166,6 +173,24 @@ class IntentPipelinePlugin(PipelinePlugin):
                                    intent_name=intent_type,
                                    samples=samples,
                                    lang=self.lang)
+
+    def handle_register_keyword(self, message):
+        """Register keywords.
+
+        message.data:
+            samples: list of natural language words / utterance chunks
+            name: the type/tag of an entity instance
+
+        Args:
+            message (Message): message containing vocab info
+        """
+        skill_id = message.data.get("skill_id") or message.context.get("skill_id")
+        samples = message.data["samples"]
+        entity_type = message.data.get('name')
+        self.register_entity(skill_id=skill_id,
+                             entity_name=entity_type,
+                             samples=samples,
+                             lang=self.lang)
 
     def handle_register_entity(self, message):
         """Register entities.
