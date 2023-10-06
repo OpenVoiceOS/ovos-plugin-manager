@@ -7,7 +7,7 @@ from ovos_plugin_manager.utils import ReadWriteStream
 
 
 class MetadataTransformer:
-
+    """ runs after utterance transformers and before intent service"""
     def __init__(self, name, priority=50, config=None):
         self.name = name
         self.bus = None
@@ -41,7 +41,7 @@ class MetadataTransformer:
 
 
 class UtteranceTransformer:
-
+    """ runs before metadata transformers and intent service"""
     def __init__(self, name, priority=50, config=None):
         self.name = name
         self.bus = None
@@ -161,6 +161,70 @@ class AudioTransformer:
         Optionally make the prediction here with saved chunks from other handlers
         """
         return audio_data, {}
+
+    def default_shutdown(self):
+        """ perform any shutdown actions """
+        pass
+
+
+class DialogTransformer:
+    """ runs before TTS stage"""
+    def __init__(self, name, priority=50, config=None):
+        self.name = name
+        self.bus = None
+        self.priority = priority
+        if not config:
+            config_core = dict(Configuration())
+            config = config_core.get("dialog_transformers", {}).get(self.name)
+        self.config = config or {}
+
+    def bind(self, bus=None):
+        """ attach messagebus """
+        self.bus = bus or get_mycroft_bus()
+
+    def initialize(self):
+        """ perform any initialization actions """
+        pass
+
+    def transform(self, dialog: str) -> str:
+        """
+        Optionally transform passed dialog and/or return additional context
+        :param dialog: str utterance to mutate before TTS
+        :returns: str mutated dialog
+        """
+        return dialog, {}
+
+    def default_shutdown(self):
+        """ perform any shutdown actions """
+        pass
+
+
+class TTSTransformer:
+    """ runs after TTS stage but before playback"""
+    def __init__(self, name, priority=50, config=None):
+        self.name = name
+        self.bus = None
+        self.priority = priority
+        if not config:
+            config_core = dict(Configuration())
+            config = config_core.get("dialog_transformers", {}).get(self.name)
+        self.config = config or {}
+
+    def bind(self, bus=None):
+        """ attach messagebus """
+        self.bus = bus or get_mycroft_bus()
+
+    def initialize(self):
+        """ perform any initialization actions """
+        pass
+
+    def transform(self, wav_file: str, context: dict = None) -> str:
+        """
+        Optionally transform passed wav_file and return path to transformed file
+        :param wav_file: path to wav file generated in TTS stage
+        :returns: path to transformed wav file for playback
+        """
+        return wav_file
 
     def default_shutdown(self):
         """ perform any shutdown actions """
