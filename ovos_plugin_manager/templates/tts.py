@@ -53,7 +53,10 @@ SSML_TAGS = re.compile(r'<[^>]*>')
 class PlaybackThread(Thread):
     """ PlaybackThread moved to ovos_audio.playback
     standalone plugin usage should rely on self.get_tts
-    ovos-audio relies on self.execute and needs this class """
+    ovos-audio relies on self.execute and needs this class
+
+    this class was only in ovos-plugin-manager in order to
+    patch usage of our plugins in mycroft-core"""
     def __new__(self, *args, **kwargs):
         LOG.warning("PlaybackThread moved to ovos_audio.playback")
         try:
