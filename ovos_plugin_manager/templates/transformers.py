@@ -186,13 +186,13 @@ class DialogTransformer:
         """ perform any initialization actions """
         pass
 
-    def transform(self, dialog: str) -> str:
+    def transform(self, dialog: str, context: dict = None) -> str:
         """
         Optionally transform passed dialog and/or return additional context
         :param dialog: str utterance to mutate before TTS
         :returns: str mutated dialog
         """
-        return dialog
+        return dialog, context
 
     def default_shutdown(self):
         """ perform any shutdown actions """
@@ -224,7 +224,7 @@ class TTSTransformer:
         :param wav_file: path to wav file generated in TTS stage
         :returns: path to transformed wav file for playback
         """
-        return wav_file
+        return wav_file, context
 
     def default_shutdown(self):
         """ perform any shutdown actions """

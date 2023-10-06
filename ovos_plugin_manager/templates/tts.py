@@ -305,24 +305,23 @@ class TTS:
         self.add_metric({"metric_type": "tts.end"})
         self.stopwatch.stop()
 
-    def init(self, bus=None, playback_clazz=None):
+    def init(self, bus=None, playback=None):
         """ Performs intial setup of TTS object.
 
         Arguments:
             bus:    Mycroft messagebus connection
         """
         self.bus = bus or BUS()
-        clazz = playback_clazz or PlaybackThread # compat
-        if clazz:
-            self._init_playback(clazz)
+        pb = playback or PlaybackThread(TTS.queue, self.bus) # compat
+        self._init_playback(pb)
         self.add_metric({"metric_type": "tts.setup"})
 
-    def _init_playback(self, clazz):
+    def _init_playback(self, playback):
         # shutdown any previous thread
         if TTS.playback:
             TTS.playback.shutdown()
 
-        TTS.playback = clazz(TTS.queue)
+        TTS.playback = playback
         TTS.playback.set_bus(self.bus)
         TTS.playback.attach_tts(self)
         if not TTS.playback.enclosure:
