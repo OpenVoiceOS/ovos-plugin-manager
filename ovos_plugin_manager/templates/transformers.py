@@ -192,7 +192,7 @@ class DialogTransformer:
         :param dialog: str utterance to mutate before TTS
         :returns: str mutated dialog
         """
-        return dialog, {}
+        return dialog
 
     def default_shutdown(self):
         """ perform any shutdown actions """
