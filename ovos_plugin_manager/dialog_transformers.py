@@ -15,7 +15,7 @@ def load_dialog_transformer_plugin(module_name: str) -> type(DialogTransformer):
     """Wrapper function for loading dialog_transformer plugin.
 
     Arguments:
-        (str) Mycroft dialog_transformer module name from config
+        (str) OpenVoiceOS dialog_transformer module name from config
     Returns:
         class: found dialog_transformer plugin class
     """
@@ -34,7 +34,7 @@ def load_tts_transformer_plugin(module_name: str) -> type(TTSTransformer):
     """Wrapper function for loading dialog_transformer plugin.
 
     Arguments:
-        (str) Mycroft dialog_transformer module name from config
+        (str) OpenVoiceOS dialog_transformer module name from config
     Returns:
         class: found dialog_transformer plugin class
     """

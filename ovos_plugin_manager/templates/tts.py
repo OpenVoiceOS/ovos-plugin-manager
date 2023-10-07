@@ -309,7 +309,7 @@ class TTS:
         """ Performs intial setup of TTS object.
 
         Arguments:
-            bus:    Mycroft messagebus connection
+            bus:    OpenVoiceOS messagebus connection
         """
         self.bus = bus or BUS()
         pb = playback or PlaybackThread(TTS.queue, self.bus) # compat
@@ -614,7 +614,7 @@ class TTS:
     def viseme(self, phonemes):
         """Create visemes from phonemes.
 
-        May be implemented to convert TTS phonemes into Mycroft mouth
+        May be implemented to convert TTS phonemes into OpenVoiceOS mouth
         visuals.
 
         Arguments:
