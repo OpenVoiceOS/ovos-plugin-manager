@@ -524,7 +524,7 @@ class TestUtils(unittest.TestCase):
             self.assertIsInstance(plug_type, str)
             # Handle plugins without associated config entrypoint
             if plug_type not in (PluginTypes.PERSONA,):
-                self.assertIsInstance(PluginConfigTypes(f"{plug_type}.config"),
+                self.assertIsInstance(PluginConfigTypes(f"{plug_type.value}.config"),
                                       PluginConfigTypes)
         for cfg_type in PluginConfigTypes:
             self.assertIsInstance(cfg_type, PluginConfigTypes)
