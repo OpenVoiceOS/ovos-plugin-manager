@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from ovos_config.config import Configuration
 from ovos_utils.messagebus import get_mycroft_bus
@@ -8,6 +8,7 @@ from ovos_plugin_manager.utils import ReadWriteStream
 
 class MetadataTransformer:
     """ runs after utterance transformers and before intent service"""
+
     def __init__(self, name, priority=50, config=None):
         self.name = name
         self.bus = None
@@ -42,6 +43,7 @@ class MetadataTransformer:
 
 class UtteranceTransformer:
     """ runs before metadata transformers and intent service"""
+
     def __init__(self, name, priority=50, config=None):
         self.name = name
         self.bus = None
@@ -169,6 +171,7 @@ class AudioTransformer:
 
 class DialogTransformer:
     """ runs before TTS stage"""
+
     def __init__(self, name, priority=50, config=None):
         self.name = name
         self.bus = None
@@ -186,7 +189,7 @@ class DialogTransformer:
         """ perform any initialization actions """
         pass
 
-    def transform(self, dialog: str, context: dict = None) -> str:
+    def transform(self, dialog: str, context: dict = None) -> Tuple(str, dict):
         """
         Optionally transform passed dialog and/or return additional context
         :param dialog: str utterance to mutate before TTS
@@ -201,6 +204,7 @@ class DialogTransformer:
 
 class TTSTransformer:
     """ runs after TTS stage but before playback"""
+
     def __init__(self, name, priority=50, config=None):
         self.name = name
         self.bus = None
@@ -218,7 +222,7 @@ class TTSTransformer:
         """ perform any initialization actions """
         pass
 
-    def transform(self, wav_file: str, context: dict = None) -> str:
+    def transform(self, wav_file: str, context: dict = None) -> Tuple(str, dict):
         """
         Optionally transform passed wav_file and return path to transformed file
         :param wav_file: path to wav file generated in TTS stage
