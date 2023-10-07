@@ -189,7 +189,7 @@ class DialogTransformer:
         """ perform any initialization actions """
         pass
 
-    def transform(self, dialog: str, context: dict = None) -> Tuple(str, dict):
+    def transform(self, dialog: str, context: dict = None) -> Tuple[str, dict]:
         """
         Optionally transform passed dialog and/or return additional context
         :param dialog: str utterance to mutate before TTS
@@ -222,7 +222,7 @@ class TTSTransformer:
         """ perform any initialization actions """
         pass
 
-    def transform(self, wav_file: str, context: dict = None) -> Tuple(str, dict):
+    def transform(self, wav_file: str, context: dict = None) -> Tuple[str, dict]:
         """
         Optionally transform passed wav_file and return path to transformed file
         :param wav_file: path to wav file generated in TTS stage
