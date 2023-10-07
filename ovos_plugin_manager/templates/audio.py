@@ -1,7 +1,7 @@
 """Definition of the audio service backends base classes.
 
 These classes can be used to create an Audioservice plugin extending
-Mycroft's media playback options.
+OpenVoiceOS's media playback options.
 """
 from abc import ABCMeta, abstractmethod
 
@@ -15,7 +15,7 @@ class AudioBackend(metaclass=ABCMeta):
 
     Arguments:
         config (dict): configuration dict for the instance
-        bus (MessageBusClient): Mycroft messagebus emitter
+        bus (MessageBusClient): OpenVoiceOS messagebus emitter
     """
 
     def __init__(self, config=None, bus=None):
@@ -134,7 +134,7 @@ class AudioBackend(metaclass=ABCMeta):
         """Lower volume.
 
         This method is used to implement audio ducking. It will be called when
-        Mycroft is listening or speaking to make sure the media playing isn't
+        OpenVoiceOS is listening or speaking to make sure the media playing isn't
         interfering.
         """
 
@@ -142,7 +142,7 @@ class AudioBackend(metaclass=ABCMeta):
         """Restore normal volume.
 
         Called when to restore the playback volume to previous level after
-        Mycroft has lowered it using lower_volume().
+        OpenVoiceOS has lowered it using lower_volume().
         """
 
     def get_track_length(self):

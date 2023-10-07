@@ -25,16 +25,17 @@ import inspect
 import random
 import re
 import subprocess
-import threading
-from os.path import isfile, join, splitext
+from os.path import isfile, join
 from pathlib import Path
-from queue import Queue, Empty
+from queue import Queue
 from threading import Thread
-from time import time, sleep
-
 import requests
 from ovos_bus_client.message import Message, dig_for_message
 from ovos_config import Configuration
+from ovos_plugin_manager.g2p import OVOSG2PFactory, find_g2p_plugins
+from ovos_plugin_manager.templates.g2p import OutOfVocabulary
+from ovos_plugin_manager.utils.config import get_plugin_config
+from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 from ovos_utils import classproperty
 from ovos_utils import resolve_resource_file
 from ovos_utils.enclosure.api import EnclosureAPI
@@ -44,272 +45,26 @@ from ovos_utils.log import LOG
 from ovos_utils.messagebus import FakeBus as BUS
 from ovos_utils.metrics import Stopwatch
 from ovos_utils.process_utils import RuntimeRequirements
-from ovos_utils.sound import play_audio
-
-from ovos_plugin_manager.g2p import OVOSG2PFactory, find_g2p_plugins
-from ovos_plugin_manager.templates.g2p import OutOfVocabulary
-from ovos_plugin_manager.utils.config import get_plugin_config
-from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
 SSML_TAGS = re.compile(r'<[^>]*>')
 
 
 class PlaybackThread(Thread):
-    """Thread class for playing back tts audio and sending
-    viseme data to enclosure.
-    """
+    """ PlaybackThread moved to ovos_audio.playback
+    standalone plugin usage should rely on self.get_tts
+    ovos-audio relies on self.execute and needs this class
 
-    def __init__(self, queue):
-        super(PlaybackThread, self).__init__()
-        self.queue = queue
-        self._terminated = False
-        self._processing_queue = False
-        self._paused = False
-        self.enclosure = None
-        self.p = None
-        self._tts = []
-        self.bus = None
-        self._now_playing = None
-        self.active_tts = None
-        self._started = threading.Event()
+    this class was only in ovos-plugin-manager in order to
+    patch usage of our plugins in mycroft-core"""
 
-    @property
-    def is_running(self):
-        return self._started.is_set() and not self._terminated
-
-    def activate_tts(self, tts_id):
-        self.active_tts = tts_id
-        tts = self.get_attached_tts()
-        if tts:
-            tts.begin_audio()
-
-    def deactivate_tts(self):
-        if self.active_tts:
-            tts = self.get_attached_tts()
-            if tts:
-                tts.end_audio()
-        self.active_tts = None
-
-    def init(self, tts):
-        """DEPRECATED! Init the TTS Playback thread."""
-        self.attach_tts(tts)
-        self.set_bus(tts.bus)
-
-    def set_bus(self, bus):
-        """Provide bus instance to the TTS Playback thread.
-        Args:
-            bus (MycroftBusClient): bus client
-        """
-        self.bus = bus
-
-    @property
-    def tts(self):
-        tts = self.get_attached_tts()
-        if not tts and self._tts:
-            return self._tts[0]
-        return tts
-
-    @tts.setter
-    def tts(self, val):
-        self.attach_tts(val)
-
-    @property
-    def attached_tts(self):
-        return self._tts
-
-    def attach_tts(self, tts):
-        """Add TTS to be cache checked."""
-        if tts not in self.attached_tts:
-            self.attached_tts.append(tts)
-
-    def detach_tts(self, tts):
-        """Remove TTS from cache check."""
-        if tts in self.attached_tts:
-            self.attached_tts.remove(tts)
-
-    def get_attached_tts(self, tts_id=None):
-        tts_id = tts_id or self.active_tts
-        if not tts_id:
-            return
-        for tts in self.attached_tts:
-            if hasattr(tts, "tts_id"):
-                # opm plugin
-                if tts.tts_id == tts_id:
-                    return tts
-
-        for tts in self.attached_tts:
-            if not hasattr(tts, "tts_id"):
-                # non-opm plugin
-                if tts.tts_name == tts_id:
-                    return tts
-
-    def clear_queue(self):
-        """Remove all pending playbacks."""
-        while not self.queue.empty():
-            self.queue.get()
+    def __new__(self, *args, **kwargs):
+        LOG.warning("PlaybackThread moved to ovos_audio.playback")
         try:
-            self.p.terminate()
-        except Exception:
-            pass
-
-    def begin_audio(self, message=None):
-        """Perform beginning of speech actions."""
-        if self.bus:
-            message = message or Message("speak")
-            self.bus.emit(message.forward("recognizer_loop:audio_output_start"))
-        else:
-            LOG.warning("Speech started before bus was attached.")
-
-    def end_audio(self, listen, message=None):
-        """Perform end of speech output actions.
-        Will inform the system that speech has ended and trigger the TTS's
-        cache checks. Listening will be triggered if requested.
-        Args:
-            listen (bool): True if listening event should be emitted
-        """
-        if self.bus:
-            # Send end of speech signals to the system
-            message = message or Message("speak")
-            self.bus.emit(message.forward("recognizer_loop:audio_output_end"))
-            if listen:
-                self.bus.emit(message.forward('mycroft.mic.listen'))
-        else:
-            LOG.warning("Speech started before bus was attached.")
-
-    def on_start(self, message=None):
-        self.blink(0.5)
-        if not self._processing_queue:
-            self._processing_queue = True
-            self.begin_audio(message)
-
-    def on_end(self, listen=False, message=None):
-        if self._processing_queue:
-            self.end_audio(listen, message)
-            self._processing_queue = False
-        # Clear cache for all attached tts objects
-        # This is basically the only safe time
-        for tts in self.attached_tts:
-            tts.cache.curate()
-        self.blink(0.2)
-
-    def _play(self):
-        try:
-            data, visemes, listen, tts_id, message = self._now_playing
-            self.activate_tts(tts_id)
-            self.on_start(message)
-            self.p = play_audio(data)
-            if visemes:
-                self.show_visemes(visemes)
-            if self.p:
-                self.p.communicate()
-                self.p.wait()
-            self.deactivate_tts()
-            if self.queue.empty():
-                self.on_end(listen, message)
-        except Empty:
-            pass
-        except Exception as e:
-            LOG.exception(e)
-            if self._processing_queue:
-                self.on_end()
-        self._now_playing = None
-
-    def run(self, cb=None):
-        """Thread main loop. Get audio and extra data from queue and play.
-
-        The queue messages is a tuple containing
-        snd_type: 'mp3' or 'wav' telling the loop what format the data is in
-        data: path to temporary audio data
-        videmes: list of visemes to display while playing
-        listen: if listening should be triggered at the end of the sentence.
-
-        Playback of audio is started and the visemes are sent over the bus
-        the loop then wait for the playback process to finish before starting
-        checking the next position in queue.
-
-        If the queue is empty the tts.end_audio() is called possibly triggering
-        listening.
-        """
-        self._paused = False
-        self._started.set()
-        while not self._terminated:
-            while self._paused:
-                sleep(0.2)
-            try:
-                # HACK: we do these check to account for direct usages of TTS.queue singletons
-                speech_data = self.queue.get(timeout=2)
-                if len(speech_data) == 5 and isinstance(speech_data[-1], Message):
-                    data, visemes, listen, tts_id, message = speech_data
-                else:
-                    LOG.warning("it seems you interfacing with TTS.queue directly, this is not recommended!\n"
-                                "new expected TTS.queue contents -> data, visemes, listen, tts_id, message")
-                    if len(speech_data) == 6:
-                        # old ovos backwards compat
-                        _, data, visemes, ident, listen, tts_id = speech_data
-                    elif len(speech_data) == 5:
-                        # mycroft style
-                        tts_id = None
-                        _, data, visemes, ident, listen = speech_data
-                    else:
-                        # old mycroft style  TODO can this be deprecated? its very very old
-                        listen = False
-                        tts_id = None
-                        _, data, visemes, ident = speech_data
-
-                    message = Message("speak", context={"session": {"session_id": ident}})
-
-                self._now_playing = (data, visemes, listen, tts_id, message)
-                self._play()
-            except Exception as e:
-                pass
-
-    def show_visemes(self, pairs):
-        """Send viseme data to enclosure
-
-        Args:
-            pairs (list): Visime and timing pair
-
-        Returns:
-            bool: True if button has been pressed.
-        """
-        if self.enclosure:
-            self.enclosure.mouth_viseme(time(), pairs)
-
-    def pause(self):
-        """pause thread"""
-        self._paused = True
-        if self.p:
-            self.p.terminate()
-
-    def resume(self):
-        """resume thread"""
-        if self._now_playing:
-            self._play()
-        self._paused = False
-
-    def clear(self):
-        """Clear all pending actions for the TTS playback thread."""
-        self.clear_queue()
-
-    def blink(self, rate=1.0):
-        """Blink mycroft's eyes"""
-        if self.enclosure and random.random() < rate:
-            self.enclosure.eyes_blink("b")
-
-    def stop(self):
-        """Stop thread"""
-        self._now_playing = None
-        self._terminated = True
-        self.clear_queue()
-
-    def shutdown(self):
-        self.stop()
-        for tts in self.attached_tts:
-            self.detach_tts(tts)
-
-    def __del__(self):
-        self.shutdown()
+            from ovos_audio.playback import PlaybackThread
+            return PlaybackThread(*args, **kwargs)
+        except ImportError:
+            raise ImportError("please install ovos-audio for playback handling")
 
 
 class TTSContext:
@@ -490,7 +245,7 @@ class TTS:
     @property
     def cache(self):
         return self.caches.get(self.tts_id) or \
-               self.get_cache()
+            self.get_cache()
 
     @cache.setter
     def cache(self, val):
@@ -551,22 +306,23 @@ class TTS:
         self.add_metric({"metric_type": "tts.end"})
         self.stopwatch.stop()
 
-    def init(self, bus=None):
+    def init(self, bus=None, playback=None):
         """ Performs intial setup of TTS object.
 
         Arguments:
-            bus:    Mycroft messagebus connection
+            bus:    OpenVoiceOS messagebus connection
         """
         self.bus = bus or BUS()
-        self._init_playback()
+        pb = playback or PlaybackThread(TTS.queue, self.bus)  # compat
+        self._init_playback(pb)
         self.add_metric({"metric_type": "tts.setup"})
 
-    def _init_playback(self):
+    def _init_playback(self, playback):
         # shutdown any previous thread
         if TTS.playback:
             TTS.playback.shutdown()
 
-        TTS.playback = PlaybackThread(TTS.queue)
+        TTS.playback = playback
         TTS.playback.set_bus(self.bus)
         TTS.playback.attach_tts(self)
         if not TTS.playback.enclosure:
@@ -859,7 +615,7 @@ class TTS:
     def viseme(self, phonemes):
         """Create visemes from phonemes.
 
-        May be implemented to convert TTS phonemes into Mycroft mouth
+        May be implemented to convert TTS phonemes into OpenVoiceOS mouth
         visuals.
 
         Arguments:

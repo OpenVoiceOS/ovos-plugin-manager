@@ -27,7 +27,7 @@ class PHALValidator:
 class PHALPlugin(Thread):
     """
     This base class is intended to be used to interface with the hardware
-    that is running Mycroft.  It exposes all possible commands which
+    that is running OpenVoiceOS.  It exposes all possible commands which
     are expected be sent to a PHAL plugin.
     All of the handlers are optional and for convenience only
     """
@@ -65,7 +65,7 @@ class PHALPlugin(Thread):
         self.bus.on("enclosure.notify.no_internet", self.on_no_internet)
         self.bus.on("enclosure.reset", self.on_reset)
 
-        # enclosure commands for Mycroft's Hardware.
+        # enclosure commands for OpenVoiceOS's Hardware.
         self.bus.on("enclosure.system.reset", self.on_system_reset)
         self.bus.on("enclosure.system.mute", self.on_system_mute)
         self.bus.on("enclosure.system.unmute", self.on_system_unmute)
