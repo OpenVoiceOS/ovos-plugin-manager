@@ -28,7 +28,7 @@ import subprocess
 from os.path import isfile, join
 from pathlib import Path
 from queue import Queue
-
+from threading import Thread
 import requests
 from ovos_bus_client.message import Message, dig_for_message
 from ovos_config import Configuration
@@ -57,6 +57,7 @@ class PlaybackThread(Thread):
 
     this class was only in ovos-plugin-manager in order to
     patch usage of our plugins in mycroft-core"""
+
     def __new__(self, *args, **kwargs):
         LOG.warning("PlaybackThread moved to ovos_audio.playback")
         try:
@@ -312,7 +313,7 @@ class TTS:
             bus:    OpenVoiceOS messagebus connection
         """
         self.bus = bus or BUS()
-        pb = playback or PlaybackThread(TTS.queue, self.bus) # compat
+        pb = playback or PlaybackThread(TTS.queue, self.bus)  # compat
         self._init_playback(pb)
         self.add_metric({"metric_type": "tts.setup"})
 
