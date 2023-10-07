@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.24a9](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a9) (2023-09-22)
+## [0.0.24a10](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a10) (2023-10-07)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a8...0.0.24a9)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a9...0.0.24a10)
+
+**Implemented enhancements:**
+
+- feat/ovos\_dialog\_tts\_transformers [\#179](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/179) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.24a9](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.24a9) (2023-09-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a8...V0.0.24a9)
 
 **Fixed bugs:**
 
