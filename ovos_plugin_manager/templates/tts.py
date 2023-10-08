@@ -313,22 +313,24 @@ class TTS:
             bus:    OpenVoiceOS messagebus connection
         """
         self.bus = bus or BUS()
-        pb = playback or PlaybackThread(TTS.queue, self.bus)  # compat
-        self._init_playback(pb)
+        if playback is None:
+            LOG.warning("PlaybackThread should be inited by ovos-audio, initing via plugin has been deprecated, "
+                        "please pass playback=PlaybackThread() to TTS.init")
+            if TTS.playback:
+                playback.shutdown()
+            playback = PlaybackThread(TTS.queue, self.bus)  # compat
+            playback.start()
+        self._init_playback(playback)
         self.add_metric({"metric_type": "tts.setup"})
 
     def _init_playback(self, playback):
-        # shutdown any previous thread
-        if TTS.playback:
-            TTS.playback.shutdown()
-
         TTS.playback = playback
         TTS.playback.set_bus(self.bus)
         TTS.playback.attach_tts(self)
         if not TTS.playback.enclosure:
             TTS.playback.enclosure = EnclosureAPI(self.bus)
 
-        if not TTS.playback._started:
+        if not TTS.playback.is_running:
             TTS.playback.start()
 
     @property
