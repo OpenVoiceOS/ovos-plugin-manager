@@ -327,7 +327,9 @@ class TTS:
         TTS.playback.attach_tts(self)
         if not TTS.playback.enclosure:
             TTS.playback.enclosure = EnclosureAPI(self.bus)
-        TTS.playback.start()
+
+        if not TTS.playback._started:
+            TTS.playback.start()
 
     @property
     def enclosure(self):
