@@ -318,17 +318,13 @@ class TTS:
         self.add_metric({"metric_type": "tts.setup"})
 
     def _init_playback(self, playback):
-        # shutdown any previous thread
-        if TTS.playback:
-            TTS.playback.shutdown()
-
         TTS.playback = playback
         TTS.playback.set_bus(self.bus)
         TTS.playback.attach_tts(self)
         if not TTS.playback.enclosure:
             TTS.playback.enclosure = EnclosureAPI(self.bus)
 
-        if not TTS.playback._started:
+        if not TTS.playback.is_running:
             TTS.playback.start()
 
     @property
