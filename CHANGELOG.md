@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.24a10](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a10) (2023-10-07)
+## [0.0.24a11](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a11) (2023-10-08)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a9...0.0.24a10)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a10...0.0.24a11)
+
+**Fixed bugs:**
+
+- fix/playback\_thread startup [\#180](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/180) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.24a10](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.24a10) (2023-10-07)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a9...V0.0.24a10)
 
 **Implemented enhancements:**
 
