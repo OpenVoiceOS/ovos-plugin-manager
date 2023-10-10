@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.24a12](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a12) (2023-10-08)
+## [0.0.24a13](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a13) (2023-10-10)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a11...0.0.24a12)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a12...0.0.24a13)
+
+**Implemented enhancements:**
+
+- feat/translate\_plug\_as\_arg [\#183](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/183) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.24a12](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.24a12) (2023-10-08)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a11...V0.0.24a12)
 
 **Fixed bugs:**
 
