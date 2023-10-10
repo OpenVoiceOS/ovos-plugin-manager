@@ -11,9 +11,9 @@ class AbstractSolver:
     enable_tx = False
     enable_cache = False
 
-    def __init__(self, config=None, *args, **kwargs):
+    def __init__(self, config=None, translator=None, *args, **kwargs):
         if args or kwargs:
-            LOG.warning("solver plugins init signature changed, please update to accept a single config kwarg. "
+            LOG.warning("solver plugins init signature changed, please update to accept config=None, translator=None. "
                         "an exception will be raised in next stable release")
             for arg in args:
                 if isinstance(arg, str):
@@ -31,7 +31,7 @@ class AbstractSolver:
         self.default_lang = self.config.get("lang", "en")
         if self.default_lang not in self.supported_langs:
             self.supported_langs.insert(0, self.default_lang)
-        self.translator = OVOSLangTranslationFactory.create()
+        self.translator = translator or OVOSLangTranslationFactory.create()
 
     @staticmethod
     def sentence_split(text, max_sentences=25):
@@ -73,8 +73,8 @@ class QuestionSolver(AbstractSolver):
     """free form unscontrained spoken question solver
     handling automatic translation back and forth as needed"""
 
-    def __init__(self, config=None, *args, **kwargs):
-        super().__init__(config, *args, **kwargs)
+    def __init__(self, config=None, translator=None, *args, **kwargs):
+        super().__init__(config, translator, *args, **kwargs)
         name = kwargs.get("name") or self.__class__.__name__
         if self.enable_cache:
             # cache contains raw data
