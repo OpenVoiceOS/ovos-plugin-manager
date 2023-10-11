@@ -1,8 +1,21 @@
 # Changelog
 
-## [0.0.24a13](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a13) (2023-10-10)
+## [0.0.24a14](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a14) (2023-10-11)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a12...0.0.24a13)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a13...0.0.24a14)
+
+**Fixed bugs:**
+
+- No module named 'mycroft\_bus\_client' [\#146](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/146)
+- Circular import while importing `StreamHandler` [\#130](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/130)
+
+**Merged pull requests:**
+
+- Add license notice and link to plugins from neon\_solvers package [\#185](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/185) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.24a13](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.24a13) (2023-10-10)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a12...V0.0.24a13)
 
 **Implemented enhancements:**
 
