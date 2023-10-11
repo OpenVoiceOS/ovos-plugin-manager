@@ -99,6 +99,12 @@ def get_lang_detect_module_configs(module_name: str):
     return load_plugin_configs(module_name, PluginConfigTypes.LANG_DETECT)
 
 
+_default_lang_detect_plugin = "ovos-lang-detect-ngram-lm"
+_fallback_lang_detect_plugin = "libretranslate_detection_plug"
+_default_translate_plugin = "libretranslate_plug"
+_fallback_translate_plugin = "libretranslate_plug"
+
+
 class OVOSLangDetectionFactory:
     """
     replicates the base neon class, but uses only OPM enabled plugins
@@ -135,7 +141,7 @@ class OVOSLangDetectionFactory:
         if not lang_module:
             # TODO: `language` is the only factory with this special handling
             LOG.warning("`detection_module` not configured")
-            lang_module = "ovos-lang-detect-ngram-lm"
+            lang_module = config.get("module", _default_lang_detect_plugin)
         try:
             if lang_module in OVOSLangDetectionFactory.MAPPINGS:
                 lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
@@ -148,11 +154,11 @@ class OVOSLangDetectionFactory:
                                                   lang_module))
         except Exception:
             # The Language Detection backend failed to start, fall back if appropriate.
-            if lang_module != "libretranslate_detection_plug":
-                lang_module = "libretranslate_detection_plug"
+            if lang_module != _fallback_lang_detect_plugin:
+                lang_module = _fallback_lang_detect_plugin
                 LOG.error(f'Language Detection plugin {lang_module} not found. '
-                          f'Falling back to libretranslate plugin')
-                clazz = load_tx_plugin("libretranslate_detection_plug")
+                          f'Falling back to {_fallback_lang_detect_plugin}')
+                clazz = load_lang_detect_plugin(_fallback_lang_detect_plugin)
                 if clazz:
                     return clazz(config=get_plugin_config(config, "language",
                                                           lang_module))
@@ -189,7 +195,7 @@ class OVOSLangTranslationFactory:
         if not lang_module:
             # TODO: `language` is the only factory with this special handling
             LOG.warning("`translation_module` not configured")
-            lang_module = "libretranslate_plug"
+            lang_module = config.get("module", _default_translate_plugin)
         try:
             if lang_module in OVOSLangTranslationFactory.MAPPINGS:
                 lang_module = OVOSLangTranslationFactory.MAPPINGS[lang_module]
@@ -201,11 +207,11 @@ class OVOSLangTranslationFactory:
                                                   lang_module))
         except Exception:
             # The Language Detection backend failed to start, fall back if appropriate.
-            if lang_module != "libretranslate_plug":
-                lang_module = "libretranslate_plug"
+            if lang_module != _fallback_translate_plugin:
+                lang_module = _fallback_translate_plugin
                 LOG.error(f'Language Translation plugin {lang_module} '
-                          f'not found. Falling back to libretranslate plugin')
-                clazz = load_tx_plugin("libretranslate_plug")
+                          f'not found. Falling back to {_fallback_translate_plugin}')
+                clazz = load_tx_plugin(_fallback_translate_plugin)
                 if clazz:
                     return clazz(config=get_plugin_config(config, "language",
                                                           lang_module))
