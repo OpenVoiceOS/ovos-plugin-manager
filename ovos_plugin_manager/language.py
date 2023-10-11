@@ -118,8 +118,6 @@ class OVOSLangDetectionFactory:
         "lingua_podre": "lingua_podre_plug"
     }
 
-    # TODO - get_class method
-
     @staticmethod
     def create(config=None):
         """
@@ -171,7 +169,6 @@ class OVOSLangTranslationFactory:
         "apertium": "apertium_plug"
     }
 
-    # TODO - get_class method
     @staticmethod
     def create(config=None):
         """
