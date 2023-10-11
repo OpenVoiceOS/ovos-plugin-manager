@@ -1,0 +1,5 @@
+pytest
+pytest-timeout
+pytest-cov
+neon-lang-plugin-libretranslate~=0.2
+ovos-tts-plugin-espeakng@git+https://github.com/oppenvoiceos/ovos-tts-plugin-espeakng@ENHANCEMENT_expose-config
