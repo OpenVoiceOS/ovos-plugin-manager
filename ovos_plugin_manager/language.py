@@ -99,10 +99,8 @@ def get_lang_detect_module_configs(module_name: str):
     return load_plugin_configs(module_name, PluginConfigTypes.LANG_DETECT)
 
 
-_default_lang_detect_plugin = "ovos-lang-detect-ngram-lm"
-_fallback_lang_detect_plugin = "libretranslate_detection_plug"
-_default_translate_plugin = "libretranslate_plug"
-_fallback_translate_plugin = "libretranslate_plug"
+_fallback_lang_detect_plugin = "ovos-lang-detect-ngram-lm"
+_fallback_translate_plugin = "ovos-translate-plugin-server"
 
 
 class OVOSLangDetectionFactory:
@@ -137,12 +135,10 @@ class OVOSLangDetectionFactory:
         config = config or Configuration()
         if "language" in config:
             config = config["language"]
-        lang_module = config.get("detection_module")
-        if not lang_module:
-            # TODO: `language` is the only factory with this special handling
-            LOG.warning("`detection_module` not configured")
-            lang_module = config.get("module", _default_lang_detect_plugin)
+        lang_module = config.get("detection_module", config.get("module"))
         try:
+            if not lang_module:
+                raise ValueError("`language.detection_module` not configured")
             if lang_module in OVOSLangDetectionFactory.MAPPINGS:
                 lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
 
@@ -191,12 +187,10 @@ class OVOSLangTranslationFactory:
         config = config or Configuration()
         if "language" in config:
             config = config["language"]
-        lang_module = config.get("translation_module")
-        if not lang_module:
-            # TODO: `language` is the only factory with this special handling
-            LOG.warning("`translation_module` not configured")
-            lang_module = config.get("module", _default_translate_plugin)
+        lang_module = config.get("translation_module", config.get("module"))
         try:
+            if not lang_module:
+                raise ValueError("`language.translation_module` not configured")
             if lang_module in OVOSLangTranslationFactory.MAPPINGS:
                 lang_module = OVOSLangTranslationFactory.MAPPINGS[lang_module]
             clazz = load_tx_plugin(lang_module)

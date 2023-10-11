@@ -116,17 +116,6 @@ class TestLangDetectionFactory(unittest.TestCase):
                     "module": "googletranslate_detection_plug"})
         self.assertEquals(plug_instance, plug)
 
-        # Create default plugin with passed plugin config
-        from ovos_plugin_manager.language import _default_lang_detect_plugin
-        config_no_module = {_default_lang_detect_plugin: {"config": True,
-                                                          "lang": "test"}}
-        plug = OVOSLangDetectionFactory.create(config_no_module)
-        load_plugin.assert_called_with(_default_lang_detect_plugin)
-        mock_plugin.assert_called_with(config={'lang': 'test',
-                                               'config': True,
-                                               'module': _default_lang_detect_plugin})
-        self.assertEquals(plug_instance, plug)
-
         # Create plugin fully specified in passed config
         config_with_module = {"detection_module": "detect-plugin",
                               "lang": "lang"}
@@ -177,17 +166,6 @@ class TestLangTranslationFactory(unittest.TestCase):
         load_plugin.assert_called_once_with('googletranslate_plug')
         mock_plugin.assert_called_once_with(
             config={'lang': "tx", "module": "googletranslate_plug"})
-        self.assertEquals(plug_instance, plug)
-
-        # Create default plugin with passed plugin config
-        from ovos_plugin_manager.language import _default_translate_plugin
-        config_no_module = {_default_translate_plugin: {"config": True,
-                                                        "lang": "test"}}
-        plug = OVOSLangTranslationFactory.create(config_no_module)
-        load_plugin.assert_called_with(_default_translate_plugin)
-        mock_plugin.assert_called_with(config={'lang': 'test',
-                                               'config': True,
-                                               'module': _default_translate_plugin})
         self.assertEquals(plug_instance, plug)
 
         # Create plugin fully specified in passed config
