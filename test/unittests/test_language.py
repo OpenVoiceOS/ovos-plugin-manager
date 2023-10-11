@@ -94,6 +94,36 @@ class TestLangDetectionFactory(unittest.TestCase):
 
     @patch("ovos_plugin_manager.language.load_lang_detect_plugin")
     @patch("ovos_plugin_manager.language.Configuration")
+    def test_get_class(self, config, load_plugin):
+        from ovos_plugin_manager.language import OVOSLangDetectionFactory
+        test_config = {"language": {
+            "detection_module": "libretranslate"
+        }}
+        mock_class = Mock()
+        config.return_value = test_config
+        load_plugin.return_value = mock_class
+
+        # Test mapped plugin from config
+        self.assertEquals(OVOSLangDetectionFactory.get_class(), mock_class)
+        load_plugin.assert_called_with("libretranslate_detection_plug")
+
+        # Test explicitly specified mapped plugin
+        conf = {"module": "google"}
+        self.assertEquals(OVOSLangDetectionFactory.get_class(conf), mock_class)
+        load_plugin.assert_called_with("googletranslate_detection_plug")
+
+        # Test unmapped plugin
+        conf = {"language": {"detection_module": "real-detect-plug"}}
+        self.assertEquals(OVOSLangDetectionFactory.get_class(conf), mock_class)
+        load_plugin.assert_called_with("real-detect-plug")
+
+        # Test invalid module config
+        conf = {"language": {}}
+        with self.assertRaises(ValueError):
+            OVOSLangDetectionFactory.get_class(conf)
+
+    @patch("ovos_plugin_manager.language.load_lang_detect_plugin")
+    @patch("ovos_plugin_manager.language.Configuration")
     def test_create(self, config, load_plugin):
         from ovos_plugin_manager.language import OVOSLangDetectionFactory
         plug_instance = Mock()
@@ -144,6 +174,37 @@ class TestLangTranslationFactory(unittest.TestCase):
             self.assertIsInstance(OVOSLangTranslationFactory.MAPPINGS[conf],
                                   str)
             self.assertNotEqual(conf, OVOSLangTranslationFactory.MAPPINGS[conf])
+
+    @patch("ovos_plugin_manager.language.load_tx_plugin")
+    @patch("ovos_plugin_manager.language.Configuration")
+    def test_get_class(self, config, load_plugin):
+        from ovos_plugin_manager.language import OVOSLangTranslationFactory
+        test_config = {"language": {
+            "translation_module": "libretranslate"
+        }}
+        mock_class = Mock()
+        config.return_value = test_config
+        load_plugin.return_value = mock_class
+
+        # Test mapped plugin from config
+        self.assertEquals(OVOSLangTranslationFactory.get_class(), mock_class)
+        load_plugin.assert_called_with("libretranslate_plug")
+
+        # Test explicitly specified mapped plugin
+        conf = {"module": "google"}
+        self.assertEquals(OVOSLangTranslationFactory.get_class(conf),
+                          mock_class)
+        load_plugin.assert_called_with("googletranslate_plug")
+
+        # Test unmapped plugin
+        conf = {"language": {"translation_module": "real-detect-plug"}}
+        self.assertEquals(OVOSLangTranslationFactory.get_class(conf), mock_class)
+        load_plugin.assert_called_with("real-detect-plug")
+
+        # Test invalid module config
+        conf = {"language": {}}
+        with self.assertRaises(ValueError):
+            OVOSLangTranslationFactory.get_class(conf)
 
     @patch("ovos_plugin_manager.language.load_tx_plugin")
     @patch("ovos_plugin_manager.language.Configuration")

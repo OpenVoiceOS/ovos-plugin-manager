@@ -119,11 +119,33 @@ class OVOSLangDetectionFactory:
     }
 
     @staticmethod
-    def create(config=None):
+    def get_class(config=None):
+        """
+        Factory method to get a Language Detector class based on configuration.
+
+        Configuration contains a `language` section with
+        the name of a LangDetection module to be read by this method.
+
+        "language": {
+            "detection_module": <engine_name>
+        }
+        """
+        config = config or Configuration()
+        if "language" in config:
+            config = config["language"]
+        lang_module = config.get("detection_module", config.get("module"))
+        if not lang_module:
+            raise ValueError("`language.detection_module` not configured")
+        if lang_module in OVOSLangDetectionFactory.MAPPINGS:
+            lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
+        return load_lang_detect_plugin(lang_module)
+
+    @staticmethod
+    def create(config=None) -> LanguageDetector:
         """
         Factory method to create a LangDetection engine based on configuration
 
-        The configuration file `mycroft.conf` contains a `language` section with
+        Configuration contains a `language` section with
         the name of a LangDetection module to be read by this method.
 
         "language": {
@@ -135,12 +157,7 @@ class OVOSLangDetectionFactory:
             config = config["language"]
         lang_module = config.get("detection_module", config.get("module"))
         try:
-            if not lang_module:
-                raise ValueError("`language.detection_module` not configured")
-            if lang_module in OVOSLangDetectionFactory.MAPPINGS:
-                lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
-
-            clazz = load_lang_detect_plugin(lang_module)
+            clazz = OVOSLangDetectionFactory.get_class(config)
             if clazz is None:
                 raise ValueError(f"Failed to load module: {lang_module}")
             LOG.info(f'Loaded the Language Detection plugin {lang_module}')
@@ -170,12 +187,34 @@ class OVOSLangTranslationFactory:
     }
 
     @staticmethod
-    def create(config=None):
+    def get_class(config=None):
+        """
+        Factory method to get a Language Translator class based on configuration.
+
+        Configuration contains a `language` section with
+        the name of a Translation module to be read by this method.
+
+        "language": {
+            "translation_module": <engine_name>
+        }
+        """
+        config = config or Configuration()
+        if "language" in config:
+            config = config["language"]
+        lang_module = config.get("translation_module", config.get("module"))
+        if not lang_module:
+            raise ValueError("`language.translation_module` not configured")
+        if lang_module in OVOSLangTranslationFactory.MAPPINGS:
+            lang_module = OVOSLangTranslationFactory.MAPPINGS[lang_module]
+        return load_tx_plugin(lang_module)
+
+    @staticmethod
+    def create(config=None) -> LanguageTranslator:
         """
         Factory method to create a LangTranslation engine based on configuration
 
-        The configuration file `mycroft.conf` contains a `language` section with
-        the name of a LangDetection module to be read by this method.
+        Configuration contains a `language` section with
+        the name of a Translation module to be read by this method.
 
         "language": {
             "translation_module": <engine_name>
@@ -186,18 +225,14 @@ class OVOSLangTranslationFactory:
             config = config["language"]
         lang_module = config.get("translation_module", config.get("module"))
         try:
-            if not lang_module:
-                raise ValueError("`language.translation_module` not configured")
-            if lang_module in OVOSLangTranslationFactory.MAPPINGS:
-                lang_module = OVOSLangTranslationFactory.MAPPINGS[lang_module]
-            clazz = load_tx_plugin(lang_module)
+            clazz = OVOSLangTranslationFactory.get_class(config)
             if clazz is None:
                 raise ValueError(f"Failed to load module: {lang_module}")
             LOG.info(f'Loaded the Language Translation plugin {lang_module}')
             return clazz(config=get_plugin_config(config, "language",
                                                   lang_module))
         except Exception:
-            # The Language Detection backend failed to start, fall back if appropriate.
+            # The Language Translation backend failed to start, fall back if appropriate.
             if lang_module != _fallback_translate_plugin:
                 lang_module = _fallback_translate_plugin
                 LOG.error(f'Language Translation plugin {lang_module} '
