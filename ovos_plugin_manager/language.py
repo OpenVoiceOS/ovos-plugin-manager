@@ -161,6 +161,8 @@ class OVOSLangDetectionFactory:
             if clazz is None:
                 raise ValueError(f"Failed to load module: {lang_module}")
             LOG.info(f'Loaded the Language Detection plugin {lang_module}')
+            if lang_module in OVOSLangDetectionFactory.MAPPINGS:
+                lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
             return clazz(config=get_plugin_config(config, "language",
                                                   lang_module))
         except Exception:
@@ -229,6 +231,8 @@ class OVOSLangTranslationFactory:
             if clazz is None:
                 raise ValueError(f"Failed to load module: {lang_module}")
             LOG.info(f'Loaded the Language Translation plugin {lang_module}')
+            if lang_module in OVOSLangTranslationFactory.MAPPINGS:
+                lang_module = OVOSLangTranslationFactory.MAPPINGS[lang_module]
             return clazz(config=get_plugin_config(config, "language",
                                                   lang_module))
         except Exception:
