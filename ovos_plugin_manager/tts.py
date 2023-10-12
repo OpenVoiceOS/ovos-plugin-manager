@@ -5,7 +5,7 @@ from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, \
 from ovos_plugin_manager.utils import PluginTypes, normalize_lang, \
     PluginConfigTypes
 from ovos_plugin_manager.utils.config import get_valid_plugin_configs, \
-    sort_plugin_configs
+    sort_plugin_configs, get_plugin_config
 from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_data_home
 from hashlib import md5
@@ -195,7 +195,8 @@ class OVOSTTSFactory:
             clazz = OVOSTTSFactory.get_class(tts_config)
             if clazz:
                 LOG.info(f'Found plugin {tts_module}')
-                tts = clazz(tts_lang, tts_config)
+                tts = clazz(tts_lang,
+                            get_plugin_config(tts_config, "tts", tts_module))
                 tts.validator.validate()
                 LOG.info(f'Loaded plugin {tts_module}')
             else:

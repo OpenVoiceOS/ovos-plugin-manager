@@ -2,7 +2,7 @@ from ovos_plugin_manager.utils import normalize_lang, \
     PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_plugin_manager.utils.config import get_valid_plugin_configs, \
-    sort_plugin_configs
+    sort_plugin_configs, get_plugin_config
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.stt import STT, StreamingSTT, StreamThread
 
@@ -152,10 +152,9 @@ class OVOSSTTFactory:
         """
         config = get_stt_config(config)
         plugin = config["module"]
-        plugin_config = config.get(plugin) or {}
         try:
             clazz = OVOSSTTFactory.get_class(config)
-            return clazz(plugin_config)
+            return clazz(get_plugin_config(config, "stt", plugin))
         except Exception:
             LOG.exception('The selected STT plugin could not be loaded!')
             raise
