@@ -3,7 +3,7 @@ import unittest
 from os import environ
 from os.path import join, dirname, isdir, isfile
 from shutil import rmtree
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 environ["OVOS_DEFAULT_LOG_NAME"] = "test"
 environ["OVOS_DEFAULT_LOG_LEVEL"] = "DEBUG"
@@ -19,6 +19,18 @@ class TestPluginInit(unittest.TestCase):
         log.debug.assert_any_call(f"Amplitude: None")
         log.debug.assert_any_call(tts.config)
 
+    def test_log_method_called(self):
+        from ovos_utils.log import LOG
+        from ovos_plugin_manager.tts import load_tts_plugin
+        real_debug = LOG.debug
+        LOG.debug = Mock()
+        plugin = load_tts_plugin("ovos-tts-plugin-espeakng")
+        tts = plugin()
+        LOG.debug.assert_any_call(f"Amplitude: None")
+        LOG.debug.assert_any_call(tts.config)
+
+        LOG.debug = real_debug
+
     @patch("mycroft.Configuration")
     def test_log_output(self, config):
         from ovos_utils.log import LOG
@@ -27,6 +39,7 @@ class TestPluginInit(unittest.TestCase):
         # Init log config
         test_log_dir = join(dirname(__file__), "logs")
         test_log_level = "DEBUG"
+        environ["OVOS_DEFAULT_LOG_NAME"] = "test"
 
         # Mock config for `mycroft` module init
         config.return_vaule = {
@@ -45,11 +58,12 @@ class TestPluginInit(unittest.TestCase):
         self.assertEqual(LOG.level, test_log_level, LOG.level)
 
         tts = plugin()
+
         self.assertEqual(LOG.base_path, test_log_dir, LOG.base_path)
         self.assertEqual(LOG.level, test_log_level, LOG.level)
         self.assertTrue(isdir(test_log_dir), test_log_dir)
-        self.assertTrue(isfile(join(test_log_dir, "ovos.log")))
-        with open(join(test_log_dir, "ovos.log"), 'r') as f:
+        self.assertTrue(isfile(join(test_log_dir, "test.log")))
+        with open(join(test_log_dir, "test.log"), 'r') as f:
             logs = f.read()
         self.assertIn("Amplitude: ", logs)
         self.assertIn(f"{tts.config}", logs)
