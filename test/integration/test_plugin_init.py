@@ -35,6 +35,8 @@ class TestPluginInit(unittest.TestCase):
 
         plugin = load_tts_plugin("ovos-tts-plugin-espeakng")
         tts = plugin()
+        self.assertEqual(LOG.base_path, test_log_dir)
+        self.assertEqual(LOG.level, test_log_level)
         self.assertTrue(isdir(test_log_dir))
         self.assertTrue(isfile(join(test_log_dir, "ovos.log")))
         with open(join(test_log_dir, "ovos.log"), 'r') as f:
