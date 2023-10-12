@@ -1,8 +1,12 @@
 import unittest
 
+from os import environ
 from os.path import join, dirname, isdir, isfile
 from shutil import rmtree
 from unittest.mock import patch
+
+environ["OVOS_DEFAULT_LOG_NAME"] = "test"
+environ["OVOS_DEFAULT_LOG_LEVEL"] = "DEBUG"
 
 
 class TestPluginInit(unittest.TestCase):
@@ -37,10 +41,13 @@ class TestPluginInit(unittest.TestCase):
         LOG.init({"path": test_log_dir, "level": test_log_level})
 
         plugin = load_tts_plugin("ovos-tts-plugin-espeakng")
+        self.assertEqual(LOG.base_path, test_log_dir, LOG.base_path)
+        self.assertEqual(LOG.level, test_log_level, LOG.level)
+
         tts = plugin()
-        self.assertEqual(LOG.base_path, test_log_dir)
-        self.assertEqual(LOG.level, test_log_level)
-        self.assertTrue(isdir(test_log_dir))
+        self.assertEqual(LOG.base_path, test_log_dir, LOG.base_path)
+        self.assertEqual(LOG.level, test_log_level, LOG.level)
+        self.assertTrue(isdir(test_log_dir), test_log_dir)
         self.assertTrue(isfile(join(test_log_dir, "ovos.log")))
         with open(join(test_log_dir, "ovos.log"), 'r') as f:
             logs = f.read()
