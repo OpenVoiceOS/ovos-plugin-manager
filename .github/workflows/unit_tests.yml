@@ -64,6 +64,9 @@ jobs:
         env:
           CODECOV_TOKEN: ${{secrets.CODECOV_TOKEN}}
         uses: codecov/codecov-action@v2
+      - name: Install ovos-core for integration testing
+        run: |
+          pip install ovos-core
       - name: Run integration tests
         run: |
           pytest test/integration
