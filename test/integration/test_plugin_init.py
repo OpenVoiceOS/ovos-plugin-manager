@@ -26,6 +26,7 @@ class TestPluginInit(unittest.TestCase):
         LOG.debug = Mock()
         plugin = load_tts_plugin("ovos-tts-plugin-espeakng")
         tts = plugin()
+        LOG.info(LOG.debug.call_args_list)
         LOG.debug.assert_any_call(f"Amplitude: None")
         LOG.debug.assert_any_call(tts.config)
 
