@@ -153,7 +153,7 @@ def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
 def normalize_lang(lang):
     # TODO consider moving to LF or ovos_utils
     # special handling, the parse sometimes messes this up
-    # eg, uk-uk gets normalized to uk-gb
+    # eg, uk-ua gets normalized to uk-gb
     # this also makes lookup easier as we
     # often get duplicate entries with both variants
     if "-" in lang:
