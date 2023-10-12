@@ -28,7 +28,10 @@ class TestPluginInit(unittest.TestCase):
         config.return_vaule = {
             "log_level": test_log_level,
             "logs": {
-                "path": test_log_dir
+                "path": test_log_dir,
+                "max_bytes": 50000000,
+                "backup_count": 1,
+                "diagnostic": False
             }
         }
         LOG.init({"path": test_log_dir, "level": test_log_level})
