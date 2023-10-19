@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.tts import TTS
 
@@ -180,7 +180,7 @@ class TestTTS(unittest.TestCase):
         get_supported_languages.assert_called_once_with(self.PLUGIN_TYPE)
 
     @patch("ovos_plugin_manager.utils.config.get_plugin_config")
-    def test_get_config(self, get_config):
+    def test_get_tts_config(self, get_config):
         from ovos_plugin_manager.tts import get_tts_config
         get_tts_config(self.TEST_CONFIG)
         get_config.assert_called_once_with(self.TEST_CONFIG,
@@ -200,6 +200,65 @@ class TestTTS(unittest.TestCase):
 
 
 class TestTTSFactory(unittest.TestCase):
-    from ovos_plugin_manager.tts import OVOSTTSFactory
-    # TODO
+    def test_mappings(self):
+        from ovos_plugin_manager.tts import OVOSTTSFactory
+        self.assertIsInstance(OVOSTTSFactory.MAPPINGS, dict)
+        for key in OVOSTTSFactory.MAPPINGS:
+            self.assertIsInstance(key, str)
+            self.assertIsInstance(OVOSTTSFactory.MAPPINGS[key], str)
+            self.assertNotEqual(key, OVOSTTSFactory.MAPPINGS[key])
 
+    @patch("ovos_plugin_manager.tts.load_tts_plugin")
+    def test_get_class(self, load_plugin):
+        from ovos_plugin_manager.tts import OVOSTTSFactory
+        global_config = {"tts": {"module": "dummy"}}
+        tts_config = {"module": "test-tts-plugin-test"}
+
+        # Test load plugin mapped global config
+        OVOSTTSFactory.get_class(global_config)
+        load_plugin.assert_called_with("ovos-tts-plugin-dummy")
+
+        # Test load plugin explicit TTS config
+        OVOSTTSFactory.get_class(tts_config)
+        load_plugin.assert_called_with("test-tts-plugin-test")
+
+    @patch("ovos_plugin_manager.tts.OVOSTTSFactory.get_class")
+    def test_create(self, get_class):
+        from ovos_plugin_manager.tts import OVOSTTSFactory
+        plugin_class = Mock()
+        get_class.return_value = plugin_class
+
+        global_config = {"lang": "en-gb",
+                         "tts": {"module": "dummy",
+                                 "ovos-tts-plugin-dummy": {"config": True,
+                                                           "lang": "en-ca"}}}
+        tts_config = {"lang": "es-es",
+                      "module": "test-tts-plugin-test"}
+
+        tts_config_2 = {"lang": "es-es",
+                        "module": "test-tts-plugin-test",
+                        "test-tts-plugin-test": {"config": True,
+                                                 "lang": "es-mx"}}
+
+        # Test create with global config and lang override
+        plugin = OVOSTTSFactory.create(global_config)
+        expected_config = {"module": "ovos-tts-plugin-dummy",
+                           "config": True,
+                           "lang": "en-ca"}
+        get_class.assert_called_once_with(expected_config)
+        plugin_class.assert_called_once_with(lang=None, config=expected_config)
+        self.assertEqual(plugin, plugin_class())
+
+        # Test create with TTS config and no module config
+        plugin = OVOSTTSFactory.create(tts_config)
+        get_class.assert_called_with(tts_config)
+        plugin_class.assert_called_with(lang=None, config=tts_config)
+        self.assertEqual(plugin, plugin_class())
+
+        # Test create with TTS config with module-specific config
+        plugin = OVOSTTSFactory.create(tts_config_2)
+        expected_config = {"module": "test-tts-plugin-test",
+                           "config": True, "lang": "es-mx"}
+        get_class.assert_called_with(expected_config)
+        plugin_class.assert_called_with(lang=None, config=expected_config)
+        self.assertEqual(plugin, plugin_class())

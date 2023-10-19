@@ -90,18 +90,20 @@ def get_tts_supported_langs():
     return get_plugin_supported_languages(PluginTypes.TTS)
 
 
-def get_tts_config(config: dict = None) -> dict:
+def get_tts_config(config: dict = None, module: str = None) -> dict:
     """
     Get relevant configuration for factory methods
     @param config: global Configuration OR plugin class-specific configuration
+    @param module: TTS module to get configuration for
     @return: plugin class-specific configuration
     """
     from ovos_plugin_manager.utils.config import get_plugin_config
-    return get_plugin_config(config, 'tts')
+    return get_plugin_config(config, 'tts', module)
 
 
 def get_voice_id(plugin_name, lang, tts_config):
-    tts_hash = md5(json.dumps(tts_config, sort_keys=True).encode("utf-8")).hexdigest()
+    tts_hash = md5(json.dumps(tts_config,
+                              sort_keys=True).encode("utf-8")).hexdigest()
     return f"{plugin_name}_{lang}_{tts_hash}"
 
 
@@ -110,7 +112,8 @@ def scan_voices():
     for lang in get_tts_supported_langs():
         VOICES_FOLDER = f"{xdg_data_home()}/OPM/voice_configs/{lang}"
         os.makedirs(VOICES_FOLDER, exist_ok=True)
-        for plug, voices in get_tts_lang_configs(lang, include_dialects=True).items():
+        for plug, voices in get_tts_lang_configs(lang,
+                                                 include_dialects=True).items():
             for voice in voices:
                 voiceid = get_voice_id(plug, lang, voice)
                 if "meta" not in voice:
@@ -190,12 +193,17 @@ class OVOSTTSFactory:
         """
         tts_config = get_tts_config(config)
         tts_module = tts_config.get('module', 'dummy')
+        if tts_module in OVOSTTSFactory.MAPPINGS:
+            # The configured module maps to a valid plugin; get configuration
+            # again to make sure any module-specific config/overrides are loaded
+            tts_module = OVOSTTSFactory.MAPPINGS[tts_module]
+            tts_config = get_tts_config(config, tts_module)
         try:
             clazz = OVOSTTSFactory.get_class(tts_config)
             if clazz:
                 LOG.info(f'Found plugin {tts_module}')
-                tts = clazz(None,  # don't pass lang and force read from config
-                            get_plugin_config(tts_config, "tts", tts_module))
+                tts = clazz(lang=None,  # explicitly read lang from config
+                            config=tts_config)
                 tts.validator.validate()
                 LOG.info(f'Loaded plugin {tts_module}')
             else:
@@ -203,6 +211,7 @@ class OVOSTTSFactory:
         except Exception:
             plugins = find_tts_plugins()
             modules = ",".join(plugins.keys())
-            LOG.exception(f'The TTS plugin "{tts_module}" could not be loaded.\nAvailable modules: {modules}')
+            LOG.exception(f'The TTS plugin "{tts_module}" could not be loaded.'
+                          f'\nAvailable modules: {modules}')
             raise
         return tts

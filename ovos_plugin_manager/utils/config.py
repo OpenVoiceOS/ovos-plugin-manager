@@ -32,6 +32,7 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
                 continue
             elif isinstance(val, dict):
                 continue
+            # Use section-scoped config as defaults (i.e. TTS.lang)
             module_config.setdefault(key, val)
         config = module_config
     if section not in ["hotwords", "VAD", "listener", "gui"]:
