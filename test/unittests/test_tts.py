@@ -184,7 +184,7 @@ class TestTTS(unittest.TestCase):
         from ovos_plugin_manager.tts import get_tts_config
         get_tts_config(self.TEST_CONFIG)
         get_config.assert_called_once_with(self.TEST_CONFIG,
-                                           self.CONFIG_SECTION)
+                                           self.CONFIG_SECTION, None)
 
     def test_get_voice_id(self):
         from ovos_plugin_manager.tts import get_voice_id

@@ -81,12 +81,12 @@ class TestSTT(unittest.TestCase):
         get_supported_languages.assert_called_once_with(self.PLUGIN_TYPE)
 
     @patch("ovos_plugin_manager.utils.config.get_plugin_config")
-    def test_get_config(self, get_config):
+    def test_get_stt_config(self, get_config):
         from ovos_plugin_manager.stt import get_stt_config
         config = copy(self.TEST_CONFIG)
         get_stt_config(self.TEST_CONFIG)
         get_config.assert_called_once_with(self.TEST_CONFIG,
-                                           self.CONFIG_SECTION)
+                                           self.CONFIG_SECTION, None)
         self.assertEqual(config, self.TEST_CONFIG)
 
 
