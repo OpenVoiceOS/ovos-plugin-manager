@@ -6,7 +6,7 @@ from ovos_plugin_manager.utils import PluginTypes, normalize_lang, \
     PluginConfigTypes
 from ovos_plugin_manager.utils.config import get_valid_plugin_configs, \
     sort_plugin_configs, get_plugin_config
-from ovos_utils.log import LOG
+from ovos_utils.log import LOG, log_deprecation
 from ovos_utils.xdg_utils import xdg_data_home
 from hashlib import md5
 
@@ -196,6 +196,7 @@ class OVOSTTSFactory:
         if tts_module in OVOSTTSFactory.MAPPINGS:
             # The configured module maps to a valid plugin; get configuration
             # again to make sure any module-specific config/overrides are loaded
+            log_deprecation("Module mappings will be deprecated", "0.1.0")
             tts_module = OVOSTTSFactory.MAPPINGS[tts_module]
             tts_config = get_tts_config(config, tts_module)
         try:
