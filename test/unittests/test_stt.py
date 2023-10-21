@@ -1,7 +1,7 @@
 import unittest
 from copy import copy
 
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
@@ -91,5 +91,66 @@ class TestSTT(unittest.TestCase):
 
 
 class TestSTTFactory(unittest.TestCase):
-    from ovos_plugin_manager.stt import OVOSSTTFactory
-    # TODO
+    def test_mappings(self):
+        from ovos_plugin_manager.stt import OVOSSTTFactory
+        self.assertIsInstance(OVOSSTTFactory.MAPPINGS, dict)
+        for key in OVOSSTTFactory.MAPPINGS:
+            self.assertIsInstance(key, str)
+            self.assertIsInstance(OVOSSTTFactory.MAPPINGS[key], str)
+            self.assertNotEqual(key, OVOSSTTFactory.MAPPINGS[key])
+
+    @patch("ovos_plugin_manager.stt.load_stt_plugin")
+    def test_get_class(self, load_plugin):
+        from ovos_plugin_manager.stt import OVOSSTTFactory
+        global_config = {"stt": {"module": "dummy"}}
+        tts_config = {"module": "test-stt-plugin-test"}
+
+        # Test load plugin mapped global config
+        OVOSSTTFactory.get_class(global_config)
+        load_plugin.assert_called_with("ovos-stt-plugin-dummy")
+
+        # Test load plugin explicit STT config
+        OVOSSTTFactory.get_class(tts_config)
+        load_plugin.assert_called_with("test-stt-plugin-test")
+
+    @patch("ovos_plugin_manager.stt.OVOSSTTFactory.get_class")
+    def test_create(self, get_class):
+        from ovos_plugin_manager.stt import OVOSSTTFactory
+        plugin_class = Mock()
+        get_class.return_value = plugin_class
+
+        global_config = {"lang": "en-gb",
+                         "stt": {"module": "dummy",
+                                 "ovos-stt-plugin-dummy": {"config": True,
+                                                           "lang": "en-ca"}}}
+        stt_config = {"lang": "es-es",
+                      "module": "test-stt-plugin-test"}
+
+        stt_config_2 = {"lang": "es-es",
+                        "module": "test-stt-plugin-test",
+                        "test-stt-plugin-test": {"config": True,
+                                                 "lang": "es-mx"}}
+
+        # Test create with global config and lang override
+        plugin = OVOSSTTFactory.create(global_config)
+        expected_config = {"module": "ovos-stt-plugin-dummy",
+                           "config": True,
+                           "lang": "en-ca"}
+        get_class.assert_called_once_with(expected_config)
+        plugin_class.assert_called_once_with(expected_config)
+        self.assertEqual(plugin, plugin_class())
+
+        # Test create with STT config and no module config
+        plugin = OVOSSTTFactory.create(stt_config)
+        get_class.assert_called_with(stt_config)
+        plugin_class.assert_called_with(stt_config)
+        self.assertEqual(plugin, plugin_class())
+
+        # Test create with STT config with module-specific config
+        plugin = OVOSSTTFactory.create(stt_config_2)
+        expected_config = {"module": "test-stt-plugin-test",
+                           "config": True, "lang": "es-mx"}
+        get_class.assert_called_with(expected_config)
+        plugin_class.assert_called_with(expected_config)
+        self.assertEqual(plugin, plugin_class())
+

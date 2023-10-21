@@ -88,14 +88,15 @@ def get_stt_supported_langs() -> dict:
     return get_plugin_supported_languages(PluginTypes.STT)
 
 
-def get_stt_config(config: dict = None) -> dict:
+def get_stt_config(config: dict = None, module: str = None) -> dict:
     """
     Get relevant configuration for factory methods
     @param config: global Configuration OR plugin class-specific configuration
+    @param module: STT module to get configuration for
     @return: plugin class-specific configuration
     """
     from ovos_plugin_manager.utils.config import get_plugin_config
-    stt_config = get_plugin_config(config, "stt")
+    stt_config = get_plugin_config(config, "stt", module)
     assert stt_config.get('lang') is not None, "expected lang but got None"
     return stt_config
 
@@ -133,7 +134,7 @@ class OVOSSTTFactory:
             "module": <engine_name>
         }
         """
-        config = config or get_stt_config()
+        config = get_stt_config(config)
         stt_module = config["module"]
         if stt_module in OVOSSTTFactory.MAPPINGS:
             stt_module = OVOSSTTFactory.MAPPINGS[stt_module]
@@ -150,11 +151,14 @@ class OVOSSTTFactory:
             "module": <engine_name>
         }
         """
-        config = get_stt_config(config)
-        plugin = config["module"]
+        stt_config = get_stt_config(config)
+        plugin = stt_config.get("module", "dummy")
+        if plugin in OVOSSTTFactory.MAPPINGS:
+            plugin = OVOSSTTFactory.MAPPINGS[plugin]
+            stt_config = get_stt_config(config, plugin)
         try:
-            clazz = OVOSSTTFactory.get_class(config)
-            return clazz(get_plugin_config(config, "stt", plugin))
+            clazz = OVOSSTTFactory.get_class(stt_config)
+            return clazz(stt_config)
         except Exception:
             LOG.exception('The selected STT plugin could not be loaded!')
             raise
