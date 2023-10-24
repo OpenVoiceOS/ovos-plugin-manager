@@ -4,7 +4,7 @@ from os import makedirs
 
 from os.path import join, dirname, isfile
 from copy import deepcopy, copy
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 _MOCK_CONFIG = {
     "lang": "global",
@@ -531,9 +531,36 @@ class TestUtils(unittest.TestCase):
             self.assertIsInstance(cfg_type, str)
             self.assertTrue(cfg_type.value.endswith('.config'))
 
-    def test_find_plugins(self):
+    @patch("ovos_plugin_manager.utils.LOG.error")
+    @patch("ovos_plugin_manager.utils._iter_entrypoints")
+    def test_find_plugins(self, iter_entrypoints, log_error):
         from ovos_plugin_manager.utils import find_plugins
-        # TODO
+        good_plugin = Mock(name="working_plugin")
+        bad_plugin = Mock(name="failing_plugin")
+        bad_plugin.load = Mock(
+            side_effect=Exception("This plugin doesn't load"))
+
+        # Test load valid plugin
+        iter_entrypoints.return_value = [good_plugin]
+        valid_loaded = find_plugins()
+        self.assertEqual(len(valid_loaded), 1)
+        self.assertEqual(list(valid_loaded.keys())[0], good_plugin.name)
+        self.assertEqual(list(valid_loaded.values())[0], good_plugin.load())
+        log_error.assert_not_called()
+
+        # Test load with invalid plugin
+        iter_entrypoints.return_value.append(bad_plugin)
+        with_invalid_loaded = find_plugins()
+        self.assertEqual(with_invalid_loaded.keys(), valid_loaded.keys())
+        log_error.assert_called_once()
+
+        # Test error not re-logged
+        with_invalid_reloaded = find_plugins()
+        self.assertEqual(with_invalid_reloaded.keys(),
+                         with_invalid_loaded.keys())
+        log_error.assert_called_once()
+
+        # TODO: Test loading by plugin type
 
     def test_load_plugin(self):
         from ovos_plugin_manager.utils import load_plugin
