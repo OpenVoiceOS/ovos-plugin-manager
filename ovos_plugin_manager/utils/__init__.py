@@ -11,13 +11,13 @@
 # limitations under the License.
 #
 """Common functions for loading plugins."""
-from typing import Optional
-
 import time
 from enum import Enum
 from threading import Event
+from typing import Optional
 
 import pkg_resources
+
 from ovos_utils.log import LOG
 
 
@@ -112,9 +112,15 @@ def find_plugins(plug_type: PluginTypes = None) -> dict:
                 if entry_point.name not in entrypoints:
                     LOG.debug(f"Loaded plugin entry point {entry_point.name}")
             except Exception as e:
-                LOG.error(f"Failed to load plugin entry point {entry_point}: "
-                          f"{e}")
+                if entry_point not in find_plugins._errored:
+                    find_plugins._errored.append(entry_point)
+                    # NOTE: this runs in a loop inside skills manager, this would endlessly spam logs
+                    LOG.error(f"Failed to load plugin entry point {entry_point}: "
+                              f"{e}")
     return entrypoints
+
+
+find_plugins._errored = []
 
 
 def _iter_entrypoints(plug_type: Optional[str]):
