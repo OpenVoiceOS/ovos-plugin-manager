@@ -1,8 +1,20 @@
 # Changelog
 
-## [0.0.24a15](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a15) (2023-10-12)
+## [0.0.24a16](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a16) (2023-10-24)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a14...0.0.24a15)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a15...0.0.24a16)
+
+**Fixed bugs:**
+
+- remove log spam [\#188](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/188) ([JarbasAl](https://github.com/JarbasAl))
+
+**Closed issues:**
+
+- support ovos-translate-server [\#182](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/182)
+
+## [V0.0.24a15](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.24a15) (2023-10-12)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a14...V0.0.24a15)
 
 **Fixed bugs:**
 
