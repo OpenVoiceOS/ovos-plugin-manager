@@ -100,3 +100,11 @@ class TestG2PFactory(unittest.TestCase):
         from ovos_plugin_manager.g2p import OVOSG2PFactory
         get_class = Mock()
         # TODO
+
+    def test_create_arpa(self):
+        # Testing a specific failure reported in #189
+        from ovos_plugin_manager.g2p import OVOSG2PFactory
+        from ovos_plugin_manager.templates.g2p import Grapheme2PhonemePlugin
+        config = {"module": "ovos-g2p-plugin-heuristic-arpa"}
+        plugin = OVOSG2PFactory.create(config)
+        self.assertIsInstance(plugin, Grapheme2PhonemePlugin)
