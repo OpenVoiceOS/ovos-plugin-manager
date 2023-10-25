@@ -1,6 +1,6 @@
 import unittest
 
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from enum import Enum
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
@@ -72,5 +72,31 @@ class TestG2P(unittest.TestCase):
 
 
 class TestG2PFactory(unittest.TestCase):
-    from ovos_plugin_manager.g2p import OVOSG2PFactory
-    # TODO
+    def test_mappings(self):
+        from ovos_plugin_manager.g2p import OVOSG2PFactory
+        self.assertIsInstance(OVOSG2PFactory.MAPPINGS, dict)
+        for key in OVOSG2PFactory.MAPPINGS:
+            self.assertIsInstance(key, str)
+            self.assertIsInstance(OVOSG2PFactory.MAPPINGS[key], str)
+            self.assertNotEqual(key, OVOSG2PFactory.MAPPINGS[key])
+
+    @patch("ovos_plugin_manager.g2p.load_g2p_plugin")
+    def test_get_class(self, load_plugin):
+        from ovos_plugin_manager.g2p import OVOSG2PFactory
+        from ovos_plugin_manager.templates.g2p import Grapheme2PhonemePlugin
+        global_config = {"g2p": {"module": "dummy"}}
+        g2p_config = {"module": "test-g2p-plugin-test"}
+
+        # Test load plugin mapped global config
+        plugin = OVOSG2PFactory.get_class(global_config)
+        self.assertEqual(plugin, Grapheme2PhonemePlugin)
+
+        # Test load plugin explicit TTS config
+        OVOSG2PFactory.get_class(g2p_config)
+        load_plugin.assert_called_with("test-g2p-plugin-test")
+
+    @patch("ovos_plugin_manager.g2p.OVOSG2PFactory.get_class")
+    def test_create(self, get_class):
+        from ovos_plugin_manager.g2p import OVOSG2PFactory
+        get_class = Mock()
+        # TODO

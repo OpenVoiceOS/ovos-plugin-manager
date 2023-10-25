@@ -153,4 +153,3 @@ class TestSTTFactory(unittest.TestCase):
         get_class.assert_called_with(expected_config)
         plugin_class.assert_called_with(expected_config)
         self.assertEqual(plugin, plugin_class())
-
