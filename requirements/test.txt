@@ -2,4 +2,9 @@ pytest
 pytest-timeout
 pytest-cov
 ovos-translate-server-plugin
-ovos-classifiers
+
+# Below for #189
+ovos-classifiers>=0.0.0a37
+ovos-tts-server>=0.0.3a9
+ovos-tts-plugin-mimic3[all]>=0.0.1a2
+onnxruntime>=1.16.1
