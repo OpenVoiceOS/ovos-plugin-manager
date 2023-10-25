@@ -1,8 +1,17 @@
 # Changelog
 
-## [0.0.24a17](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a17) (2023-10-25)
+## [0.0.24a18](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.24a18) (2023-10-25)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a16...0.0.24a17)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a17...0.0.24a18)
+
+**Fixed bugs:**
+
+- STT class init with wrong config [\#132](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/132)
+- Fix STT and TTS configuration handling [\#187](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/187) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.24a17](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.24a17) (2023-10-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24a16...V0.0.24a17)
 
 **Merged pull requests:**
 
