@@ -6,4 +6,6 @@ ovos-translate-server-plugin
 # Below for #189
 ovos-classifiers>=0.0.0a37
 mycroft-mimic3-tts[all]<1.0
+nltk~=3.8
+# Failing case installs nltk 3.3, passing installed 3.8.1
 # ovos-tts-plugin-mimic3>=0.0.1a2
