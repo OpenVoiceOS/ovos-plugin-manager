@@ -629,6 +629,26 @@ class TestConfigUtils(unittest.TestCase):
         self.assertEqual(seg_config, get_plugin_config(section="segmentation"))
         self.assertEqual(gui_config, get_plugin_config(section="gui"))
 
+        # Test TTS config with plugin `lang` override
+        config = {
+            "lang": "en-us",
+            "tts": {
+                "module": "ovos_tts_plugin_espeakng",
+                "ovos_tts_plugin_espeakng": {
+                  "lang": "de-de",
+                  "voice": "german-mbrola-5",
+                  "speed": "135",
+                  "amplitude": "80",
+                  "pitch": "20"
+                }
+            }
+        }
+        tts_config = get_plugin_config(config, "tts")
+        self.assertEqual(tts_config['lang'], 'de-de')
+        self.assertEqual(tts_config['module'], 'ovos_tts_plugin_espeakng')
+        self.assertEqual(tts_config['voice'], 'german-mbrola-5')
+        self.assertNotIn("ovos_tts_plugin_espeakng", tts_config)
+
         self.assertEqual(_MOCK_CONFIG, start_config)
 
     def test_get_valid_plugin_configs(self):
