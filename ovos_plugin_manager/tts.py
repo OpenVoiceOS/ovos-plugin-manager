@@ -208,7 +208,7 @@ class OVOSTTSFactory:
                 tts.validator.validate()
                 LOG.info(f'Loaded plugin {tts_module}')
             else:
-                raise FileNotFoundError("unknown plugin")
+                raise RuntimeError(f"unknown plugin: {tts_module}")
         except Exception:
             plugins = find_tts_plugins()
             modules = ",".join(plugins.keys())
