@@ -53,7 +53,7 @@ jobs:
           pip install .
       - name: Install test dependencies
         run: |
-          pip install pytest pytest-timeout pytest-cov neon-lang-plugin-libretranslate
+          pip install -r requirements/test.txt
       - name: Run unittests
         run: |
           pytest --cov=ovos_plugin_manager --cov-report xml test/unittests

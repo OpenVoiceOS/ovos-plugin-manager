@@ -1,0 +1,5 @@
+pytest
+pytest-timeout
+pytest-cov
+neon-lang-plugin-libretranslate
+ovos-translate-server-plugin
