@@ -1,3 +1,33 @@
+# NEON AI (TM) SOFTWARE, Software Development Kit & Application Framework
+# All trademark and other rights reserved by their respective owners
+# Copyright 2008-2022 Neongecko.com Inc.
+# Contributors: Daniel McKnight, Guy Daniels, Elon Gasper, Richard Leeds,
+# Regina Bloomstine, Casimiro Ferreira, Andrii Pernatii, Kirill Hrymailo
+# BSD-3 License
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from this
+#    software without specific prior written permission.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+# CONTRIBUTORS  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+# OR PROFITS;  OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Solver service can be found at: https://github.com/Neongeckocom/neon_solvers
+
 from json_database import JsonStorageXDG
 from ovos_utils.xdg_utils import xdg_cache_home
 from quebra_frases import sentence_tokenize
@@ -11,9 +41,9 @@ class AbstractSolver:
     enable_tx = False
     enable_cache = False
 
-    def __init__(self, config=None, *args, **kwargs):
+    def __init__(self, config=None, translator=None, *args, **kwargs):
         if args or kwargs:
-            LOG.warning("solver plugins init signature changed, please update to accept a single config kwarg. "
+            LOG.warning("solver plugins init signature changed, please update to accept config=None, translator=None. "
                         "an exception will be raised in next stable release")
             for arg in args:
                 if isinstance(arg, str):
@@ -31,7 +61,7 @@ class AbstractSolver:
         self.default_lang = self.config.get("lang", "en")
         if self.default_lang not in self.supported_langs:
             self.supported_langs.insert(0, self.default_lang)
-        self.translator = OVOSLangTranslationFactory.create()
+        self.translator = translator or OVOSLangTranslationFactory.create()
 
     @staticmethod
     def sentence_split(text, max_sentences=25):
@@ -73,8 +103,8 @@ class QuestionSolver(AbstractSolver):
     """free form unscontrained spoken question solver
     handling automatic translation back and forth as needed"""
 
-    def __init__(self, config=None, *args, **kwargs):
-        super().__init__(config, *args, **kwargs)
+    def __init__(self, config=None, translator=None, *args, **kwargs):
+        super().__init__(config, translator, *args, **kwargs)
         name = kwargs.get("name") or self.__class__.__name__
         if self.enable_cache:
             # cache contains raw data

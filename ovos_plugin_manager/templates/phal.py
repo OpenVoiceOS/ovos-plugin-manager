@@ -27,7 +27,7 @@ class PHALValidator:
 class PHALPlugin(Thread):
     """
     This base class is intended to be used to interface with the hardware
-    that is running Mycroft.  It exposes all possible commands which
+    that is running OpenVoiceOS.  It exposes all possible commands which
     are expected be sent to a PHAL plugin.
     All of the handlers are optional and for convenience only
     """
@@ -45,9 +45,27 @@ class PHALPlugin(Thread):
         self.log = LOG
         self.name = name
 
+        self.register_enclosure_namespace()
+        self.register_core_events()
+
+        self._activate_mouth_events()
+        self.start()
+
+    def register_core_events(self):
+        # audio events
+        self.bus.on('recognizer_loop:record_begin', self.on_record_begin)
+        self.bus.on('recognizer_loop:record_end', self.on_record_end)
+        self.bus.on("recognizer_loop:sleep", self.on_sleep)
+        self.bus.on('recognizer_loop:audio_output_start', self.on_audio_output_start)
+        self.bus.on('recognizer_loop:audio_output_end', self.on_audio_output_end)
+        self.bus.on("mycroft.awoken", self.on_awake)
+        self.bus.on("speak", self.on_speak)
+
+    def register_enclosure_namespace(self):
+        self.bus.on("enclosure.notify.no_internet", self.on_no_internet)
         self.bus.on("enclosure.reset", self.on_reset)
 
-        # enclosure commands for Mycroft's Hardware.
+        # enclosure commands for OpenVoiceOS's Hardware.
         self.bus.on("enclosure.system.reset", self.on_system_reset)
         self.bus.on("enclosure.system.mute", self.on_system_mute)
         self.bus.on("enclosure.system.unmute", self.on_system_unmute)
@@ -76,6 +94,7 @@ class PHALPlugin(Thread):
         self.bus.on("enclosure.mouth.listen", self._on_mouth_listen)
         self.bus.on("enclosure.mouth.smile", self._on_mouth_smile)
         self.bus.on("enclosure.mouth.viseme", self._on_mouth_viseme)
+        self.bus.on("enclosure.mouth.viseme_list", self._on_mouth_viseme_list)
 
         # mouth/matrix display
         self.bus.on("enclosure.mouth.reset", self.on_display_reset)
@@ -83,20 +102,6 @@ class PHALPlugin(Thread):
         self.bus.on("enclosure.mouth.display", self.on_display)
         self.bus.on("enclosure.weather.display", self.on_weather_display)
 
-        # audio events
-        self.bus.on('recognizer_loop:record_begin', self.on_record_begin)
-        self.bus.on('recognizer_loop:record_end', self.on_record_end)
-        self.bus.on("recognizer_loop:sleep", self.on_sleep)
-        self.bus.on('recognizer_loop:audio_output_start', self.on_audio_output_start)
-        self.bus.on('recognizer_loop:audio_output_end', self.on_audio_output_end)
-
-        # other events
-        self.bus.on("mycroft.awoken", self.on_awake)
-        self.bus.on("speak", self.on_speak)
-        self.bus.on("enclosure.notify.no_internet", self.on_no_internet)
-
-        self._activate_mouth_events()
-        self.start()
 
     @classproperty
     def runtime_requirements(self):
@@ -156,7 +161,8 @@ class PHALPlugin(Thread):
         self.bus.remove("enclosure.eyes.timedspin", self.on_eyes_timed_spin)
         self.bus.remove("enclosure.eyes.volume", self.on_eyes_volume)
         self.bus.remove("enclosure.eyes.spin", self.on_eyes_spin)
-        self.bus.remove("enclosure.eyes.set_pixel", self.on_eyes_set_pixel)
+        self.bus.remove("enclosure.eyes.setpixel", self.on_eyes_set_pixel)
+        self.bus.remove('enclosure.eyes.fill', self.on_eyes_fill)
 
         self.bus.remove("enclosure.mouth.reset", self.on_display_reset)
         self.bus.remove("enclosure.mouth.talk", self.on_talk)
@@ -164,6 +170,7 @@ class PHALPlugin(Thread):
         self.bus.remove("enclosure.mouth.listen", self.on_listen)
         self.bus.remove("enclosure.mouth.smile", self.on_smile)
         self.bus.remove("enclosure.mouth.viseme", self.on_viseme)
+        self.bus.remove("enclosure.mouth.viseme_list", self._on_mouth_viseme_list)
         self.bus.remove("enclosure.mouth.text", self.on_text)
         self.bus.remove("enclosure.mouth.display", self.on_display)
         self.bus.remove("enclosure.mouth.events.activate", self._activate_mouth_events)
@@ -372,6 +379,26 @@ class PHALPlugin(Thread):
         if self.mouth_events_active:
             self.on_viseme(message)
 
+    def _on_mouth_viseme_list(self, message=None):
+        """mouth visemes as a list in a single message.
+
+            Args:
+                start (int):    Timestamp for start of speech
+                viseme_pairs:   Pairs of viseme id and cumulative end times
+                                (code, end time)
+
+                                codes:
+                                 0 = shape for sounds like 'y' or 'aa'
+                                 1 = shape for sounds like 'aw'
+                                 2 = shape for sounds like 'uh' or 'r'
+                                 3 = shape for sounds like 'th' or 'sh'
+                                 4 = neutral shape for no sound
+                                 5 = shape for sounds like 'f' or 'v'
+                                 6 = shape for sounds like 'oy' or 'ao'
+        """
+        if self.mouth_events_active:
+            self.on_viseme_list(message)
+
     def _on_mouth_text(self, message=None):
         """Display text (scrolling as needed)
         Args:
@@ -415,6 +442,25 @@ class PHALPlugin(Thread):
                          4 = neutral shape for no sound
                          5 = shape for sounds like 'f' or 'v'
                          6 = shape for sounds like 'oy' or 'ao'
+        """
+        pass
+
+    def on_viseme_list(self, message=None):
+        """ Send mouth visemes as a list in a single message.
+
+            Args:
+                start (int):    Timestamp for start of speech
+                viseme_pairs:   Pairs of viseme id and cumulative end times
+                                (code, end time)
+
+                                codes:
+                                 0 = shape for sounds like 'y' or 'aa'
+                                 1 = shape for sounds like 'aw'
+                                 2 = shape for sounds like 'uh' or 'r'
+                                 3 = shape for sounds like 'th' or 'sh'
+                                 4 = neutral shape for no sound
+                                 5 = shape for sounds like 'f' or 'v'
+                                 6 = shape for sounds like 'oy' or 'ao'
         """
         pass
 

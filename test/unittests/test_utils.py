@@ -4,7 +4,7 @@ from os import makedirs
 
 from os.path import join, dirname, isfile
 from copy import deepcopy, copy
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 _MOCK_CONFIG = {
     "lang": "global",
@@ -524,16 +524,43 @@ class TestUtils(unittest.TestCase):
             self.assertIsInstance(plug_type, str)
             # Handle plugins without associated config entrypoint
             if plug_type not in (PluginTypes.PERSONA,):
-                self.assertIsInstance(PluginConfigTypes(f"{plug_type}.config"),
+                self.assertIsInstance(PluginConfigTypes(f"{plug_type.value}.config"),
                                       PluginConfigTypes)
         for cfg_type in PluginConfigTypes:
             self.assertIsInstance(cfg_type, PluginConfigTypes)
             self.assertIsInstance(cfg_type, str)
             self.assertTrue(cfg_type.value.endswith('.config'))
 
-    def test_find_plugins(self):
+    @patch("ovos_plugin_manager.utils.LOG.error")
+    @patch("ovos_plugin_manager.utils._iter_entrypoints")
+    def test_find_plugins(self, iter_entrypoints, log_error):
         from ovos_plugin_manager.utils import find_plugins
-        # TODO
+        good_plugin = Mock(name="working_plugin")
+        bad_plugin = Mock(name="failing_plugin")
+        bad_plugin.load = Mock(
+            side_effect=Exception("This plugin doesn't load"))
+
+        # Test load valid plugin
+        iter_entrypoints.return_value = [good_plugin]
+        valid_loaded = find_plugins()
+        self.assertEqual(len(valid_loaded), 1)
+        self.assertEqual(list(valid_loaded.keys())[0], good_plugin.name)
+        self.assertEqual(list(valid_loaded.values())[0], good_plugin.load())
+        log_error.assert_not_called()
+
+        # Test load with invalid plugin
+        iter_entrypoints.return_value.append(bad_plugin)
+        with_invalid_loaded = find_plugins()
+        self.assertEqual(with_invalid_loaded.keys(), valid_loaded.keys())
+        log_error.assert_called_once()
+
+        # Test error not re-logged
+        with_invalid_reloaded = find_plugins()
+        self.assertEqual(with_invalid_reloaded.keys(),
+                         with_invalid_loaded.keys())
+        log_error.assert_called_once()
+
+        # TODO: Test loading by plugin type
 
     def test_load_plugin(self):
         from ovos_plugin_manager.utils import load_plugin
@@ -601,6 +628,26 @@ class TestConfigUtils(unittest.TestCase):
         self.assertEqual(pos_config, get_plugin_config(section="postag"))
         self.assertEqual(seg_config, get_plugin_config(section="segmentation"))
         self.assertEqual(gui_config, get_plugin_config(section="gui"))
+
+        # Test TTS config with plugin `lang` override
+        config = {
+            "lang": "en-us",
+            "tts": {
+                "module": "ovos_tts_plugin_espeakng",
+                "ovos_tts_plugin_espeakng": {
+                  "lang": "de-de",
+                  "voice": "german-mbrola-5",
+                  "speed": "135",
+                  "amplitude": "80",
+                  "pitch": "20"
+                }
+            }
+        }
+        tts_config = get_plugin_config(config, "tts")
+        self.assertEqual(tts_config['lang'], 'de-de')
+        self.assertEqual(tts_config['module'], 'ovos_tts_plugin_espeakng')
+        self.assertEqual(tts_config['voice'], 'german-mbrola-5')
+        self.assertNotIn("ovos_tts_plugin_espeakng", tts_config)
 
         self.assertEqual(_MOCK_CONFIG, start_config)
 

@@ -18,3 +18,4 @@ dist
 
 # Created by unit tests
 .pytest_cache/
+/.gtm/

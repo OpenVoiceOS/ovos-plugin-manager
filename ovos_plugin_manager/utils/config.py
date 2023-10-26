@@ -27,10 +27,12 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
         module_config = dict(config.get(module) or dict())
         module_config.setdefault('module', module)
         for key, val in config.items():
-            if key == "module":
+            # Configured module name is not part of that module's config
+            if key in ("module", "translation_module", "detection_module"):
                 continue
             elif isinstance(val, dict):
                 continue
+            # Use section-scoped config as defaults (i.e. TTS.lang)
             module_config.setdefault(key, val)
         config = module_config
     if section not in ["hotwords", "VAD", "listener", "gui"]:

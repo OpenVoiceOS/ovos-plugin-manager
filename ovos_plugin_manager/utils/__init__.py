@@ -11,14 +11,13 @@
 # limitations under the License.
 #
 """Common functions for loading plugins."""
-from typing import Optional
-
 import time
 from enum import Enum
 from threading import Event
+from typing import Optional
 
 import pkg_resources
-from langcodes import standardize_tag as _normalize_lang
+
 from ovos_utils.log import LOG
 
 
@@ -40,6 +39,8 @@ class PluginTypes(str, Enum):
     UTTERANCE_TRANSFORMER = "neon.plugin.text"
     METADATA_TRANSFORMER = "neon.plugin.metadata"
     AUDIO_TRANSFORMER = "neon.plugin.audio"
+    DIALOG_TRANSFORMER = "opm.transformer.dialog"
+    TTS_TRANSFORMER = "opm.transformer.tts"
     QUESTION_SOLVER = "neon.plugin.solver"
     TLDR_SOLVER = "opm.solver.summarization"
     ENTAILMENT_SOLVER = "opm.solver.entailment"
@@ -72,6 +73,8 @@ class PluginConfigTypes(str, Enum):
     UTTERANCE_TRANSFORMER = "neon.plugin.text.config"
     METADATA_TRANSFORMER = "neon.plugin.metadata.config"
     AUDIO_TRANSFORMER = "neon.plugin.audio.config"
+    DIALOG_TRANSFORMER = "opm.transformer.dialog.config"
+    TTS_TRANSFORMER = "opm.transformer.tts.config"
     QUESTION_SOLVER = "neon.plugin.solver.config"
     TLDR_SOLVER = "opm.solver.summarization.config"
     ENTAILMENT_SOLVER = "opm.solver.entailment.config"
@@ -109,9 +112,15 @@ def find_plugins(plug_type: PluginTypes = None) -> dict:
                 if entry_point.name not in entrypoints:
                     LOG.debug(f"Loaded plugin entry point {entry_point.name}")
             except Exception as e:
-                LOG.debug(f"Failed to load plugin entry point {entry_point}: "
-                          f"{e}")
+                if entry_point not in find_plugins._errored:
+                    find_plugins._errored.append(entry_point)
+                    # NOTE: this runs in a loop inside skills manager, this would endlessly spam logs
+                    LOG.error(f"Failed to load plugin entry point {entry_point}: "
+                              f"{e}")
     return entrypoints
+
+
+find_plugins._errored = []
 
 
 def _iter_entrypoints(plug_type: Optional[str]):
@@ -149,15 +158,17 @@ def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
 
 def normalize_lang(lang):
     # TODO consider moving to LF or ovos_utils
+    # special handling, the parse sometimes messes this up
+    # eg, uk-ua gets normalized to uk-gb
+    # this also makes lookup easier as we
+    # often get duplicate entries with both variants
+    if "-" in lang:
+        pieces = lang.split("-")
+        if len(pieces) == 2 and pieces[0] == pieces[1]:
+            lang = pieces[0]
+
     try:
-        # special handling, the parse sometimes messes this up
-        # eg, uk-uk gets normalized to uk-gb
-        # this also makes lookup easier as we
-        # often get duplicate entries with both variants
-        if "-" in lang:
-            pieces = lang.split("-")
-            if len(pieces) == 2 and pieces[0] == pieces[1]:
-                lang = pieces[0]
+        from langcodes import standardize_tag as _normalize_lang
         lang = _normalize_lang(lang, macro=True)
     except ValueError:
         # this lang code is apparently not valid ?

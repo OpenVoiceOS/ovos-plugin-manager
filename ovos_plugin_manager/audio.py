@@ -45,13 +45,14 @@ def setup_audio_service(service_module, config=None, bus=None):
 
     Arguments:
         service_module: Python module to run
-        config (dict): Mycroft configuration dict
+        config (dict): OpenVoiceOS configuration dict
         bus (MessageBusClient): Messagebus interface
     Returns:
         (list) List of created services.
     """
-    config = config or Configuration()
+    config = config or Configuration().get("Audio", {})
     bus = bus or get_mycroft_bus()
+
     if (hasattr(service_module, 'autodetect') and
             callable(service_module.autodetect)):
         try:
@@ -71,8 +72,8 @@ def load_audio_service_plugins(config=None, bus=None):
     """Load installed audioservice plugins.
 
     Arguments:
-        config: Mycroft core configuration
-        bus: Mycroft messagebus
+        config: OpenVoiceOS core configuration
+        bus: OpenVoiceOS messagebus
 
     Returns:
         List of started services

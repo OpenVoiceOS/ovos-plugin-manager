@@ -32,7 +32,7 @@ def load_audio_transformer_plugin(module_name: str) -> type(AudioTransformer):
     """Wrapper function for loading audio_transformer plugin.
 
     Arguments:
-        (str) Mycroft audio_transformer module name from config
+        (str) OpenVoiceOS audio_transformer module name from config
     Returns:
         class: found audio_transformer plugin class
     """

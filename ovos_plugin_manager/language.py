@@ -99,8 +99,14 @@ def get_lang_detect_module_configs(module_name: str):
     return load_plugin_configs(module_name, PluginConfigTypes.LANG_DETECT)
 
 
+_fallback_lang_detect_plugin = "ovos-lang-detect-ngram-lm"
+_fallback_translate_plugin = "ovos-translate-plugin-server"
+
+
 class OVOSLangDetectionFactory:
-    """ replicates the base neon class, but uses only OPM enabled plugins"""
+    """
+    replicates the base neon class, but uses only OPM enabled plugins
+    """
     MAPPINGS = {
         "libretranslate": "libretranslate_detection_plug",
         "google": "googletranslate_detection_plug",
@@ -112,41 +118,63 @@ class OVOSLangDetectionFactory:
         "lingua_podre": "lingua_podre_plug"
     }
 
-    # TODO - get_class method
-
     @staticmethod
-    def create(config=None):
-        """Factory method to create a LangDetection engine based on configuration.
+    def get_class(config=None):
+        """
+        Factory method to get a Language Detector class based on configuration.
 
-        The configuration file ``mycroft.conf`` contains a ``language`` section with
+        Configuration contains a `language` section with
         the name of a LangDetection module to be read by this method.
 
-         "language": {
+        "language": {
             "detection_module": <engine_name>
-          }
+        }
         """
+        config = config or Configuration()
+        if "language" in config:
+            config = config["language"]
+        lang_module = config.get("detection_module", config.get("module"))
+        if not lang_module:
+            raise ValueError("`language.detection_module` not configured")
+        if lang_module in OVOSLangDetectionFactory.MAPPINGS:
+            lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
+        return load_lang_detect_plugin(lang_module)
+
+    @staticmethod
+    def create(config=None) -> LanguageDetector:
+        """
+        Factory method to create a LangDetection engine based on configuration
+
+        Configuration contains a `language` section with
+        the name of a LangDetection module to be read by this method.
+
+        "language": {
+            "detection_module": <engine_name>
+        }
+        """
+        config = config or Configuration()
+        if "language" in config:
+            config = config["language"]
+        lang_module = config.get("detection_module", config.get("module"))
         try:
-            config = config or Configuration()
-            if "language" in config:
-                config = config["language"]
-            lang_module = config.get("detection_module", "libretranslate_detection_plug")
+            clazz = OVOSLangDetectionFactory.get_class(config)
+            if clazz is None:
+                raise ValueError(f"Failed to load module: {lang_module}")
+            LOG.info(f'Loaded the Language Detection plugin {lang_module}')
             if lang_module in OVOSLangDetectionFactory.MAPPINGS:
                 lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
-
-            clazz = load_lang_detect_plugin(lang_module)
-            if clazz is None:
-                raise ValueError
-            LOG.info(f'Loaded the Language Detection plugin {lang_module}')
-            return clazz(config=get_plugin_config(config, "language", lang_module))
+            return clazz(config=get_plugin_config(config, "language",
+                                                  lang_module))
         except Exception:
             # The Language Detection backend failed to start, fall back if appropriate.
-            if lang_module != "libretranslate_detection_plug":
-                lang_module = "libretranslate_detection_plug"
-                LOG.error(f'Language Translation plugin {lang_module} not found\n'
-                          f'Falling back to libretranslate plugin')
-                clazz = load_tx_plugin("libretranslate_detection_plug")
+            if lang_module != _fallback_lang_detect_plugin:
+                lang_module = _fallback_lang_detect_plugin
+                LOG.error(f'Language Detection plugin {lang_module} not found. '
+                          f'Falling back to {_fallback_lang_detect_plugin}')
+                clazz = load_lang_detect_plugin(_fallback_lang_detect_plugin)
                 if clazz:
-                    return clazz(config=get_plugin_config(config, "language", lang_module))
+                    return clazz(config=get_plugin_config(config, "language",
+                                                          lang_module))
             
             raise
 
@@ -160,39 +188,62 @@ class OVOSLangTranslationFactory:
         "apertium": "apertium_plug"
     }
 
-    # TODO - get_class method
     @staticmethod
-    def create(config=None):
-        """Factory method to create a LangTranslation engine based on configuration.
-
-        The configuration file ``mycroft.conf`` contains a ``language`` section with
-        the name of a LangDetection module to be read by this method.
-
-
-          "language": {
-            "translation_module": <engine_name>
-          }
+    def get_class(config=None):
         """
+        Factory method to get a Language Translator class based on configuration.
+
+        Configuration contains a `language` section with
+        the name of a Translation module to be read by this method.
+
+        "language": {
+            "translation_module": <engine_name>
+        }
+        """
+        config = config or Configuration()
+        if "language" in config:
+            config = config["language"]
+        lang_module = config.get("translation_module", config.get("module"))
+        if not lang_module:
+            raise ValueError("`language.translation_module` not configured")
+        if lang_module in OVOSLangTranslationFactory.MAPPINGS:
+            lang_module = OVOSLangTranslationFactory.MAPPINGS[lang_module]
+        return load_tx_plugin(lang_module)
+
+    @staticmethod
+    def create(config=None) -> LanguageTranslator:
+        """
+        Factory method to create a LangTranslation engine based on configuration
+
+        Configuration contains a `language` section with
+        the name of a Translation module to be read by this method.
+
+        "language": {
+            "translation_module": <engine_name>
+        }
+        """
+        config = config or Configuration()
+        if "language" in config:
+            config = config["language"]
+        lang_module = config.get("translation_module", config.get("module"))
         try:
-            config = config or Configuration()
-            if "language" in config:
-                config = config["language"]
-            lang_module = config.get("translation_module", "libretranslate_plug")
+            clazz = OVOSLangTranslationFactory.get_class(config)
+            if clazz is None:
+                raise ValueError(f"Failed to load module: {lang_module}")
+            LOG.info(f'Loaded the Language Translation plugin {lang_module}')
             if lang_module in OVOSLangTranslationFactory.MAPPINGS:
                 lang_module = OVOSLangTranslationFactory.MAPPINGS[lang_module]
-            clazz = load_tx_plugin(lang_module)
-            if clazz is None:
-                raise ValueError
-            LOG.info(f'Loaded the Language Translation plugin {lang_module}')
-            return clazz(config=get_plugin_config(config, "language", lang_module))
+            return clazz(config=get_plugin_config(config, "language",
+                                                  lang_module))
         except Exception:
-            # The Language Detection backend failed to start, fall back if appropriate.
-            if lang_module != "libretranslate_plug":
-                lang_module = "libretranslate_plug"
-                LOG.error(f'Language Translation plugin {lang_module} not found\n'
-                          f'Falling back to libretranslate plugin')
-                clazz = load_tx_plugin("libretranslate_plug")
+            # The Language Translation backend failed to start, fall back if appropriate.
+            if lang_module != _fallback_translate_plugin:
+                lang_module = _fallback_translate_plugin
+                LOG.error(f'Language Translation plugin {lang_module} '
+                          f'not found. Falling back to {_fallback_translate_plugin}')
+                clazz = load_tx_plugin(_fallback_translate_plugin)
                 if clazz:
-                    return clazz(config=get_plugin_config(config, "language", lang_module))
+                    return clazz(config=get_plugin_config(config, "language",
+                                                          lang_module))
 
             raise

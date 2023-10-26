@@ -2,6 +2,7 @@ from ovos_bus_client import Message
 from ovos_bus_client import MessageBusClient
 from ovos_utils.gui import GUIInterface
 from ovos_utils.log import LOG
+from ovos_config import Configuration
 
 
 class GUIExtension:
@@ -27,7 +28,8 @@ class GUIExtension:
             bus.run_in_thread()
             bus.connected_event.wait()
         self.bus = bus
-        self.gui = gui or GUIInterface("ovos.shell", bus=self.bus)
+        self.gui = gui or GUIInterface("ovos.shell", bus=self.bus,
+                                       config=Configuration().get("gui", {}))
         self.preload_gui = preload_gui
         self.permanent = permanent
         self.config = config
