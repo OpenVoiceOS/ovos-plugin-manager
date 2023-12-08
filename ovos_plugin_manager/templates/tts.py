@@ -161,6 +161,8 @@ class TTS:
         self.ssml_tags = ssml_tags or []
         self.log_timestamps = self.config.get("log_timestamps", False)
 
+        self.enable_cache = self.config.get("enable_cache", True)
+
         self.voice = self.config.get("voice") or "default"
         # TODO can self.filename be deprecated ? is it used anywhere at all?
         cache_dir = get_cache_directory(self.tts_name)
@@ -550,7 +552,7 @@ class TTS:
         cache = self.get_cache(voice, lang)  # cache per tts_id (lang/voice combo)
 
         # load from cache
-        if sentence_hash in cache:
+        if self.enable_cache and sentence_hash in cache:
             audio, phonemes = self.get_from_cache(sentence, **kwargs)
             self.add_metric({"metric_type": "tts.synth.finished", "cache": True})
             return audio, phonemes
@@ -571,8 +573,9 @@ class TTS:
         self.add_metric({"metric_type": "tts.synth.finished"})
 
         # cache sentence + phonemes
-        self._cache_sentence(sentence, audio, phonemes, sentence_hash,
-                             voice=voice, lang=lang)
+        if self.enable_cache:
+            self._cache_sentence(sentence, audio, phonemes, sentence_hash,
+                                 voice=voice, lang=lang)
         return audio, phonemes
 
     def _cache_phonemes(self, sentence, phonemes=None, sentence_hash=None):
