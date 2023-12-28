@@ -1,8 +1,20 @@
 # Changelog
 
-## [0.0.25a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.25a1) (2023-12-09)
+## [0.0.25a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.25a2) (2023-12-28)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24...0.0.25a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.25a1...0.0.25a2)
+
+**Closed issues:**
+
+- module 'inspect' has no attribute 'formatargspec' [\#189](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/189)
+
+**Merged pull requests:**
+
+- refactor/move\_from\_utils [\#196](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/196) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.25a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.25a1) (2023-12-09)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24...V0.0.25a1)
 
 **Implemented enhancements:**
 
