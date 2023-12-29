@@ -6,7 +6,7 @@ OpenVoiceOS's media playback options.
 from abc import ABCMeta, abstractmethod
 
 from ovos_utils import classproperty
-from ovos_utils.messagebus import FakeBus
+from ovos_utils.fakebus import FakeBus
 from ovos_utils.process_utils import RuntimeRequirements
 
 

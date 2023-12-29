@@ -42,7 +42,7 @@ from ovos_bus_client.apis.enclosure import EnclosureAPI
 from ovos_utils.file_utils import get_cache_directory
 from ovos_utils.lang.visimes import VISIMES
 from ovos_utils.log import LOG
-from ovos_utils.messagebus import FakeBus as BUS
+from ovos_utils.fakebus import FakeBus
 from ovos_utils.metrics import Stopwatch
 from ovos_utils.process_utils import RuntimeRequirements
 
@@ -153,7 +153,7 @@ class TTS:
 
         self.stopwatch = Stopwatch()
         self.tts_name = self.__class__.__name__
-        self.bus = BUS()  # initialized in "init" step
+        self.bus = FakeBus()  # initialized in "init" step
         self.lang = lang or self.config.get("lang") or 'en-us'
         self.validator = validator or TTSValidator(self)
         self.phonetic_spelling = phonetic_spelling
@@ -314,7 +314,7 @@ class TTS:
         Arguments:
             bus:    OpenVoiceOS messagebus connection
         """
-        self.bus = bus or BUS()
+        self.bus = bus or FakeBus()
         if playback is None:
             LOG.warning("PlaybackThread should be inited by ovos-audio, initing via plugin has been deprecated, "
                         "please pass playback=PlaybackThread() to TTS.init")
