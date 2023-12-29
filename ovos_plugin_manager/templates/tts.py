@@ -37,8 +37,8 @@ from ovos_plugin_manager.templates.g2p import OutOfVocabulary
 from ovos_plugin_manager.utils.config import get_plugin_config
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 from ovos_utils import classproperty
-from ovos_utils import resolve_resource_file
-from ovos_utils.enclosure.api import EnclosureAPI
+from ovos_utils.file_utils import resolve_resource_file
+from ovos_bus_client.apis.enclosure import EnclosureAPI
 from ovos_utils.file_utils import get_cache_directory
 from ovos_utils.lang.visimes import VISIMES
 from ovos_utils.log import LOG
