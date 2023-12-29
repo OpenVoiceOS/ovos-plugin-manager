@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
-from ovos_plugin_manager.skillz import get_skill_directories, get_default_skills_directory
+from ovos_plugin_manager.skills import get_skill_directories, get_default_skills_directory
 
 
 class TestSkills(unittest.TestCase):
