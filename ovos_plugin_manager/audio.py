@@ -1,6 +1,6 @@
 from ovos_plugin_manager.utils import PluginConfigTypes, PluginTypes
 from ovos_utils.log import LOG
-from ovos_utils.messagebus import get_mycroft_bus
+from ovos_bus_client.util import get_mycroft_bus
 from ovos_config import Configuration
 
 
