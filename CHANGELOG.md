@@ -1,48 +1,13 @@
 # Changelog
 
-## [0.0.25](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.25) (2023-12-29)
+## [0.0.26a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a1) (2023-12-29)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.25a4...0.0.25)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.25...0.0.26a1)
 
 **Merged pull requests:**
 
+- packaging/update imports [\#203](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/203) ([JarbasAl](https://github.com/JarbasAl))
 - Update requirements.txt [\#201](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/201) ([JarbasAl](https://github.com/JarbasAl))
-
-## [V0.0.25a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.25a4) (2023-12-29)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.25a3...V0.0.25a4)
-
-**Merged pull requests:**
-
-- update imports [\#198](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/198) ([JarbasAl](https://github.com/JarbasAl))
-
-## [V0.0.25a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.25a3) (2023-12-29)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.25a2...V0.0.25a3)
-
-**Merged pull requests:**
-
-- Update requirements.txt [\#197](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/197) ([JarbasAl](https://github.com/JarbasAl))
-
-## [V0.0.25a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.25a2) (2023-12-28)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.25a1...V0.0.25a2)
-
-**Closed issues:**
-
-- module 'inspect' has no attribute 'formatargspec' [\#189](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/189)
-
-**Merged pull requests:**
-
-- refactor/move\_from\_utils [\#196](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/196) ([JarbasAl](https://github.com/JarbasAl))
-
-## [V0.0.25a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.25a1) (2023-12-09)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.24...V0.0.25a1)
-
-**Implemented enhancements:**
-
-- feat/disable\_cache [\#194](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/194) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
