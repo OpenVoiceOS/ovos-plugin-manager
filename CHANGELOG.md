@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.26a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a2) (2023-12-30)
+## [0.0.26a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a3) (2023-12-30)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a1...0.0.26a2)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a2...0.0.26a3)
+
+**Fixed bugs:**
+
+- fix phal plugins in ovos-utils \>= 0.1.0a2 [\#205](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/205) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.26a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.26a2) (2023-12-30)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a1...V0.0.26a2)
 
 **Fixed bugs:**
 
