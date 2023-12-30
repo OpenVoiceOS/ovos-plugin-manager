@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.26a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a1) (2023-12-29)
+## [0.0.26a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a2) (2023-12-30)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.25...0.0.26a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a1...0.0.26a2)
+
+**Fixed bugs:**
+
+- fix gui extensions in ovos-utils \>= 0.1.0a2 [\#204](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/204) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.26a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.26a1) (2023-12-29)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.25...V0.0.26a1)
 
 **Merged pull requests:**
 
