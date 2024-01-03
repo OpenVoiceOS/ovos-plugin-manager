@@ -469,7 +469,9 @@ class TTS:
         Returns:
             list: list of sentence parts
         """
-        return quebra_frases.sentence_tokenize(sentence)
+        if self.config.get("sentence_tokenize"): # TODO default to True on next major release
+            return quebra_frases.sentence_tokenize(sentence)
+        return [sentence]
 
     def execute(self, sentence, ident=None, listen=False, **kwargs):
         """Convert sentence to speech, preprocessing out unsupported ssml
