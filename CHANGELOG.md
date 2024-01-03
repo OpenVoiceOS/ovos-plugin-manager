@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.26a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a3) (2023-12-30)
+## [0.0.26a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a4) (2024-01-03)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a2...0.0.26a3)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a3...0.0.26a4)
+
+**Implemented enhancements:**
+
+- feat/sentence\_tokenize\_before\_TTS [\#206](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/206) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.26a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.26a3) (2023-12-30)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a2...V0.0.26a3)
 
 **Fixed bugs:**
 
