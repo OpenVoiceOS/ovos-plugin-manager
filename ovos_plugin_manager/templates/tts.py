@@ -25,6 +25,7 @@ import inspect
 import random
 import re
 import subprocess
+import quebra_frases
 from os.path import isfile, join
 from pathlib import Path
 from queue import Queue
@@ -456,7 +457,8 @@ class TTS:
         return utterance.replace("  ", " ")
 
     def _preprocess_sentence(self, sentence):
-        """Default preprocessing is no preprocessing.
+        """Default preprocessing is a sentence_tokenizer, 
+        ie. splits the utterance into sub-sentences using quebra_frases
 
         This method can be overridden to create chunks suitable to the
         TTS engine in question.
@@ -467,6 +469,8 @@ class TTS:
         Returns:
             list: list of sentence parts
         """
+        if self.config.get("sentence_tokenize"): # TODO default to True on next major release
+            return quebra_frases.sentence_tokenize(sentence)
         return [sentence]
 
     def execute(self, sentence, ident=None, listen=False, **kwargs):
