@@ -1,5 +1,5 @@
-ovos-utils < 0.2.0, >=0.0.37
-ovos-bus-client < 0.2.0, >=0.0.8
+ovos-utils < 0.2.0, >=0.1.0a8
+ovos-bus-client < 0.2.0, >=0.0.9a3
 ovos-config < 0.2.0, >=0.0.12
 combo_lock~=0.2
 requests~=2.26

@@ -30,7 +30,7 @@ class PluginTypes(str, Enum):
     VAD = "ovos.plugin.VAD"
     PHONEME = "ovos.plugin.g2p"
     AUDIO2IPA = "ovos.plugin.audio2ipa"
-    AUDIO = 'mycroft.plugin.audioservice'
+    AUDIO = 'mycroft.plugin.audioservice'  # DEPRECATED
     STT = 'mycroft.plugin.stt'
     TTS = 'mycroft.plugin.tts'
     WAKEWORD = 'mycroft.plugin.wake_word'
@@ -52,6 +52,9 @@ class PluginTypes(str, Enum):
     TOKENIZATION = "intentbox.tokenization"
     POSTAG = "intentbox.postag"
     STREAM_EXTRACTOR = "ovos.ocp.extractor"
+    AUDIO_PLAYER = "opm.media.audio"
+    VIDEO_PLAYER = "opm.media.video"
+    WEB_PLAYER = "opm.media.web"
     PERSONA = "opm.plugin.persona"  # personas are a dict, they have no config because they ARE a config
 
 
@@ -86,6 +89,9 @@ class PluginConfigTypes(str, Enum):
     TOKENIZATION = "intentbox.tokenization.config"
     POSTAG = "intentbox.postag.config"
     STREAM_EXTRACTOR = "ovos.ocp.extractor.config"
+    AUDIO_PLAYER = "opm.media.audio.config"
+    VIDEO_PLAYER = "opm.media.video.config"
+    WEB_PLAYER = "opm.media.web.config"
 
 
 def find_plugins(plug_type: PluginTypes = None) -> dict:

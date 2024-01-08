@@ -3,26 +3,25 @@
 These classes can be used to create an Audioservice plugin extending
 OpenVoiceOS's media playback options.
 """
-from abc import ABCMeta, abstractmethod
+from ovos_bus_client.message import Message
 
+from ovos_plugin_manager.templates.media import AudioPlayerBackend as _AB
 from ovos_utils import classproperty
-from ovos_utils.fakebus import FakeBus
+from ovos_utils.log import log_deprecation
+from ovos_utils.ocp import PlaybackType, TrackState
 from ovos_utils.process_utils import RuntimeRequirements
 
+log_deprecation("ovos_plugin_manager.templates.audio has been deprecated on ovos-audio, "
+                "move to ovos_plugin_manager.templates.media", "0.1.0")
 
-class AudioBackend(metaclass=ABCMeta):
+
+class AudioBackend(_AB):
     """Base class for all audio backend implementations.
 
     Arguments:
         config (dict): configuration dict for the instance
         bus (MessageBusClient): OpenVoiceOS messagebus emitter
     """
-
-    def __init__(self, config=None, bus=None):
-        self._track_start_callback = None
-        self.supports_mime_hints = False
-        self.config = config or {}
-        self.bus = bus or FakeBus()
 
     @classproperty
     def runtime_requirements(self):
@@ -59,143 +58,52 @@ class AudioBackend(metaclass=ABCMeta):
                                    no_internet_fallback=True,
                                    no_network_fallback=True)
 
-    @property
-    def playback_time(self):
-        return 0
-
-    @abstractmethod
-    def supported_uris(self):
-        """List of supported uri types.
-
-        Returns:
-            list: Supported uri's
-        """
-
-    @abstractmethod
+    # methods below deprecated and handled by OCP directly
+    # playlists are no longer managed plugin side
+    # this is just a compat layer forwarding commands to OCP
     def clear_list(self):
         """Clear playlist."""
+        msg = Message('ovos.common_play.playlist.clear')
+        self.bus.emit(msg)
 
-    @abstractmethod
     def add_list(self, tracks):
         """Add tracks to backend's playlist.
 
         Arguments:
             tracks (list): list of tracks.
         """
+        tracks = tracks or []
+        if isinstance(tracks, (str, tuple)):
+            tracks = [tracks]
+        elif not isinstance(tracks, list):
+            raise ValueError
+        tracks = [self._uri2meta(t) for t in tracks]
+        msg = Message('ovos.common_play.playlist.queue',
+                      {'tracks': tracks})
+        self.bus.emit(msg)
 
-    @abstractmethod
-    def play(self, repeat=False):
-        """Start playback.
-
-        Starts playing the first track in the playlist and will contiune
-        until all tracks have been played.
-
-        Arguments:
-            repeat (bool): Repeat playlist, defaults to False
-        """
-
-    @abstractmethod
-    def stop(self):
-        """Stop playback.
-
-        Stops the current playback.
-
-        Returns:
-            bool: True if playback was stopped, otherwise False
-        """
-
-    def set_track_start_callback(self, callback_func):
-        """Register callback on track start.
-
-        This method should be called as each track in a playlist is started.
-        """
-        self._track_start_callback = callback_func
-
-    def pause(self):
-        """Pause playback.
-
-        Stops playback but may be resumed at the exact position the pause
-        occured.
-        """
-
-    def resume(self):
-        """Resume paused playback.
-
-        Resumes playback after being paused.
-        """
+    @staticmethod
+    def _uri2meta(uri):
+        if isinstance(uri, list):
+            uri = uri[0]
+        try:
+            from ovos_ocp_files_plugin.plugin import OCPFilesMetadataExtractor
+            return OCPFilesMetadataExtractor.extract_metadata(uri)
+        except:
+            meta = {"uri": uri,
+                    "skill_id": "mycroft.audio_interface",
+                    "playback": PlaybackType.AUDIO,  # TODO mime type check
+                    "status": TrackState.QUEUED_AUDIO,
+                    }
+        return meta
 
     def next(self):
         """Skip to next track in playlist."""
+        self.bus.emit(Message("ovos.common_play.next"))
 
     def previous(self):
         """Skip to previous track in playlist."""
-
-    def lower_volume(self):
-        """Lower volume.
-
-        This method is used to implement audio ducking. It will be called when
-        OpenVoiceOS is listening or speaking to make sure the media playing isn't
-        interfering.
-        """
-
-    def restore_volume(self):
-        """Restore normal volume.
-
-        Called when to restore the playback volume to previous level after
-        OpenVoiceOS has lowered it using lower_volume().
-        """
-
-    def get_track_length(self):
-        """
-        getting the duration of the audio in milliseconds
-        NOTE: not yet supported by mycroft-core
-        """
-
-    def get_track_position(self):
-        """
-        get current position in milliseconds
-        NOTE: not yet supported by mycroft-core
-        """
-
-    def set_track_position(self, milliseconds):
-        """
-        go to position in milliseconds
-        NOTE: not yet supported by mycroft-core
-          Args:
-                milliseconds (int): number of milliseconds of final position
-        """
-
-    def seek_forward(self, seconds=1):
-        """Skip X seconds.
-
-        Arguments:
-            seconds (int): number of seconds to seek, if negative rewind
-        """
-
-    def seek_backward(self, seconds=1):
-        """Rewind X seconds.
-
-        Arguments:
-            seconds (int): number of seconds to seek, if negative jump forward.
-        """
-
-    def track_info(self):
-        """Get info about current playing track.
-
-        Returns:
-            dict: Track info containing atleast the keys artist and album.
-        """
-        ret = {}
-        ret['artist'] = ''
-        ret['album'] = ''
-        return ret
-
-    def shutdown(self):
-        """Perform clean shutdown.
-
-        Implements any audio backend specific shutdown procedures.
-        """
-        self.stop()
+        self.bus.emit(Message("ovos.common_play.previous"))
 
 
 class RemoteAudioBackend(AudioBackend):
