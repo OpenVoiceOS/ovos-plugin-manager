@@ -89,6 +89,9 @@ class PluginConfigTypes(str, Enum):
     TOKENIZATION = "intentbox.tokenization.config"
     POSTAG = "intentbox.postag.config"
     STREAM_EXTRACTOR = "ovos.ocp.extractor.config"
+    AUDIO_PLAYER = "opm.media.audio.config"
+    VIDEO_PLAYER = "opm.media.video.config"
+    WEB_PLAYER = "opm.media.web.config"
 
 
 def find_plugins(plug_type: PluginTypes = None) -> dict:
