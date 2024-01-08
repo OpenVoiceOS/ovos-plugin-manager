@@ -1,6 +1,7 @@
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.ocp import OCPStreamExtractor
 from ovos_utils.log import LOG
+from functools import lru_cache
 
 
 def find_plugins(*args, **kwargs):
@@ -92,3 +93,9 @@ class StreamHandler:
 
         # no extractor available, return raw url
         return meta or {"uri": uri}
+
+
+@lru_cache()  # to avoid loading StreamHandler more than once
+def available_extractors():
+    return ["/", "http:", "https:", "file:"] + \
+        [f"{sei}//" for sei in StreamHandler().supported_seis]
