@@ -3,11 +3,13 @@
 These classes can be used to create an Audioservice plugin extending
 OpenVoiceOS's media playback options.
 """
+from ovos_bus_client.message import Message
+
 from ovos_plugin_manager.templates.media import AudioBackend as _AB
 from ovos_utils import classproperty
 from ovos_utils.log import log_deprecation
+from ovos_utils.ocp import PlaybackType, TrackState
 from ovos_utils.process_utils import RuntimeRequirements
-from ovos_bus_client.message import Message
 
 log_deprecation("ovos_plugin_manager.templates.audio has been deprecated on ovos-audio, "
                 "move to ovos_plugin_manager.templates.media", "0.1.0")
@@ -90,10 +92,9 @@ class AudioBackend(_AB):
         except:
             meta = {"uri": uri,
                     "skill_id": "mycroft.audio_interface",
-                    "playback": 2,  # PlaybackType.AUDIO,  # TODO mime type check
-                    "status": 33  # TrackState.QUEUED_AUDIO
+                    "playback": PlaybackType.AUDIO,  # TODO mime type check
+                    "status": TrackState.QUEUED_AUDIO,
                     }
-            meta["skill_id"] = "mycroft.audio_interface"
         return meta
 
     def next(self):
