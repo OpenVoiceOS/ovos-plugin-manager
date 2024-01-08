@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.26a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a4) (2024-01-03)
+## [0.0.26a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a5) (2024-01-08)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a3...0.0.26a4)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a4...0.0.26a5)
+
+**Implemented enhancements:**
+
+- feat/OCP\_backends [\#207](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/207) ([NeonJarbas](https://github.com/NeonJarbas))
+
+## [V0.0.26a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.26a4) (2024-01-03)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a3...V0.0.26a4)
 
 **Implemented enhancements:**
 
