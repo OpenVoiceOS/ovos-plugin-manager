@@ -1,7 +1,7 @@
 from typing import List, Tuple
 
 from ovos_config.config import Configuration
-from ovos_utils.messagebus import get_mycroft_bus
+from ovos_bus_client.util import get_mycroft_bus
 
 from ovos_plugin_manager.utils import ReadWriteStream
 

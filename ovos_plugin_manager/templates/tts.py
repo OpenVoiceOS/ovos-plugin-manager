@@ -25,6 +25,7 @@ import inspect
 import random
 import re
 import subprocess
+import quebra_frases
 from os.path import isfile, join
 from pathlib import Path
 from queue import Queue
@@ -42,7 +43,7 @@ from ovos_bus_client.apis.enclosure import EnclosureAPI
 from ovos_utils.file_utils import get_cache_directory
 from ovos_utils.lang.visimes import VISIMES
 from ovos_utils.log import LOG
-from ovos_utils.messagebus import FakeBus as BUS
+from ovos_utils.fakebus import FakeBus
 from ovos_utils.metrics import Stopwatch
 from ovos_utils.process_utils import RuntimeRequirements
 
@@ -153,13 +154,15 @@ class TTS:
 
         self.stopwatch = Stopwatch()
         self.tts_name = self.__class__.__name__
-        self.bus = BUS()  # initialized in "init" step
+        self.bus = FakeBus()  # initialized in "init" step
         self.lang = lang or self.config.get("lang") or 'en-us'
         self.validator = validator or TTSValidator(self)
         self.phonetic_spelling = phonetic_spelling
         self.audio_ext = audio_ext
         self.ssml_tags = ssml_tags or []
         self.log_timestamps = self.config.get("log_timestamps", False)
+
+        self.enable_cache = self.config.get("enable_cache", True)
 
         self.voice = self.config.get("voice") or "default"
         # TODO can self.filename be deprecated ? is it used anywhere at all?
@@ -312,7 +315,7 @@ class TTS:
         Arguments:
             bus:    OpenVoiceOS messagebus connection
         """
-        self.bus = bus or BUS()
+        self.bus = bus or FakeBus()
         if playback is None:
             LOG.warning("PlaybackThread should be inited by ovos-audio, initing via plugin has been deprecated, "
                         "please pass playback=PlaybackThread() to TTS.init")
@@ -454,7 +457,8 @@ class TTS:
         return utterance.replace("  ", " ")
 
     def _preprocess_sentence(self, sentence):
-        """Default preprocessing is no preprocessing.
+        """Default preprocessing is a sentence_tokenizer, 
+        ie. splits the utterance into sub-sentences using quebra_frases
 
         This method can be overridden to create chunks suitable to the
         TTS engine in question.
@@ -465,6 +469,8 @@ class TTS:
         Returns:
             list: list of sentence parts
         """
+        if self.config.get("sentence_tokenize"): # TODO default to True on next major release
+            return quebra_frases.sentence_tokenize(sentence)
         return [sentence]
 
     def execute(self, sentence, ident=None, listen=False, **kwargs):
@@ -550,7 +556,7 @@ class TTS:
         cache = self.get_cache(voice, lang)  # cache per tts_id (lang/voice combo)
 
         # load from cache
-        if sentence_hash in cache:
+        if self.enable_cache and sentence_hash in cache:
             audio, phonemes = self.get_from_cache(sentence, **kwargs)
             self.add_metric({"metric_type": "tts.synth.finished", "cache": True})
             return audio, phonemes
@@ -571,8 +577,9 @@ class TTS:
         self.add_metric({"metric_type": "tts.synth.finished"})
 
         # cache sentence + phonemes
-        self._cache_sentence(sentence, audio, phonemes, sentence_hash,
-                             voice=voice, lang=lang)
+        if self.enable_cache:
+            self._cache_sentence(sentence, audio, phonemes, sentence_hash,
+                                 voice=voice, lang=lang)
         return audio, phonemes
 
     def _cache_phonemes(self, sentence, phonemes=None, sentence_hash=None):
