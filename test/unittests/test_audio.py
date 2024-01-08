@@ -6,11 +6,11 @@ from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 class TestAudioTemplate(unittest.TestCase):
     def test_audio_backend(self):
-        from ovos_plugin_manager.templates.audio import AudioBackend
+        from ovos_plugin_manager.templates.media import AudioBackend
         # TODO
 
     def test_remote_audio_backend(self):
-        from ovos_plugin_manager.templates.audio import RemoteAudioBackend
+        from ovos_plugin_manager.templates.media import RemoteAudioBackend
 
 
 class TestAudio(unittest.TestCase):
