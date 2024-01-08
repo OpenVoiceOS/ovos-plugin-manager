@@ -228,7 +228,7 @@ class RemoteAudioBackend(AudioBackend):
 
 
 class VideoBackend(MediaBackend):
-    """ for audio"""
+    """ for video"""
     def load_track(self, uri):
         super().load_track(uri)
         self.bus.emit(Message("ovos.common_play.track.state",
@@ -244,7 +244,7 @@ class VideoBackend(MediaBackend):
 class RemoteVideoBackend(VideoBackend):
     """Base class for remote audio backends.
 
-    RemoteAudioBackends will always be checked after the normal
+    RemoteVideoBackends will always be checked after the normal
     VideoBackends to make playback start locally by default.
 
     An example of a RemoteVideoBackend would be things like Chromecasts, etc.
@@ -266,12 +266,12 @@ class VideoWebBackend(MediaBackend):
                               {"state": TrackState.PLAYING_WEBVIEW}))
 
 
-class RemoteWebBackend(VideoBackend):
+class RemoteWebBackend(VideoWebBackend):
     """Base class for remote web backends.
 
-    RemoteAudioBackends will always be checked after the normal
+    RemoteWebBackends will always be checked after the normal
     VideoBackends to make playback start locally by default.
 
-    An example of a RemoteVideoBackend would be
+    An example of a RemoteWebBackend would be
     things that can render a webpage in a different machine
     """
