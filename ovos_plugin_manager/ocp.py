@@ -96,6 +96,11 @@ class StreamHandler:
 
 
 @lru_cache()  # to avoid loading StreamHandler more than once
+def load_stream_extractors():
+    return StreamHandler()
+
+
 def available_extractors():
+    xtract = load_stream_extractors()
     return ["/", "http:", "https:", "file:"] + \
-        [f"{sei}//" for sei in StreamHandler().supported_seis]
+        [f"{sei}//" for sei in xtract.supported_seis]
