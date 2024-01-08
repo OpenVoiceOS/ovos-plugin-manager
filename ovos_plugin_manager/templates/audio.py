@@ -8,6 +8,10 @@ from abc import ABCMeta, abstractmethod
 from ovos_utils import classproperty
 from ovos_utils.messagebus import FakeBus
 from ovos_utils.process_utils import RuntimeRequirements
+from ovos_utils.log import log_deprecation
+
+log_deprecation("ovos_plugin_manager.templates.audio has been deprecated on ovos-audio, "
+                "move to ovos_plugin_manager.templates.media", "0.1.0")
 
 
 class AudioBackend(metaclass=ABCMeta):
