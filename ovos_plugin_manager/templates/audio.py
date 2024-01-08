@@ -5,7 +5,7 @@ OpenVoiceOS's media playback options.
 """
 from ovos_bus_client.message import Message
 
-from ovos_plugin_manager.templates.media import AudioBackend as _AB
+from ovos_plugin_manager.templates.media import AudioPlayerBackend as _AB
 from ovos_utils import classproperty
 from ovos_utils.log import log_deprecation
 from ovos_utils.ocp import PlaybackType, TrackState

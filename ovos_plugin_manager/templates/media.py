@@ -202,7 +202,7 @@ class MediaBackend(metaclass=ABCMeta):
         self.stop()
 
 
-class AudioBackend(MediaBackend):
+class AudioPlayerBackend(MediaBackend):
     """ for audio"""
 
     def load_track(self, uri):
@@ -217,7 +217,7 @@ class AudioBackend(MediaBackend):
                               {"state": TrackState.PLAYING_AUDIO}))
 
 
-class RemoteAudioBackend(AudioBackend):
+class RemoteAudioPlayerBackend(AudioPlayerBackend):
     """Base class for remote audio backends.
 
     RemoteAudioBackends will always be checked after the normal
@@ -227,7 +227,7 @@ class RemoteAudioBackend(AudioBackend):
     """
 
 
-class VideoBackend(MediaBackend):
+class VideoPlayerBackend(MediaBackend):
     """ for video"""
     def load_track(self, uri):
         super().load_track(uri)
@@ -241,7 +241,7 @@ class VideoBackend(MediaBackend):
                               {"state": TrackState.PLAYING_VIDEO}))
 
 
-class RemoteVideoBackend(VideoBackend):
+class RemoteVideoPlayerBackend(VideoPlayerBackend):
     """Base class for remote audio backends.
 
     RemoteVideoBackends will always be checked after the normal
@@ -251,7 +251,7 @@ class RemoteVideoBackend(VideoBackend):
     """
 
 
-class VideoWebBackend(MediaBackend):
+class WebPlayerBackend(MediaBackend):
     """ for web pages"""
 
     def load_track(self, uri):
@@ -266,7 +266,7 @@ class VideoWebBackend(MediaBackend):
                               {"state": TrackState.PLAYING_WEBVIEW}))
 
 
-class RemoteWebBackend(VideoWebBackend):
+class RemoteWebPlayerBackend(WebPlayerBackend):
     """Base class for remote web backends.
 
     RemoteWebBackends will always be checked after the normal
