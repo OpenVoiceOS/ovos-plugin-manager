@@ -241,6 +241,7 @@ class TextToSpeechCache:
         # only persist if utterance is spoken >= N times
         self.persist_thresh = self.config.get("persist_thresh", 1)
         self._sentence_count = {}
+        self.load_persistent_cache()
 
     def __contains__(self, sha):
         """The cache contains a SHA if it knows of it and it exists on disk."""
