@@ -23,6 +23,7 @@ class MediaBackend(metaclass=ABCMeta):
         self.supports_mime_hints = False
         self.config = config or {}
         self.bus = bus or FakeBus()
+        self.meta = {}
 
     def set_track_start_callback(self, callback_func):
         """Register callback on track start.
@@ -31,8 +32,9 @@ class MediaBackend(metaclass=ABCMeta):
         """
         self._track_start_callback = callback_func
 
-    def load_track(self, uri):
+    def load_track(self, uri: str, metadata: dict = None):
         self._now_playing = uri
+        self.meta.update(metadata or {})
         LOG.debug(f"queuing for {self.__class__.__name__} playback: {uri}")
         self.bus.emit(Message("ovos.common_play.media.state",
                               {"state": MediaState.LOADED_MEDIA}))
@@ -188,11 +190,7 @@ class MediaBackend(metaclass=ABCMeta):
         Returns:
             dict: Track info containing atleast the keys artist and album.
         """
-        ret = {}
-        ret['artist'] = ''
-        ret['album'] = ''
-        ret['title'] = self._now_playing
-        return ret
+        return self.meta
 
     def shutdown(self):
         """Perform clean shutdown.
@@ -205,8 +203,8 @@ class MediaBackend(metaclass=ABCMeta):
 class AudioPlayerBackend(MediaBackend):
     """ for audio"""
 
-    def load_track(self, uri):
-        super().load_track(uri)
+    def load_track(self, uri, metadata: dict = None):
+        super().load_track(uri, metadata)
         self.bus.emit(Message("ovos.common_play.track.state",
                               {"state": TrackState.QUEUED_AUDIO}))
 
@@ -229,8 +227,8 @@ class RemoteAudioPlayerBackend(AudioPlayerBackend):
 
 class VideoPlayerBackend(MediaBackend):
     """ for video"""
-    def load_track(self, uri):
-        super().load_track(uri)
+    def load_track(self, uri, metadata: dict = None):
+        super().load_track(uri, metadata)
         self.bus.emit(Message("ovos.common_play.track.state",
                               {"state": TrackState.QUEUED_VIDEO}))
 
@@ -254,8 +252,8 @@ class RemoteVideoPlayerBackend(VideoPlayerBackend):
 class WebPlayerBackend(MediaBackend):
     """ for web pages"""
 
-    def load_track(self, uri):
-        super().load_track(uri)
+    def load_track(self, uri, metadata: dict = None):
+        super().load_track(uri, metadata)
         self.bus.emit(Message("ovos.common_play.track.state",
                               {"state": TrackState.QUEUED_WEBVIEW}))
 
