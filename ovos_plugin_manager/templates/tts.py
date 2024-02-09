@@ -861,14 +861,16 @@ class StreamingTTS(TTS):
     NOTE: StreamingTTS does not support phonemes
     """
     
-    def init(self, bus=None, playback=None):
+    def init(self, bus=None, playback=None, callbacks=None):
         """ Performs intial setup of TTS object.
 
         Arguments:
             bus:    OpenVoiceOS messagebus connection
+            playback: PlaybackThread
+            callbacks: StreamingTTSCallbacks
         """
         super().init(bus, playback)
-        self.callbacks = StreamingTTSCallbacks(self.bus)
+        self.callbacks = callbacks or StreamingTTSCallbacks(self.bus)
 
     @abc.abstractmethod
     async def stream_tts(sentence, lang=None, voice=None, **kwargs):
