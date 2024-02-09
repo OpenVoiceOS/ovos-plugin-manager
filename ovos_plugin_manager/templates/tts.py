@@ -299,7 +299,8 @@ class TTS:
             return {}
 
     def begin_audio(self):
-        """Helper function for child classes to call in execute()"""
+        """Helper function for child classes to call in execute()"""        
+        self.stopwatch.start()
         self.add_metric({"metric_type": "tts.start"})
 
     def end_audio(self, listen=False):
@@ -503,7 +504,6 @@ class TTS:
         return sentence
 
     def _execute(self, sentence, ident, listen, **kwargs):
-        self.stopwatch.start()
         sentence = self._replace_phonetic_spellings(sentence)
         chunks = self._preprocess_sentence(sentence)
         # Apply the listen flag to the last chunk, set the rest to False
@@ -895,7 +895,6 @@ class StreamingTTS(TTS):
         return wav_file
 
     def _execute(self, sentence, **kwargs):
-        self.stopwatch.start()
         sentence = self._replace_phonetic_spellings(sentence)
         self.add_metric({"metric_type": "tts.preprocessed",
                          "n_chunks": len(chunks)})
