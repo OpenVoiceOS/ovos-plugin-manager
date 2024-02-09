@@ -896,8 +896,7 @@ class StreamingTTS(TTS):
 
     def _execute(self, sentence, **kwargs):
         sentence = self._replace_phonetic_spellings(sentence)
-        self.add_metric({"metric_type": "tts.preprocessed",
-                         "n_chunks": len(chunks)})
+        self.add_metric({"metric_type": "tts.preprocessed"})
 
         sentence_hash = hash_sentence(sentence)
 
