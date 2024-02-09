@@ -809,19 +809,25 @@ class StreamingTTS(TTS):
     This class is only provided for backwards compatibility
     Usage is discouraged
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._process = None
+        
     def stream_start(self): 
-        self.process = subprocess.Popen(["paplay"], stdin=subprocess.PIPE)
+        if self._process:
+            self.stream_stop()
+        self._process = subprocess.Popen(["paplay"], stdin=subprocess.PIPE)
         
     def stream_chunk(self, chunk):   
-        if self.process:
-            self.process.stdin.write(chunk)
-            self.process.stdin.flush()
+        if self._process:
+            self._process.stdin.write(chunk)
+            self._process.stdin.flush()
 
     def stream_stop(self): 
-        if self.process:
-            self.process.stdin.close()
-            self.process.wait()
-        self.process = None
+        if self._process:
+            self._process.stdin.close()
+            self._process.wait()
+        self._process = None
 
     @abc.abstractmethod
     async def stream_tts(sentence):
