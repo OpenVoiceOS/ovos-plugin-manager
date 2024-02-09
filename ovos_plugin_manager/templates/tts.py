@@ -487,9 +487,11 @@ class TTS:
             listen: (bool) True if listen should be triggered at the end
                     of the utterance.
         """
+        self.begin_audio()
         sentence = self.validate_ssml(sentence)
         self.add_metric({"metric_type": "tts.ssml.validated"})
         self._execute(sentence, ident, listen, **kwargs)
+        self.end_audio()
 
     def _replace_phonetic_spellings(self, sentence):
         if self.phonetic_spelling:
@@ -803,6 +805,50 @@ class RemoteTTSTimeoutException(RemoteTTSException):
     pass
 
 
+class StreamingTTSCallbacks:
+    """handle the playback of streaming TTS, can be overrided in StreamingTTS"""
+    def __init__(self, bus, play_args=None):
+        self.bus = bus
+        self.play_args = play_args or ["paplay"]
+        self._process = None
+
+    def stream_start(self, **kwargs): 
+        message = kwargs.get("message") or \
+                  dig_for_message() or \
+                  Message("speak")
+        
+        # we don't use the regular PlaybackThread here, we need to handle recognizer_loop:audio_output_start
+        if not self.config.get("pulse_duck", False):
+            self.bus.emit(Message("ovos.common_play.duck"))
+        self.bus.emit(message.forward("recognizer_loop:audio_output_start"))
+        
+        if self._process:
+            self.stream_stop()
+        self._process = subprocess.Popen(self.play_args, stdin=subprocess.PIPE)
+
+    def stream_chunk(self, chunk):
+        if self._process:
+            self._process.stdin.write(chunk)
+            self._process.stdin.flush()
+
+    def stream_stop(self, **kwargs):        
+        message = kwargs.get("message") or \
+                  dig_for_message() or \
+                  Message("speak")
+        
+        if self._process:
+            self._process.stdin.close()
+            self._process.wait()
+        self._process = None
+
+        # we don't use the regular PlaybackThread here, we need to handle recognizer_loop:audio_output_end and listen flag
+        if not self.config.get("pulse_duck", False):
+            self.bus.emit(Message("ovos.common_play.unduck"))
+        self.bus.emit(message.forward("recognizer_loop:audio_output_end"))       
+        if kwargs.get("listen"):
+            self.bus.emit(message.forward('mycroft.mic.listen'))
+
+
 class StreamingTTS(TTS):
     """
     Abstract class for a Streaming TTS engine implementation.
@@ -814,46 +860,67 @@ class StreamingTTS(TTS):
 
     NOTE: StreamingTTS does not support phonemes
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._process = None
-        
-    def stream_start(self): 
-        if self._process:
-            self.stream_stop()
-        self._process = subprocess.Popen(["paplay"], stdin=subprocess.PIPE)
-        
-    def stream_chunk(self, chunk):   
-        if self._process:
-            self._process.stdin.write(chunk)
-            self._process.stdin.flush()
+    
+    def init(self, bus=None, playback=None):
+        """ Performs intial setup of TTS object.
 
-    def stream_stop(self): 
-        if self._process:
-            self._process.stdin.close()
-            self._process.wait()
-        self._process = None
+        Arguments:
+            bus:    OpenVoiceOS messagebus connection
+        """
+        super().init(bus, playback)
+        self.callbacks = StreamingTTSCallbacks(self.bus)
 
     @abc.abstractmethod
-    async def stream_tts(sentence):
+    async def stream_tts(sentence, lang=None, voice=None, **kwargs):
         """yield chunks of TTS audio as they become available"""
         raise NotImplementedError
                 
-    async def generate_audio(self, sentence, wav_file, play_streaming=True):
+    async def generate_audio(self, sentence, wav_file, play_streaming=True, **kwargs):
         """save streamed TTS to wav file, if configured also play TTS as it becomes available"""
         if play_streaming:
-            self.stream_start()
+            self.callbacks.stream_start(message)
         with open(wav_file, "wb") as f:
             try:
-                async for chunk in self.stream_tts(sentence):
+                async for chunk in self.stream_tts(sentence, **kwargs):
                     f.write(chunk)
                     if play_streaming:
-                        self.stream_chunk(chunk)
+                        self.callbacks.stream_chunk(chunk)
             finally:
                 if play_streaming:
-                    self.stream_stop()
+                    self.callbacks.stream_stop(**kwargs)
         return wav_file
 
+    def _execute(self, sentence, **kwargs):
+        self.stopwatch.start()
+        sentence = self._replace_phonetic_spellings(sentence)
+        self.add_metric({"metric_type": "tts.preprocessed",
+                         "n_chunks": len(chunks)})
+
+        sentence_hash = hash_sentence(sentence)
+
+        # parse requested language for this TTS request
+        lang, voice = self.context.get(kwargs)   
+        kwargs["lang"] = lang
+        kwargs["voice"] = voice
+
+        # get path to cache final synthesized file
+        cache = self.get_cache(voice, lang)  # cache per tts_id (lang/voice combo)
+        wav_file = str(cache.define_audio_file(sentence_hash))
+
+        # handle streaming TTS
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            self.add_metric({"metric_type": "tts.stream.start"})
+            loop.run_until_complete(
+                self.generate_audio(sentence, wav_file, 
+                                    play_streaming=False, 
+                                    **kwargs)
+            )
+        finally:
+            loop.close()
+            self.add_metric({"metric_type": "tts.stream.end"})
+        
     def get_tts(self, sentence, wav_file):
         """wrap streaming TTS into sync usage"""
         loop = asyncio.new_event_loop()
