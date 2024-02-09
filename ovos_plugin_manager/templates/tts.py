@@ -904,6 +904,11 @@ class StreamingTTS(TTS):
         lang, voice = self.context.get(kwargs)   
         kwargs["lang"] = lang
         kwargs["voice"] = voice
+        
+        # filter kwargs per plugin, different plugins expose different options
+        kwargs = {k: v for k, v in kwargs.items()
+                  if k in inspect.signature(self.generate_audio).parameters
+                  and k not in ["sentence", "wav_file", "play_streaming"]}
 
         # get path to cache final synthesized file
         cache = self.get_cache(voice, lang)  # cache per tts_id (lang/voice combo)
