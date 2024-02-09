@@ -917,7 +917,7 @@ class StreamingTTS(TTS):
             self.add_metric({"metric_type": "tts.stream.start"})
             loop.run_until_complete(
                 self.generate_audio(sentence, wav_file, 
-                                    play_streaming=False, 
+                                    play_streaming=True, 
                                     **kwargs)
             )
         finally:
