@@ -805,9 +805,14 @@ class RemoteTTSTimeoutException(RemoteTTSException):
 
 class StreamingTTS(TTS):
     """
-    Abstract class for a Remote TTS engine implementation.
-    This class is only provided for backwards compatibility
-    Usage is discouraged
+    Abstract class for a Streaming TTS engine implementation.
+    Audio is streamed in chunks as it becomes available instead of waiting the full sentence to be synthesized
+    
+    this plugin can be used in a synchronous way like any other plugin via self.get_tts(sentence, wav_file)
+    
+    to play audio as it becomes available use self.generate_audio(sentence, wav_file)
+
+    NOTE: StreamingTTS does not support phonemes
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
