@@ -349,6 +349,7 @@ class TTS:
     def enclosure(self, val):
         TTS.playback.enclosure = val
 
+    @abc.abstractmethod
     def get_tts(self, sentence, wav_file, lang=None):
         """Abstract method that a tts implementation needs to implement.
 
@@ -755,6 +756,7 @@ class ConcatTTS(TTS):
         self.channels = self.config.get("channels", "1")
         self.rate = self.config.get("rate", "16000")
 
+    @abc.abstractmethod
     def sentence_to_files(self, sentence):
         """ list of ordered files to concatenate and form final wav file
         return files (list) , phonemes (list)
