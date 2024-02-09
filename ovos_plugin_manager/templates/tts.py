@@ -24,6 +24,8 @@ movements for all TTS engines (only mimic implements this in upstream)
 import inspect
 import random
 import re
+import abc
+import asyncio
 import subprocess
 import quebra_frases
 from os.path import isfile, join
@@ -799,6 +801,59 @@ class RemoteTTSException(Exception):
 
 class RemoteTTSTimeoutException(RemoteTTSException):
     pass
+
+
+class StreamingTTS(TTS):
+    """
+    Abstract class for a Remote TTS engine implementation.
+    This class is only provided for backwards compatibility
+    Usage is discouraged
+    """
+    def stream_start(self): 
+        self.process = subprocess.Popen(["paplay"], stdin=subprocess.PIPE)
+        
+    def stream_chunk(self, chunk):   
+        if self.process:
+            self.process.stdin.write(chunk)
+            self.process.stdin.flush()
+
+    def stream_stop(self): 
+        if self.process:
+            self.process.stdin.close()
+            self.process.wait()
+        self.process = None
+
+    @abc.abstractmethod
+    async def stream_tts(sentence):
+        """yield chunks of TTS audio as they become available"""
+        raise NotImplementedError
+                
+    async def generate_audio(self, sentence, wav_file, play_streaming=True):
+        """save streamed TTS to wav file, if configured also play TTS as it becomes available"""
+        if play_streaming:
+            self.stream_start()
+        with open(wav_file, "wb") as f:
+            try:
+                async for chunk in self.stream_tts(sentence):
+                    f.write(chunk)
+                    if play_streaming:
+                        self.stream_chunk(chunk)
+            finally:
+                if play_streaming:
+                    self.stream_stop()
+        return wav_file
+
+    def get_tts(self, sentence, wav_file):
+        """wrap streaming TTS into sync usage"""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            wav_file = loop.run_until_complete(
+                self.generate_audio(sentence, wav_file, play_streaming=False)
+            )
+        finally:
+            loop.close()
+        return wav_file, None  # No phonemes
 
 
 class RemoteTTS(TTS):
