@@ -875,7 +875,7 @@ class StreamingTTS(TTS):
         self.callbacks = callbacks or StreamingTTSCallbacks(self.bus)
 
     @abc.abstractmethod
-    async def stream_tts(sentence, lang=None, voice=None, **kwargs):
+    async def stream_tts(sentence, **kwargs):
         """yield chunks of TTS audio as they become available"""
         raise NotImplementedError
                 
@@ -907,7 +907,7 @@ class StreamingTTS(TTS):
         
         # filter kwargs per plugin, different plugins expose different options
         kwargs = {k: v for k, v in kwargs.items()
-                  if k in inspect.signature(self.generate_audio).parameters
+                  if k in inspect.signature(self.stream_tts).parameters
                   and k not in ["sentence", "wav_file", "play_streaming"]}
 
         # get path to cache final synthesized file
@@ -928,13 +928,13 @@ class StreamingTTS(TTS):
             loop.close()
             self.add_metric({"metric_type": "tts.stream.end"})
         
-    def get_tts(self, sentence, wav_file):
+    def get_tts(self, sentence, wav_file, **kwargs):
         """wrap streaming TTS into sync usage"""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
             wav_file = loop.run_until_complete(
-                self.generate_audio(sentence, wav_file, play_streaming=False)
+                self.generate_audio(sentence, wav_file, play_streaming=False, **kwargs)
             )
         finally:
             loop.close()
