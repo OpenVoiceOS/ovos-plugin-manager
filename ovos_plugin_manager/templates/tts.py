@@ -840,7 +840,7 @@ class StreamingTTSCallbacks:
             self._process.stdin.write(chunk)
             self._process.stdin.flush()
 
-    def stream_stop(self, **kwargs):        
+    def stream_stop(self, listen=False, **kwargs):
         message = kwargs.get("message") or \
                   dig_for_message() or \
                   Message("speak")
@@ -854,7 +854,7 @@ class StreamingTTSCallbacks:
         if not self.config.get("pulse_duck", False):
             self.bus.emit(Message("ovos.common_play.unduck"))
         self.bus.emit(message.forward("recognizer_loop:audio_output_end"))       
-        if kwargs.get("listen"):
+        if listen:
             self.bus.emit(message.forward('mycroft.mic.listen'))
 
 
@@ -887,7 +887,8 @@ class StreamingTTS(TTS):
         """yield chunks of TTS audio as they become available"""
         raise NotImplementedError
                 
-    async def generate_audio(self, sentence, wav_file, play_streaming=True, **kwargs):
+    async def generate_audio(self, sentence, wav_file, play_streaming=True, listen=False,
+                             **kwargs):
         """save streamed TTS to wav file, if configured also play TTS as it becomes available"""
         if play_streaming:
             self.callbacks.stream_start(**kwargs)
@@ -899,7 +900,7 @@ class StreamingTTS(TTS):
                         self.callbacks.stream_chunk(chunk)
             finally:
                 if play_streaming:
-                    self.callbacks.stream_stop(**kwargs)
+                    self.callbacks.stream_stop(listen, **kwargs)
         return wav_file
 
     def _execute(self, sentence, ident, listen, **kwargs):
@@ -912,8 +913,6 @@ class StreamingTTS(TTS):
         lang, voice = self.context.get(kwargs)   
         kwargs["lang"] = lang
         kwargs["voice"] = voice
-        kwargs["ident"] = ident
-        kwargs["listen"] = listen
 
         # get path to cache final synthesized file
         cache = self.get_cache(voice, lang)  # cache per tts_id (lang/voice combo)
@@ -937,7 +936,8 @@ class StreamingTTS(TTS):
             self.add_metric({"metric_type": "tts.stream.start"})
             loop.run_until_complete(
                 self.generate_audio(sentence, wav_file, 
-                                    play_streaming=True, 
+                                    play_streaming=True,
+                                    listen=listen,
                                     **kwargs)
             )
         finally:
