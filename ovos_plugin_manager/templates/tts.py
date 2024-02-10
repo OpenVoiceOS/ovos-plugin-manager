@@ -821,14 +821,19 @@ class StreamingTTSCallbacks:
         self.play_args = play_args or ["paplay"]
         self._process = None
 
-    def stream_start(self, **kwargs): 
-        message = kwargs.get("message") or \
+    def stream_start(self, message=None):
+        """prepare anything needed to playback streamed audio
+        events:
+        - "ovos.common_play.duck"
+        - "recognizer_loop:audio_output_start"
+        """
+        message = message or \
                   dig_for_message() or \
                   Message("speak")
         
         # we don't use the regular PlaybackThread here, we need to handle recognizer_loop:audio_output_start
         if not self.config.get("pulse_duck", False):
-            self.bus.emit(Message("ovos.common_play.duck"))
+            self.bus.emit(message.forward("ovos.common_play.duck"))
         self.bus.emit(message.forward("recognizer_loop:audio_output_start"))
         
         if self._process:
@@ -836,12 +841,19 @@ class StreamingTTSCallbacks:
         self._process = subprocess.Popen(self.play_args, stdin=subprocess.PIPE)
 
     def stream_chunk(self, chunk):
+        """play streamed chunk of audio"""
         if self._process:
             self._process.stdin.write(chunk)
             self._process.stdin.flush()
 
-    def stream_stop(self, listen=False, **kwargs):
-        message = kwargs.get("message") or \
+    def stream_stop(self, listen=False, message=None):
+        """got all streamed audio, cleanup state
+        events:
+        - "ovos.common_play.unduck"
+        - "recognizer_loop:audio_output_end"
+        - 'mycroft.mic.listen'
+        """
+        message = message or \
                   dig_for_message() or \
                   Message("speak")
         
@@ -852,7 +864,7 @@ class StreamingTTSCallbacks:
 
         # we don't use the regular PlaybackThread here, we need to handle recognizer_loop:audio_output_end and listen flag
         if not self.config.get("pulse_duck", False):
-            self.bus.emit(Message("ovos.common_play.unduck"))
+            self.bus.emit(message.forward("ovos.common_play.unduck"))
         self.bus.emit(message.forward("recognizer_loop:audio_output_end"))       
         if listen:
             self.bus.emit(message.forward('mycroft.mic.listen'))
@@ -883,24 +895,25 @@ class StreamingTTS(TTS):
                                                             tts_config=self.config)
 
     @abc.abstractmethod
-    async def stream_tts(self, sentence, **kwargs) -> AsyncIterable[bytes]:
+    async def stream_tts(self, sentence) -> AsyncIterable[bytes]:
         """yield chunks of TTS audio as they become available"""
         raise NotImplementedError
                 
-    async def generate_audio(self, sentence, wav_file, play_streaming=True, listen=False,
-                             **kwargs):
+    async def generate_audio(self, sentence, wav_file, play_streaming=True,
+                             listen=False, message=None, plugin_kwargs=None):
         """save streamed TTS to wav file, if configured also play TTS as it becomes available"""
+        plugin_kwargs = plugin_kwargs or {}
         if play_streaming:
-            self.callbacks.stream_start(**kwargs)
+            self.callbacks.stream_start(message)
         with open(wav_file, "wb") as f:
             try:
-                async for chunk in self.stream_tts(sentence, **kwargs):
+                async for chunk in self.stream_tts(sentence, **plugin_kwargs):
                     f.write(chunk)
                     if play_streaming:
                         self.callbacks.stream_chunk(chunk)
             finally:
                 if play_streaming:
-                    self.callbacks.stream_stop(listen, **kwargs)
+                    self.callbacks.stream_stop(listen, message)
         return wav_file
 
     def _execute(self, sentence, ident, listen, **kwargs):
@@ -924,8 +937,12 @@ class StreamingTTS(TTS):
 
         wav_file = str(cache.define_audio_file(sentence_hash))
 
+        message = kwargs.get("message") or \
+                  dig_for_message() or \
+                  Message("speak")
+
         # filter kwargs per plugin, different plugins expose different options
-        kwargs = {k: v for k, v in kwargs.items()
+        plugin_kwargs = {k: v for k, v in kwargs.items()
                   if k in inspect.signature(self.stream_tts).parameters
                   and k not in ["sentence", "wav_file", "play_streaming"]}
 
@@ -938,7 +955,8 @@ class StreamingTTS(TTS):
                 self.generate_audio(sentence, wav_file, 
                                     play_streaming=True,
                                     listen=listen,
-                                    **kwargs)
+                                    message=message,
+                                    plugin_kwargs=plugin_kwargs)
             )
         finally:
             loop.close()
@@ -950,7 +968,9 @@ class StreamingTTS(TTS):
         asyncio.set_event_loop(loop)
         try:
             wav_file = loop.run_until_complete(
-                self.generate_audio(sentence, wav_file, play_streaming=False, **kwargs)
+                self.generate_audio(sentence, wav_file,
+                                    play_streaming=False,
+                                    plugin_kwargs=kwargs)
             )
         finally:
             loop.close()
