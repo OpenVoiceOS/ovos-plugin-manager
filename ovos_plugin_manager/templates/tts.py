@@ -506,14 +506,17 @@ class TTS:
                     sentence = sentence.replace(word, spelled)
         return sentence
 
-    def _execute(self, sentence, ident, listen, **kwargs):
-        sentence = self._replace_phonetic_spellings(sentence)
-        chunks = self._preprocess_sentence(sentence)
-        # Apply the listen flag to the last chunk, set the rest to False
-        chunks = [(chunks[i], listen if i == len(chunks) - 1 else False)
-                  for i in range(len(chunks))]
-        self.add_metric({"metric_type": "tts.preprocessed",
-                         "n_chunks": len(chunks)})
+    def _execute(self, sentence, ident, listen, preprocess=True, **kwargs):
+        if preprocess:
+            sentence = self._replace_phonetic_spellings(sentence)
+            chunks = self._preprocess_sentence(sentence)
+            # Apply the listen flag to the last chunk, set the rest to False
+            chunks = [(chunks[i], listen if i == len(chunks) - 1 else False)
+                      for i in range(len(chunks))]
+            self.add_metric({"metric_type": "tts.preprocessed",
+                             "n_chunks": len(chunks)})
+        else:
+            chunks = [(sentence, listen)]
 
         lang, voice = self.context.get(kwargs)
         tts_id = join(self.tts_name, voice, lang)
@@ -911,15 +914,21 @@ class StreamingTTS(TTS):
         kwargs["voice"] = voice
         kwargs["ident"] = ident
         kwargs["listen"] = listen
-        
+
+        # get path to cache final synthesized file
+        cache = self.get_cache(voice, lang)  # cache per tts_id (lang/voice combo)
+
+        # if cached, play existing file instead
+        if self.enable_cache and sentence_hash in cache:
+            super()._execute(sentence, ident, listen, preprocess=False, **kwargs)
+            return
+
+        wav_file = str(cache.define_audio_file(sentence_hash))
+
         # filter kwargs per plugin, different plugins expose different options
         kwargs = {k: v for k, v in kwargs.items()
                   if k in inspect.signature(self.stream_tts).parameters
                   and k not in ["sentence", "wav_file", "play_streaming"]}
-
-        # get path to cache final synthesized file
-        cache = self.get_cache(voice, lang)  # cache per tts_id (lang/voice combo)
-        wav_file = str(cache.define_audio_file(sentence_hash))
 
         # handle streaming TTS
         loop = asyncio.new_event_loop()
