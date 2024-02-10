@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.26a6](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a6) (2024-02-07)
+## [0.0.26a7](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a7) (2024-02-10)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a5...0.0.26a6)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a6...0.0.26a7)
+
+**Implemented enhancements:**
+
+- feat/streaming\_tts [\#212](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/212) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.26a6](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.26a6) (2024-02-07)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a5...V0.0.26a6)
 
 **Implemented enhancements:**
 
