@@ -21,33 +21,36 @@ movements for all TTS engines (only mimic implements this in upstream)
         # would hang here
         engine.playback.stop()
 """
+import abc
+import asyncio
 import inspect
 import random
 import re
-import abc
-import asyncio
 import subprocess
-import quebra_frases
 from os.path import isfile, join
 from pathlib import Path
 from queue import Queue
 from threading import Thread
+from typing import AsyncIterable
+
+import quebra_frases
 import requests
+from ovos_bus_client.apis.enclosure import EnclosureAPI
 from ovos_bus_client.message import Message, dig_for_message
 from ovos_config import Configuration
+from ovos_utils import classproperty
+from ovos_utils.fakebus import FakeBus
+from ovos_utils.file_utils import get_cache_directory
+from ovos_utils.file_utils import resolve_resource_file
+from ovos_utils.lang.visimes import VISIMES
+from ovos_utils.log import LOG
+from ovos_utils.metrics import Stopwatch
+from ovos_utils.process_utils import RuntimeRequirements
+
 from ovos_plugin_manager.g2p import OVOSG2PFactory, find_g2p_plugins
 from ovos_plugin_manager.templates.g2p import OutOfVocabulary
 from ovos_plugin_manager.utils.config import get_plugin_config
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
-from ovos_utils import classproperty
-from ovos_utils.file_utils import resolve_resource_file
-from ovos_bus_client.apis.enclosure import EnclosureAPI
-from ovos_utils.file_utils import get_cache_directory
-from ovos_utils.lang.visimes import VISIMES
-from ovos_utils.log import LOG
-from ovos_utils.fakebus import FakeBus
-from ovos_utils.metrics import Stopwatch
-from ovos_utils.process_utils import RuntimeRequirements
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
 SSML_TAGS = re.compile(r'<[^>]*>')
@@ -809,8 +812,9 @@ class RemoteTTSTimeoutException(RemoteTTSException):
 
 class StreamingTTSCallbacks:
     """handle the playback of streaming TTS, can be overrided in StreamingTTS"""
-    def __init__(self, bus, play_args=None):
+    def __init__(self, bus, play_args=None, tts_config=None):
         self.bus = bus
+        self.config = tts_config or {}
         self.play_args = play_args or ["paplay"]
         self._process = None
 
@@ -872,17 +876,18 @@ class StreamingTTS(TTS):
             callbacks: StreamingTTSCallbacks
         """
         super().init(bus, playback)
-        self.callbacks = callbacks or StreamingTTSCallbacks(self.bus)
+        self.callbacks = callbacks or StreamingTTSCallbacks(self.bus,
+                                                            tts_config=self.config)
 
     @abc.abstractmethod
-    async def stream_tts(sentence, **kwargs):
+    async def stream_tts(self, sentence, **kwargs) -> AsyncIterable[bytes]:
         """yield chunks of TTS audio as they become available"""
         raise NotImplementedError
                 
     async def generate_audio(self, sentence, wav_file, play_streaming=True, **kwargs):
         """save streamed TTS to wav file, if configured also play TTS as it becomes available"""
         if play_streaming:
-            self.callbacks.stream_start(message)
+            self.callbacks.stream_start(**kwargs)
         with open(wav_file, "wb") as f:
             try:
                 async for chunk in self.stream_tts(sentence, **kwargs):
@@ -894,7 +899,7 @@ class StreamingTTS(TTS):
                     self.callbacks.stream_stop(**kwargs)
         return wav_file
 
-    def _execute(self, sentence, **kwargs):
+    def _execute(self, sentence, ident, listen, **kwargs):
         sentence = self._replace_phonetic_spellings(sentence)
         self.add_metric({"metric_type": "tts.preprocessed"})
 
@@ -904,6 +909,8 @@ class StreamingTTS(TTS):
         lang, voice = self.context.get(kwargs)   
         kwargs["lang"] = lang
         kwargs["voice"] = voice
+        kwargs["ident"] = ident
+        kwargs["listen"] = listen
         
         # filter kwargs per plugin, different plugins expose different options
         kwargs = {k: v for k, v in kwargs.items()
