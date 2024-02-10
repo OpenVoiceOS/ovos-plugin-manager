@@ -827,6 +827,7 @@ class StreamingTTSCallbacks:
         - "ovos.common_play.duck"
         - "recognizer_loop:audio_output_start"
         """
+        LOG.info(f"TTS stream start: {self.__class__.__name__}")
         message = message or \
                   dig_for_message() or \
                   Message("speak")
@@ -838,10 +839,12 @@ class StreamingTTSCallbacks:
         
         if self._process:
             self.stream_stop()
+        LOG.debug(f"stream playback command: {self.play_args}")
         self._process = subprocess.Popen(self.play_args, stdin=subprocess.PIPE)
 
     def stream_chunk(self, chunk):
         """play streamed chunk of audio"""
+        LOG.debug(f"TTS stream chunk: {self.__class__.__name__} - {len(chunk)} bytes")
         if self._process:
             self._process.stdin.write(chunk)
             self._process.stdin.flush()
@@ -853,6 +856,7 @@ class StreamingTTSCallbacks:
         - "recognizer_loop:audio_output_end"
         - 'mycroft.mic.listen'
         """
+        LOG.info(f"TTS stream stop: {self.__class__.__name__}")
         message = message or \
                   dig_for_message() or \
                   Message("speak")
