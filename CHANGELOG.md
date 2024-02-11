@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.26a7](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a7) (2024-02-10)
+## [0.0.26a8](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a8) (2024-02-11)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a6...0.0.26a7)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a7...0.0.26a8)
+
+**Fixed bugs:**
+
+- fix/load\_persistent\_cache\(\) [\#209](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/209) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.26a7](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.26a7) (2024-02-10)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a6...V0.0.26a7)
 
 **Implemented enhancements:**
 
