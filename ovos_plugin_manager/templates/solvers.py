@@ -27,12 +27,14 @@
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Solver service can be found at: https://github.com/Neongeckocom/neon_solvers
+import abc
+from typing import Optional, List, Iterable
 
 from json_database import JsonStorageXDG
+from ovos_plugin_manager.language import OVOSLangTranslationFactory
+from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_cache_home
 from quebra_frases import sentence_tokenize
-from ovos_utils.log import LOG
-from ovos_plugin_manager.language import OVOSLangTranslationFactory
 
 
 class AbstractSolver:
@@ -64,16 +66,18 @@ class AbstractSolver:
         self.translator = translator or OVOSLangTranslationFactory.create()
 
     @staticmethod
-    def sentence_split(text, max_sentences=25):
+    def sentence_split(text: str, max_sentences: int=25) -> List[str]:
         return sentence_tokenize(text)[:max_sentences]
 
-    def _get_user_lang(self, context, lang=None):
+    def _get_user_lang(self, context: Optional[dict] = None,
+                       lang: Optional[str] = None) -> str:
         context = context or {}
         lang = lang or context.get("lang") or self.default_lang
         lang = lang.split("-")[0]
         return lang
 
-    def _tx_query(self, query, context=None, lang=None):
+    def _tx_query(self, query: str,
+                  context: Optional[dict] = None, lang: Optional[str] = None):
         if not self.enable_tx:
             return query, context, lang
         context = context or {}
@@ -119,28 +123,42 @@ class QuestionSolver(AbstractSolver):
             self.cache = self.spoken_cache = {}
 
     # plugin methods to override
-    def get_spoken_answer(self, query, context):
+    @abc.abstractmethod
+    def get_spoken_answer(self, query: str,
+                          context: Optional[dict] = None) -> str:
         """
         query assured to be in self.default_lang
         return a single sentence text response
         """
         raise NotImplementedError
 
-    def get_data(self, query, context):
+    def stream_utterances(self, query: str,
+                          context: Optional[dict] = None) -> Iterable[str]:
+        """streaming api, yields utterances as they become available
+        each utterance can be sent to TTS before we have a full answer
+        this is particularly helpful with LLMs"""
+        ans = self.get_spoken_answer(query, context)
+        for utt in self.sentence_split(ans):
+            yield utt
+
+    def get_data(self, query: str,
+                 context: Optional[dict] = None) -> dict:
         """
         query assured to be in self.default_lang
         return a dict response
         """
-        raise NotImplementedError
+        return {"answer": self.get_spoken_answer(query, context)}
 
-    def get_image(self, query, context=None):
+    def get_image(self, query: str,
+                  context: Optional[dict] = None) -> str:
         """
         query assured to be in self.default_lang
         return path/url to a single image to acompany spoken_answer
         """
-        raise NotImplementedError
+        return None
 
-    def get_expanded_answer(self, query, context=None):
+    def get_expanded_answer(self, query: str,
+                            context: Optional[dict] = None) -> List[dict]:
         """
         query assured to be in self.default_lang
         return a list of ordered steps to expand the answer, eg, "tell me more"
@@ -151,10 +169,13 @@ class QuestionSolver(AbstractSolver):
         }
         :return:
         """
-        raise NotImplementedError
+        return [{"title": query,
+                 "summary": self.get_spoken_answer(query, context),
+                 "img": self.get_image(query, context)}]
 
     # user facing methods
-    def search(self, query, context=None, lang=None):
+    def search(self, query: str,
+               context: Optional[dict] = None, lang: Optional[str] = None) -> dict:
         """
         cache and auto translate query if needed
         returns translated response from self.get_data
@@ -181,7 +202,8 @@ class QuestionSolver(AbstractSolver):
             return self.translator.translate_dict(data, user_lang, lang)
         return data
 
-    def visual_answer(self, query, context=None, lang=None):
+    def visual_answer(self, query: str,
+                      context: Optional[dict] = None, lang: Optional[str] = None) -> str:
         """
         cache and auto translate query if needed
         returns image that answers query
@@ -189,7 +211,8 @@ class QuestionSolver(AbstractSolver):
         query, context, lang = self._tx_query(query, context, lang)
         return self.get_image(query, context)
 
-    def spoken_answer(self, query, context=None, lang=None):
+    def spoken_answer(self, query: str,
+                      context: Optional[dict] = None, lang: Optional[str] = None) -> str:
         """
         cache and auto translate query if needed
         returns chunked and translated response from self.get_spoken_answer
@@ -216,7 +239,8 @@ class QuestionSolver(AbstractSolver):
             else:
                 return summary
 
-    def long_answer(self, query, context=None, lang=None):
+    def long_answer(self, query: str,
+                    context: Optional[dict] = None, lang: Optional[str] = None) -> List[dict]:
         """
         return a list of ordered steps to expand the answer, eg, "tell me more"
         step0 is always self.spoken_answer and self.get_image
@@ -250,7 +274,10 @@ class TldrSolver(AbstractSolver):
     handling automatic translation back and forth as needed"""
 
     # plugin methods to override
-    def get_tldr(self, document, context):
+
+    @abc.abstractmethod
+    def get_tldr(self, document: str,
+                 context: Optional[dict] = None) -> str:
         """
         document assured to be in self.default_lang
          returns summary of provided document
@@ -258,7 +285,8 @@ class TldrSolver(AbstractSolver):
         raise NotImplementedError
 
     # user facing methods
-    def tldr(self, document, context=None, lang=None):
+    def tldr(self, document: str,
+             context: Optional[dict] = None, lang: Optional[str] = None) -> str:
         """
         cache and auto translate query if needed
         returns summary of provided document
@@ -280,7 +308,10 @@ class EvidenceSolver(AbstractSolver):
     handling automatic translation back and forth as needed"""
 
     # plugin methods to override
-    def get_best_passage(self, evidence, question, context):
+
+    @abc.abstractmethod
+    def get_best_passage(self, evidence: str, question: str,
+                         context: Optional[dict] = None) -> str:
         """
         evidence and question assured to be in self.default_lang
          returns summary of provided document
@@ -288,7 +319,8 @@ class EvidenceSolver(AbstractSolver):
         raise NotImplementedError
 
     # user facing methods
-    def extract_answer(self, evidence, question, context=None, lang=None):
+    def extract_answer(self, evidence: str, question: str,
+                       context: Optional[dict] = None, lang: Optional[str] = None) -> str:
         """
         cache and auto translate evidence and question if needed
         returns passage from evidence that answers question
@@ -311,7 +343,10 @@ class MultipleChoiceSolver(AbstractSolver):
     handling automatic translation back and forth as needed"""
 
     # plugin methods to override
-    def select_answer(self, query, options, context):
+
+    @abc.abstractmethod
+    def select_answer(self, query: str, options: List[str],
+                      context: Optional[dict] = None) -> str:
         """
         query and options assured to be in self.default_lang
         return best answer from options list
@@ -319,7 +354,8 @@ class MultipleChoiceSolver(AbstractSolver):
         raise NotImplementedError
 
     # user facing methods
-    def solve(self, query, options, context=None, lang=None):
+    def solve(self, query: str, options: List[str],
+              context: Optional[dict] = None, lang: Optional[str] = None) -> str:
         """
         cache and auto translate query and options if needed
         returns best answer from provided options
@@ -341,7 +377,10 @@ class EntailmentSolver(AbstractSolver):
     handling automatic translation back and forth as needed"""
 
     # plugin methods to override
-    def check_entailment(self, premise, hypothesis, context):
+
+    @abc.abstractmethod
+    def check_entailment(self, premise: str, hypothesis: str,
+                         context: Optional[dict] = None) -> bool:
         """
         premise and hyopithesis assured to be in self.default_lang
         return Bool, True if premise entails the hypothesis False otherwise
@@ -349,7 +388,8 @@ class EntailmentSolver(AbstractSolver):
         raise NotImplementedError
 
     # user facing methods
-    def entails(self, premise, hypothesis, context=None, lang=None):
+    def entails(self, premise: str, hypothesis: str,
+                context: Optional[dict] = None, lang: Optional[str] = None) -> bool:
         """
         cache and auto translate premise and hypothesis if needed
         return Bool, True if premise entails the hypothesis False otherwise
