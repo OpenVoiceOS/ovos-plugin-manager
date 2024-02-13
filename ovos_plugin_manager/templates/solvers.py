@@ -132,6 +132,15 @@ class QuestionSolver(AbstractSolver):
         """
         raise NotImplementedError
 
+    def stream_utterances(self, query: str,
+                          context: Optional[dict] = None) -> Iterable[str]:
+        """streaming api, yields utterances as they become available
+        each utterance can be sent to TTS before we have a full answer
+        this is particularly helpful with LLMs"""
+        ans = self.get_spoken_answer(query, context)
+        for utt in self.sentence_split(ans):
+            yield utt
+
     def get_data(self, query: str,
                  context: Optional[dict] = None) -> dict:
         """
