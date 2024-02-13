@@ -1,8 +1,20 @@
 # Changelog
 
-## [0.0.26a8](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a8) (2024-02-11)
+## [0.0.26a9](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a9) (2024-02-13)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a7...0.0.26a8)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a8...0.0.26a9)
+
+**Implemented enhancements:**
+
+- feat/streaming\_solver [\#213](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/213) ([JarbasAl](https://github.com/JarbasAl))
+
+**Fixed bugs:**
+
+- Messages from ovos\_utils.log.LOG are swallowed and not sent to STDOUT [\#173](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/173)
+
+## [V0.0.26a8](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.26a8) (2024-02-11)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a7...V0.0.26a8)
 
 **Fixed bugs:**
 
