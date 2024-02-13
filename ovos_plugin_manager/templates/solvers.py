@@ -27,12 +27,13 @@
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Solver service can be found at: https://github.com/Neongeckocom/neon_solvers
+import abc
 
 from json_database import JsonStorageXDG
+from ovos_plugin_manager.language import OVOSLangTranslationFactory
+from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_cache_home
 from quebra_frases import sentence_tokenize
-from ovos_utils.log import LOG
-from ovos_plugin_manager.language import OVOSLangTranslationFactory
 
 
 class AbstractSolver:
@@ -119,6 +120,7 @@ class QuestionSolver(AbstractSolver):
             self.cache = self.spoken_cache = {}
 
     # plugin methods to override
+    @abc.abstractmethod
     def get_spoken_answer(self, query, context):
         """
         query assured to be in self.default_lang
@@ -131,14 +133,14 @@ class QuestionSolver(AbstractSolver):
         query assured to be in self.default_lang
         return a dict response
         """
-        raise NotImplementedError
+        return {"answer": self.get_spoken_answer(query, context)}
 
     def get_image(self, query, context=None):
         """
         query assured to be in self.default_lang
         return path/url to a single image to acompany spoken_answer
         """
-        raise NotImplementedError
+        return None
 
     def get_expanded_answer(self, query, context=None):
         """
@@ -151,7 +153,9 @@ class QuestionSolver(AbstractSolver):
         }
         :return:
         """
-        raise NotImplementedError
+        return [{"title": query,
+                 "summary": self.get_spoken_answer(query, context),
+                 "img": self.get_image(query, context)}]
 
     # user facing methods
     def search(self, query, context=None, lang=None):
@@ -250,6 +254,8 @@ class TldrSolver(AbstractSolver):
     handling automatic translation back and forth as needed"""
 
     # plugin methods to override
+
+    @abc.abstractmethod
     def get_tldr(self, document, context):
         """
         document assured to be in self.default_lang
@@ -280,6 +286,8 @@ class EvidenceSolver(AbstractSolver):
     handling automatic translation back and forth as needed"""
 
     # plugin methods to override
+
+    @abc.abstractmethod
     def get_best_passage(self, evidence, question, context):
         """
         evidence and question assured to be in self.default_lang
@@ -311,6 +319,8 @@ class MultipleChoiceSolver(AbstractSolver):
     handling automatic translation back and forth as needed"""
 
     # plugin methods to override
+
+    @abc.abstractmethod
     def select_answer(self, query, options, context):
         """
         query and options assured to be in self.default_lang
@@ -341,6 +351,8 @@ class EntailmentSolver(AbstractSolver):
     handling automatic translation back and forth as needed"""
 
     # plugin methods to override
+
+    @abc.abstractmethod
     def check_entailment(self, premise, hypothesis, context):
         """
         premise and hyopithesis assured to be in self.default_lang
