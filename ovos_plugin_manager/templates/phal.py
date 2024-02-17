@@ -516,10 +516,7 @@ class PHALPlugin(Thread):
         self._mouth_events = False
 
 class AdminPlugin(PHALPlugin):
-    def __init__(self, bus=None, name="", config=None):
-        super().__init__(bus=None, name="", config=None)
+    """Running as Admin"""
 
 class AdminValidator(PHALValidator):
-    @staticmethod
-    def validate(config=None):
-        return True
+    """Running as Admin"""
