@@ -515,7 +515,11 @@ class PHALPlugin(Thread):
         """Disable movement of the mouth with speech"""
         self._mouth_events = False
 
+class AdminPlugin(PHALPlugin):
+    def __init__(self, bus=None, name="", config=None):
+        super().__init__(bus=None, name="", config=None)
 
-# Just for api consistency
-AdminPlugin = PHALPlugin
-AdminValidator = PHALValidator
+class AdminValidator(PHALValidator):
+    @staticmethod
+    def validate(config=None):
+        return True
