@@ -515,7 +515,8 @@ class PHALPlugin(Thread):
         """Disable movement of the mouth with speech"""
         self._mouth_events = False
 
+class AdminPlugin(PHALPlugin):
+    """Running as Admin"""
 
-# Just for api consistency
-AdminPlugin = PHALPlugin
-AdminValidator = PHALValidator
+class AdminValidator(PHALValidator):
+    """Running as Admin"""
