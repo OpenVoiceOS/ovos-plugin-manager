@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.26a9](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a9) (2024-02-13)
+## [0.0.26a10](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a10) (2024-02-17)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a8...0.0.26a9)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a9...0.0.26a10)
+
+**Fixed bugs:**
+
+- fix: AdminPlugin [\#214](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/214) ([builderjer](https://github.com/builderjer))
+
+## [V0.0.26a9](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.26a9) (2024-02-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a8...V0.0.26a9)
 
 **Implemented enhancements:**
 
