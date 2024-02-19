@@ -2,7 +2,7 @@ ovos-utils < 0.2.0, >=0.1.0a8
 ovos-bus-client < 0.2.0, >=0.0.9a3
 ovos-config < 0.2.0, >=0.0.12
 combo_lock~=0.2
-requests~=2.26
+requests~=2.31
 quebra_frases
 langcodes~=3.3.0
 
