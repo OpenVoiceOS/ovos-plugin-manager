@@ -56,6 +56,8 @@ TTS_PLUGIN_ENTRY_POINT = 'ovos-tts-plugin-dummy=ovos_plugin_manager.templates.tt
 STT_PLUGIN_ENTRY_POINT = 'ovos-stt-plugin-dummy=ovos_plugin_manager.templates.stt:STT'
 WW_PLUGIN_ENTRY_POINT = 'ovos-ww-plugin-dummy=ovos_plugin_manager.templates.hotwords:HotWordEngine'
 
+with open("README.md", "r") as f:
+    long_description = f.read()
 
 setup(
     name='ovos-plugin-manager',
@@ -70,8 +72,10 @@ setup(
     author='jarbasAi',
     install_requires=required("requirements/requirements.txt"),
     package_data={'': package_files('ovos-plugin-manager')},
-    author_email='jarbasai@mailfence.com',
+    author_email='jarbas@openvoiceos.com',
     description='OpenVoiceOS plugin manager',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     entry_points={
         'intentbox.segmentation': SEG_PLUGIN_ENTRY_POINT,
         'intentbox.tokenization': TOK_PLUGIN_ENTRY_POINT,
