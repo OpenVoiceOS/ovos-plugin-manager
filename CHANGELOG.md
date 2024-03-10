@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.26a10](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a10) (2024-02-17)
+## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a9...0.0.26a10)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a10...HEAD)
+
+**Merged pull requests:**
+
+- chore\(docs\): add a long description to PyPi [\#215](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/215) ([mikejgray](https://github.com/mikejgray))
+
+## [V0.0.26a10](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V0.0.26a10) (2024-02-17)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a9...V0.0.26a10)
 
 **Fixed bugs:**
 
