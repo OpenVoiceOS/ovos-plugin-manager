@@ -2,7 +2,19 @@
 
 ## [Unreleased](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/HEAD)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a10...HEAD)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...HEAD)
+
+**Fixed bugs:**
+
+- fix/tts\_reload [\#219](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/219) ([JarbasAl](https://github.com/JarbasAl))
+
+**Closed issues:**
+
+- Error about Azure TTS plugin [\#193](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/193)
+
+## [V](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V) (2024-03-10)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a10...V)
 
 **Merged pull requests:**
 
