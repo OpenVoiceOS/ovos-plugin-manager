@@ -339,7 +339,7 @@ class TTS:
         if not TTS.playback.enclosure:
             TTS.playback.enclosure = EnclosureAPI(self.bus)
 
-        if not TTS.playback.is_running:
+        if not TTS.playback.is_alive():
             TTS.playback.start()
 
     @property
