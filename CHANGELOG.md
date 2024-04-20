@@ -4,6 +4,10 @@
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...HEAD)
 
+**Implemented enhancements:**
+
+- feat/lang\_detection\_plugin [\#220](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/220) ([JarbasAl](https://github.com/JarbasAl))
+
 **Fixed bugs:**
 
 - fix/tts\_reload [\#219](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/219) ([JarbasAl](https://github.com/JarbasAl))
