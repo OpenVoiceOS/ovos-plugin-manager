@@ -7,7 +7,7 @@ from os.path import isfile, join
 from pathlib import Path
 from queue import Queue
 from threading import Thread
-from typing import AsyncIterable
+from typing import AsyncIterable, List
 
 import quebra_frases
 import requests
@@ -35,9 +35,31 @@ SSML_TAGS = re.compile(r'<[^>]*>')
 
 
 class TTSContext:
+    """
+    A context manager for handling Text-To-Speech (TTS) operations and caching.
+
+    Attributes:
+        plugin_id (str): Identifier for the TTS plugin being used.
+        lang (str): Language code for the TTS operation.
+        voice (str): Identifier for the voice type in use.
+        synth_kwargs (dict): Optional dictionary containing additional keyword arguments for the TTS synthesizer.
+
+    Class Attributes:
+        _caches (dict): A class-level dictionary acting as a cache store for different TTS contexts.
+    """
+
     _caches = {}
 
     def __init__(self, plugin_id: str, lang: str, voice: str, synth_kwargs: dict = None):
+        """
+        Initializes the TTSContext instance.
+
+        Parameters:
+            plugin_id (str): The unique identifier for the TTS plugin.
+            lang (str): The language in which the text will be synthesized.
+            voice (str): The voice model to be used for text synthesis.
+            synth_kwargs (dict, optional): Additional keyword arguments for the synthesizer.
+        """
         self.plugin_id = plugin_id
         self.lang = lang
         self.voice = voice
@@ -45,9 +67,26 @@ class TTSContext:
 
     @property
     def tts_id(self):
+        """
+        Constructs a unique identifier for the TTS context based on plugin, voice, and language.
+
+        Returns:
+            str: A unique identifier that represents the TTS context.
+        """
         return join(self.plugin_id, self.voice, self.lang)
 
     def get_cache(self, audio_ext="wav", cache_config=None):
+        """
+        Retrieves or creates a cache instance for the current TTS context.
+
+        Parameters:
+            audio_ext (str, optional): The file extension for the audio files (default is 'wav').
+            cache_config (dict, optional): Configuration settings for the cache, including parameters like
+                                          minimum free percent, persistence settings, and cache directory path.
+
+        Returns:
+            TextToSpeechCache: The cache instance associated with the current TTS context.
+        """
         cache_config = cache_config or {
             "min_free_percent": 75,
             "persist_cache": False,
@@ -61,6 +100,20 @@ class TTSContext:
         return self._caches[self.tts_id]
 
     def get_from_cache(self, sentence, audio_ext="wav", cache_config=None):
+        """
+        Retrieves an audio file and phoneme data from the cache, based on the input sentence.
+
+        Parameters:
+            sentence (str): The sentence for which to retrieve audio data.
+            audio_ext (str, optional): The file extension of the audio file (default is 'wav').
+            cache_config (dict, optional): Configuration settings for the cache.
+
+        Returns:
+            tuple: A tuple containing the path to the cached audio file and optionally the phoneme data.
+
+        Raises:
+            FileNotFoundError: If the sentence is not found in the cache.
+        """
         sentence_hash = hash_sentence(sentence)
         phonemes = None
         cache = self.get_cache(audio_ext, cache_config)
@@ -79,18 +132,34 @@ class TTS:
     It aggregates the minimum required parameters and exposes
     ``execute(sentence)`` and ``validate_ssml(sentence)`` functions.
 
-    Arguments:
-        lang (str):
-        config (dict): Configuration for this specific tts engine
-        validator (TTSValidator): Used to verify proper installation
-        phonetic_spelling (bool): Whether to spell certain words phonetically
-        ssml_tags (list): Supported ssml properties. Ex. ['speak', 'prosody']
+    Attributes:
+        queue (Queue): A queue for managing TTS playback tasks.
+        playback (PlaybackThread): The playback thread used for TTS audio output.
+
+    Args:
+        lang (str): The language code for the TTS engine.
+        config (dict): Configuration settings for the specific TTS engine.
+        validator (TTSValidator): Validator used to verify proper installation.
+        audio_ext (str): The default audio file extension (default is 'wav').
+        phonetic_spelling (bool): Whether to spell certain words phonetically.
+        ssml_tags (list): Supported SSML properties (e.g., ['speak', 'prosody']).
     """
     queue = None
     playback = None
 
     def __init__(self, lang=None, config=None, validator=None,
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
+        """
+        Initializes the TTS engine with specified parameters.
+
+        Args:
+            lang (str): The language code (deprecated).
+            config (dict): Configuration settings for the TTS engine.
+            validator (TTSValidator): Validator for verifying installation.
+            audio_ext (str): Default audio file extension (default is 'wav').
+            phonetic_spelling (bool): Whether to use phonetic spelling (default is True).
+            ssml_tags (list): Supported SSML tags (default is None).
+        """
         if lang is not None:
             log_deprecation("lang argument for TTS has been deprecated! it will be ignored, "
                             "pass lang to get_tts directly instead")
@@ -125,6 +194,12 @@ class TTS:
 
     @property
     def plugin_id(self) -> str:
+        """
+        Retrieves the plugin ID for the TTS engine.
+
+        Returns:
+            str: The plugin ID associated with the TTS engine.
+        """
         if not self._plugin_id:
             from ovos_plugin_manager.tts import find_tts_plugins
             for tts_id, clazz in find_tts_plugins().items():
@@ -147,7 +222,7 @@ class TTS:
         This property should be overridden by the derived class to advertise
         what languages that engine supports.
         Returns:
-            set: supported languages
+            set: A set of supported language codes.
         """
         return set()
 
@@ -155,19 +230,17 @@ class TTS:
     def get_tts(self, sentence, wav_file, lang=None):
         """Abstract method that a tts implementation needs to implement.
 
-        Should get data from tts.
-
-        Arguments:
-            sentence(str): Sentence to synthesize
-            wav_file(str): output file
-            lang(str): requested language (optional), defaults to self.lang
+        Args:
+            sentence (str): The input sentence to synthesize.
+            wav_file (str): The output file path for the synthesized audio.
+            lang (str, optional): The requested language (defaults to self.lang).
 
         Returns:
             tuple: (wav_file, phoneme)
         """
         return "", None
 
-    def preprocess_sentence(self, sentence):
+    def preprocess_sentence(self, sentence: str) -> List[str]:
         """Default preprocessing is a sentence_tokenizer,
         ie. splits the utterance into sub-sentences using quebra_frases
 
@@ -317,6 +390,9 @@ class TTS:
 
     # init helpers
     def _init_g2p(self):
+        """
+        Initializes the grapheme-to-phoneme (G2P) conversion for the TTS engine.
+        """
         cfg = Configuration()
         g2pm = self.config.get("g2p_module")
         if g2pm:
@@ -357,6 +433,13 @@ class TTS:
         self.add_metric({"metric_type": "tts.setup"})
 
     def _init_playback(self, playback):
+        """
+        Initializes the playback functionality for the TTS engine.
+
+        Args:
+            playback: PlaybackThread instance.
+        """
+
         TTS.playback = playback
         TTS.playback.set_bus(self.bus)
         TTS.playback.attach_tts(self)
@@ -367,7 +450,15 @@ class TTS:
             TTS.playback.start()
 
     def load_spellings(self, config=None):
-        """Load phonetic spellings of words as dictionary."""
+        """
+        Loads phonetic spellings of words as a dictionary.
+
+        Args:
+            config (dict, optional): Configuration settings.
+
+        Returns:
+            dict: A dictionary of phonetic spellings.
+        """
         path = join('text', self.lang.lower(), 'phonetic_spellings.txt')
         try:
             spellings_file = resolve_resource_file(path, config=config or Configuration())
@@ -387,7 +478,12 @@ class TTS:
 
     ## execution events
     def add_metric(self, metadata=None):
-        """ wraps handle_metric to catch exceptions and log timestamps """
+        """
+        Wraps handle_metric to catch exceptions and log timestamps.
+
+        Args:
+            metadata (dict, optional): Additional metadata for the metric.
+        """
         try:
             self.handle_metric(metadata)
             if self.log_timestamps:
@@ -527,9 +623,19 @@ class TTS:
             self.add_metric({"metric_type": "tts.queued"})
 
     def synth(self, sentence, ctxt: TTSContext = None, **kwargs):
-        """ This method wraps get_tts
-        several optional keyword arguments are supported
-        sentence will be read/saved to cache"""
+        """
+        Synthesizes speech for the given sentence. wraps get_tts
+
+        sentence will be read/saved to cache
+
+        Args:
+            sentence (str): The sentence to synthesize.
+            ctxt (TTSContext): The TTS context.
+            **kwargs: Additional synth arguments for get_tts.
+
+        Returns:
+            tuple: A tuple containing the path to the synthesized audio file and phoneme data.
+        """
         self.add_metric({"metric_type": "tts.synth.start"})
         sentence_hash = hash_sentence(sentence)
 
@@ -583,6 +689,15 @@ class TTS:
 
     ## cache
     def _cache_phonemes(self, sentence, cache: TextToSpeechCache = None, phonemes=None, sentence_hash=None):
+        """
+        Caches phonemes for the given sentence.
+
+        Args:
+            sentence (str): The sentence to cache phonemes for.
+            cache (TextToSpeechCache): The cache instance.
+            phonemes (str, optional): The phonemes for the sentence.
+            sentence_hash (str, optional): The hash of the sentence.
+        """
         sentence_hash = sentence_hash or hash_sentence(sentence)
         if not phonemes and self.g2p is not None:
             try:
@@ -597,6 +712,16 @@ class TTS:
         return None
 
     def _cache_sentence(self, sentence, audio_file, cache, phonemes=None, sentence_hash=None):
+        """
+        Caches the sentence along with associated audio and phonemes.
+
+        Args:
+            sentence (str): The sentence to cache.
+            audio_file (AudioFile): The audio file associated with the sentence.
+            cache (TextToSpeechCache): The cache instance.
+            phonemes (str, optional): The phonemes for the sentence.
+            sentence_hash (str, optional): The hash of the sentence.
+        """
         sentence_hash = sentence_hash or hash_sentence(sentence)
         # RANT: why do you hate strings ChrisV?
         if isinstance(audio_file.path, str):
@@ -607,6 +732,7 @@ class TTS:
 
     ## shutdown
     def stop(self):
+        """Stops the TTS playback."""
         if TTS.playback:
             try:
                 TTS.playback.stop()
@@ -615,11 +741,13 @@ class TTS:
         self.add_metric({"metric_type": "tts.stop"})
 
     def shutdown(self):
+        """Shuts down the TTS engine."""
         self.stop()
         if TTS.playback:
             TTS.playback.detach_tts(self)
 
     def __del__(self):
+        """Destructor for the TTS object."""
         self.shutdown()
 
     # below code is all deprecated and marked for removal in next stable release
@@ -627,6 +755,11 @@ class TTS:
     @deprecated("self.enclosure has been deprecated, use EnclosureAPI directly decoupled from the plugin code",
                 "0.1.0")
     def enclosure(self):
+        """Deprecated. Accessor for the enclosure property.
+
+        Returns:
+            EnclosureAPI: The EnclosureAPI instance associated with the TTS playback.
+        """
         if not TTS.playback.enclosure:
             bus = TTS.playback.bus or self.bus
             TTS.playback.enclosure = EnclosureAPI(bus)
@@ -636,12 +769,22 @@ class TTS:
     @deprecated("self.enclosure has been deprecated, use EnclosureAPI directly decoupled from the plugin code",
                 "0.1.0")
     def enclosure(self, val):
+        """Deprecated. Setter for the enclosure property.
+
+        Arguments:
+            val (EnclosureAPI): The EnclosureAPI instance to set.
+        """
         TTS.playback.enclosure = val
 
     @property
     @deprecated("self.filename has been deprecated, unused for a long time now",
                 "0.1.0")
     def filename(self):
+        """Deprecated. Accessor for the filename property.
+
+        Returns:
+            str: The filename for the TTS audio.
+        """
         cache_dir = get_cache_directory(self.tts_name)
         return join(cache_dir, 'tts.' + self.audio_ext)
 
@@ -649,18 +792,32 @@ class TTS:
     @deprecated("self.filename has been deprecated, unused for a long time now",
                 "0.1.0")
     def filename(self, val):
-        pass
+        """Deprecated. Setter for the filename property.
+
+        Arguments:
+            val (str): The filename to set.
+        """
 
     @property
     @deprecated("self.tts_id has been deprecated, use TTSContext().tts_id",
                 "0.1.0")
     def tts_id(self):
+        """Deprecated. Accessor for the tts_id property.
+
+        Returns:
+            str: The ID associated with the TTS context.
+        """
         return self._get_ctxt().tts_id
 
     @property
     @deprecated("self.cache has been deprecated, use TTSContext().get_cache",
                 "0.1.0")
     def cache(self):
+        """Deprecated. Accessor for the cache property.
+
+        Returns:
+            TextToSpeechCache: The cache associated with the TTS context.
+        """
         return TTSContext._caches.get(self.tts_id) or \
             self.get_cache()
 
@@ -668,35 +825,60 @@ class TTS:
     @deprecated("self.cache has been deprecated, use TTSContext().get_cache",
                 "0.1.0")
     def cache(self, val):
+        """Deprecated. Setter for the cache property.
+
+        Arguments:
+            val (TextToSpeechCache): The cache to set.
+        """
         TTSContext._caches[self.tts_id] = val
 
     @deprecated("get_voice was never formally adopted and is unused, it will be removed",
                 "0.1.0")
     def get_voice(self, gender, lang=None):
-        """ map a language and gender to a valid voice for this TTS engine """
+        """Deprecated. Get a valid voice for the TTS engine.
+
+        Arguments:
+            gender (str): Gender of the voice.
+            lang (str, optional): Language for the voice. Defaults to None.
+
+        Returns:
+            str: The selected voice.
+        """
         lang = lang or self.lang
         return gender
 
     @deprecated("get_cache has been deprecated, use TTSContext().get_cache directly",
                 "0.1.0")
     def get_cache(self, voice=None, lang=None):
+        """Deprecated. Get the cache associated with the TTS context.
+
+        Arguments:
+            voice (str, optional): Voice for the cache. Defaults to None.
+            lang (str, optional): Language for the cache. Defaults to None.
+
+        Returns:
+            TextToSpeechCache: The cache associated with the TTS context.
+        """
         return self._get_ctxt().get_cache(self.audio_ext, self.config)
 
     @deprecated("clear_cache has been deprecated, use TTSContext().get_cache directly",
                 "0.1.0")
     def clear_cache(self):
-        """ Remove all cached files. """
+        """Deprecated. Clear all cached files."""
         cache = self._get_ctxt().get_cache(self.audio_ext, self.config)
         cache.clear()
 
     @deprecated("save_phonemes has been deprecated, use TTSContext().get_cache directly",
                 "0.1.0")
     def save_phonemes(self, key, phonemes):
-        """Cache phonemes
+        """Deprecated. Cache phonemes.
 
         Arguments:
-            key (str):        Hash key for the sentence
-            phonemes (str):   phoneme string to save
+            key (str): Hash key for the sentence.
+            phonemes (str): Phoneme string to save.
+
+        Returns:
+            PhonemeFile: The PhonemeFile instance.
         """
         cache = self._get_ctxt().get_cache(self.audio_ext, self.config)
         phoneme_file = cache.define_phoneme_file(key)
@@ -706,10 +888,13 @@ class TTS:
     @deprecated("load_phonemes has been deprecated, use TTSContext().get_cache directly",
                 "0.1.0")
     def load_phonemes(self, key):
-        """Load phonemes from cache file.
+        """Deprecated. Load phonemes from cache file.
 
         Arguments:
-            key (str): Key identifying phoneme cache
+            key (str): Key identifying phoneme cache.
+
+        Returns:
+            str: Phonemes loaded from the cache file.
         """
         cache = self._get_ctxt().get_cache(self.audio_ext, self.config)
         phoneme_file = cache.define_phoneme_file(key)
@@ -718,6 +903,14 @@ class TTS:
     @deprecated("get_from_cache has been deprecated, use TTSContext().get_from_cache directly",
                 "0.1.0")
     def get_from_cache(self, sentence):
+        """Deprecated. Get data from the cache.
+
+        Arguments:
+            sentence (str): Sentence used as cache key.
+
+        Returns:
+            tuple: Tuple containing the audio and phonemes.
+        """
         return self._get_ctxt().get_from_cache(sentence, self.audio_ext, self.config)
 
 
