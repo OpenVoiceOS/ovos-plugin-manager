@@ -21,7 +21,7 @@ from ovos_utils.fakebus import FakeBus
 from ovos_utils.file_utils import get_cache_directory
 from ovos_utils.file_utils import resolve_resource_file
 from ovos_utils.lang.visimes import VISIMES
-from ovos_utils.log import LOG, deprecated
+from ovos_utils.log import LOG, deprecated, log_deprecation
 from ovos_utils.metrics import Stopwatch
 from ovos_utils.process_utils import RuntimeRequirements
 
@@ -37,10 +37,11 @@ SSML_TAGS = re.compile(r'<[^>]*>')
 class TTSContext:
     _caches = {}
 
-    def __init__(self, plugin_id: str, lang: str, voice: str):
+    def __init__(self, plugin_id: str, lang: str, voice: str, synth_kwargs: dict = None):
         self.plugin_id = plugin_id
         self.lang = lang
         self.voice = voice
+        self.synth_kwargs = synth_kwargs or {}
 
     @property
     def tts_id(self):
@@ -90,6 +91,9 @@ class TTS:
 
     def __init__(self, lang=None, config=None, validator=None,
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
+        if lang is not None:
+            log_deprecation("lang argument for TTS has been deprecated! it will be ignored, "
+                            "pass lang to get_tts directly instead")
         self.log_timestamps = False
 
         self.config = config or get_plugin_config(config, "tts")
@@ -116,6 +120,18 @@ class TTS:
         # unused by plugins, assigned in init method by ovos-audio,
         # only present for backwards compat reasons
         self.bus = None
+
+        self._plugin_id = ""  # the plugin name
+
+    @property
+    def plugin_id(self) -> str:
+        if not self._plugin_id:
+            from ovos_plugin_manager.tts import find_tts_plugins
+            for tts_id, clazz in find_tts_plugins().items():
+                if isinstance(self, clazz):
+                    self._plugin_id = tts_id
+                    break
+        return self._plugin_id
 
     # methods for individual plugins to override
     @classproperty
@@ -183,11 +199,18 @@ class TTS:
     # properties that reflect bus message session
     @property
     def voice(self):
+        voice = self.config.get("voice") or "default"
         message = dig_for_message()
         if message:
-            # TODO - get from tts_prefs in session
-            pass
-        return self.config.get("voice") or "default"
+            sess = SessionManager.get()
+            if sess.tts_preferences["plugin_id"] == self.plugin_id:
+                v = sess.tts_preferences["config"].get("voice")
+                if v:
+                    voice = v
+            else:
+                # we got a request for a TTS plugin that isn't loaded!
+                LOG.error("ignoring TTS preferences in Session, plugin does not match!")
+        return voice
 
     @voice.setter
     def voice(self, val):
@@ -432,18 +455,38 @@ class TTS:
             LOG.debug(f"no mouth movements available! unknown visemes for {sentence}")
         return viseme
 
-    def _get_ctxt(self, kwargs=None):
-        kwargs = kwargs or {}
+    def _get_ctxt(self, kwargs=None) -> TTSContext:
+        """create a TTSContext from arbitrary kwargs passed to synth/execute methods
+        takes preferences from Session into account if a message is present
+        """
         # get request specific synth params
+        kwargs = kwargs or {}
         message = kwargs.get("message") or dig_for_message()
-        lang = kwargs.get("lang")
-        voice = kwargs.get("voice")
-        if message and not lang:
-            sess = SessionManager.get(message)
-            lang = lang or sess.lang
-        return TTSContext(plugin_id=self.tts_name,  # TODO this should be the OPM name at some point
-                          lang=lang or self.lang,
-                          voice=voice or self.voice)
+
+        # update kwargs from session
+        if message:
+            sess = SessionManager.get()
+            if sess.tts_preferences["plugin_id"] == self.plugin_id:
+                for k, v in sess.tts_preferences["config"].items():
+                    if k not in kwargs:
+                        kwargs[k] = v
+            else:
+                # we got a request for a TTS plugin that isn't loaded!
+                LOG.error("ignoring TTS preferences in Session, plugin does not match!")
+
+            if "lang" not in kwargs:
+                kwargs["lang"] = sess.lang
+
+        # filter kwargs accepted by this specific plugin
+        kwargs = {k: v for k, v in kwargs.items()
+                  if k in inspect.signature(self.get_tts).parameters
+                  and k not in ["sentence", "wav_file"]}
+
+        LOG.debug(f"TTS kwargs: {kwargs}")
+        return TTSContext(plugin_id=self.plugin_id,
+                          lang=kwargs.get("lang") or self.lang,
+                          voice=kwargs.get("voice") or self.voice,
+                          synth_kwargs=kwargs)
 
     def _execute(self, sentence, ident, listen, preprocess=True, **kwargs):
         if preprocess:
@@ -470,7 +513,7 @@ class TTS:
         # synth -> queue for playback
         for sentence, l in chunks:
             # load from cache or synth + cache
-            audio_file, phonemes = self.synth(sentence, ctxt, **kwargs)
+            audio_file, phonemes = self.synth(sentence, ctxt)
 
             # get visemes/mouth movements
             viseme = self._get_visemes(phonemes, sentence, ctxt)
@@ -490,7 +533,7 @@ class TTS:
         self.add_metric({"metric_type": "tts.synth.start"})
         sentence_hash = hash_sentence(sentence)
 
-        # parse requested language for this TTS request
+        # parse kwargs for this TTS request
         ctxt = ctxt or self._get_ctxt(kwargs)
         cache = ctxt.get_cache(self.audio_ext, self.config)
 
@@ -502,16 +545,8 @@ class TTS:
 
         # synth + cache
         audio = cache.define_audio_file(sentence_hash)
-
-        # filter kwargs per plugin, different plugins expose different kwargs
-        #   ovos -> lang + voice optional kwargs
-        #   neon-core -> message
-        kwargs = {k: v for k, v in kwargs.items()
-                  if k in inspect.signature(self.get_tts).parameters
-                  and k not in ["sentence", "wav_file"]}
-
-        # finally do the TTS synth
-        audio.path, phonemes = self.get_tts(sentence, str(audio), **kwargs)
+        audio.path, phonemes = self.get_tts(sentence, str(audio),
+                                            **ctxt.synth_kwargs)
         self.add_metric({"metric_type": "tts.synth.finished"})
 
         # cache sentence + phonemes
@@ -588,7 +623,6 @@ class TTS:
         self.shutdown()
 
     # below code is all deprecated and marked for removal in next stable release
-    # TODO - update version number in warnings
     @property
     @deprecated("self.enclosure has been deprecated, use EnclosureAPI directly decoupled from the plugin code",
                 "0.1.0")
@@ -1004,3 +1038,4 @@ class PlaybackThread(Thread):
             return PlaybackThread(*args, **kwargs)
         except ImportError:
             raise ImportError("please install ovos-audio for playback handling")
+

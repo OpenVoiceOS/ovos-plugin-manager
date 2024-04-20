@@ -267,16 +267,10 @@ class TestTTSFactory(unittest.TestCase):
 
 
 class TestTTSContext(unittest.TestCase):
-    def test_tts_context_init(self):
-        session_mock = MagicMock()
-        tts_context = TTSContext(session=session_mock)
-        self.assertEqual(tts_context.session, session_mock)
-        self.assertEqual(tts_context.lang, session_mock.lang)
 
     @patch("ovos_plugin_manager.templates.tts.TextToSpeechCache", autospec=True)
     def test_tts_context_get_cache(self, cache_mock):
-        session_mock = MagicMock()
-        tts_context = TTSContext(session=session_mock)
+        tts_context = TTSContext("plug", "voice", "lang")
 
         result = tts_context.get_cache()
 
@@ -286,13 +280,13 @@ class TestTTSContext(unittest.TestCase):
 
 class TestTTSCache(unittest.TestCase):
     def setUp(self):
-        self.tts_mock = TTS(lang="en-us", config={"some_config_key": "some_config_value"})
+        self.tts_mock = TTS(config={"some_config_key": "some_config_value"})
         self.tts_mock.stopwatch = MagicMock()
         self.tts_mock.queue = MagicMock()
         self.tts_mock.playback = MagicMock()
 
     @patch("ovos_plugin_manager.templates.tts.hash_sentence", return_value="fake_hash")
-    @patch("ovos_plugin_manager.templates.tts.TTSContext", autospec=True)
+    @patch("ovos_plugin_manager.templates.tts.TTSContext")
     def test_tts_synth(self, tts_context_mock, hash_sentence_mock):
         tts_context_mock.get_cache.return_value = MagicMock()
         tts_context_mock.get_cache.return_value.define_audio_file.return_value.path = "fake_audio_path"
@@ -314,9 +308,28 @@ class TestTTSCache(unittest.TestCase):
         tts_context_mock._caches = {tts_context_mock.tts_id: tts_context_mock.get_cache.return_value}
 
         sentence = "Hello world!"
+        self.tts_mock.enable_cache = True
         result = self.tts_mock.synth(sentence, tts_context_mock)
 
         tts_context_mock.get_cache.assert_called_once_with("wav", self.tts_mock.config)
         tts_context_mock.get_cache.return_value.define_audio_file.assert_called_once_with("fake_hash")
         self.assertEqual(result, (tts_context_mock.get_cache.return_value.define_audio_file.return_value, None))
         self.assertIn("fake_hash", tts_context_mock.get_cache.return_value.cached_sentences)
+
+    @patch("ovos_plugin_manager.templates.tts.hash_sentence", return_value="fake_hash")
+    def test_tts_synth_cache_disabled(self, hash_sentence_mock):
+        tts_context_mock = MagicMock()
+        tts_context_mock.tts_id = "fake_tts_id"
+        tts_context_mock.get_cache.return_value = MagicMock()
+        tts_context_mock.get_cache.return_value.cached_sentences = {}
+        tts_context_mock.get_cache.return_value.define_audio_file.return_value.path = "fake_audio_path"
+        tts_context_mock._caches = {tts_context_mock.tts_id: tts_context_mock.get_cache.return_value}
+
+        sentence = "Hello world!"
+        self.tts_mock.enable_cache = False
+        result = self.tts_mock.synth(sentence, tts_context_mock)
+
+        tts_context_mock.get_cache.assert_called_once_with("wav", self.tts_mock.config)
+        tts_context_mock.get_cache.return_value.define_audio_file.assert_called_once_with("fake_hash")
+        self.assertEqual(result, (tts_context_mock.get_cache.return_value.define_audio_file.return_value, None))
+        self.assertNotIn("fake_hash", tts_context_mock.get_cache.return_value.cached_sentences)
