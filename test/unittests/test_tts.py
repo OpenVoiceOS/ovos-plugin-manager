@@ -248,13 +248,13 @@ class TestTTSFactory(unittest.TestCase):
                            "config": True,
                            "lang": "en-ca"}
         get_class.assert_called_once_with(expected_config)
-        plugin_class.assert_called_once_with(lang=None, config=expected_config)
+        plugin_class.assert_called_once_with(config=expected_config)
         self.assertEqual(plugin, plugin_class())
 
         # Test create with TTS config and no module config
         plugin = OVOSTTSFactory.create(tts_config)
         get_class.assert_called_with(tts_config)
-        plugin_class.assert_called_with(lang=None, config=tts_config)
+        plugin_class.assert_called_with(config=tts_config)
         self.assertEqual(plugin, plugin_class())
 
         # Test create with TTS config with module-specific config
@@ -262,7 +262,7 @@ class TestTTSFactory(unittest.TestCase):
         expected_config = {"module": "test-tts-plugin-test",
                            "config": True, "lang": "es-mx"}
         get_class.assert_called_with(expected_config)
-        plugin_class.assert_called_with(lang=None, config=expected_config)
+        plugin_class.assert_called_with(config=expected_config)
         self.assertEqual(plugin, plugin_class())
 
 
