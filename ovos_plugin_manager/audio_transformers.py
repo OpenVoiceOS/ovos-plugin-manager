@@ -1,6 +1,7 @@
-from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
-from ovos_plugin_manager.templates.transformers import AudioTransformer
 from ovos_utils.log import LOG
+
+from ovos_plugin_manager.templates.transformers import AudioTransformer, AudioLanguageDetector
+from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
 def find_plugins(*args, **kwargs):
@@ -57,3 +58,13 @@ def get_audio_transformer_module_configs(module_name: str):
     """
     from ovos_plugin_manager.utils.config import load_plugin_configs
     return load_plugin_configs(module_name, PluginConfigTypes.AUDIO_TRANSFORMER)
+
+
+def find_audio_lang_detector_plugins() -> dict:
+    """
+    Find all installed audio language detector plugins
+    @return: dict plugin names to entrypoints
+    """
+    from ovos_plugin_manager.utils import find_plugins
+    return {k: p for k, p in find_plugins(PluginTypes.AUDIO_TRANSFORMER).items()
+            if issubclass(p, AudioLanguageDetector)}
