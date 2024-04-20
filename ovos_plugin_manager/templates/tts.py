@@ -910,7 +910,7 @@ class StreamingTTS(TTS):
                                                             tts_config=self.config)
 
     @abc.abstractmethod
-    async def stream_tts(self, sentence) -> AsyncIterable[bytes]:
+    async def stream_tts(self, sentence, **kwargs) -> AsyncIterable[bytes]:
         """yield chunks of TTS audio as they become available"""
         raise NotImplementedError
 
@@ -938,16 +938,13 @@ class StreamingTTS(TTS):
         sentence_hash = hash_sentence(sentence)
 
         # parse requested language for this TTS request
-        lang, voice = self.context.get(kwargs)
-        kwargs["lang"] = lang
-        kwargs["voice"] = voice
-
-        # get path to cache final synthesized file
-        cache = self.get_cache(voice, lang)  # cache per tts_id (lang/voice combo)
+        ctxt = self._get_ctxt(kwargs)
+        cache = ctxt.get_cache(self.audio_ext, self.config)
 
         # if cached, play existing file instead
         if self.enable_cache and sentence_hash in cache:
-            super()._execute(sentence, ident, listen, preprocess=False, **kwargs)
+            super()._execute(sentence, ident, listen,
+                             preprocess=False, **ctxt.synth_kwargs)
             return
 
         wav_file = str(cache.define_audio_file(sentence_hash))
@@ -956,10 +953,10 @@ class StreamingTTS(TTS):
                   dig_for_message() or \
                   Message("speak")
 
-        # filter kwargs per plugin, different plugins expose different options
-        plugin_kwargs = {k: v for k, v in kwargs.items()
-                         if k in inspect.signature(self.stream_tts).parameters
-                         and k not in ["sentence", "wav_file", "play_streaming"]}
+        # filter kwargs accepted by this specific plugin
+        ctxt.synth_kwargs = {k: v for k, v in kwargs.items()
+                             if k in inspect.signature(self.stream_tts).parameters
+                             and k not in ["sentence"]}
 
         # handle streaming TTS
         loop = asyncio.new_event_loop()
@@ -971,7 +968,7 @@ class StreamingTTS(TTS):
                                     play_streaming=True,
                                     listen=listen,
                                     message=message,
-                                    plugin_kwargs=plugin_kwargs)
+                                    plugin_kwargs=ctxt.synth_kwargs)
             )
         finally:
             loop.close()
@@ -1038,4 +1035,3 @@ class PlaybackThread(Thread):
             return PlaybackThread(*args, **kwargs)
         except ImportError:
             raise ImportError("please install ovos-audio for playback handling")
-
