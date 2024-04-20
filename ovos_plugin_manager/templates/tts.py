@@ -227,13 +227,14 @@ class TTS:
         return set()
 
     @abc.abstractmethod
-    def get_tts(self, sentence, wav_file, lang=None):
+    def get_tts(self, sentence, wav_file, lang=None, voice=None):
         """Abstract method that a tts implementation needs to implement.
 
         Args:
             sentence (str): The input sentence to synthesize.
             wav_file (str): The output file path for the synthesized audio.
             lang (str, optional): The requested language (defaults to self.lang).
+            voice (str, optional): The requested voice (defaults to self.voice).
 
         Returns:
             tuple: (wav_file, phoneme)
@@ -275,7 +276,7 @@ class TTS:
         voice = self.config.get("voice") or "default"
         message = dig_for_message()
         if message:
-            sess = SessionManager.get()
+            sess = SessionManager.get(message)
             if sess.tts_preferences["plugin_id"] == self.plugin_id:
                 v = sess.tts_preferences["config"].get("voice")
                 if v:
@@ -293,7 +294,7 @@ class TTS:
     def lang(self):
         message = dig_for_message()
         if message:
-            sess = SessionManager.get()
+            sess = SessionManager.get(message)
             return sess.lang
         return self.config.get("lang") or 'en-us'
 
@@ -561,7 +562,7 @@ class TTS:
 
         # update kwargs from session
         if message:
-            sess = SessionManager.get()
+            sess = SessionManager.get(message)
             if sess.tts_preferences["plugin_id"] == self.plugin_id:
                 for k, v in sess.tts_preferences["config"].items():
                     if k not in kwargs:

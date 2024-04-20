@@ -1,6 +1,10 @@
 import unittest
-from unittest.mock import MagicMock, patch
-from unittest.mock import Mock
+from unittest.mock import MagicMock
+from unittest.mock import patch, Mock
+
+from ovos_bus_client.session import Session
+from ovos_config import Configuration
+from ovos_utils.fakebus import FakeBus, Message
 
 from ovos_plugin_manager.templates.tts import TTS, TTSContext
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
@@ -333,3 +337,41 @@ class TestTTSCache(unittest.TestCase):
         tts_context_mock.get_cache.return_value.define_audio_file.assert_called_once_with("fake_hash")
         self.assertEqual(result, (tts_context_mock.get_cache.return_value.define_audio_file.return_value, None))
         self.assertNotIn("fake_hash", tts_context_mock.get_cache.return_value.cached_sentences)
+
+
+class TestSession(unittest.TestCase):
+    def test_tts_session(self):
+        sess = Session(session_id="123")
+        m = Message("speak",
+                    context={"session": sess.serialize()})
+
+        tts = TTS()
+        tts.init(FakeBus(), Mock())
+        self.assertEqual(tts.plugin_id, "ovos-tts-plugin-dummy")
+        self.assertEqual(tts.voice, "default")  # no voice set
+        self.assertEqual(tts.lang, Configuration()["lang"])  # from config
+
+        kwargs = {"message": m}
+        tts.execute("test sentence", **kwargs)
+        path, visemes, listen, tts_id, message = tts.queue.get()
+        self.assertEqual(message, m)
+        self.assertEqual(message.context["session"]["session_id"], sess.session_id)
+
+        ctxt = tts._get_ctxt(kwargs)
+        self.assertEqual(ctxt.plugin_id, tts.plugin_id)
+        self.assertEqual(ctxt.lang, sess.lang)
+        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/default/{sess.lang}")
+        self.assertEqual(ctxt.synth_kwargs, {'lang': 'en-us'})
+
+        sess = Session(session_id="123",
+                       lang="klingon",
+                       tts_prefs={"plugin_id": "ovos-tts-plugin-dummy",
+                                  "config": {"voice": "A"}})
+        m = Message("speak",
+                    context={"session": sess.serialize()})
+        kwargs = {"message": m}
+        ctxt = tts._get_ctxt(kwargs)
+        self.assertEqual(ctxt.lang, sess.lang)
+        self.assertEqual(ctxt.voice, sess.tts_preferences["config"]["voice"])
+        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/{ctxt.voice}/{sess.lang}")
+        self.assertEqual(ctxt.synth_kwargs, {'lang': 'klingon', 'voice': 'A'})
