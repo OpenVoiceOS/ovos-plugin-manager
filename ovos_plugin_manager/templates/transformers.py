@@ -1,7 +1,10 @@
-from typing import List, Tuple
+import abc
+from typing import List, Tuple, Optional
 
-from ovos_config.config import Configuration
 from ovos_bus_client.util import get_mycroft_bus
+from ovos_config.config import Configuration
+from ovos_config.locale import get_default_lang
+from ovos_utils.log import LOG
 
 from ovos_plugin_manager.utils import ReadWriteStream
 
@@ -233,3 +236,22 @@ class TTSTransformer:
     def default_shutdown(self):
         """ perform any shutdown actions """
         pass
+
+
+class AudioLanguageDetector(AudioTransformer):
+
+    @property
+    def valid_langs(self) -> List[str]:
+        return list(
+            set([get_default_lang()] + Configuration().get("secondary_langs", []))
+        )
+
+    @abc.abstractmethod
+    def detect(self, audio_data: bytes, valid_langs: Optional[List] = None) -> Tuple[str, float]:
+        raise NotImplementedError
+
+    # plugin api
+    def transform(self, audio_data: bytes):
+        lang, prob = self.detect(audio_data)
+        LOG.info(f"Detected speech language '{lang}' with probability {prob}")
+        return audio_data, {"stt_lang": lang, "lang_probability": prob}
