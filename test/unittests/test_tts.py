@@ -341,28 +341,30 @@ class TestTTSCache(unittest.TestCase):
 
 class TestSession(unittest.TestCase):
     def test_tts_session(self):
-        sess = Session(session_id="123")
+        sess = Session(session_id="123", lang="en-us")
         m = Message("speak",
                     context={"session": sess.serialize()})
 
         tts = TTS()
-        tts.init(FakeBus(), Mock())
         self.assertEqual(tts.plugin_id, "ovos-tts-plugin-dummy")
         self.assertEqual(tts.voice, "default")  # no voice set
-        self.assertEqual(tts.lang, Configuration()["lang"])  # from config
+        self.assertEqual(tts.lang, "en-us")  # from config
 
+        # test that session makes it all the way to the TTS.queue
         kwargs = {"message": m}
         tts.execute("test sentence", **kwargs)
         path, visemes, listen, tts_id, message = tts.queue.get()
         self.assertEqual(message, m)
         self.assertEqual(message.context["session"]["session_id"], sess.session_id)
 
+        # test that lang from Session is used
         ctxt = tts._get_ctxt(kwargs)
         self.assertEqual(ctxt.plugin_id, tts.plugin_id)
         self.assertEqual(ctxt.lang, sess.lang)
-        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/default/{sess.lang}")
+        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/default/en-us")
         self.assertEqual(ctxt.synth_kwargs, {'lang': 'en-us'})
 
+        # test that tts_prefs are used if plugin_id matches
         sess = Session(session_id="123",
                        lang="klingon",
                        tts_prefs={"plugin_id": "ovos-tts-plugin-dummy",
@@ -373,5 +375,21 @@ class TestSession(unittest.TestCase):
         ctxt = tts._get_ctxt(kwargs)
         self.assertEqual(ctxt.lang, sess.lang)
         self.assertEqual(ctxt.voice, sess.tts_preferences["config"]["voice"])
-        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/{ctxt.voice}/{sess.lang}")
+        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/A/klingon")
         self.assertEqual(ctxt.synth_kwargs, {'lang': 'klingon', 'voice': 'A'})
+
+        # test that tts_prefs are ignored if plugin_id doesnt match
+        sess = Session(session_id="123",
+                       lang="klingon",
+                       tts_prefs={"plugin_id": "ovos-tts-plugin-INVALID",
+                                  "config": {"voice": "A"}})
+        m = Message("speak",
+                    context={"session": sess.serialize()})
+        kwargs = {"message": m}
+        ctxt = tts._get_ctxt(kwargs)
+        self.assertEqual(ctxt.lang, sess.lang)
+        self.assertEqual(ctxt.voice, "default")
+        self.assertNotEqual(ctxt.tts_id, f"ovos-tts-plugin-INVALID/A/klingon")
+        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/default/klingon")
+        self.assertEqual(ctxt.synth_kwargs, {'lang': 'klingon'})
+
