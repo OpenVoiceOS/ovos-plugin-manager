@@ -273,18 +273,7 @@ class TTS:
     # properties that reflect bus message session
     @property
     def voice(self):
-        voice = self.config.get("voice") or "default"
-        message = dig_for_message()
-        if message:
-            sess = SessionManager.get(message)
-            if sess.tts_preferences["plugin_id"] == self.plugin_id:
-                v = sess.tts_preferences["config"].get("voice")
-                if v:
-                    voice = v
-            else:
-                # we got a request for a TTS plugin that isn't loaded!
-                LOG.error("ignoring TTS preferences in Session, plugin does not match!")
-        return voice
+        return self.config.get("voice") or "default"
 
     @voice.setter
     def voice(self, val):
@@ -554,25 +543,16 @@ class TTS:
 
     def _get_ctxt(self, kwargs=None) -> TTSContext:
         """create a TTSContext from arbitrary kwargs passed to synth/execute methods
-        takes preferences from Session into account if a message is present
+        takes lang from Session into account if a message is present
         """
         # get request specific synth params
         kwargs = kwargs or {}
         message = kwargs.get("message") or dig_for_message()
 
         # update kwargs from session
-        if message:
+        if message and "lang" not in kwargs:
             sess = SessionManager.get(message)
-            if sess.tts_preferences["plugin_id"] == self.plugin_id:
-                for k, v in sess.tts_preferences["config"].items():
-                    if k not in kwargs:
-                        kwargs[k] = v
-            else:
-                # we got a request for a TTS plugin that isn't loaded!
-                LOG.error("ignoring TTS preferences in Session, plugin does not match!")
-
-            if "lang" not in kwargs:
-                kwargs["lang"] = sess.lang
+            kwargs["lang"] = sess.lang
 
         # filter kwargs accepted by this specific plugin
         kwargs = {k: v for k, v in kwargs.items()
