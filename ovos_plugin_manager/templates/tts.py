@@ -3,6 +3,7 @@ import asyncio
 import inspect
 import os.path
 import re
+import sys
 import subprocess
 from os.path import isfile, join
 from pathlib import Path
@@ -165,7 +166,7 @@ class TTS:
             log_deprecation("lang argument for TTS has been deprecated! it will be ignored, "
                             "pass lang to get_tts directly instead")
         self.log_timestamps = False
-
+        self.root_dir = os.path.dirname(os.path.abspath(sys.modules[self.__module__].__file__))
         self.config = config or get_plugin_config(config, "tts")
 
         self.stopwatch = Stopwatch()
@@ -177,7 +178,7 @@ class TTS:
         self.ssml_tags = ssml_tags or []
         self.log_timestamps = self.config.get("log_timestamps", False)
 
-        self.enable_cache = self.config.get("enable_cache", False)
+        self.enable_cache = self.config.get("enable_cache", True)
 
         if TTS.queue is None:
             TTS.queue = Queue()
@@ -420,7 +421,6 @@ class TTS:
 
         TTS.playback = playback
         TTS.playback.set_bus(self.bus)
-        TTS.playback.attach_tts(self)
         if not TTS.playback.enclosure:
             TTS.playback.enclosure = EnclosureAPI(self.bus)
 
@@ -440,18 +440,19 @@ class TTS:
         if config:
             LOG.warning("config argument is deprecated and unused!")
         spellings_data = {}
-        locale = f"{os.path.dirname(__file__)}/locale"
-        for lang in os.listdir(locale):
-            spellings_file = f"{locale}/{lang}/phonetic_spellings.txt"
-            if not os.path.isfile(spellings_file):
-                continue
-            try:
-                with open(spellings_file) as f:
-                    lines = filter(bool, f.read().split('\n'))
-                lines = [i.split(':') for i in lines]
-                spellings_data[lang] = {key.strip(): value.strip() for key, value in lines}
-            except ValueError:
-                LOG.exception(f'Failed to load {lang} phonetic spellings.')
+        locale = f"{self.root_dir}/locale"
+        if os.path.isdir(locale):
+            for lang in os.listdir(locale):
+                spellings_file = f"{locale}/{lang}/phonetic_spellings.txt"
+                if not os.path.isfile(spellings_file):
+                    continue
+                try:
+                    with open(spellings_file) as f:
+                        lines = filter(bool, f.read().split('\n'))
+                    lines = [i.split(':') for i in lines]
+                    spellings_data[lang] = {key.strip(): value.strip() for key, value in lines}
+                except ValueError:
+                    LOG.exception(f'Failed to load {lang} phonetic spellings.')
         return spellings_data
 
     ## execution events
