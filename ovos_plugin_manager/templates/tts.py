@@ -127,6 +127,11 @@ class TTSContext:
             phonemes = pho_file.load()
         return audio_file, phonemes
 
+    @classmethod
+    def curate_caches(cls):
+        for cache in TTSContext._caches.values():
+            cache.curate()
+
 
 class TTS:
     """TTS abstract class to be implemented by all TTS engines.
