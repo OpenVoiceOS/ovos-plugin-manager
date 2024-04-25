@@ -404,10 +404,9 @@ class TTS:
         if playback is None:
             LOG.warning("PlaybackThread should be inited by ovos-audio, initing via plugin has been deprecated, "
                         "please pass playback=PlaybackThread() to TTS.init")
-            if TTS.playback:
-                playback.shutdown()
-            playback = PlaybackThread(TTS.queue, self.bus)  # compat
-            playback.start()
+            if not TTS.playback:
+                playback = PlaybackThread(TTS.queue, self.bus)  # compat
+                playback.start()
         self._init_playback(playback)
         self.add_metric({"metric_type": "tts.setup"})
 
