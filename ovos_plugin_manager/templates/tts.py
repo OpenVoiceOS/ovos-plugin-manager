@@ -1,13 +1,14 @@
 import abc
 import asyncio
 import inspect
+import os.path
 import re
 import subprocess
 from os.path import isfile, join
 from pathlib import Path
 from queue import Queue
 from threading import Thread
-from typing import AsyncIterable, List
+from typing import AsyncIterable, List, Dict
 
 import quebra_frases
 import requests
@@ -48,7 +49,7 @@ class TTSContext:
         _caches (dict): A class-level dictionary acting as a cache store for different TTS contexts.
     """
 
-    _caches = {}
+    _caches: Dict[str, TextToSpeechCache] = {}
 
     def __init__(self, plugin_id: str, lang: str, voice: str, synth_kwargs: dict = None):
         """
@@ -181,7 +182,7 @@ class TTS:
         if TTS.queue is None:
             TTS.queue = Queue()
 
-        self.spellings = self.load_spellings()
+        self.spellings: Dict[str, dict] = self.load_spellings()
         self._init_g2p()
 
         self.add_metric({"metric_type": "tts.init"})
@@ -270,7 +271,6 @@ class TTS:
         """ receive timing metrics for diagnostics
         does nothing by default but plugins might use it, eg, NeonCore"""
 
-    # properties that reflect bus message session
     @property
     def voice(self):
         return self.config.get("voice") or "default"
@@ -278,18 +278,6 @@ class TTS:
     @voice.setter
     def voice(self, val):
         self.config["voice"] = val
-
-    @property
-    def lang(self):
-        message = dig_for_message()
-        if message:
-            sess = SessionManager.get(message)
-            return sess.lang
-        return self.config.get("lang") or 'en-us'
-
-    @lang.setter
-    def lang(self, val):
-        LOG.warning("self.lang can not be set! it comes from the bus message")
 
     # SSML helpers
     @staticmethod
@@ -439,7 +427,7 @@ class TTS:
         if not TTS.playback.is_alive():
             TTS.playback.start()
 
-    def load_spellings(self, config=None):
+    def load_spellings(self, config=None) -> Dict[str, dict]:
         """
         Loads phonetic spellings of words as a dictionary.
 
@@ -449,22 +437,22 @@ class TTS:
         Returns:
             dict: A dictionary of phonetic spellings.
         """
-        path = join('text', self.lang.lower(), 'phonetic_spellings.txt')
-        try:
-            spellings_file = resolve_resource_file(path, config=config or Configuration())
-        except:
-            LOG.debug('Failed to locate phonetic spellings resource file.')
-            return {}
-        if not spellings_file:
-            return {}
-        try:
-            with open(spellings_file) as f:
-                lines = filter(bool, f.read().split('\n'))
-            lines = [i.split(':') for i in lines]
-            return {key.strip(): value.strip() for key, value in lines}
-        except ValueError:
-            LOG.exception('Failed to load phonetic spellings.')
-            return {}
+        if config:
+            LOG.warning("config argument is deprecated and unused!")
+        spellings_data = {}
+        locale = f"{os.path.dirname(__file__)}/locale"
+        for lang in os.listdir(locale):
+            spellings_file = f"{locale}/{lang}/phonetic_spellings.txt"
+            if not os.path.isfile(spellings_file):
+                continue
+            try:
+                with open(spellings_file) as f:
+                    lines = filter(bool, f.read().split('\n'))
+                lines = [i.split(':') for i in lines]
+                spellings_data[lang] = {key.strip(): value.strip() for key, value in lines}
+            except ValueError:
+                LOG.exception(f'Failed to load {lang} phonetic spellings.')
+        return spellings_data
 
     ## execution events
     def add_metric(self, metadata=None):
@@ -514,11 +502,11 @@ class TTS:
         self.end_audio()
 
     ## synth
-    def _replace_phonetic_spellings(self, sentence):
-        if self.phonetic_spelling:
+    def _replace_phonetic_spellings(self, sentence:str, lang: str) -> str:
+        if self.phonetic_spelling and lang in self.spellings:
             for word in re.findall(r"[\w']+", sentence):
-                if word.lower() in self.spellings:
-                    spelled = self.spellings[word.lower()]
+                if word.lower() in self.spellings[lang]:
+                    spelled = self.spellings[lang][word.lower()]
                     sentence = sentence.replace(word, spelled)
         return sentence
 
@@ -561,14 +549,17 @@ class TTS:
 
         LOG.debug(f"TTS kwargs: {kwargs}")
         return TTSContext(plugin_id=self.plugin_id,
-                          lang=kwargs.get("lang") or self.lang,
+                          lang=kwargs.get("lang") or Configuration().get("lang", "en-us"),
                           voice=kwargs.get("voice") or self.voice,
                           synth_kwargs=kwargs)
 
     def _execute(self, sentence, ident, listen, preprocess=True, **kwargs):
+        # get request specific synth params
+        ctxt = self._get_ctxt(kwargs)
+
         if preprocess:
             # pre-process
-            sentence = self._replace_phonetic_spellings(sentence)
+            sentence = self._replace_phonetic_spellings(sentence, ctxt.lang)
             chunks = self.preprocess_sentence(sentence)
             # Apply the listen flag to the last chunk, set the rest to False
             chunks = [(chunks[i], listen if i == len(chunks) - 1 else False)
@@ -579,9 +570,6 @@ class TTS:
                              "n_chunks": len(chunks)})
         else:
             chunks = [(sentence, listen)]
-
-        # get request specific synth params
-        ctxt = self._get_ctxt(kwargs)
 
         message = kwargs.get("message") or \
                   dig_for_message() or \
@@ -638,7 +626,7 @@ class TTS:
 
         # cache sentence + phonemes
         if self.enable_cache:
-            self._cache_sentence(sentence, audio, cache,
+            self._cache_sentence(sentence, ctxt.lang, audio, cache,
                                  phonemes, sentence_hash)
         return audio, phonemes
 
@@ -669,7 +657,7 @@ class TTS:
         return visimes or None
 
     ## cache
-    def _cache_phonemes(self, sentence, cache: TextToSpeechCache = None, phonemes=None, sentence_hash=None):
+    def _cache_phonemes(self, sentence, lang: str, cache: TextToSpeechCache = None, phonemes=None, sentence_hash=None):
         """
         Caches phonemes for the given sentence.
 
@@ -682,7 +670,7 @@ class TTS:
         sentence_hash = sentence_hash or hash_sentence(sentence)
         if not phonemes and self.g2p is not None:
             try:
-                phonemes = self.g2p.utterance2arpa(sentence, self.lang)
+                phonemes = self.g2p.utterance2arpa(sentence, lang)
                 self.add_metric({"metric_type": "tts.phonemes.g2p"})
             except Exception as e:
                 self.add_metric({"metric_type": "tts.phonemes.g2p.error", "error": str(e)})
@@ -692,7 +680,7 @@ class TTS:
             return phoneme_file
         return None
 
-    def _cache_sentence(self, sentence, audio_file, cache, phonemes=None, sentence_hash=None):
+    def _cache_sentence(self, sentence, lang: str, audio_file, cache, phonemes=None, sentence_hash=None):
         """
         Caches the sentence along with associated audio and phonemes.
 
@@ -707,7 +695,7 @@ class TTS:
         # RANT: why do you hate strings ChrisV?
         if isinstance(audio_file.path, str):
             audio_file.path = Path(audio_file.path)
-        pho_file = self._cache_phonemes(sentence, cache, phonemes, sentence_hash)
+        pho_file = self._cache_phonemes(sentence, lang, cache, phonemes, sentence_hash)
         cache.cached_sentences[sentence_hash] = (audio_file, pho_file)
         self.add_metric({"metric_type": "tts.synth.cached"})
 
@@ -825,7 +813,6 @@ class TTS:
         Returns:
             str: The selected voice.
         """
-        lang = lang or self.lang
         return gender
 
     @deprecated("get_cache has been deprecated, use TTSContext().get_cache directly",
@@ -893,6 +880,22 @@ class TTS:
             tuple: Tuple containing the audio and phonemes.
         """
         return self._get_ctxt().get_from_cache(sentence, self.audio_ext, self.config)
+
+    @property
+    @deprecated("language is defined per request in get_tts, self.lang is not used",
+                "0.1.0")
+    def lang(self):
+        message = dig_for_message()
+        if message:
+            sess = SessionManager.get(message)
+            return sess.lang
+        return self.config.get("lang") or 'en-us'
+
+    @lang.setter
+    @deprecated("language is defined per request in get_tts, self.lang is not used",
+                "0.1.0")
+    def lang(self, val):
+        LOG.warning("self.lang can not be set! it comes from the bus message")
 
 
 class TTSValidator:
@@ -1106,14 +1109,15 @@ class StreamingTTS(TTS):
         return wav_file
 
     def _execute(self, sentence, ident, listen, **kwargs):
-        sentence = self._replace_phonetic_spellings(sentence)
-        self.add_metric({"metric_type": "tts.preprocessed"})
-
-        sentence_hash = hash_sentence(sentence)
 
         # parse requested language for this TTS request
         ctxt = self._get_ctxt(kwargs)
         cache = ctxt.get_cache(self.audio_ext, self.config)
+
+        sentence = self._replace_phonetic_spellings(sentence, ctxt.lang)
+        self.add_metric({"metric_type": "tts.preprocessed"})
+
+        sentence_hash = hash_sentence(sentence)
 
         # if cached, play existing file instead
         if self.enable_cache and sentence_hash in cache:
