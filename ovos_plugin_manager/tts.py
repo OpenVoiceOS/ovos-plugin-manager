@@ -203,8 +203,8 @@ class OVOSTTSFactory:
             clazz = OVOSTTSFactory.get_class(tts_config)
             if clazz:
                 LOG.info(f'Found plugin {tts_module}')
-                tts = clazz(lang=None,  # explicitly read lang from config
-                            config=tts_config)
+                tts = clazz(config=tts_config)
+                tts._plugin_id = tts_module
                 tts.validator.validate()
                 LOG.info(f'Loaded plugin {tts_module}')
             else:

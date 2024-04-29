@@ -1,7 +1,13 @@
 import unittest
+from unittest.mock import MagicMock
 from unittest.mock import patch, Mock
+
+from ovos_bus_client.session import Session
+from ovos_config import Configuration
+from ovos_utils.fakebus import FakeBus, Message
+
+from ovos_plugin_manager.templates.tts import TTS, TTSContext
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
-from ovos_plugin_manager.templates.tts import TTS
 
 
 class TestTTSTemplate(unittest.TestCase):
@@ -114,23 +120,23 @@ class TestTTSTemplate(unittest.TestCase):
         self.assertEqual(tagged_with_exclusion, valid_output)
 
     def test_playback_thread(self):
-        from ovos_plugin_manager.templates.tts import PlaybackThread
+        pass
         # TODO
-    
+
     def test_tts_context(self):
-        from ovos_plugin_manager.templates.tts import TTSContext
+        pass
         # TODO
-    
+
     def test_tts_validator(self):
-        from ovos_plugin_manager.templates.tts import TTSValidator
+        pass
         # TODO
-    
+
     def test_concat_tts(self):
-        from ovos_plugin_manager.templates.tts import ConcatTTS
+        pass
         # TODO
-    
+
     def test_remote_tt(self):
-        from ovos_plugin_manager.templates.tts import RemoteTTS
+        pass
         # TODO
 
 
@@ -187,15 +193,15 @@ class TestTTS(unittest.TestCase):
                                            self.CONFIG_SECTION, None)
 
     def test_get_voice_id(self):
-        from ovos_plugin_manager.tts import get_voice_id
+        pass
         # TODO
 
     def test_scan_voices(self):
-        from ovos_plugin_manager.tts import scan_voices
+        pass
         # TODO
 
     def test_get_voices(self):
-        from ovos_plugin_manager.tts import get_voices
+        pass
         # TODO
 
 
@@ -246,13 +252,13 @@ class TestTTSFactory(unittest.TestCase):
                            "config": True,
                            "lang": "en-ca"}
         get_class.assert_called_once_with(expected_config)
-        plugin_class.assert_called_once_with(lang=None, config=expected_config)
+        plugin_class.assert_called_once_with(config=expected_config)
         self.assertEqual(plugin, plugin_class())
 
         # Test create with TTS config and no module config
         plugin = OVOSTTSFactory.create(tts_config)
         get_class.assert_called_with(tts_config)
-        plugin_class.assert_called_with(lang=None, config=tts_config)
+        plugin_class.assert_called_with(config=tts_config)
         self.assertEqual(plugin, plugin_class())
 
         # Test create with TTS config with module-specific config
@@ -260,5 +266,110 @@ class TestTTSFactory(unittest.TestCase):
         expected_config = {"module": "test-tts-plugin-test",
                            "config": True, "lang": "es-mx"}
         get_class.assert_called_with(expected_config)
-        plugin_class.assert_called_with(lang=None, config=expected_config)
+        plugin_class.assert_called_with(config=expected_config)
         self.assertEqual(plugin, plugin_class())
+
+
+class TestTTSContext(unittest.TestCase):
+
+    @patch("ovos_plugin_manager.templates.tts.TextToSpeechCache", autospec=True)
+    def test_tts_context_get_cache(self, cache_mock):
+        tts_context = TTSContext("plug", "voice", "lang")
+
+        result = tts_context.get_cache()
+
+        self.assertEqual(result, cache_mock.return_value)
+        self.assertEqual(result, tts_context._caches[tts_context.tts_id])
+
+
+class TestTTSCache(unittest.TestCase):
+    def setUp(self):
+        self.tts_mock = TTS(config={"some_config_key": "some_config_value"})
+        self.tts_mock.stopwatch = MagicMock()
+        self.tts_mock.queue = MagicMock()
+        self.tts_mock.playback = MagicMock()
+
+    @patch("ovos_plugin_manager.templates.tts.hash_sentence", return_value="fake_hash")
+    @patch("ovos_plugin_manager.templates.tts.TTSContext")
+    def test_tts_synth(self, tts_context_mock, hash_sentence_mock):
+        tts_context_mock.get_cache.return_value = MagicMock()
+        tts_context_mock.get_cache.return_value.define_audio_file.return_value.path = "fake_audio_path"
+
+        sentence = "Hello world!"
+        result = self.tts_mock.synth(sentence, tts_context_mock)
+
+        tts_context_mock.get_cache.assert_called_once_with("wav", self.tts_mock.config)
+        tts_context_mock.get_cache.return_value.define_audio_file.assert_called_once_with("fake_hash")
+        self.assertEqual(result, (tts_context_mock.get_cache.return_value.define_audio_file.return_value, None))
+
+    @patch("ovos_plugin_manager.templates.tts.hash_sentence", return_value="fake_hash")
+    def test_tts_synth_cache_enabled(self, hash_sentence_mock):
+        tts_context_mock = MagicMock()
+        tts_context_mock.tts_id = "fake_tts_id"
+        tts_context_mock.get_cache.return_value = MagicMock()
+        tts_context_mock.get_cache.return_value.cached_sentences = {}
+        tts_context_mock.get_cache.return_value.define_audio_file.return_value.path = "fake_audio_path"
+        tts_context_mock._caches = {tts_context_mock.tts_id: tts_context_mock.get_cache.return_value}
+
+        sentence = "Hello world!"
+        self.tts_mock.enable_cache = True
+        result = self.tts_mock.synth(sentence, tts_context_mock)
+
+        tts_context_mock.get_cache.assert_called_once_with("wav", self.tts_mock.config)
+        tts_context_mock.get_cache.return_value.define_audio_file.assert_called_once_with("fake_hash")
+        self.assertEqual(result, (tts_context_mock.get_cache.return_value.define_audio_file.return_value, None))
+        self.assertIn("fake_hash", tts_context_mock.get_cache.return_value.cached_sentences)
+
+    @patch("ovos_plugin_manager.templates.tts.hash_sentence", return_value="fake_hash")
+    def test_tts_synth_cache_disabled(self, hash_sentence_mock):
+        tts_context_mock = MagicMock()
+        tts_context_mock.tts_id = "fake_tts_id"
+        tts_context_mock.get_cache.return_value = MagicMock()
+        tts_context_mock.get_cache.return_value.cached_sentences = {}
+        tts_context_mock.get_cache.return_value.define_audio_file.return_value.path = "fake_audio_path"
+        tts_context_mock._caches = {tts_context_mock.tts_id: tts_context_mock.get_cache.return_value}
+
+        sentence = "Hello world!"
+        self.tts_mock.enable_cache = False
+        result = self.tts_mock.synth(sentence, tts_context_mock)
+
+        tts_context_mock.get_cache.assert_called_once_with("wav", self.tts_mock.config)
+        tts_context_mock.get_cache.return_value.define_audio_file.assert_called_once_with("fake_hash")
+        self.assertEqual(result, (tts_context_mock.get_cache.return_value.define_audio_file.return_value, None))
+        self.assertNotIn("fake_hash", tts_context_mock.get_cache.return_value.cached_sentences)
+
+
+class TestSession(unittest.TestCase):
+    def test_tts_session(self):
+        sess = Session(session_id="123", lang="en-us")
+        m = Message("speak",
+                    context={"session": sess.serialize()})
+
+        tts = TTS()
+        self.assertEqual(tts.plugin_id, "ovos-tts-plugin-dummy")
+        self.assertEqual(tts.voice, "default")  # no voice set
+        self.assertEqual(tts.lang, "en-us")  # from config
+
+        # test that session makes it all the way to the TTS.queue
+        kwargs = {"message": m}
+        tts.execute("test sentence", **kwargs)
+        path, visemes, listen, tts_id, message = tts.queue.get()
+        self.assertEqual(message, m)
+        self.assertEqual(message.context["session"]["session_id"], sess.session_id)
+
+        # test that lang from Session is used
+        ctxt = tts._get_ctxt(kwargs)
+        self.assertEqual(ctxt.plugin_id, tts.plugin_id)
+        self.assertEqual(ctxt.lang, sess.lang)
+        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/default/en-us")
+        self.assertEqual(ctxt.synth_kwargs, {'lang': 'en-us'})
+
+        sess = Session(session_id="123",
+                       lang="klingon")
+        m = Message("speak",
+                    context={"session": sess.serialize()})
+        kwargs = {"message": m}
+        ctxt = tts._get_ctxt(kwargs)
+        self.assertEqual(ctxt.lang, sess.lang)
+        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/default/klingon")
+        self.assertEqual(ctxt.synth_kwargs, {'lang': 'klingon'})
