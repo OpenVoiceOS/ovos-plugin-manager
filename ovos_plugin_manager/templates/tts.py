@@ -717,8 +717,6 @@ class TTS:
     def shutdown(self):
         """Shuts down the TTS engine."""
         self.stop()
-        if TTS.playback:
-            TTS.playback.detach_tts(self)
 
     def __del__(self):
         """Destructor for the TTS object."""
