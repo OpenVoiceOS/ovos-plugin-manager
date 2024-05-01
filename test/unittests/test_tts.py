@@ -362,14 +362,14 @@ class TestSession(unittest.TestCase):
         self.assertEqual(ctxt.plugin_id, tts.plugin_id)
         self.assertEqual(ctxt.lang, sess.lang)
         self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/default/en-us")
-        self.assertEqual(ctxt.synth_kwargs, {'lang': 'en-us'})
+        self.assertEqual(ctxt.synth_kwargs, {'lang': 'en-us', "voice": "default"})
 
         sess = Session(session_id="123",
                        lang="klingon")
         m = Message("speak",
                     context={"session": sess.serialize()})
-        kwargs = {"message": m}
+        kwargs = {"message": m, "voice": "Daghor"}
         ctxt = tts._get_ctxt(kwargs)
         self.assertEqual(ctxt.lang, sess.lang)
-        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/default/klingon")
-        self.assertEqual(ctxt.synth_kwargs, {'lang': 'klingon'})
+        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/Daghor/klingon")
+        self.assertEqual(ctxt.synth_kwargs, {'lang': 'klingon', 'voice': 'Daghor'})
