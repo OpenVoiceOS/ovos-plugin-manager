@@ -11,6 +11,7 @@
 
 **Fixed bugs:**
 
+- hotfix/voice\_kwarg [\#223](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/223) ([JarbasAl](https://github.com/JarbasAl))
 - hotfix/clean\_shutdown [\#222](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/222) ([JarbasAl](https://github.com/JarbasAl))
 - fix/tts\_reload [\#219](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/219) ([JarbasAl](https://github.com/JarbasAl))
 
