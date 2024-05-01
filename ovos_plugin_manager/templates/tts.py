@@ -889,8 +889,6 @@ class TTS:
         return self._get_ctxt().get_from_cache(sentence, self.audio_ext, self.config)
 
     @property
-    @deprecated("language is defined per request in get_tts, self.lang is not used",
-                "0.1.0")
     def lang(self):
         message = dig_for_message()
         if message:
