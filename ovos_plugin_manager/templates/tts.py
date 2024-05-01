@@ -547,6 +547,10 @@ class TTS:
             sess = SessionManager.get(message)
             kwargs["lang"] = sess.lang
 
+        # voice from config
+        if "voice" not in kwargs:
+            kwargs["voice"] = self.voice
+
         # filter kwargs accepted by this specific plugin
         kwargs = {k: v for k, v in kwargs.items()
                   if k in inspect.signature(self.get_tts).parameters
@@ -555,7 +559,7 @@ class TTS:
         LOG.debug(f"TTS kwargs: {kwargs}")
         return TTSContext(plugin_id=self.plugin_id,
                           lang=kwargs.get("lang") or Configuration().get("lang", "en-us"),
-                          voice=kwargs.get("voice") or self.voice,
+                          voice=kwargs.get("voice", "default"),
                           synth_kwargs=kwargs)
 
     def _execute(self, sentence, ident, listen, preprocess=True, **kwargs):
