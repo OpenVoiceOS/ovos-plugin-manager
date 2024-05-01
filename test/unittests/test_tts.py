@@ -348,6 +348,7 @@ class TestSession(unittest.TestCase):
         tts = TTS()
         self.assertEqual(tts.plugin_id, "ovos-tts-plugin-dummy")
         self.assertEqual(tts.voice, "default")  # no voice set
+        self.assertEqual(tts.lang, "en-us")  # from config
 
         # test that session makes it all the way to the TTS.queue
         kwargs = {"message": m}
