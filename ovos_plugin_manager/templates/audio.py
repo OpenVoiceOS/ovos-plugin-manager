@@ -7,8 +7,41 @@ from ovos_bus_client.message import Message
 
 from ovos_plugin_manager.templates.media import AudioPlayerBackend as _AB
 from ovos_utils import classproperty
-from ovos_utils.log import log_deprecation
+from ovos_utils.log import LOG, log_deprecation
 from ovos_utils.process_utils import RuntimeRequirements
+
+try:
+    from ovos_utils.ocp import PlaybackType, TrackState
+except ImportError:
+    LOG.warning("Please update to ovos-utils~=0.1.")
+    from enum import IntEnum
+
+    class PlaybackType(IntEnum):
+        SKILL = 0  # skills handle playback whatever way they see fit,
+        # eg spotify / mycroft common play
+        VIDEO = 1  # Video results
+        AUDIO = 2  # Results should be played audio only
+        AUDIO_SERVICE = 3  ## DEPRECATED - used in ovos 0.0.7
+        MPRIS = 4  # External MPRIS compliant player
+        WEBVIEW = 5  # webview, render a url instead of media player
+        UNDEFINED = 100  # data not available, hopefully status will be updated soon..
+
+
+    class TrackState(IntEnum):
+        DISAMBIGUATION = 1  # media result, not queued for playback
+        PLAYING_SKILL = 20  # Skill is handling playback internally
+        PLAYING_AUDIOSERVICE = 21  ## DEPRECATED - used in ovos 0.0.7
+        PLAYING_VIDEO = 22  # Skill forwarded playback to video service
+        PLAYING_AUDIO = 23  # Skill forwarded playback to audio service
+        PLAYING_MPRIS = 24  # External media player is handling playback
+        PLAYING_WEBVIEW = 25  # Media playback handled in browser (eg. javascript)
+
+        QUEUED_SKILL = 30  # Waiting playback to be handled inside skill
+        QUEUED_AUDIOSERVICE = 31  ## DEPRECATED - used in ovos 0.0.7
+        QUEUED_VIDEO = 32  # Waiting playback in video service
+        QUEUED_AUDIO = 33  # Waiting playback in audio service
+        QUEUED_WEBVIEW = 34  # Waiting playback in browser service
+
 
 log_deprecation("ovos_plugin_manager.templates.audio has been deprecated on ovos-audio, "
                 "move to ovos_plugin_manager.templates.media", "0.1.0")
@@ -89,7 +122,6 @@ class AudioBackend(_AB):
             from ovos_ocp_files_plugin.plugin import OCPFilesMetadataExtractor
             return OCPFilesMetadataExtractor.extract_metadata(uri)
         except:
-            from ovos_utils.ocp import PlaybackType, TrackState
             meta = {"uri": uri,
                     "skill_id": "mycroft.audio_interface",
                     "playback": PlaybackType.AUDIO,  # TODO mime type check
