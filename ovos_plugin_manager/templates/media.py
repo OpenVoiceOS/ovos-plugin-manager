@@ -4,7 +4,10 @@ from ovos_bus_client.message import Message
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import FakeBus
 
-from ovos_utils.ocp import MediaState, PlayerState, TrackState
+try:
+    from ovos_utils.ocp import MediaState, PlayerState, TrackState
+except ImportError:
+    MediaState, PlayerState, TrackState = None, None, None
 
 
 class MediaBackend(metaclass=ABCMeta):
@@ -18,6 +21,8 @@ class MediaBackend(metaclass=ABCMeta):
    """
 
     def __init__(self, config=None, bus=None):
+        if MediaState is None:
+            raise RuntimeError("Please update to ovos-utils~=0.1.")
         self._now_playing = None  # single uri
         self._track_start_callback = None
         self.supports_mime_hints = False
