@@ -8,7 +8,6 @@ from ovos_bus_client.message import Message
 from ovos_plugin_manager.templates.media import AudioPlayerBackend as _AB
 from ovos_utils import classproperty
 from ovos_utils.log import log_deprecation
-from ovos_utils.ocp import PlaybackType, TrackState
 from ovos_utils.process_utils import RuntimeRequirements
 
 log_deprecation("ovos_plugin_manager.templates.audio has been deprecated on ovos-audio, "
@@ -90,6 +89,7 @@ class AudioBackend(_AB):
             from ovos_ocp_files_plugin.plugin import OCPFilesMetadataExtractor
             return OCPFilesMetadataExtractor.extract_metadata(uri)
         except:
+            from ovos_utils.ocp import PlaybackType, TrackState
             meta = {"uri": uri,
                     "skill_id": "mycroft.audio_interface",
                     "playback": PlaybackType.AUDIO,  # TODO mime type check
