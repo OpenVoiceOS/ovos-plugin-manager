@@ -1,10 +1,15 @@
 from ovos_plugin_manager.utils import PluginTypes
 from ovos_plugin_manager.templates.ocp import OCPStreamExtractor
-from ovos_plugin_manager.templates.media import AudioPlayerBackend, VideoPlayerBackend,  WebPlayerBackend
 from ovos_utils.log import LOG
 from functools import lru_cache
 
 from ovos_plugin_manager.utils import find_plugins
+
+try:
+    from ovos_plugin_manager.templates.media import AudioPlayerBackend, VideoPlayerBackend, WebPlayerBackend
+except ImportError:
+    LOG.warning("Please install ovos-utils~=0.1 for `AudioPlayerBackend`, "
+                "`VideoPlayerBackend`, and `WebPlayerBackend` imports.")
 
 
 def find_ocp_plugins() -> dict:
