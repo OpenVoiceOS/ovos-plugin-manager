@@ -3,11 +3,7 @@ from abc import ABCMeta, abstractmethod
 from ovos_bus_client.message import Message
 from ovos_utils.log import LOG
 from ovos_utils.messagebus import FakeBus
-
-try:
-    from ovos_utils.ocp import MediaState, PlayerState, TrackState
-except ImportError:
-    MediaState, PlayerState, TrackState = None, None, None
+from ovos_utils.ocp import MediaState, PlayerState, TrackState
 
 
 class MediaBackend(metaclass=ABCMeta):
