@@ -19,6 +19,10 @@
 
 - Error about Azure TTS plugin [\#193](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/193)
 
+**Merged pull requests:**
+
+- Update for ovos-utils 0.0.X compat. [\#224](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/224) ([NeonDaniel](https://github.com/NeonDaniel))
+
 ## [V](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/V) (2024-03-10)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.0.26a10...V)
