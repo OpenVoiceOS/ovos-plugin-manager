@@ -56,7 +56,7 @@ TTS_PLUGIN_ENTRY_POINT = 'ovos-tts-plugin-dummy=ovos_plugin_manager.templates.tt
 STT_PLUGIN_ENTRY_POINT = 'ovos-stt-plugin-dummy=ovos_plugin_manager.templates.stt:STT'
 WW_PLUGIN_ENTRY_POINT = 'ovos-ww-plugin-dummy=ovos_plugin_manager.templates.hotwords:HotWordEngine'
 
-with open("README.md", "r") as f:
+with open(os.path.join(BASEDIR, "README.md"), "r") as f:
     long_description = f.read()
 
 setup(
