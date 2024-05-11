@@ -242,12 +242,10 @@ class AudioBackend(metaclass=ABCMeta):
             tracks = [tracks]
         elif not isinstance(tracks, list):
             raise ValueError
-        if tracks:
+        if tracks and not self._tracks:
             self.load_track(tracks[0])
             self._idx = 0
-        else:
-            LOG.error("called add_list without tracks!")
-        self._tracks = tracks
+        self._tracks += tracks
 
     def next(self):
         """Skip to next track in playlist."""
@@ -340,7 +338,7 @@ class AudioBackend(metaclass=ABCMeta):
         self._now_playing = uri
         LOG.debug(f"queuing for {self.__class__.__name__} playback: {uri}")
         self.bus.emit(Message("ovos.common_play.media.state",
-                              {"state": MediaState.LOADED_MEDIA}))
+                              {"state": MediaState.LOADING_MEDIA}))
         self.bus.emit(Message("ovos.common_play.track.state", {
             "state": TrackState.QUEUED_AUDIOSERVICE
         }))
