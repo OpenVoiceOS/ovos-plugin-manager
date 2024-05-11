@@ -10,7 +10,7 @@ from ovos_bus_client import Message
 from ovos_bus_client.message import dig_for_message
 from ovos_utils import classproperty
 from ovos_utils.fakebus import FakeBus
-from ovos_utils.log import log_deprecation, LOG
+from ovos_utils.log import LOG
 from ovos_utils.process_utils import RuntimeRequirements
 
 try:
@@ -91,6 +91,7 @@ class AudioBackend(metaclass=ABCMeta):
     def __init__(self, config=None, bus=None):
         self._now_playing = None  # single uri
         self._tracks = []  # list of dicts for OCP entries
+        self._idx = 0
         self._track_start_callback = None
         self.supports_mime_hints = False
         self.config = config or {}
@@ -225,6 +226,45 @@ class AudioBackend(metaclass=ABCMeta):
         """
         return self._uri2meta(self._now_playing)
 
+    def clear_list(self):
+        """Clear playlist."""
+        self._tracks = []
+
+    def add_list(self, tracks):
+        """Add tracks to backend's playlist.
+
+        Arguments:
+            tracks (list): list of tracks.
+        """
+        tracks = tracks or []
+        if isinstance(tracks, str):
+            tracks = [tracks]
+        elif not isinstance(tracks, list):
+            raise ValueError
+        if tracks:
+            self.load_track(tracks[0])
+        else:
+            LOG.error("called add_list without tracks!")
+        self._tracks = tracks
+
+    def next(self):
+        """Skip to next track in playlist."""
+        self._idx += 1
+        if self._idx < len(self._tracks):
+            self.load_track(self._tracks[self._idx])
+            self.play()
+        else:
+            LOG.error("no more tracks!")
+
+    def previous(self):
+        """Skip to previous track in playlist."""
+        self._idx = max(self._idx - 1, 0)
+        if self._idx < len(self._tracks):
+            self.load_track(self._tracks[self._idx])
+            self.play()
+        else:
+            LOG.error("already in first track!")
+
     def seek_forward(self, seconds=1):
         """Skip X seconds.
 
@@ -273,39 +313,6 @@ class AudioBackend(metaclass=ABCMeta):
         if sauce == "skills":
             msg.context["source"] = "audio_service"
         return msg
-
-    ####################################
-    # OCP wrappers
-    #   default to playlist support via OCP
-    def clear_list(self):
-        """Clear playlist."""
-        self._tracks = []
-        self.bus.emit(Message("ovos.common_play.playlist.clear"))
-
-    def add_list(self, tracks):
-        """Add tracks to backend's playlist.
-
-        Arguments:
-            tracks (list): list of tracks.
-        """
-        tracks = tracks or []
-        if isinstance(tracks, (str, tuple)):
-            tracks = [tracks]
-        elif not isinstance(tracks, list):
-            raise ValueError
-        self.load_track(tracks[0])
-        self._tracks = [self._uri2meta(t) for t in tracks]
-        self.bus.emit(Message('ovos.common_play.playlist.queue',
-                              {'tracks': self._tracks}))
-        self.track_info()  # will trigger update in track data
-
-    def next(self):
-        """Skip to next track in playlist."""
-        self.bus.emit(Message("ovos.common_play.next"))
-
-    def previous(self):
-        """Skip to previous track in playlist."""
-        self.bus.emit(Message("ovos.common_play.previous"))
 
     ############################
     # OCP extensions - new methods to improve compat with OCP
