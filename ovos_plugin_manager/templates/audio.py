@@ -229,6 +229,7 @@ class AudioBackend(metaclass=ABCMeta):
     def clear_list(self):
         """Clear playlist."""
         self._tracks = []
+        self._idx = 0
 
     def add_list(self, tracks):
         """Add tracks to backend's playlist.
@@ -243,6 +244,7 @@ class AudioBackend(metaclass=ABCMeta):
             raise ValueError
         if tracks:
             self.load_track(tracks[0])
+            self._idx = 0
         else:
             LOG.error("called add_list without tracks!")
         self._tracks = tracks
