@@ -1,8 +1,8 @@
 # Changelog
 
-## [0.0.26a21](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a21) (2024-05-11)
+## [0.0.26a22](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a22) (2024-05-11)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a21)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a22)
 
 **Implemented enhancements:**
 
@@ -11,6 +11,7 @@
 
 **Fixed bugs:**
 
+- fix/legacy\_playlist\_queue [\#227](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/227) ([JarbasAl](https://github.com/JarbasAl))
 - hotfix/voice\_kwarg [\#223](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/223) ([JarbasAl](https://github.com/JarbasAl))
 - hotfix/clean\_shutdown [\#222](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/222) ([JarbasAl](https://github.com/JarbasAl))
 - fix/tts\_reload [\#219](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/219) ([JarbasAl](https://github.com/JarbasAl))
