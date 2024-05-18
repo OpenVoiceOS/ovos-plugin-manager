@@ -133,9 +133,9 @@ class AudioBackend(metaclass=ABCMeta):
                                    no_network_fallback=True)
 
     @property
-    @abstractmethod
     def playback_time(self) -> int:
         """ in milliseconds """
+        return 0
 
     @abstractmethod
     def supported_uris(self) -> List[str]:
