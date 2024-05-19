@@ -1,8 +1,8 @@
 # Changelog
 
-## [0.0.26a23](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a23) (2024-05-18)
+## [0.0.26a24](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a24) (2024-05-19)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a23)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a24)
 
 **Implemented enhancements:**
 
@@ -24,6 +24,7 @@
 
 **Merged pull requests:**
 
+- fix/py3.12 [\#231](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/231) ([JarbasAl](https://github.com/JarbasAl))
 - refactor/legacy\_audio [\#226](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/226) ([JarbasAl](https://github.com/JarbasAl))
 - Fix file path handling in setup.py [\#225](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/225) ([NeonDaniel](https://github.com/NeonDaniel))
 - Update for ovos-utils 0.0.X compat. [\#224](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/224) ([NeonDaniel](https://github.com/NeonDaniel))
