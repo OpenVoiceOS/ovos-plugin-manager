@@ -8,3 +8,6 @@ langcodes~=3.3.0
 
 # see https://github.com/pypa/setuptools/issues/1471
 importlib_metadata
+
+# needed explicitly since python 3.12
+setuptools
