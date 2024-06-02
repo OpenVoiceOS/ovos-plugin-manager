@@ -629,6 +629,8 @@ class TTS:
 
         # synth + cache
         audio = cache.define_audio_file(sentence_hash)
+        # ensure cache dir exists
+        os.makedirs(os.path.dirname(str(audio)), exist_ok=True)
         audio.path, phonemes = self.get_tts(sentence, str(audio),
                                             **ctxt.synth_kwargs)
         self.add_metric({"metric_type": "tts.synth.finished"})
