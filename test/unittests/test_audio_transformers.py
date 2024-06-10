@@ -1,12 +1,60 @@
 import unittest
+import time
 from unittest.mock import patch
 
-from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes, ReadWriteStream
+
+
+class TestReadWriteStream(unittest.TestCase):
+    def test_write_and_read(self):
+        # Initialize the stream
+        stream = ReadWriteStream()
+
+        # Write some data to the stream
+        stream.write(b'1234567890abcdefghijklmnopqrstuvwxyz')
+
+        # Read some data from the stream
+        self.assertEqual(stream.read(10), b'1234567890')
+
+        # Read more data with a timeout
+        self.assertEqual(stream.read(5, timeout=1), b'abcde')
+
+    def test_clear_buffer(self):
+        # Initialize the stream
+        stream = ReadWriteStream()
+
+        # Write some data to the stream
+        stream.write(b'1234567890abcdefghijklmnopqrstuvwxyz')
+
+        # Clear the buffer
+        stream.clear()
+        self.assertEqual(len(stream), 0)
+
+    def test_write_with_max_size(self):
+        # Initialize the stream with a max size of 20 bytes
+        stream = ReadWriteStream(max_size=20)
+
+        # Write some data to the stream
+        stream.write(b'1234567890abcdefghijklmnopqrstuvwxyz')
+
+        # The buffer should have been trimmed to the last 20 bytes
+        self.assertEqual(stream.read(20), b'ghijklmnopqrstuvwxyz')
+
+    def test_clear_buffer_with_max_size(self):
+        # Initialize the stream with a max size of 20 bytes
+        stream = ReadWriteStream(max_size=20)
+
+        # Write some data to the stream
+        stream.write(b'1234567890abcdefghijklmnopqrstuvwxyz')
+
+        # Clear the buffer
+        stream.clear()
+        self.assertEqual(len(stream), 0)
 
 
 class TestAudioTransformersTemplate(unittest.TestCase):
     def test_audio_transformer(self):
-        from ovos_plugin_manager.templates.transformers import AudioTransformer
+        pass
         # TODO
 
 

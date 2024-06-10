@@ -95,9 +95,11 @@ class AudioTransformer:
 
         # buffers with audio chunks to be used in predictions
         # always cleared before STT stage
-        self.noise_feed = ReadWriteStream()
-        self.hotword_feed = ReadWriteStream()
-        self.speech_feed = ReadWriteStream()
+        # 16000 samples/second * 2 bytes/sample * 3 seconds = 96000 bytes.
+        self.noise_feed = ReadWriteStream(max_size=96000)  # 3 second buffer
+        self.hotword_feed = ReadWriteStream(max_size=96000)  # 3 seconds buffer
+        # 16000 samples/second * 2 bytes/sample * 10 seconds = 320000 bytes.
+        self.speech_feed = ReadWriteStream(max_size=320000)  # 10 seconds buffer
 
     def _read_mycroft_conf(self):
         config_core = dict(Configuration())

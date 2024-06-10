@@ -12,12 +12,12 @@
 #
 """Common functions for loading plugins."""
 import time
+from collections import deque
 from enum import Enum
-from threading import Event
+from threading import Event, Lock
 from typing import Optional
 
 import pkg_resources
-
 from ovos_utils.log import LOG
 
 
@@ -185,36 +185,47 @@ def normalize_lang(lang):
 class ReadWriteStream:
     """
     Class used to support writing binary audio data at any pace,
-    optionally chopping when the buffer gets too large
+    with an optional maximum buffer size
     """
 
-    def __init__(self, s=b'', chop_samples=-1):
-        self.buffer = s
+    def __init__(self, s=b'', max_size=None):
+        self.buffer = deque(s)
         self.write_event = Event()
-        self.chop_samples = chop_samples
+        self.lock = Lock()
+        self.max_size = max_size  # Introduce max size
 
     def __len__(self):
-        return len(self.buffer)
+        with self.lock:
+            return len(self.buffer)
 
     def read(self, n=-1, timeout=None):
-        if n == -1:
-            n = len(self.buffer)
-        if 0 < self.chop_samples < len(self.buffer):
-            samples_left = len(self.buffer) % self.chop_samples
-            self.buffer = self.buffer[-samples_left:]
-        return_time = 1e10 if timeout is None else (
-                timeout + time.time()
-        )
-        while len(self.buffer) < n:
+        with self.lock:
+            if n == -1 or n > len(self.buffer):
+                n = len(self.buffer)
+
+        end_time = time.time() + timeout if timeout is not None else float('inf')
+
+        while True:
+            with self.lock:
+                if len(self.buffer) >= n:
+                    chunk = bytes([self.buffer.popleft() for _ in range(n)])
+                    return chunk
+
+            remaining_time = None
+            if timeout is not None:
+                remaining_time = end_time - time.time()
+                if remaining_time <= 0:
+                    return b''
+
             self.write_event.clear()
-            if not self.write_event.wait(return_time - time.time()):
-                return b''
-        chunk = self.buffer[:n]
-        self.buffer = self.buffer[n:]
-        return chunk
+            self.write_event.wait(remaining_time)
 
     def write(self, s):
-        self.buffer += s
+        with self.lock:
+            self.buffer.extend(s)
+            if self.max_size is not None:
+                while len(self.buffer) > self.max_size:
+                    self.buffer.popleft()  # Discard oldest data to maintain max size
         self.write_event.set()
 
     def flush(self):
@@ -222,4 +233,5 @@ class ReadWriteStream:
         pass
 
     def clear(self):
-        self.buffer = b''
+        with self.lock:
+            self.buffer.clear()
