@@ -121,6 +121,7 @@ class STT(metaclass=ABCMeta):
 
     @abstractmethod
     def execute(self, audio, language: Optional[str] = None) -> str:
+        # TODO - eventually deprecate this and make transcribe the @abstractmethod
         pass
 
     def transcribe(self, audio, lang: Optional[str] = None) -> List[Tuple[str, float]]:
