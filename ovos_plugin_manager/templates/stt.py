@@ -236,8 +236,15 @@ class StreamingSTT(STT, metaclass=ABCMeta):
             return text
         return None
 
-    def execute(self, audio, language=None):
+    def execute(self, audio: Optional = None,
+                language: Optional[str] = None):
         return self.stream_stop()
+
+    def transcribe(self, audio: Optional = None,
+                   lang: Optional[str] = None) -> List[Tuple[str, float]]:
+        """transcribe audio data to a list of
+        possible transcriptions and respective confidences"""
+        return [(self.execute(audio, lang), 1.0)]
 
     @abstractmethod
     def create_streaming_thread(self):
