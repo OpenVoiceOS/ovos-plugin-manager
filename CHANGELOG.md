@@ -1,11 +1,12 @@
 # Changelog
 
-## [0.0.26a27](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a27) (2024-06-10)
+## [0.0.26a28](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a28) (2024-06-15)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a27)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a28)
 
 **Implemented enhancements:**
 
+- feat/alternative\_transcripts [\#236](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/236) ([JarbasAl](https://github.com/JarbasAl))
 - feat/lang\_detection\_plugin [\#220](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/220) ([JarbasAl](https://github.com/JarbasAl))
 - feat/restore phonetic spellings [\#195](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/195) ([JarbasAl](https://github.com/JarbasAl))
 
