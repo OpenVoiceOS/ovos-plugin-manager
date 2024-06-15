@@ -8,6 +8,7 @@ import json
 from abc import ABCMeta, abstractmethod
 from queue import Queue
 from threading import Thread, Event
+from typing import List, Tuple, Optional
 
 from ovos_config import Configuration
 from ovos_utils import classproperty
@@ -78,8 +79,8 @@ class STT(metaclass=ABCMeta):
     @property
     def lang(self):
         return self._lang or \
-               self.config.get("lang") or \
-               Configuration().get("lang", "en-us")
+            self.config.get("lang") or \
+            Configuration().get("lang", "en-us")
 
     @lang.setter
     def lang(self, val):
@@ -119,8 +120,14 @@ class STT(metaclass=ABCMeta):
         return lang
 
     @abstractmethod
-    def execute(self, audio, language=None):
+    def execute(self, audio, language: Optional[str] = None) -> str:
+        # TODO - eventually deprecate this and make transcribe the @abstractmethod
         pass
+
+    def transcribe(self, audio, lang: Optional[str] = None) -> List[Tuple[str, float]]:
+        """transcribe audio data to a list of
+        possible transcriptions and respective confidences"""
+        return [(self.execute(audio, lang), 1.0)]
 
     @property
     def available_languages(self) -> set:
@@ -230,8 +237,15 @@ class StreamingSTT(STT, metaclass=ABCMeta):
             return text
         return None
 
-    def execute(self, audio, language=None):
+    def execute(self, audio: Optional = None,
+                language: Optional[str] = None):
         return self.stream_stop()
+
+    def transcribe(self, audio: Optional = None,
+                   lang: Optional[str] = None) -> List[Tuple[str, float]]:
+        """transcribe audio data to a list of
+        possible transcriptions and respective confidences"""
+        return [(self.execute(audio, lang), 1.0)]
 
     @abstractmethod
     def create_streaming_thread(self):
