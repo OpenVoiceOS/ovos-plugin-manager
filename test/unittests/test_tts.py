@@ -390,5 +390,5 @@ class TestStreamingTTSCallbacks(unittest.TestCase):
     def test_play_args_from_default_config(self):
         config = Configuration()
         config["play_wav_cmdline"] = "afplay"
-        tts_callbacks = StreamingTTSCallbacks(FakeBus())
+        tts_callbacks = StreamingTTSCallbacks(FakeBus(), config)
         assert tts_callbacks.play_args == ["afplay"]
