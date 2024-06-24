@@ -1012,13 +1012,14 @@ class RemoteTTSTimeoutException(RemoteTTSException):
 class StreamingTTSCallbacks:
     """handle the playback of streaming TTS, can be overrided in StreamingTTS"""
 
-    def __init__(self, bus, play_args=["paplay"], tts_config=None):
+    def __init__(self, bus, play_args=None, tts_config=None):
         self.bus = bus
         self.config = tts_config
         # Prefer directly passed play args, then config from plugin, then default WAV config
         self.play_args = play_args \
             or [get_plugin_config(tts_config, "tts").get("streaming_tts_cmd")] \
-            or [get_plugin_config().get("play_wav_cmdline")]
+            or [get_plugin_config().get("play_wav_cmdline")] \
+            or ["paplay"]
         self._process = None
 
     def stream_start(self, message=None):
