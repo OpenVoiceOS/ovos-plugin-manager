@@ -1,3 +1,6 @@
+from os import environ
+import os
+import pwd
 import unittest
 from unittest.mock import MagicMock
 from unittest.mock import patch, Mock
@@ -377,18 +380,21 @@ class TestSession(unittest.TestCase):
 class TestStreamingTTSCallbacks(unittest.TestCase):
     def test_play_args_passed_in(self):
         tts_callbacks = StreamingTTSCallbacks(FakeBus(), ["vlc"])
-        assert tts_callbacks.play_args == ["vlc"]
+        self.assertEqual(tts_callbacks.play_args, ["vlc"])
 
     def test_default_play_args(self):
         tts_callbacks = StreamingTTSCallbacks(FakeBus())
-        assert tts_callbacks.play_args == ["paplay"]
+        self.assertEqual(tts_callbacks.play_args, ["paplay"])
 
     def test_play_args_from_tts_config(self):
         tts_callbacks = StreamingTTSCallbacks(FakeBus(), None, {"streaming_tts_cmd": "vlc"})
-        assert tts_callbacks.play_args == ["vlc"]
+        self.assertEqual(tts_callbacks.play_args, ["vlc"])
 
     def test_play_args_from_default_config(self):
-        config = Configuration()
-        config["play_wav_cmdline"] = "afplay"
-        tts_callbacks = StreamingTTSCallbacks(FakeBus(), config)
-        assert tts_callbacks.play_args == ["afplay"]
+        environ["XDG_CONFIG_HOME"] = os.getcwd()
+        os.makedirs(f"{os.getcwd()}/mycroft", exist_ok=True)
+        with open(f"{os.getcwd()}/mycroft/mycroft.conf", "w", encoding="utf-8") as f:
+            f.write('{"play_wav_cmdline": "afplay"}')
+        tts_callbacks = StreamingTTSCallbacks(FakeBus(), None)
+        self.assertEqual(tts_callbacks.play_args, ["afplay"])
+        os.removedirs(f"{os.getcwd()}/mycroft")
