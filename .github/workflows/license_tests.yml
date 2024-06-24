@@ -12,9 +12,9 @@ jobs:
   license_tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Setup Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v5
         with:
           python-version: 3.8
       - name: Install Build Tools
@@ -34,11 +34,11 @@ jobs:
         id: license_check_report
         uses: pilosus/action-pip-license-checker@v0.5.0
         with:
-          requirements: 'requirements-all.txt'
-          fail: 'Copyleft,Other,Error'
+          requirements: "requirements-all.txt"
+          fail: "Copyleft,Other,Error"
           fails-only: true
-          exclude: '^(tqdm).*'
-          exclude-license: '^(Mozilla).*$'
+          exclude: "^(tqdm).*"
+          exclude-license: "^(Mozilla).*$"
       - name: Print report
         if: ${{ always() }}
         run: echo "${{ steps.license_check_report.outputs.report }}"

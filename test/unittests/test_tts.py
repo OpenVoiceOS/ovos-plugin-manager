@@ -6,7 +6,7 @@ from ovos_bus_client.session import Session
 from ovos_config import Configuration
 from ovos_utils.fakebus import FakeBus, Message
 
-from ovos_plugin_manager.templates.tts import TTS, TTSContext
+from ovos_plugin_manager.templates.tts import TTS, StreamingTTSCallbacks, TTSContext
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
@@ -373,3 +373,22 @@ class TestSession(unittest.TestCase):
         self.assertEqual(ctxt.lang, sess.lang)
         self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/Daghor/klingon")
         self.assertEqual(ctxt.synth_kwargs, {'lang': 'klingon', 'voice': 'Daghor'})
+
+class TestStreamingTTSCallbacks(unittest.TestCase):
+    def test_play_args_passed_in(self):
+        tts_callbacks = StreamingTTSCallbacks(FakeBus(), ["vlc"])
+        assert tts_callbacks.play_args == ["vlc"]
+
+    def test_default_play_args(self):
+        tts_callbacks = StreamingTTSCallbacks(FakeBus())
+        assert tts_callbacks.play_args == ["paplay"]
+
+    def test_play_args_from_tts_config(self):
+        tts_callbacks = StreamingTTSCallbacks(FakeBus(), None, {"streaming_tts_cmd": "vlc"})
+        assert tts_callbacks.play_args == ["vlc"]
+
+    def test_play_args_from_default_config(self):
+        config = Configuration()
+        config["play_wav_cmdline"] = "afplay"
+        tts_callbacks = StreamingTTSCallbacks(FakeBus())
+        assert tts_callbacks.play_args == ["afplay"]
