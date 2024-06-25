@@ -104,17 +104,17 @@ class TestLangDetectionFactory(unittest.TestCase):
         load_plugin.return_value = mock_class
 
         # Test mapped plugin from config
-        self.assertEquals(OVOSLangDetectionFactory.get_class(), mock_class)
+        self.assertEqual(OVOSLangDetectionFactory.get_class(), mock_class)
         load_plugin.assert_called_with("libretranslate_detection_plug")
 
         # Test explicitly specified mapped plugin
         conf = {"module": "google"}
-        self.assertEquals(OVOSLangDetectionFactory.get_class(conf), mock_class)
+        self.assertEqual(OVOSLangDetectionFactory.get_class(conf), mock_class)
         load_plugin.assert_called_with("googletranslate_detection_plug")
 
         # Test unmapped plugin
         conf = {"language": {"detection_module": "real-detect-plug"}}
-        self.assertEquals(OVOSLangDetectionFactory.get_class(conf), mock_class)
+        self.assertEqual(OVOSLangDetectionFactory.get_class(conf), mock_class)
         load_plugin.assert_called_with("real-detect-plug")
 
         # Test invalid module config
@@ -144,7 +144,7 @@ class TestLangDetectionFactory(unittest.TestCase):
         mock_plugin.assert_called_once_with(
             config={'lang': "detect",
                     "module": "googletranslate_detection_plug"})
-        self.assertEquals(plug_instance, plug)
+        self.assertEqual(plug_instance, plug)
 
         # Create plugin fully specified in passed config
         config_with_module = {"detection_module": "detect-plugin",
@@ -153,7 +153,7 @@ class TestLangDetectionFactory(unittest.TestCase):
         load_plugin.assert_called_with("detect-plugin")
         mock_plugin.assert_called_with(config={"module": "detect-plugin",
                                                "lang": "lang"})
-        self.assertEquals(plug_instance, plug)
+        self.assertEqual(plug_instance, plug)
 
         # Create plugin fallback module config parsing
         config_with_fallback_module = {"module": "test-detect-plugin",
@@ -161,7 +161,7 @@ class TestLangDetectionFactory(unittest.TestCase):
         plug = OVOSLangDetectionFactory.create(config_with_fallback_module)
         load_plugin.assert_called_with("test-detect-plugin")
         mock_plugin.assert_called_with(config=config_with_fallback_module)
-        self.assertEquals(plug_instance, plug)
+        self.assertEqual(plug_instance, plug)
         # TODO: Test exception handling fallback to libretranslate
 
 
@@ -187,18 +187,18 @@ class TestLangTranslationFactory(unittest.TestCase):
         load_plugin.return_value = mock_class
 
         # Test mapped plugin from config
-        self.assertEquals(OVOSLangTranslationFactory.get_class(), mock_class)
+        self.assertEqual(OVOSLangTranslationFactory.get_class(), mock_class)
         load_plugin.assert_called_with("libretranslate_plug")
 
         # Test explicitly specified mapped plugin
         conf = {"module": "google"}
-        self.assertEquals(OVOSLangTranslationFactory.get_class(conf),
+        self.assertEqual(OVOSLangTranslationFactory.get_class(conf),
                           mock_class)
         load_plugin.assert_called_with("googletranslate_plug")
 
         # Test unmapped plugin
         conf = {"language": {"translation_module": "real-detect-plug"}}
-        self.assertEquals(OVOSLangTranslationFactory.get_class(conf), mock_class)
+        self.assertEqual(OVOSLangTranslationFactory.get_class(conf), mock_class)
         load_plugin.assert_called_with("real-detect-plug")
 
         # Test invalid module config
@@ -227,7 +227,7 @@ class TestLangTranslationFactory(unittest.TestCase):
         load_plugin.assert_called_once_with('googletranslate_plug')
         mock_plugin.assert_called_once_with(
             config={'lang': "tx", "module": "googletranslate_plug"})
-        self.assertEquals(plug_instance, plug)
+        self.assertEqual(plug_instance, plug)
 
         # Create plugin fully specified in passed config
         config_with_module = {"translation_module": "translate-plugin",
@@ -236,7 +236,7 @@ class TestLangTranslationFactory(unittest.TestCase):
         load_plugin.assert_called_with("translate-plugin")
         mock_plugin.assert_called_with(config={"module": "translate-plugin",
                                                "lang": "lang"})
-        self.assertEquals(plug_instance, plug)
+        self.assertEqual(plug_instance, plug)
 
         # Create plugin fallback module config parsing
         config_with_fallback_module = {"module": "test-translate-plugin",
@@ -244,6 +244,6 @@ class TestLangTranslationFactory(unittest.TestCase):
         plug = OVOSLangTranslationFactory.create(config_with_fallback_module)
         load_plugin.assert_called_with("test-translate-plugin")
         mock_plugin.assert_called_with(config=config_with_fallback_module)
-        self.assertEquals(plug_instance, plug)
+        self.assertEqual(plug_instance, plug)
 
         # TODO: Test exception handling fallback to libretranslate

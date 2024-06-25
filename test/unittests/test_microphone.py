@@ -48,8 +48,8 @@ class TestMicrophoneTemplate(unittest.TestCase):
         self.assertEqual(mic_3.sample_channels, 3)
         self.assertEqual(mic_3.chunk_size, 4)
 
-        self.assertNotEquals(mic, mic_2)
-        self.assertNotEquals(mic, mic_3)
+        self.assertNotEqual(mic, mic_2)
+        self.assertNotEqual(mic, mic_3)
 
     def test_properties(self):
         from ovos_plugin_manager.templates.microphone import Microphone
