@@ -34,7 +34,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Build Tools
         run: |
-          python -m pip install build wheel
+          python -m pip install build wheel setuptools
       - name: Install System Dependencies
         run: |
           sudo apt-get update

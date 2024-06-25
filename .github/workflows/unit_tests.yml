@@ -45,7 +45,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt install python3-dev
-          python -m pip install build wheel
+          python -m pip install build wheel setuptools
       - name: Install test dependencies
         run: |
           pip install -r requirements/test.txt
