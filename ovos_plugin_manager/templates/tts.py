@@ -1015,11 +1015,17 @@ class StreamingTTSCallbacks:
     def __init__(self, bus, play_args=None, tts_config=None):
         self.bus = bus
         self.config = tts_config
-        # Prefer directly passed play args, then config from plugin, then default WAV config
-        self.play_args = play_args \
-            or [get_plugin_config(tts_config, "tts").get("streaming_tts_cmd")] \
-            or [get_plugin_config().get("play_wav_cmdline")] \
-            or ["paplay"]
+        if play_args is not None:
+            self.play_args = play_args
+        # Prefer directly passed play args, then config from plugin, then default WAV config, then finally paplay
+        else:
+            self.play_args = [get_plugin_config(tts_config, "tts").get("streaming_tts_cmd")]
+        if self.play_args == [None]:
+            self.play_args = [get_plugin_config().get("play_wav_cmdline")]
+        if self.play_args == [None]:
+            self.play_args = ["paplay"]
+        for i, arg in enumerate(self.play_args):
+            self.play_args[i] = arg.replace(" %1", "")
         self._process = None
 
     def stream_start(self, message=None):

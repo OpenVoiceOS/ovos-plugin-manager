@@ -391,10 +391,11 @@ class TestStreamingTTSCallbacks(unittest.TestCase):
         self.assertEqual(tts_callbacks.play_args, ["vlc"])
 
     def test_play_args_from_default_config(self):
-        environ["XDG_CONFIG_HOME"] = os.getcwd()
-        os.makedirs(f"{os.getcwd()}/mycroft", exist_ok=True)
-        with open(f"{os.getcwd()}/mycroft/mycroft.conf", "w", encoding="utf-8") as f:
-            f.write('{"play_wav_cmdline": "afplay"}')
+        environ["OVOS_CONFIG_BASE_FOLDER"] = "mycroft"
+        environ["OVOS_CONFIG_FILENAME"] = "test.conf"
+        os.makedirs(f"{os.path.expanduser('~')}/.config/mycroft", exist_ok=True)
+        with open(f"{os.path.expanduser('~')}/.config/mycroft/test.conf", "w", encoding="utf-8") as f:
+            f.write('{"play_wav_cmdline": "afplay %1"}')
         tts_callbacks = StreamingTTSCallbacks(FakeBus(), None)
         self.assertEqual(tts_callbacks.play_args, ["afplay"])
-        os.removedirs(f"{os.getcwd()}/mycroft")
+        os.remove(f"{os.path.expanduser('~')}/.config/mycroft/test.conf")
