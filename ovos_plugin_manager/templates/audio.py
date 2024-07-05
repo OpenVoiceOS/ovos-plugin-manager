@@ -88,7 +88,8 @@ class AudioBackend(metaclass=ABCMeta):
         bus (MessageBusClient): OpenVoiceOS messagebus emitter
     """
 
-    def __init__(self, config=None, bus=None):
+    def __init__(self, config=None, bus=None, name=None):
+        self.name = name or self.__class__.__name__
         self._now_playing = None  # single uri
         self._tracks = []  # list of dicts for OCP entries
         self._idx = 0
