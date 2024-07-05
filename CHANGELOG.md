@@ -1,8 +1,8 @@
 # Changelog
 
-## [0.0.26a28](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a28) (2024-06-15)
+## [0.0.26a29](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a29) (2024-07-05)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a28)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a29)
 
 **Implemented enhancements:**
 
@@ -13,6 +13,7 @@
 **Fixed bugs:**
 
 - abstractmethod decorator breaks OCP 0.0.6 compat. [\#229](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/229)
+- fix/missing\_property [\#239](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/239) ([JarbasAl](https://github.com/JarbasAl))
 - ensure cache dir exists [\#232](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/232) ([JarbasAl](https://github.com/JarbasAl))
 - fix/playback\_time\_not\_abstract [\#230](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/230) ([JarbasAl](https://github.com/JarbasAl))
 - fix/legacy\_playlist\_queue [\#227](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/227) ([JarbasAl](https://github.com/JarbasAl))
