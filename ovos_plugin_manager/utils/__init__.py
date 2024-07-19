@@ -22,6 +22,10 @@ from ovos_utils.log import LOG
 
 
 class PluginTypes(str, Enum):
+    EMBEDDINGS = "opm.embeddings"
+    FACE_EMBEDDINGS = "opm.embeddings.face"
+    VOICE_EMBEDDINGS = "opm.embeddings.voice"
+    TEXT_EMBEDDINGS = "opm.embeddings.text"
     GUI = "ovos.plugin.gui"
     PHAL = "ovos.plugin.phal"
     ADMIN = "ovos.plugin.phal.admin"
@@ -59,6 +63,10 @@ class PluginTypes(str, Enum):
 
 
 class PluginConfigTypes(str, Enum):
+    EMBEDDINGS = "opm.embeddings.config"
+    FACE_EMBEDDINGS = "opm.embeddings.face.config"
+    VOICE_EMBEDDINGS = "opm.embeddings.voice.config"
+    TEXT_EMBEDDINGS = "opm.embeddings.text.config"
     GUI = "ovos.plugin.gui.config"
     PHAL = "ovos.plugin.phal.config"
     ADMIN = "ovos.plugin.phal.admin.config"
