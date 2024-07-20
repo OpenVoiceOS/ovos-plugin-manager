@@ -22,6 +22,7 @@ from ovos_utils.log import LOG
 
 
 class PluginTypes(str, Enum):
+    PIPELINE = "opm.pipeline"
     EMBEDDINGS = "opm.embeddings"
     FACE_EMBEDDINGS = "opm.embeddings.face"
     VOICE_EMBEDDINGS = "opm.embeddings.voice"
@@ -63,6 +64,7 @@ class PluginTypes(str, Enum):
 
 
 class PluginConfigTypes(str, Enum):
+    PIPELINE = "opm.pipeline.config"
     EMBEDDINGS = "opm.embeddings.config"
     FACE_EMBEDDINGS = "opm.embeddings.face.config"
     VOICE_EMBEDDINGS = "opm.embeddings.voice.config"
