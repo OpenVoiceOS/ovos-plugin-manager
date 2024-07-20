@@ -58,26 +58,217 @@ class EmbeddingsDB:
         return NotImplemented
 
     def distance(self, embeddings_a: np.ndarray, embeddings_b: np.ndarray, metric: str = "cosine") -> float:
-        """Calculate the distance between two embeddings.
+        """
+        Calculate the distance between two embeddings using the specified metric.
 
         Args:
             embeddings_a (np.ndarray): The first embedding vector.
             embeddings_b (np.ndarray): The second embedding vector.
             metric (str, optional): The distance metric to use. Defaults to "cosine".
+                Supported metrics include:
+                - "cosine": Cosine distance, 1 - cosine similarity. Useful for text similarity and high-dimensional data.
+                - "euclidean": Euclidean distance, L2 norm of the difference. Commonly used in clustering and geometric distance.
+                - "manhattan": Manhattan distance, L1 norm of the difference. Suitable for grid-based maps and robotics.
+                - "chebyshev": Chebyshev distance, maximum absolute difference. Used for chessboard distance and pathfinding.
+                - "minkowski": Minkowski distance, generalization of Euclidean and Manhattan distances. Parameterized by p, flexible use case.
+                - "hamming": Hamming distance, proportion of differing elements. Ideal for error detection and binary data.
+                - "jaccard": Jaccard distance, 1 - Jaccard similarity (intersection over union). Used for set similarity and binary attributes.
+                - "canberra": Canberra distance, weighted version of Manhattan distance. Sensitive to small changes, used in environmental data.
+                - "braycurtis": Bray-Curtis distance, dissimilarity between non-negative vectors. Common in ecology and species abundance studies.
+                - "mahalanobis": Mahalanobis distance, distance considering correlations (requires covariance matrix). Useful for multivariate outlier detection.
+                - "pearson_correlation": Pearson correlation distance, 1 - Pearson correlation coefficient. Used in time series analysis and signal processing.
+                - "spearman_rank": Spearman rank correlation distance, 1 - Spearman rank correlation coefficient. Measures rank correlation for non-linear monotonic relationships.
+                - "wasserstein": Earth Mover's Distance (Wasserstein distance). Compares probability distributions or histograms.
+                - "cosine_squared": Cosine squared distance, 1 - cosine similarity squared. For squared similarity in high-dimensional data.
+                - "kl_divergence": Kullback-Leibler divergence, asymmetric measure of difference between distributions. Applied in information theory and probability distributions.
+                - "bhattacharyya": Bhattacharyya distance, measure of overlap between statistical samples. Useful in classification and image processing.
+                - "hellinger": Hellinger distance, measure of similarity between two probability distributions. Applied in statistical inference.
+                - "dice": Dice distance, similarity measure for binary data. Suitable for binary data comparison and text similarity.
+                - "ruzicka": Ruzicka distance, similarity measure for non-negative vectors. Used in ecology and species abundance.
+                - "kulczynski": Kulczynski distance, used in ecology to compare similarity. Suitable for ecological studies and species distribution.
+                - "sorensen": Sørensen distance, another name for Dice distance. Applied in binary data comparison and text similarity.
+                - "chi_squared": Chi-squared distance, used for comparing categorical data distributions. Suitable for categorical data analysis and distribution comparison.
+                - "jensen_shannon": Jensen-Shannon divergence, symmetrized and smoothed version of KL divergence. Used in information theory and probability distributions.
+                - "squared_euclidean": Squared Euclidean distance, square of the Euclidean distance. Useful for clustering algorithms and geometric distance.
+                - "weighted_euclidean": Weighted Euclidean distance, L2 norm with weights. Applied when features have different scales or importance.
+                - "log_cosh": Log-Cosh distance, log of the hyperbolic cosine of the difference. Robust to outliers.
+                - "tanimoto": Tanimoto coefficient, similarity measure for binary vectors. Used for binary data comparison.
+                - "rao": Rao's Quadratic Entropy, measure of divergence between distributions. Useful for comparing probability distributions.
+                - "gower": Gower distance, handles mixed types of data. Applied in cases with numerical and categorical data.
+                - "tversky": Tversky index, generalization of Jaccard and Dice for asymmetrical comparison. Parameterized by alpha and beta.
+                - "alpha_divergence": Alpha divergence, generalized divergence measure. Parameterized by alpha, used for comparing distributions.
 
         Returns:
-            float: The calculated distance.
+            float: The calculated distance between the two embedding vectors.
+
+        Raises:
+            ValueError: If the specified metric is unsupported.
         """
         if metric == "cosine":
+            # Cosine distance: 1 - cosine similarity
+            # Use case: Text similarity, high-dimensional data
             dot = np.dot(embeddings_a, embeddings_b)
             norma = np.linalg.norm(embeddings_a)
             normb = np.linalg.norm(embeddings_b)
             cos = dot / (norma * normb)
             return 1 - cos
         elif metric == "euclidean":
+            # Euclidean distance: L2 norm of the difference
+            # Use case: Geometric distance, clustering
             return np.linalg.norm(embeddings_a - embeddings_b)
         elif metric == "manhattan":
+            # Manhattan distance: L1 norm of the difference
+            # Use case: Grid-based maps, robotics
             return np.sum(np.abs(embeddings_a - embeddings_b))
+        elif metric == "chebyshev":
+            # Chebyshev distance: Maximum absolute difference
+            # Use case: Chessboard distance, pathfinding
+            return np.max(np.abs(embeddings_a - embeddings_b))
+        elif metric == "minkowski":
+            # Minkowski distance: Generalization of Euclidean and Manhattan distances
+            # Use case: Flexible distance metric, parameterized by p
+            p = 3  # Example value for p, this can be parameterized
+            return np.sum(np.abs(embeddings_a - embeddings_b) ** p) ** (1 / p)
+        elif metric == "hamming":
+            # Hamming distance: Proportion of differing elements
+            # Use case: Error detection, binary data
+            return np.mean(embeddings_a != embeddings_b)
+        elif metric == "jaccard":
+            # Jaccard distance: 1 - Jaccard similarity (intersection over union)
+            # Use case: Set similarity, binary attributes
+            intersection = np.sum(np.minimum(embeddings_a, embeddings_b))
+            union = np.sum(np.maximum(embeddings_a, embeddings_b))
+            return 1 - intersection / union
+        elif metric == "canberra":
+            # Canberra distance: Weighted version of Manhattan distance
+            # Use case: Environmental data, sensitive to small changes
+            return np.sum(np.abs(embeddings_a - embeddings_b) / (np.abs(embeddings_a) + np.abs(embeddings_b)))
+        elif metric == "braycurtis":
+            # Bray-Curtis distance: Dissimilarity between non-negative vectors
+            # Use case: Ecology, species abundance
+            return np.sum(np.abs(embeddings_a - embeddings_b)) / np.sum(np.abs(embeddings_a + embeddings_b))
+        elif metric == "mahalanobis":
+            # Mahalanobis distance: Distance considering correlations (requires covariance matrix)
+            # Use case: Multivariate outlier detection
+            covariance_matrix = np.cov(embeddings_a, embeddings_b, rowvar=False)
+            inv_cov_matrix = np.linalg.inv(covariance_matrix)
+            delta = embeddings_a - embeddings_b
+            return np.sqrt(np.dot(np.dot(delta.T, inv_cov_matrix), delta))
+        elif metric == "pearson_correlation":
+            # Correlation distance: 1 - Pearson correlation coefficient
+            # Use case: Time series analysis, signal processing
+            mean_a = np.mean(embeddings_a)
+            mean_b = np.mean(embeddings_b)
+            centered_a = embeddings_a - mean_a
+            centered_b = embeddings_b - mean_b
+            norm_a = np.linalg.norm(centered_a)
+            norm_b = np.linalg.norm(centered_b)
+            correlation = np.dot(centered_a, centered_b) / (norm_a * norm_b)
+            return 1 - correlation
+        elif metric == "spearman_rank":
+            # Spearman rank correlation distance: 1 - Spearman rank correlation coefficient.
+            # Use case: Measures the rank correlation between two vectors. Useful for non-linear monotonic relationships.
+            rank_a = np.argsort(np.argsort(embeddings_a))
+            rank_b = np.argsort(np.argsort(embeddings_b))
+            return 1 - np.corrcoef(rank_a, rank_b)[0, 1]
+        elif metric == "wasserstein":
+            # Earth Mover's Distance (Wasserstein distance)
+            # Use case: Comparing probability distributions or histograms
+            arr1_sorted = np.sort(embeddings_a)
+            arr2_sorted = np.sort(embeddings_b)
+            cdf1 = np.cumsum(arr1_sorted) / np.sum(arr1_sorted)
+            cdf2 = np.cumsum(arr2_sorted) / np.sum(arr2_sorted)
+            return np.sum(np.abs(cdf1 - cdf2))
+        elif metric == "cosine_squared":
+            # Cosine squared distance: 1 - cosine similarity squared
+            # Use case: Squared similarity, high-dimensional data
+            dot = np.dot(embeddings_a, embeddings_b)
+            norma = np.linalg.norm(embeddings_a)
+            normb = np.linalg.norm(embeddings_b)
+            cos = dot / (norma * normb)
+            return 1 - cos ** 2
+        elif metric == "kl_divergence":
+            # Kullback-Leibler divergence: Asymmetric measure of difference between distributions
+            # Use case: Information theory, probability distributions
+            return np.sum(embeddings_a * np.log(embeddings_a / embeddings_b))
+        elif metric == "bhattacharyya":
+            # Bhattacharyya distance: Measure of overlap between statistical samples
+            # Use case: Classification, image processing
+            bc = np.sum(np.sqrt(embeddings_a * embeddings_b))
+            return -np.log(bc)
+        elif metric == "hellinger":
+            # Hellinger distance: Measure of similarity between two probability distributions
+            # Use case: Probability distributions, statistical inference
+            return np.sqrt(0.5 * np.sum((np.sqrt(embeddings_a) - np.sqrt(embeddings_b)) ** 2))
+        elif metric == "dice":
+            # Dice distance: Similarity measure for binary data
+            # Use case: Binary data comparison, text similarity
+            intersection = np.sum(embeddings_a * embeddings_b)
+            return 1 - (2 * intersection) / (np.sum(embeddings_a) + np.sum(embeddings_b))
+        elif metric == "ruzicka":
+            # Ruzicka distance: Similarity measure for non-negative vectors
+            # Use case: Ecology, species abundance
+            return 1 - np.sum(np.minimum(embeddings_a, embeddings_b)) / np.sum(np.maximum(embeddings_a, embeddings_b))
+        elif metric == "kulczynski":
+            # Kulczynski distance: Measure used in ecology to compare similarity
+            # Use case: Ecological studies, species distribution
+            return np.sum(np.abs(embeddings_a - embeddings_b)) / np.sum(np.minimum(embeddings_a, embeddings_b))
+        elif metric == "sorensen":
+            # Sørensen distance: Another name for Dice distance
+            # Use case: Binary data comparison, text similarity
+            intersection = np.sum(embeddings_a * embeddings_b)
+            return 1 - (2 * intersection) / (np.sum(embeddings_a) + np.sum(embeddings_b))
+        elif metric == "chi_squared":
+            # Chi-squared distance: Used for comparing categorical data distributions
+            # Use case: Categorical data analysis, distribution comparison
+            return np.sum((embeddings_a - embeddings_b) ** 2 / (embeddings_a + embeddings_b))
+        elif metric == "jensen_shannon":
+            # Jensen-Shannon divergence: Symmetrized and smoothed version of KL divergence
+            # Use case: Information theory, probability distributions
+            m = 0.5 * (embeddings_a + embeddings_b)
+            return 0.5 * (np.sum(embeddings_a * np.log(embeddings_a / m)) + np.sum(embeddings_b * np.log(embeddings_b / m)))
+        elif metric == "squared_euclidean":
+            # Squared Euclidean distance: Square of the Euclidean distance
+            # Use case: Clustering algorithms, geometric distance
+            return np.sum((embeddings_a - embeddings_b) ** 2)
+        elif metric == "weighted_euclidean":
+            # Weighted Euclidean distance: L2 norm with weights
+            # Use case: Features with different scales or importance
+            weights = np.ones_like(embeddings_a)  # Example weights, should be parameterized
+            return np.sqrt(np.sum(weights * (embeddings_a - embeddings_b) ** 2))
+        elif metric == "log_cosh":
+            # Log-Cosh distance: Log of the hyperbolic cosine of the difference
+            # Use case: Robustness to outliers
+            return np.sum(np.log(np.cosh(embeddings_a - embeddings_b)))
+        elif metric == "tanimoto":
+            # Tanimoto coefficient: Similarity measure for binary vectors
+            # Use case: Binary data comparison
+            intersection = np.sum(embeddings_a * embeddings_b)
+            return 1 - intersection / (np.sum(embeddings_a) + np.sum(embeddings_b) - intersection)
+        elif metric == "rao":
+            # Rao's Quadratic Entropy: Measure of divergence between distributions
+            # Use case: Comparing probability distributions
+            p = embeddings_a / np.sum(embeddings_a)
+            q = embeddings_b / np.sum(embeddings_b)
+            return np.sum((p - q) ** 2 / (p + q))
+        elif metric == "gower":
+            # Gower distance: Handles mixed types of data
+            # Use case: Mixed data types (numerical and categorical)
+            numerical_part = np.sum(np.abs(embeddings_a - embeddings_b)) / len(embeddings_a)
+            categorical_part = np.mean(embeddings_a != embeddings_b)
+            return numerical_part + categorical_part
+        elif metric == "tversky":
+            # Tversky index: Generalization of Jaccard and Dice for asymmetrical comparison
+            alpha = 0.5  # Example value, can be parameterized
+            beta = 0.5   # Example value, can be parameterized
+            intersection = np.sum(np.minimum(embeddings_a, embeddings_b))
+            return 1 - intersection / (intersection + alpha * np.sum(embeddings_a - embeddings_b) + beta * np.sum(embeddings_b - embeddings_a))
+        elif metric == "alpha_divergence":
+            # Alpha divergence: Generalized divergence measure
+            alpha = 0.5  # Example value, can be parameterized
+            p = embeddings_a / np.sum(embeddings_a)
+            q = embeddings_b / np.sum(embeddings_b)
+            return np.sum((p ** alpha - q ** alpha) / (alpha * (p + q) ** alpha))
         else:
             raise ValueError("Unsupported metric")
 
