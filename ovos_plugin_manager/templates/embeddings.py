@@ -57,9 +57,15 @@ class EmbeddingsDB:
         """
         return NotImplemented
 
-    def distance(self, embeddings_a: np.ndarray, embeddings_b: np.ndarray, metric: str = "cosine") -> float:
+    def distance(self, embeddings_a: np.ndarray, embeddings_b: np.ndarray, metric: str = "cosine",
+                 alpha: float = 0.5,  # for alpha_divergence and tversky metrics
+                 beta: float = 0.5,  # for tversky metric
+                 p: float = 3,  # for minkowski and weighted_minkowski metrics
+                 euclidean_weights: Optional[np.ndarray] = None,  # required for weighted_euclidean and weighted_minkowski metrics
+                 covariance_matrix: Optional[np.ndarray] = None  # required for mahalanobis distance with user-defined covariance
+                 ) -> float:
         """
-        Calculate the distance between two embeddings using the specified metric.
+        Calculate the distance between two embeddings vectors using the specified distance metric.
 
         Args:
             embeddings_a (np.ndarray): The first embedding vector.
@@ -71,11 +77,12 @@ class EmbeddingsDB:
                 - "manhattan": Manhattan distance, L1 norm of the difference. Suitable for grid-based maps and robotics.
                 - "chebyshev": Chebyshev distance, maximum absolute difference. Used for chessboard distance and pathfinding.
                 - "minkowski": Minkowski distance, generalization of Euclidean and Manhattan distances. Parameterized by p, flexible use case.
+                - "weighted_minkowski": Weighted Minkowski distance, a generalization of Minkowski with weights. Parameterized by `p`, uses `euclidean_weights`.
                 - "hamming": Hamming distance, proportion of differing elements. Ideal for error detection and binary data.
                 - "jaccard": Jaccard distance, 1 - Jaccard similarity (intersection over union). Used for set similarity and binary attributes.
                 - "canberra": Canberra distance, weighted version of Manhattan distance. Sensitive to small changes, used in environmental data.
                 - "braycurtis": Bray-Curtis distance, dissimilarity between non-negative vectors. Common in ecology and species abundance studies.
-                - "mahalanobis": Mahalanobis distance, distance considering correlations (requires covariance matrix). Useful for multivariate outlier detection.
+                - "mahalanobis": Mahalanobis distance, considering correlations (requires covariance matrix). Useful for multivariate outlier detection.
                 - "pearson_correlation": Pearson correlation distance, 1 - Pearson correlation coefficient. Used in time series analysis and signal processing.
                 - "spearman_rank": Spearman rank correlation distance, 1 - Spearman rank correlation coefficient. Measures rank correlation for non-linear monotonic relationships.
                 - "wasserstein": Earth Mover's Distance (Wasserstein distance). Compares probability distributions or histograms.
@@ -83,7 +90,6 @@ class EmbeddingsDB:
                 - "kl_divergence": Kullback-Leibler divergence, asymmetric measure of difference between distributions. Applied in information theory and probability distributions.
                 - "bhattacharyya": Bhattacharyya distance, measure of overlap between statistical samples. Useful in classification and image processing.
                 - "hellinger": Hellinger distance, measure of similarity between two probability distributions. Applied in statistical inference.
-                - "dice": Dice distance, similarity measure for binary data. Suitable for binary data comparison and text similarity.
                 - "ruzicka": Ruzicka distance, similarity measure for non-negative vectors. Used in ecology and species abundance.
                 - "kulczynski": Kulczynski distance, used in ecology to compare similarity. Suitable for ecological studies and species distribution.
                 - "sorensen": Sørensen distance, another name for Dice distance. Applied in binary data comparison and text similarity.
@@ -97,12 +103,21 @@ class EmbeddingsDB:
                 - "gower": Gower distance, handles mixed types of data. Applied in cases with numerical and categorical data.
                 - "tversky": Tversky index, generalization of Jaccard and Dice for asymmetrical comparison. Parameterized by alpha and beta.
                 - "alpha_divergence": Alpha divergence, generalized divergence measure. Parameterized by alpha, used for comparing distributions.
+                - "kendall_tau": Kendall's Tau distance: 1 - Kendall Tau correlation coefficient. Use case: Rank correlation for ordinal data
+                - "renyi_divergence": Generalized divergence measure. Use case: Comparing probability distributions
+                - "total_variation":  Measure of divergence between distributions. Use case: Probability distributions, statistical inference
+
+            alpha (float, optional): Parameter for `tversky` and `alpha_divergence` metrics. Default is 0.5.
+            beta (float, optional): Parameter for `tversky` metric. Default is 0.5.
+            p (float, optional): Parameter for `minkowski` and `weighted_minkowski` metrics. Default is 3.
+            euclidean_weights (Optional[np.ndarray], optional): Weights for `weighted_euclidean` and `weighted_minkowski` metrics. Must be provided if using these metrics. Default is None.
+            covariance_matrix (Optional[np.ndarray], optional): Covariance matrix for `mahalanobis` distance. Must be provided if using this metric. Default is None.
 
         Returns:
             float: The calculated distance between the two embedding vectors.
 
         Raises:
-            ValueError: If the specified metric is unsupported.
+            ValueError: If the specified metric is unsupported or requires parameters not provided.
         """
         if metric == "cosine":
             # Cosine distance: 1 - cosine similarity
@@ -127,8 +142,13 @@ class EmbeddingsDB:
         elif metric == "minkowski":
             # Minkowski distance: Generalization of Euclidean and Manhattan distances
             # Use case: Flexible distance metric, parameterized by p
-            p = 3  # Example value for p, this can be parameterized
             return np.sum(np.abs(embeddings_a - embeddings_b) ** p) ** (1 / p)
+        elif metric == "weighted_minkowski":
+            # Weighted Minkowski distance: Generalization of Minkowski distance with weights
+            # Use case: Flexible distance metric with weighted dimensions
+            if euclidean_weights is None:
+                raise ValueError("euclidean_weights must be provided for weighted_minkowski metric")
+            return np.sum(euclidean_weights * np.abs(embeddings_a - embeddings_b) ** p) ** (1 / p)
         elif metric == "hamming":
             # Hamming distance: Proportion of differing elements
             # Use case: Error detection, binary data
@@ -150,7 +170,8 @@ class EmbeddingsDB:
         elif metric == "mahalanobis":
             # Mahalanobis distance: Distance considering correlations (requires covariance matrix)
             # Use case: Multivariate outlier detection
-            covariance_matrix = np.cov(embeddings_a, embeddings_b, rowvar=False)
+            if covariance_matrix is None:
+                covariance_matrix = np.cov(embeddings_a, embeddings_b, rowvar=False)
             inv_cov_matrix = np.linalg.inv(covariance_matrix)
             delta = embeddings_a - embeddings_b
             return np.sqrt(np.dot(np.dot(delta.T, inv_cov_matrix), delta))
@@ -200,11 +221,6 @@ class EmbeddingsDB:
             # Hellinger distance: Measure of similarity between two probability distributions
             # Use case: Probability distributions, statistical inference
             return np.sqrt(0.5 * np.sum((np.sqrt(embeddings_a) - np.sqrt(embeddings_b)) ** 2))
-        elif metric == "dice":
-            # Dice distance: Similarity measure for binary data
-            # Use case: Binary data comparison, text similarity
-            intersection = np.sum(embeddings_a * embeddings_b)
-            return 1 - (2 * intersection) / (np.sum(embeddings_a) + np.sum(embeddings_b))
         elif metric == "ruzicka":
             # Ruzicka distance: Similarity measure for non-negative vectors
             # Use case: Ecology, species abundance
@@ -234,8 +250,9 @@ class EmbeddingsDB:
         elif metric == "weighted_euclidean":
             # Weighted Euclidean distance: L2 norm with weights
             # Use case: Features with different scales or importance
-            weights = np.ones_like(embeddings_a)  # Example weights, should be parameterized
-            return np.sqrt(np.sum(weights * (embeddings_a - embeddings_b) ** 2))
+            if euclidean_weights is None:
+                raise ValueError("euclidean_weights must be provided for weighted_euclidean metric")
+            return np.sqrt(np.sum(euclidean_weights * (embeddings_a - embeddings_b) ** 2))
         elif metric == "log_cosh":
             # Log-Cosh distance: Log of the hyperbolic cosine of the difference
             # Use case: Robustness to outliers
@@ -259,16 +276,31 @@ class EmbeddingsDB:
             return numerical_part + categorical_part
         elif metric == "tversky":
             # Tversky index: Generalization of Jaccard and Dice for asymmetrical comparison
-            alpha = 0.5  # Example value, can be parameterized
-            beta = 0.5   # Example value, can be parameterized
             intersection = np.sum(np.minimum(embeddings_a, embeddings_b))
             return 1 - intersection / (intersection + alpha * np.sum(embeddings_a - embeddings_b) + beta * np.sum(embeddings_b - embeddings_a))
         elif metric == "alpha_divergence":
             # Alpha divergence: Generalized divergence measure
-            alpha = 0.5  # Example value, can be parameterized
             p = embeddings_a / np.sum(embeddings_a)
             q = embeddings_b / np.sum(embeddings_b)
             return np.sum((p ** alpha - q ** alpha) / (alpha * (p + q) ** alpha))
+        elif metric == "kendall_tau":
+            # Kendall's Tau distance: 1 - Kendall Tau correlation coefficient
+            # Use case: Rank correlation for ordinal data
+            concordant = np.sum((embeddings_a > embeddings_b) == (embeddings_b > embeddings_a))
+            discordant = np.sum((embeddings_a > embeddings_b) != (embeddings_b > embeddings_a))
+            return 1 - (concordant - discordant) / (concordant + discordant)
+        elif metric == "renyi_divergence":
+            # Renyi Divergence: Generalized divergence measure
+            # Use case: Comparing probability distributions
+            p = embeddings_a / np.sum(embeddings_a)
+            q = embeddings_b / np.sum(embeddings_b)
+            return 1 / (1 - alpha) * np.log(np.sum((p ** alpha + q ** alpha) / 2))
+        elif metric == "total_variation":
+            # Total Variation distance: Measure of divergence between distributions
+            # Use case: Probability distributions, statistical inference
+            p = embeddings_a / np.sum(embeddings_a)
+            q = embeddings_b / np.sum(embeddings_b)
+            return 0.5 * np.sum(np.abs(p - q))
         else:
             raise ValueError("Unsupported metric")
 
