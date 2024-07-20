@@ -1,4 +1,4 @@
-from ovos_plugin_manager.templates.keywords import KeywordExtractor
+from ovos_plugin_manager.templates.pipeline import PipelinePlugin
 from ovos_plugin_manager.utils import PluginTypes
 
 
@@ -11,7 +11,7 @@ def find_pipeline_plugins() -> dict:
     return find_plugins(PluginTypes.PIPELINE)
 
 
-def load_pipeline_plugin(module_name: str) -> type(KeywordExtractor):
+def load_pipeline_plugin(module_name: str) -> type(PipelinePlugin):
     """
     Get an uninstantiated class for the requested module_name
     @param module_name: Plugin entrypoint name to load
