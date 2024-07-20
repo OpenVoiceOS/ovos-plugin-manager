@@ -1,8 +1,8 @@
 # Changelog
 
-## [0.0.26a30](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a30) (2024-07-20)
+## [0.0.26a31](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a31) (2024-07-20)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a30)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a31)
 
 **Implemented enhancements:**
 
