@@ -1,11 +1,12 @@
 # Changelog
 
-## [0.0.26a33](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a33) (2024-07-20)
+## [0.0.26a34](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a34) (2024-07-21)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a33)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a34)
 
 **Implemented enhancements:**
 
+- feat/add\_rerank\_method [\#243](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/243) ([JarbasAl](https://github.com/JarbasAl))
 - feat/pipeline\_intent\_match [\#242](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/242) ([JarbasAl](https://github.com/JarbasAl))
 - feat/pipeline\_plugin\_placeholder [\#241](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/241) ([JarbasAl](https://github.com/JarbasAl))
 - feat/embeddings plugins [\#240](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/240) ([JarbasAl](https://github.com/JarbasAl))
