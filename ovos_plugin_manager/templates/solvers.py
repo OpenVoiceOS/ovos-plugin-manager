@@ -1,34 +1,8 @@
-# NEON AI (TM) SOFTWARE, Software Development Kit & Application Framework
-# All trademark and other rights reserved by their respective owners
-# Copyright 2008-2022 Neongecko.com Inc.
-# Contributors: Daniel McKnight, Guy Daniels, Elon Gasper, Richard Leeds,
-# Regina Bloomstine, Casimiro Ferreira, Andrii Pernatii, Kirill Hrymailo
-# BSD-3 License
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-# 1. Redistributions of source code must retain the above copyright notice,
-#    this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright notice,
-#    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution.
-# 3. Neither the name of the copyright holder nor the names of its
-#    contributors may be used to endorse or promote products derived from this
-#    software without specific prior written permission.
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
-# CONTRIBUTORS  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
-# OR PROFITS;  OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Original AbstractSolver class taken from: https://github.com/Neongeckocom/neon_solvers, licensed under BSD-3
+# QuestionSolver Improvements and other solver classes are OVOS originals licensed under Apache 2.0
 
-# Solver service can be found at: https://github.com/Neongeckocom/neon_solvers
 import abc
-from typing import Optional, List, Iterable
+from typing import Optional, List, Iterable, Tuple
 
 from json_database import JsonStorageXDG
 from ovos_plugin_manager.language import OVOSLangTranslationFactory
@@ -89,12 +63,6 @@ class AbstractSolver:
             query = self.translator.translate(query, lang, user_lang)
 
         context["lang"] = lang
-
-        # HACK - cleanup some common translation mess ups
-        # this is properly solving by using a good translate plugin
-        # only common mistakes in default libretranslate plugin are handled
-        if lang.startswith("en"):
-            query = query.replace("who is is ", "who is ")
 
         return query, context, lang
 
@@ -344,14 +312,24 @@ class MultipleChoiceSolver(AbstractSolver):
 
     # plugin methods to override
 
-    @abc.abstractmethod
+    # TODO  - make abstract in the future,
+    #  just giving some time buffer to update existing
+    #  plugins in the wild missing this method
+    #@abc.abstractmethod
+    def rerank(self, query: str, options: List[str],
+               context: Optional[dict] = None) -> List[Tuple[float, str]]:
+        """
+        rank options list, returning a list of tuples (score, text)
+        """
+        raise NotImplementedError
+
     def select_answer(self, query: str, options: List[str],
                       context: Optional[dict] = None) -> str:
         """
         query and options assured to be in self.default_lang
         return best answer from options list
         """
-        raise NotImplementedError
+        return self.rerank(query, options, context)[0][1]
 
     # user facing methods
     def solve(self, query: str, options: List[str],
@@ -394,8 +372,7 @@ class EntailmentSolver(AbstractSolver):
         cache and auto translate premise and hypothesis if needed
         return Bool, True if premise entails the hypothesis False otherwise
         """
-        user_lang = self._get_user_lang(context, lang)
-        query, context, lang = self._tx_query(query, context, lang)
-
-        # summarize
+        premise, context, lang = self._tx_query(premise, context, lang)
+        hypothesis, context, lang = self._tx_query(hypothesis, context, lang)
+        # check for entailment
         return self.check_entailment(premise, hypothesis)
