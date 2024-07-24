@@ -1,14 +1,21 @@
 import abc
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Union, Iterable
 
-import numpy as np
+# Typing helpers for readability
+try:
+    import numpy as np
+    EmbeddingsArray = np.ndarray
+except ImportError:
+    EmbeddingsArray = Iterable[Union[int, float]]
+EmbeddingsTuple = Union[Tuple[str, float], Tuple[str, float, Dict]]
 
 
 class EmbeddingsDB:
     """Base plugin for embeddings database"""
 
     @abc.abstractmethod
-    def add_embeddings(self, key: str, embedding: np.ndarray) -> np.ndarray:
+    def add_embeddings(self, key: str, embedding: EmbeddingsArray,
+                       metadata: Optional[Dict] = None) -> EmbeddingsArray:
         """Store 'embedding' under 'key' with associated metadata.
 
         Args:
@@ -21,7 +28,7 @@ class EmbeddingsDB:
         return NotImplemented
 
     @abc.abstractmethod
-    def get_embeddings(self, key: str) -> np.ndarray:
+    def get_embeddings(self, key: str) -> EmbeddingsArray:
         """Retrieve embeddings stored under 'key'.
 
         Args:
@@ -33,7 +40,7 @@ class EmbeddingsDB:
         return NotImplemented
 
     @abc.abstractmethod
-    def delete_embeddings(self, key: str) -> np.ndarray:
+    def delete_embeddings(self, key: str) -> EmbeddingsArray:
         """Delete embeddings stored under 'key'.
 
         Args:
@@ -45,7 +52,8 @@ class EmbeddingsDB:
         return NotImplemented
 
     @abc.abstractmethod
-    def query(self, embeddings: np.ndarray, top_k: int = 5) -> List[Tuple[str, float]]:
+    def query(self, embeddings: EmbeddingsArray, top_k: int = 5,
+              return_metadata: bool = False) -> List[EmbeddingsTuple]:
         """Return top_k embeddings closest to the given 'embeddings'.
 
         Args:
@@ -54,15 +62,17 @@ class EmbeddingsDB:
 
         Returns:
             List[Tuple[str, float]]: List of tuples containing the key and distance.
+                if return_metadata is True
+            List[Tuple[str, float, dict]]: List of tuples containing the key, distance and metadata.
         """
         return NotImplemented
 
-    def distance(self, embeddings_a: np.ndarray, embeddings_b: np.ndarray, metric: str = "cosine",
+    def distance(self, embeddings_a: EmbeddingsArray, embeddings_b: EmbeddingsArray, metric: str = "cosine",
                  alpha: float = 0.5,  # for alpha_divergence and tversky metrics
                  beta: float = 0.5,  # for tversky metric
                  p: float = 3,  # for minkowski and weighted_minkowski metrics
-                 euclidean_weights: Optional[np.ndarray] = None,  # required for weighted_euclidean and weighted_minkowski metrics
-                 covariance_matrix: Optional[np.ndarray] = None  # required for mahalanobis distance with user-defined covariance
+                 euclidean_weights: Optional[EmbeddingsArray] = None,  # required for weighted_euclidean and weighted_minkowski metrics
+                 covariance_matrix: Optional[EmbeddingsArray] = None  # required for mahalanobis distance with user-defined covariance
                  ) -> float:
         """
         Calculate the distance between two embeddings vectors using the specified distance metric.
@@ -317,7 +327,7 @@ class TextEmbeddingsStore:
         self.db = db
 
     @abc.abstractmethod
-    def get_text_embeddings(self, text: str) -> np.ndarray:
+    def get_text_embeddings(self, text: str) -> EmbeddingsArray:
         """Convert text to its corresponding embeddings.
 
         Args:
@@ -369,8 +379,8 @@ class TextEmbeddingsStore:
         Returns:
             float: The calculated distance.
         """
-        emb: np.ndarray = self.get_text_embeddings(text_a)
-        emb2: np.ndarray = self.get_text_embeddings(text_b)
+        emb: EmbeddingsArray = self.get_text_embeddings(text_a)
+        emb2: EmbeddingsArray = self.get_text_embeddings(text_b)
         return self.db.distance(emb, emb2, metric)
 
 
@@ -386,7 +396,7 @@ class FaceEmbeddingsStore:
         self.db = db
 
     @abc.abstractmethod
-    def get_face_embeddings(self, frame: np.ndarray) -> np.ndarray:
+    def get_face_embeddings(self, frame: EmbeddingsArray) -> EmbeddingsArray:
         """Convert an image frame to its corresponding face embeddings.
 
         Args:
@@ -397,7 +407,7 @@ class FaceEmbeddingsStore:
         """
         return NotImplemented
 
-    def add_face(self, user_id: str, frame: np.ndarray):
+    def add_face(self, user_id: str, frame: EmbeddingsArray):
         """Add a face and its embeddings to the database.
 
         Args:
@@ -407,7 +417,7 @@ class FaceEmbeddingsStore:
         Returns:
             np.ndarray: The stored face embeddings.
         """
-        emb: np.ndarray = self.get_face_embeddings(frame)
+        emb: EmbeddingsArray = self.get_face_embeddings(frame)
         return self.db.add_embeddings(user_id, emb)
 
     def delete_face(self, user_id: str):
@@ -421,7 +431,7 @@ class FaceEmbeddingsStore:
         """
         return self.db.delete_embeddings(user_id)
 
-    def predict(self, frame: np.ndarray, top_k: int = 3, thresh: float = 0.15) -> Optional[str]:
+    def predict(self, frame: EmbeddingsArray, top_k: int = 3, thresh: float = 0.15) -> Optional[str]:
         """Return the top predicted face closest to the given frame.
 
         Args:
@@ -440,7 +450,7 @@ class FaceEmbeddingsStore:
             return None
         return best[0]
 
-    def query(self, frame: np.ndarray, top_k: int = 5) -> List[Tuple[str, float]]:
+    def query(self, frame: EmbeddingsArray, top_k: int = 5) -> List[Tuple[str, float]]:
         """Query the database for the top_k closest face embeddings to the frame.
 
         Args:
@@ -453,7 +463,7 @@ class FaceEmbeddingsStore:
         emb = self.get_face_embeddings(frame)
         return self.db.query(emb, top_k)
 
-    def distance(self, face_a: np.ndarray, face_b: np.ndarray, metric: str = "cosine") -> float:
+    def distance(self, face_a: EmbeddingsArray, face_b: EmbeddingsArray, metric: str = "cosine") -> float:
         """Calculate the distance between embeddings of two faces.
 
         Args:
@@ -464,8 +474,8 @@ class FaceEmbeddingsStore:
         Returns:
             float: The calculated distance.
         """
-        emb: np.ndarray = self.get_face_embeddings(face_a)
-        emb2: np.ndarray = self.get_face_embeddings(face_b)
+        emb: EmbeddingsArray = self.get_face_embeddings(face_a)
+        emb2: EmbeddingsArray = self.get_face_embeddings(face_b)
         return self.db.distance(emb, emb2, metric)
 
 
@@ -481,7 +491,7 @@ class VoiceEmbeddingsStore:
         self.db = db
 
     @staticmethod
-    def audiochunk2array(audio_bytes: bytes) -> np.ndarray:
+    def audiochunk2array(audio_bytes: bytes) -> EmbeddingsArray:
         """Convert audio buffer to a normalized float32 NumPy array.
 
         Args:
@@ -498,7 +508,7 @@ class VoiceEmbeddingsStore:
         return data
 
     @abc.abstractmethod
-    def get_voice_embeddings(self, audio_data: np.ndarray) -> np.ndarray:
+    def get_voice_embeddings(self, audio_data: EmbeddingsArray) -> EmbeddingsArray:
         """Convert audio data to its corresponding voice embeddings.
 
         Args:
@@ -509,7 +519,7 @@ class VoiceEmbeddingsStore:
         """
         return NotImplemented
 
-    def add_voice(self, user_id: str, audio_data: np.ndarray):
+    def add_voice(self, user_id: str, audio_data: EmbeddingsArray):
         """Add a voice and its embeddings to the database.
 
         Args:
@@ -519,7 +529,7 @@ class VoiceEmbeddingsStore:
         Returns:
             np.ndarray: The stored voice embeddings.
         """
-        emb: np.ndarray = self.get_voice_embeddings(audio_data)
+        emb: EmbeddingsArray = self.get_voice_embeddings(audio_data)
         return self.db.add_embeddings(user_id, emb)
 
     def delete_voice(self, user_id: str):
@@ -533,7 +543,7 @@ class VoiceEmbeddingsStore:
         """
         return self.db.delete_embeddings(user_id)
 
-    def predict(self, audio_data: np.ndarray, top_k: int = 3, thresh: float = 0.75) -> Optional[str]:
+    def predict(self, audio_data: EmbeddingsArray, top_k: int = 3, thresh: float = 0.75) -> Optional[str]:
         """Return the top predicted voice closest to the given audio_data.
 
         Args:
@@ -550,7 +560,7 @@ class VoiceEmbeddingsStore:
             return None
         return best[0]
 
-    def query(self, audio_data: np.ndarray, top_k: int = 5) -> List[Tuple[str, float]]:
+    def query(self, audio_data: EmbeddingsArray, top_k: int = 5) -> List[Tuple[str, float]]:
         """Query the database for the top_k closest voice embeddings to the audio_data.
 
         Args:
@@ -563,7 +573,7 @@ class VoiceEmbeddingsStore:
         emb = self.get_voice_embeddings(audio_data)
         return self.db.query(emb, top_k)
 
-    def distance(self, voice_a: np.ndarray, voice_b: np.ndarray, metric: str = "cosine") -> float:
+    def distance(self, voice_a: EmbeddingsArray, voice_b: EmbeddingsArray, metric: str = "cosine") -> float:
         """Calculate the distance between embeddings of two voices.
 
         Args:
