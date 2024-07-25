@@ -16,62 +16,6 @@ from ovos_plugin_manager.language import OVOSLangTranslationFactory, OVOSLangDet
 from ovos_plugin_manager.templates.language import LanguageTranslator, LanguageDetector
 
 
-def _deprecate_context2lang():
-    """Decorator to deprecate the 'context' kwarg and replace it with 'lang'.
-    NOTE: can only be used in methods that accept "lang" as argument"""
-
-    def func_decorator(func):
-
-        @wraps(func)
-        def func_wrapper(*args, **kwargs):
-
-            # Inspect the function signature to ensure it has both 'lang' and 'context' parameters
-            signature = inspect.signature(func)
-            params = signature.parameters
-
-            if "context" in kwargs:
-                # NOTE: deprecate this at same time we
-                # standardize plugin namespaces to opm.XXX
-                log_deprecation("'context' kwarg has been deprecated, "
-                                "please pass 'lang' as it's own kwarg instead", "0.1.0")
-                if "lang" in kwargs["context"] and "lang" not in kwargs:
-                    kwargs["lang"] = kwargs["context"]["lang"]
-
-            # ensure valid kwargs
-            if "lang" not in params and "lang" in kwargs:
-                kwargs.pop("lang")
-            if "context" not in params and "context" in kwargs:
-                kwargs.pop("context")
-            return func(*args, **kwargs)
-
-        return func_wrapper
-
-    return func_decorator
-
-
-def _do_tx(solver, data, source_lang, target_lang):
-    if isinstance(data, str):
-        return solver.translate(data,
-                                source_lang=source_lang, target_lang=target_lang)
-    elif isinstance(data, list):
-        for idx, e in enumerate(data):
-            data[idx] = _do_tx(solver, e, source_lang=source_lang, target_lang=target_lang)
-    elif isinstance(data, dict):
-        for k, v in data.items():
-            data[k] = _do_tx(solver, v, source_lang=source_lang, target_lang=target_lang)
-    elif isinstance(data, tuple) and len(data) == 2:
-        if isinstance(data[0], str):
-            a = _do_tx(solver, data[0], source_lang=source_lang, target_lang=target_lang)
-        else:
-            a = data[0]
-        if isinstance(data[1], str):
-            b = _do_tx(solver, data[1], source_lang=source_lang, target_lang=target_lang)
-        else:
-            b = data[1]
-        return (a, b)
-    return data
-
-
 def auto_translate(translate_keys: List[str], translate_str_args=True):
     """ Decorator to ensure all kwargs in 'translate_keys' are translated to self.default_lang.
     data returned by the decorated function will be translated back to original language
@@ -160,17 +104,37 @@ def auto_detect_lang(text_keys: List[str]):
     return func_decorator
 
 
-def _call_with_sanitized_kwargs(func, *args, lang: Optional[str] = None):
-    # Inspect the function signature to ensure it has both 'lang' and 'context' parameters
-    params = inspect.signature(func).parameters
-    kwargs = {}
-    if "lang" in params:
-        # new style - only lang is passed
-        kwargs["lang"] = lang
-    elif "context" in kwargs:
-        # old style - when plugins received context only
-        kwargs["context"]["lang"] = lang
-    return func(*args, **kwargs)
+def _deprecate_context2lang():
+    """Decorator to deprecate the 'context' kwarg and replace it with 'lang'.
+    NOTE: can only be used in methods that accept "lang" as argument"""
+
+    def func_decorator(func):
+
+        @wraps(func)
+        def func_wrapper(*args, **kwargs):
+
+            # Inspect the function signature to ensure it has both 'lang' and 'context' parameters
+            signature = inspect.signature(func)
+            params = signature.parameters
+
+            if "context" in kwargs:
+                # NOTE: deprecate this at same time we
+                # standardize plugin namespaces to opm.XXX
+                log_deprecation("'context' kwarg has been deprecated, "
+                                "please pass 'lang' as it's own kwarg instead", "0.1.0")
+                if "lang" in kwargs["context"] and "lang" not in kwargs:
+                    kwargs["lang"] = kwargs["context"]["lang"]
+
+            # ensure valid kwargs
+            if "lang" not in params and "lang" in kwargs:
+                kwargs.pop("lang")
+            if "context" not in params and "context" in kwargs:
+                kwargs.pop("context")
+            return func(*args, **kwargs)
+
+        return func_wrapper
+
+    return func_decorator
 
 
 class AbstractSolver:
@@ -510,6 +474,7 @@ class QuestionSolver(AbstractSolver):
 
 class CorpusSolver(QuestionSolver):
     """Retrieval based question solver"""
+
     def __init__(self, config=None,
                  translator: Optional[LanguageTranslator] = None,
                  detector: Optional[LanguageDetector] = None,
@@ -744,3 +709,39 @@ class EntailmentSolver(AbstractSolver):
         """
         # check for entailment
         return self.check_entailment(premise, hypothesis, lang=lang)
+
+
+def _do_tx(solver, data, source_lang, target_lang):
+    if isinstance(data, str):
+        return solver.translate(data,
+                                source_lang=source_lang, target_lang=target_lang)
+    elif isinstance(data, list):
+        for idx, e in enumerate(data):
+            data[idx] = _do_tx(solver, e, source_lang=source_lang, target_lang=target_lang)
+    elif isinstance(data, dict):
+        for k, v in data.items():
+            data[k] = _do_tx(solver, v, source_lang=source_lang, target_lang=target_lang)
+    elif isinstance(data, tuple) and len(data) == 2:
+        if isinstance(data[0], str):
+            a = _do_tx(solver, data[0], source_lang=source_lang, target_lang=target_lang)
+        else:
+            a = data[0]
+        if isinstance(data[1], str):
+            b = _do_tx(solver, data[1], source_lang=source_lang, target_lang=target_lang)
+        else:
+            b = data[1]
+        return (a, b)
+    return data
+
+
+def _call_with_sanitized_kwargs(func, *args, lang: Optional[str] = None):
+    # Inspect the function signature to ensure it has both 'lang' and 'context' parameters
+    params = inspect.signature(func).parameters
+    kwargs = {}
+    if "lang" in params:
+        # new style - only lang is passed
+        kwargs["lang"] = lang
+    elif "context" in kwargs:
+        # old style - when plugins received context only
+        kwargs["context"]["lang"] = lang
+    return func(*args, **kwargs)
