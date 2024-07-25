@@ -141,11 +141,11 @@ class TestQuestionSolverBaseMethods(unittest.TestCase):
         solver.translator.translate.return_value = "a wild translation appears"
 
         # no translation
-        ans = solver.spoken_answer("some query")
+        ans = solver.spoken_answer("some query", lang="en")
         solver.translator.translate.assert_not_called()
 
         # translation
-        ans = solver.spoken_answer("not english", context={"lang": "unk"})
+        ans = solver.spoken_answer("not english", lang="unk")
         solver.translator.translate.assert_called()
 
 
