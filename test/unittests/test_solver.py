@@ -1,8 +1,10 @@
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 
+from ovos_plugin_manager.templates.solvers import QuestionSolver, auto_detect_lang, auto_translate, _deprecate_context2lang, AbstractSolver
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
-from ovos_plugin_manager.templates.solvers import QuestionSolver
+
+
 # TODO: Test Tldr, Evidence, MultipleChoice, Entailment
 
 
@@ -141,11 +143,11 @@ class TestQuestionSolverBaseMethods(unittest.TestCase):
         solver.translator.translate.return_value = "a wild translation appears"
 
         # no translation
-        ans = solver.spoken_answer("some query")
+        ans = solver.spoken_answer("some query", lang="en")
         solver.translator.translate.assert_not_called()
 
         # translation
-        ans = solver.spoken_answer("not english", context={"lang": "unk"})
+        ans = solver.spoken_answer("not english", lang="unk")
         solver.translator.translate.assert_called()
 
 
@@ -398,3 +400,76 @@ class TestReadingComprehensionSolver(unittest.TestCase):
             get_reading_comprehension_solver_supported_langs
         get_reading_comprehension_solver_supported_langs()
         get_supported_languages.assert_called_once_with(self.PLUGIN_TYPE)
+
+
+class TestAutoTranslate(unittest.TestCase):
+    def setUp(self):
+        self.solver = AbstractSolver(enable_tx=True, default_lang='en')
+        self.solver.translate = MagicMock(side_effect=lambda text, source_lang=None, target_lang=None: text[
+                                                                                                       ::-1] if source_lang and target_lang else text)
+
+    def test_auto_translate_decorator(self):
+        @auto_translate(translate_keys=['text'])
+        def test_func(solver, text, lang=None):
+            return text[::-1]
+
+        result = test_func(self.solver, 'hello', lang='es')
+        self.assertEqual(result, 'olleh')  # 'hello' reversed due to mock translation
+
+    def test_auto_translate_no_translation(self):
+        @auto_translate(translate_keys=['text'])
+        def test_func(solver, text, lang=None):
+            return text
+
+        result = test_func(self.solver, 'hello')
+        self.assertEqual(result, 'hello')
+
+
+class TestAutoDetectLang(unittest.TestCase):
+    def setUp(self):
+        self.solver = AbstractSolver()
+        self.solver.detect_language = MagicMock(return_value='en')
+
+    def test_auto_detect_lang_decorator(self):
+        self.solver.detector = Mock()
+        self.solver.detector.detect.return_value = "en"
+
+        @auto_detect_lang(text_keys=['text'])
+        def test_func(solver, text, lang=None):
+            return lang
+
+        result = test_func(self.solver, 'hello world')
+        self.assertEqual(result, 'en')
+
+    def test_auto_detect_lang_with_lang(self):
+        @auto_detect_lang(text_keys=['text'])
+        def test_func(solver, text, lang=None):
+            return lang
+
+        result = test_func(self.solver, 'hello', lang='es')
+        self.assertEqual(result, 'es')
+
+
+class TestDeprecateContext2Lang(unittest.TestCase):
+    def setUp(self):
+        self.solver = AbstractSolver()
+
+    def test_deprecate_context2lang(self):
+        @_deprecate_context2lang()
+        def test_func(solver, lang=None):
+            return lang
+
+        result = test_func(self.solver, context={'lang': 'en'})
+        self.assertEqual(result, 'en')
+
+    def test_no_context(self):
+        @_deprecate_context2lang()
+        def test_func(solver, lang=None):
+            return lang
+
+        result = test_func(self.solver, lang='fr')
+        self.assertEqual(result, 'fr')
+
+
+if __name__ == '__main__':
+    unittest.main()
