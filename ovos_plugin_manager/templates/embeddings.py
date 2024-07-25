@@ -356,18 +356,21 @@ class TextEmbeddingsStore:
         """
         self.db.delete_embeddings(document)
 
-    def query(self, document: str, top_k: int = 5) -> List[Tuple[str, float]]:
+    def query(self, document: str, top_k: int = 5,
+              return_metadata: bool = False) -> List[Tuple[str, float]]:
         """Query the database for the top_k closest embeddings to the document.
 
         Args:
             document (str): The document to query.
             top_k (int, optional): The number of top results to return. Defaults to 5.
+            return_metadata (bool, optional): Whether to include metadata in the results. Defaults to False.
 
         Returns:
             List[Tuple[str, float]]: List of tuples containing the document and distance.
         """
         embeddings = self.get_text_embeddings(document)
-        return self.db.query(embeddings, top_k)
+        return self.db.query(embeddings, top_k,
+                             return_metadata=return_metadata)
 
     def distance(self, text_a: str, text_b: str, metric: str = "cosine") -> float:
         """Calculate the distance between embeddings of two texts.
@@ -452,18 +455,21 @@ class FaceEmbeddingsStore:
             return None
         return best_match[0]
 
-    def query(self, frame: EmbeddingsArray, top_k: int = 5) -> List[Tuple[str, float]]:
+    def query(self, frame: EmbeddingsArray, top_k: int = 5,
+                return_metadata: bool = False) -> List[Tuple[str, float]]:
         """Query the database for the top_k closest face embeddings to the frame.
 
         Args:
             frame (np.ndarray): The input image frame containing a face.
             top_k (int, optional): The number of top results to return. Defaults to 5.
+            return_metadata (bool, optional): Whether to include metadata in the results. Defaults to False.
 
         Returns:
             List[Tuple[str, float]]: List of tuples containing the user ID and distance.
         """
         embeddings = self.get_face_embeddings(frame)
-        return self.db.query(embeddings, top_k)
+        return self.db.query(embeddings, top_k,
+                             return_metadata=return_metadata)
 
     def distance(self, face_a: EmbeddingsArray, face_b: EmbeddingsArray, metric: str = "cosine") -> float:
         """Calculate the distance between embeddings of two faces.
@@ -564,18 +570,21 @@ class VoiceEmbeddingsStore:
             return None
         return best_match[0]
 
-    def query(self, audio_data: EmbeddingsArray, top_k: int = 5) -> List[Tuple[str, float]]:
+    def query(self, audio_data: EmbeddingsArray, top_k: int = 5,
+                return_metadata: bool = False) -> List[Tuple[str, float]]:
         """Query the database for the top_k closest voice embeddings to the audio_data.
 
         Args:
             audio_data (np.ndarray): The input audio data.
             top_k (int, optional): The number of top results to return. Defaults to 5.
+            return_metadata (bool, optional): Whether to include metadata in the results. Defaults to False.
 
         Returns:
             List[Tuple[str, float]]: List of tuples containing the user ID and distance.
         """
         embeddings = self.get_voice_embeddings(audio_data)
-        return self.db.query(embeddings, top_k)
+        return self.db.query(embeddings, top_k,
+                             return_metadata=return_metadata)
 
     def distance(self, voice_a: EmbeddingsArray, voice_b: EmbeddingsArray, metric: str = "cosine") -> float:
         """Calculate the distance between embeddings of two voices.
