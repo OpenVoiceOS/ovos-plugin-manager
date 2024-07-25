@@ -192,9 +192,33 @@ class AbstractSolver:
         self.default_lang = internal_lang or self.config.get("lang", "en")
         if self.default_lang not in self.supported_langs:
             self.supported_langs.insert(0, self.default_lang)
-        self.translator = translator or OVOSLangTranslationFactory.create()
-        self.detector = detector or OVOSLangDetectionFactory.create()
+        self._translator = translator or OVOSLangTranslationFactory.create() if self.enable_tx else None
+        self._detector = detector or OVOSLangDetectionFactory.create() if self.enable_tx else None
         LOG.debug(f"{self.__class__.__name__} default language: {self.default_lang}")
+
+    @property
+    def detector(self):
+        """ language detector, lazy init on first access"""
+        if not self._detector:
+            # if it's being used, there is no recovery, do not try: except:
+            self._detector = OVOSLangDetectionFactory.create()
+        return self._detector
+
+    @detector.setter
+    def detector(self, val):
+        self._detector = val
+
+    @property
+    def translator(self):
+        """ language translator, lazy init on first access"""
+        if not self._translator:
+            # if it's being used, there is no recovery, do not try: except:
+            self._translator = OVOSLangTranslationFactory.create()
+        return self._translator
+
+    @translator.setter
+    def translator(self, val):
+        self._translator = val
 
     @staticmethod
     def sentence_split(text: str, max_sentences: int = 25) -> List[str]:
