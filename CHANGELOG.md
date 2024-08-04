@@ -1,11 +1,12 @@
 # Changelog
 
-## [0.0.26a37](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a37) (2024-07-25)
+## [0.0.26a38](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a38) (2024-08-04)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a37)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a38)
 
 **Implemented enhancements:**
 
+- feat/units\_kwarg\_solvers [\#247](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/247) ([JarbasAl](https://github.com/JarbasAl))
 - feat/metadata [\#246](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/246) ([JarbasAl](https://github.com/JarbasAl))
 - feat/embeddings\_metadata\_support [\#245](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/245) ([JarbasAl](https://github.com/JarbasAl))
 - feat/add\_rerank\_method [\#243](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/243) ([JarbasAl](https://github.com/JarbasAl))
