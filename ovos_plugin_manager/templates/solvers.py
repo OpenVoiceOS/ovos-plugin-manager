@@ -311,7 +311,7 @@ class QuestionSolver(AbstractSolver):
     @abc.abstractmethod
     def get_spoken_answer(self, query: str,
                           lang: Optional[str] = None,
-                          units: Optional[str] = None) -> str:
+                          units: Optional[str] = None) -> Optional[str]:
         """
         Obtain the spoken answer for a given query.
 
@@ -347,7 +347,7 @@ class QuestionSolver(AbstractSolver):
     @_deprecate_context2lang()
     def get_data(self, query: str,
                  lang: Optional[str] = None,
-                 units: Optional[str] = None) -> Optional[Dict]:
+                 units: Optional[str] = None) -> Optional[Dict[str, str]]:
         """
         Retrieve data for the given query.
 
@@ -381,7 +381,7 @@ class QuestionSolver(AbstractSolver):
     @_deprecate_context2lang()
     def get_expanded_answer(self, query: str,
                             lang: Optional[str] = None,
-                            units: Optional[str] = None) -> List[dict]:
+                            units: Optional[str] = None) -> List[Dict[str, str]]:
         """
         Get an expanded list of steps to elaborate on the answer.
 
@@ -403,7 +403,7 @@ class QuestionSolver(AbstractSolver):
     @auto_translate(translate_keys=["query"])
     def search(self, query: str,
                lang: Optional[str] = None,
-               units: Optional[str] = None) -> dict:
+               units: Optional[str] = None) -> Optional[Dict]:
         """
         Perform a search with automatic translation and caching.
 
@@ -441,7 +441,7 @@ class QuestionSolver(AbstractSolver):
     @auto_translate(translate_keys=["query"])
     def visual_answer(self, query: str,
                       lang: Optional[str] = None,
-                      units: Optional[str] = None) -> str:
+                      units: Optional[str] = None) -> Optional[str]:
         """
         Retrieve the image associated with the query with automatic translation and caching.
 
@@ -465,7 +465,7 @@ class QuestionSolver(AbstractSolver):
     @auto_translate(translate_keys=["query"])
     def spoken_answer(self, query: str,
                       lang: Optional[str] = None,
-                      units: Optional[str] = None) -> str:
+                      units: Optional[str] = None) -> Optional[str]:
         """
         Retrieve the spoken answer for the query with automatic translation and caching.
 
@@ -500,7 +500,7 @@ class QuestionSolver(AbstractSolver):
     @auto_translate(translate_keys=["query"])
     def long_answer(self, query: str,
                     lang: Optional[str] = None,
-                    units: Optional[str] = None) -> List[Dict]:
+                    units: Optional[str] = None) -> List[Dict[str, str]]:
         """
         Retrieve a detailed list of steps to expand the answer.
 
@@ -566,7 +566,7 @@ class CorpusSolver(QuestionSolver):
 
     @auto_detect_lang(text_keys=["query"])
     @auto_translate(translate_keys=["query"])
-    def get_spoken_answer(self, query: str, lang: Optional[str] = None) -> str:
+    def get_spoken_answer(self, query: str, lang: Optional[str] = None) -> Optional[str]:
         # Query the corpus
         answers = [a[1] for a in self.retrieve_from_corpus(query, lang=lang,
                                                            k=self.config.get("n_answer", 1))]
@@ -818,6 +818,10 @@ def _call_with_sanitized_kwargs(func, *args: Any,
     """
     params = inspect.signature(func).parameters
     kwargs = {}
+
+    # ensure context is passed, it didn't used to be optional
+    if "context" in params and "context" not in kwargs:
+        kwargs["context"] = {}
 
     if "lang" in params:
         # new style - only lang/units is passed
