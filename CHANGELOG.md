@@ -1,8 +1,8 @@
 # Changelog
 
-## [0.0.26a38](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a38) (2024-08-04)
+## [0.0.26a39](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.0.26a39) (2024-08-05)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a38)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.0.26a39)
 
 **Implemented enhancements:**
 
@@ -20,6 +20,7 @@
 **Fixed bugs:**
 
 - abstractmethod decorator breaks OCP 0.0.6 compat. [\#229](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/229)
+- fix/context\_kwarg\_backwards\_compat [\#248](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/248) ([JarbasAl](https://github.com/JarbasAl))
 - refactor/solver\_decorators [\#244](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/244) ([JarbasAl](https://github.com/JarbasAl))
 - fix/missing\_property [\#239](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/239) ([JarbasAl](https://github.com/JarbasAl))
 - ensure cache dir exists [\#232](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/232) ([JarbasAl](https://github.com/JarbasAl))
