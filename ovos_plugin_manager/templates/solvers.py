@@ -121,7 +121,7 @@ def _deprecate_context2lang():
                 # NOTE: deprecate this at same time we
                 # standardize plugin namespaces to opm.XXX
                 log_deprecation("'context' kwarg has been deprecated, "
-                                "please pass 'lang' as it's own kwarg instead", "0.1.0")
+                                "please pass 'lang' as it's own kwarg instead", "1.0.0")
                 if "lang" in kwargs["context"] and "lang" not in kwargs:
                     kwargs["lang"] = kwargs["context"]["lang"]
 
