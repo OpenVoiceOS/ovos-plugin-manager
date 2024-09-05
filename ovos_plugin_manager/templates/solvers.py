@@ -1,19 +1,14 @@
-# Original AbstractSolver class taken from: https://github.com/Neongeckocom/neon_solvers, licensed under BSD-3
-# QuestionSolver Improvements and other solver classes are OVOS originals licensed under Apache 2.0
-
 import abc
 import inspect
-from functools import wraps, lru_cache
+from functools import wraps
 from typing import Optional, List, Iterable, Tuple, Dict, Union, Any
 
 from json_database import JsonStorageXDG
-from ovos_utils import flatten_list
 from ovos_utils.log import LOG, log_deprecation
 from ovos_utils.xdg_utils import xdg_cache_home
-from quebra_frases import sentence_tokenize
 
-from ovos_plugin_manager.language import OVOSLangTranslationFactory, OVOSLangDetectionFactory
 from ovos_plugin_manager.templates.language import LanguageTranslator, LanguageDetector
+from ovos_plugin_manager.thirdparty.solvers import AbstractSolver
 
 
 def auto_translate(translate_keys: List[str], translate_str_args=True):
@@ -135,135 +130,6 @@ def _deprecate_context2lang():
         return func_wrapper
 
     return func_decorator
-
-
-class AbstractSolver:
-    """Base class for solvers that perform various NLP tasks."""
-
-    def __init__(self, config=None,
-                 translator: Optional[LanguageTranslator] = None,
-                 detector: Optional[LanguageDetector] = None,
-                 priority=50,
-                 enable_tx=False,
-                 enable_cache=False,
-                 internal_lang: Optional[str] = None,
-                 *args, **kwargs):
-        self.priority = priority
-        self.enable_tx = enable_tx
-        self.enable_cache = enable_cache
-        self.config = config or {}
-        self.supported_langs = self.config.get("supported_langs") or []
-        self.default_lang = internal_lang or self.config.get("lang", "en")
-        if self.default_lang not in self.supported_langs:
-            self.supported_langs.insert(0, self.default_lang)
-        self._translator = translator or OVOSLangTranslationFactory.create() if self.enable_tx else None
-        self._detector = detector or OVOSLangDetectionFactory.create() if self.enable_tx else None
-        LOG.debug(f"{self.__class__.__name__} default language: {self.default_lang}")
-
-    @property
-    def detector(self):
-        """ language detector, lazy init on first access"""
-        if not self._detector:
-            # if it's being used, there is no recovery, do not try: except:
-            self._detector = OVOSLangDetectionFactory.create()
-        return self._detector
-
-    @detector.setter
-    def detector(self, val):
-        self._detector = val
-
-    @property
-    def translator(self):
-        """ language translator, lazy init on first access"""
-        if not self._translator:
-            # if it's being used, there is no recovery, do not try: except:
-            self._translator = OVOSLangTranslationFactory.create()
-        return self._translator
-
-    @translator.setter
-    def translator(self, val):
-        self._translator = val
-
-    @staticmethod
-    def sentence_split(text: str, max_sentences: int = 25) -> List[str]:
-        """
-        Split text into sentences.
-
-        :param text: Input text.
-        :param max_sentences: Maximum number of sentences to return.
-        :return: List of sentences.
-        """
-        try:
-            # sentence_tokenize occasionally has issues with \n for some reason
-            return flatten_list([sentence_tokenize(t)
-                                 for t in text.split("\n")])[:max_sentences]
-        except Exception as e:
-            LOG.exception(f"Error in sentence_split: {e}")
-            return [text]
-
-    @lru_cache(maxsize=128)
-    def detect_language(self, text: str) -> str:
-        """
-        Detect the language of the input text.
-
-        :param text: Input text.
-        :return: Detected language code.
-        """
-        return self.detector.detect(text)
-
-    @lru_cache(maxsize=128)
-    def translate(self, text: str,
-                  target_lang: Optional[str] = None,
-                  source_lang: Optional[str] = None) -> str:
-        """
-        Translate text from source_lang to target_lang.
-
-        :param text: Input text.
-        :param target_lang: Target language code.
-        :param source_lang: Source language code.
-        :return: Translated text.
-        """
-        source_lang = source_lang or self.detect_language(text)
-        target_lang = target_lang or self.default_lang
-        if source_lang.split("-")[0] == target_lang.split("-")[0]:
-            return text  # skip translation
-        return self.translator.translate(text,
-                                         target=target_lang,
-                                         source=source_lang)
-
-    def translate_list(self, data: List[str],
-                       target_lang: Optional[str] = None,
-                       source_lang: Optional[str] = None) -> List[str]:
-        """
-        Translate a list of strings from source_lang to target_lang.
-
-        :param data: List of strings.
-        :param target_lang: Target language code.
-        :param source_lang: Source language code.
-        :return: List of translated strings.
-        """
-        return self.translator.translate_list(data,
-                                              lang_tgt=target_lang,
-                                              lang_src=source_lang)
-
-    def translate_dict(self, data: Dict[str, str],
-                       target_lang: Optional[str] = None,
-                       source_lang: Optional[str] = None) -> Dict[str, str]:
-        """
-        Translate a dictionary of strings from source_lang to target_lang.
-
-        :param data: Dictionary of strings.
-        :param target_lang: Target language code.
-        :param source_lang: Source language code.
-        :return: Dictionary of translated strings.
-        """
-        return self.translator.translate_dict(data,
-                                              lang_tgt=target_lang,
-                                              lang_src=source_lang)
-
-    def shutdown(self):
-        """Module specific shutdown method."""
-        pass
 
 
 class QuestionSolver(AbstractSolver):
