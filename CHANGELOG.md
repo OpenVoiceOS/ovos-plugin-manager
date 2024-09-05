@@ -1,8 +1,8 @@
 # Changelog
 
-## [0.1.0](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.1.0) (2024-09-02)
+## [0.1.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.1.1a1) (2024-09-05)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.1.0)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V...0.1.1a1)
 
 **Implemented enhancements:**
 
@@ -36,6 +36,7 @@
 
 **Merged pull requests:**
 
+- planned\_deprecations [\#254](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/254) ([JarbasAl](https://github.com/JarbasAl))
 - refactor/improve\_readwritestream [\#234](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/234) ([JarbasAl](https://github.com/JarbasAl))
 - refactor/deprecation\_warnings [\#233](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/233) ([JarbasAl](https://github.com/JarbasAl))
 - fix/py3.12 [\#231](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/231) ([JarbasAl](https://github.com/JarbasAl))
