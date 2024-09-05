@@ -9,7 +9,7 @@ from os.path import isfile, join
 from pathlib import Path
 from queue import Queue
 from threading import Thread
-from typing import AsyncIterable, List, Dict
+from typing import AsyncIterable, List, Dict, Tuple, Optional
 
 import quebra_frases
 import requests
@@ -21,7 +21,6 @@ from ovos_config.locations import get_xdg_cache_save_path
 from ovos_utils import classproperty
 from ovos_utils.fakebus import FakeBus
 from ovos_utils.file_utils import get_cache_directory
-from ovos_utils.file_utils import resolve_resource_file
 from ovos_utils.lang.visimes import VISIMES
 from ovos_utils.log import LOG, deprecated, log_deprecation
 from ovos_utils.metrics import Stopwatch
@@ -131,6 +130,42 @@ class TTSContext:
     def curate_caches(cls):
         for cache in TTSContext._caches.values():
             cache.curate()
+
+    ###########
+    # deprecated methods
+    @deprecated("'get_message' has been deprecated without replacement", "1.0.0")
+    def get_message(self, kwargs) -> Optional[Message]:
+        msg = kwargs.get("message") or dig_for_message()
+        if msg and isinstance(msg, Message):
+            return msg
+
+    @deprecated("'self.get_lang' has been deprecated, access self.lang directly", "1.0.0")
+    def get_lang(self, kwargs) -> str:
+        return kwargs.get("lang") or self.lang
+
+    @deprecated("'self.get_gender' has been deprecated, access self.voice and self.lang directly", "1.0.0")
+    def get_gender(self, kwargs) -> Optional[str]:
+        gender = kwargs.get("gender")
+        message = self.get_message(kwargs)
+        if not gender and message:
+            gender = message.data.get("gender") or \
+                     message.context.get("gender")
+        return gender
+
+    @deprecated("'self.get_voice' has been deprecated, access self.voice directly", "1.0.0")
+    def get_voice(self, kwargs):
+        voice = kwargs.get("voice")
+        message = self.get_message(kwargs)
+        if not voice and message:
+            # get voice from message object if possible
+            voice = message.data.get("voice") or \
+                    message.context.get("voice")
+        return voice or self.voice
+
+    @deprecated("'self.get' has been deprecated, access self.voice and self.lang directly", "1.0.0")
+    def get(self, kwargs=None) -> Tuple[str, Optional[str]]:
+        kwargs = kwargs or {}
+        return self.get_lang(kwargs), self.get_voice(kwargs)
 
 
 class TTS:
