@@ -64,7 +64,7 @@ class STT(metaclass=ABCMeta):
 
     @property
     @deprecated("self.recognizer has been deprecated! "
-                "if you need it 'from speech_recognition import Recognizer' directly", "0.1.0")
+                "if you need it 'from speech_recognition import Recognizer' directly", "1.0.0")
     def recognizer(self):
         # only imported here to not drag dependency
         from speech_recognition import Recognizer
@@ -89,7 +89,7 @@ class STT(metaclass=ABCMeta):
 
     @property
     @deprecated("self.keys has been deprecated! "
-                "implement config handling directly instead", "0.1.0")
+                "implement config handling directly instead", "1.0.0")
     def keys(self):
         return self._keys or self.config_core.get("keys", {})
 
@@ -100,7 +100,7 @@ class STT(metaclass=ABCMeta):
 
     @property
     @deprecated("self.credential has been deprecated! "
-                "implement config handling directly instead", "0.1.0")
+                "implement config handling directly instead", "1.0.0")
     def credential(self):
         return self._credential or self.config.get("credential", {})
 
@@ -111,7 +111,7 @@ class STT(metaclass=ABCMeta):
 
     @staticmethod
     @deprecated("self.init_language has been deprecated! "
-                "implement config handling directly instead", "0.1.0")
+                "implement config handling directly instead", "1.0.0")
     def init_language(config_core):
         lang = config_core.get("lang", "en-US")
         langs = lang.split("-")
@@ -141,14 +141,14 @@ class STT(metaclass=ABCMeta):
 
 
 class TokenSTT(STT, metaclass=ABCMeta):
-    @deprecated("TokenSTT is deprecated, please subclass from STT directly", "0.1.0")
+    @deprecated("TokenSTT is deprecated, please subclass from STT directly", "1.0.0")
     def __init__(self, config=None):
         super().__init__(config)
         self.token = self.credential.get("token")
 
 
 class GoogleJsonSTT(STT, metaclass=ABCMeta):
-    @deprecated("GoogleJsonSTT is deprecated, please subclass from STT directly", "0.1.0")
+    @deprecated("GoogleJsonSTT is deprecated, please subclass from STT directly", "1.0.0")
     def __init__(self, config=None):
         super().__init__(config)
         if not self.credential.get("json") or self.keys.get("google_cloud"):
@@ -157,7 +157,7 @@ class GoogleJsonSTT(STT, metaclass=ABCMeta):
 
 
 class BasicSTT(STT, metaclass=ABCMeta):
-    @deprecated("BasicSTT is deprecated, please subclass from STT directly", "0.1.0")
+    @deprecated("BasicSTT is deprecated, please subclass from STT directly", "1.0.0")
     def __init__(self, config=None):
         super().__init__(config)
         self.username = str(self.credential.get("username"))
@@ -166,7 +166,7 @@ class BasicSTT(STT, metaclass=ABCMeta):
 
 class KeySTT(STT, metaclass=ABCMeta):
 
-    @deprecated("KeySTT is deprecated, please subclass from STT directly", "0.1.0")
+    @deprecated("KeySTT is deprecated, please subclass from STT directly", "1.0.0")
     def __init__(self, config=None):
         super().__init__(config)
         self.id = str(self.credential.get("client_id"))

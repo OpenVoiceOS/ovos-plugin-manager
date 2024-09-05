@@ -733,7 +733,7 @@ class TTS:
     # below code is all deprecated and marked for removal in next stable release
     @property
     @deprecated("self.enclosure has been deprecated, use EnclosureAPI directly decoupled from the plugin code",
-                "0.1.0")
+                "1.0.0")
     def enclosure(self):
         """Deprecated. Accessor for the enclosure property.
 
@@ -747,7 +747,7 @@ class TTS:
 
     @enclosure.setter
     @deprecated("self.enclosure has been deprecated, use EnclosureAPI directly decoupled from the plugin code",
-                "0.1.0")
+                "1.0.0")
     def enclosure(self, val):
         """Deprecated. Setter for the enclosure property.
 
@@ -758,7 +758,7 @@ class TTS:
 
     @property
     @deprecated("self.filename has been deprecated, unused for a long time now",
-                "0.1.0")
+                "1.0.0")
     def filename(self):
         """Deprecated. Accessor for the filename property.
 
@@ -770,7 +770,7 @@ class TTS:
 
     @filename.setter
     @deprecated("self.filename has been deprecated, unused for a long time now",
-                "0.1.0")
+                "1.0.0")
     def filename(self, val):
         """Deprecated. Setter for the filename property.
 
@@ -780,7 +780,7 @@ class TTS:
 
     @property
     @deprecated("self.tts_id has been deprecated, use TTSContext().tts_id",
-                "0.1.0")
+                "1.0.0")
     def tts_id(self):
         """Deprecated. Accessor for the tts_id property.
 
@@ -791,7 +791,7 @@ class TTS:
 
     @property
     @deprecated("self.cache has been deprecated, use TTSContext().get_cache",
-                "0.1.0")
+                "1.0.0")
     def cache(self):
         """Deprecated. Accessor for the cache property.
 
@@ -803,7 +803,7 @@ class TTS:
 
     @cache.setter
     @deprecated("self.cache has been deprecated, use TTSContext().get_cache",
-                "0.1.0")
+                "1.0.0")
     def cache(self, val):
         """Deprecated. Setter for the cache property.
 
@@ -813,7 +813,7 @@ class TTS:
         TTSContext._caches[self.tts_id] = val
 
     @deprecated("get_voice was never formally adopted and is unused, it will be removed",
-                "0.1.0")
+                "1.0.0")
     def get_voice(self, gender, lang=None):
         """Deprecated. Get a valid voice for the TTS engine.
 
@@ -827,7 +827,7 @@ class TTS:
         return gender
 
     @deprecated("get_cache has been deprecated, use TTSContext().get_cache directly",
-                "0.1.0")
+                "1.0.0")
     def get_cache(self, voice=None, lang=None):
         """Deprecated. Get the cache associated with the TTS context.
 
@@ -841,14 +841,14 @@ class TTS:
         return self._get_ctxt().get_cache(self.audio_ext, self.config)
 
     @deprecated("clear_cache has been deprecated, use TTSContext().get_cache directly",
-                "0.1.0")
+                "1.0.0")
     def clear_cache(self):
         """Deprecated. Clear all cached files."""
         cache = self._get_ctxt().get_cache(self.audio_ext, self.config)
         cache.clear()
 
     @deprecated("save_phonemes has been deprecated, use TTSContext().get_cache directly",
-                "0.1.0")
+                "1.0.0")
     def save_phonemes(self, key, phonemes):
         """Deprecated. Cache phonemes.
 
@@ -865,7 +865,7 @@ class TTS:
         return phoneme_file
 
     @deprecated("load_phonemes has been deprecated, use TTSContext().get_cache directly",
-                "0.1.0")
+                "1.0.0")
     def load_phonemes(self, key):
         """Deprecated. Load phonemes from cache file.
 
@@ -880,7 +880,7 @@ class TTS:
         return phoneme_file.load()
 
     @deprecated("get_from_cache has been deprecated, use TTSContext().get_from_cache directly",
-                "0.1.0")
+                "1.0.0")
     def get_from_cache(self, sentence):
         """Deprecated. Get data from the cache.
 
@@ -902,7 +902,7 @@ class TTS:
 
     @lang.setter
     @deprecated("language is defined per request in get_tts, self.lang is not used",
-                "0.1.0")
+                "1.0.0")
     def lang(self, val):
         LOG.warning("self.lang can not be set! it comes from the bus message")
 
@@ -1186,7 +1186,7 @@ class RemoteTTS(TTS):
     """
 
     @deprecated("RemoteTTS has been deprecated, please use the regular TTS class",
-                "0.1.0")
+                "1.0.0")
     def __init__(self, lang, config, url, api_path, validator):
         super(RemoteTTS, self).__init__(lang, config, validator)
         self.api_path = api_path
