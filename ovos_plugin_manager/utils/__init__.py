@@ -18,7 +18,7 @@ from threading import Event, Lock
 from typing import Optional
 
 import pkg_resources
-from ovos_utils.log import LOG
+from ovos_utils.log import LOG, log_deprecation
 
 
 class PluginTypes(str, Enum):
@@ -198,7 +198,9 @@ class ReadWriteStream:
     with an optional maximum buffer size
     """
 
-    def __init__(self, s=b'', max_size=None):
+    def __init__(self, s=b'', chop_samples=-1, max_size=None):
+        if chop_samples != -1:
+            log_deprecation("'chop_samples' kwarg has been deprecated and will be ignored", "1.0.0")
         self.buffer = deque(s)
         self.write_event = Event()
         self.lock = Lock()

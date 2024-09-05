@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 from unittest.mock import patch, Mock
 
 from ovos_bus_client.session import Session
-from ovos_config import Configuration
 from ovos_utils.fakebus import FakeBus, Message
 
 from ovos_plugin_manager.templates.tts import TTS, TTSContext
@@ -119,24 +118,8 @@ class TestTTSTemplate(unittest.TestCase):
         tagged_with_exclusion = TTS.format_speak_tags("Don't<speak>Speak This.</speak>But Not this.", False)
         self.assertEqual(tagged_with_exclusion, valid_output)
 
-    def test_playback_thread(self):
-        pass
-        # TODO
-
-    def test_tts_context(self):
-        pass
-        # TODO
-
     def test_tts_validator(self):
-        pass
-        # TODO
-
-    def test_concat_tts(self):
-        pass
-        # TODO
-
-    def test_remote_tt(self):
-        pass
+        from ovos_plugin_manager.templates.tts import TTSValidator
         # TODO
 
 
@@ -193,15 +176,15 @@ class TestTTS(unittest.TestCase):
                                            self.CONFIG_SECTION, None)
 
     def test_get_voice_id(self):
-        pass
+        from ovos_plugin_manager.tts import get_voice_id
         # TODO
 
     def test_scan_voices(self):
-        pass
+        from ovos_plugin_manager.tts import scan_voices
         # TODO
 
     def test_get_voices(self):
-        pass
+        from ovos_plugin_manager.tts import get_voices
         # TODO
 
 
