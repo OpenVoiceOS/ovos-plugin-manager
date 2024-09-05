@@ -140,7 +140,7 @@ class OVOSTTSFactory:
         }
         """
         config = config or get_tts_config()
-        tts_module = config.get("module") or "dummy"
+        tts_module = config.get("module") or "ovos-tts-plugin-dummy"
         return load_tts_plugin(tts_module)
 
     @staticmethod
@@ -155,7 +155,7 @@ class OVOSTTSFactory:
         }
         """
         tts_config = get_tts_config(config)
-        tts_module = tts_config.get('module', 'dummy')
+        tts_module = tts_config.get('module', 'ovos-tts-plugin-dummy')
         try:
             clazz = OVOSTTSFactory.get_class(tts_config)
             if clazz:
@@ -173,6 +173,7 @@ class OVOSTTSFactory:
                           f'\nAvailable modules: {modules}')
             raise
         return tts
+
 
 if __name__ == "__main__":
     lang = "en-us"

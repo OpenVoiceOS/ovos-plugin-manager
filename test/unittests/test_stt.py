@@ -91,18 +91,11 @@ class TestSTT(unittest.TestCase):
 
 
 class TestSTTFactory(unittest.TestCase):
-    def test_mappings(self):
-        from ovos_plugin_manager.stt import OVOSSTTFactory
-        self.assertIsInstance(OVOSSTTFactory.MAPPINGS, dict)
-        for key in OVOSSTTFactory.MAPPINGS:
-            self.assertIsInstance(key, str)
-            self.assertIsInstance(OVOSSTTFactory.MAPPINGS[key], str)
-            self.assertNotEqual(key, OVOSSTTFactory.MAPPINGS[key])
 
     @patch("ovos_plugin_manager.stt.load_stt_plugin")
     def test_get_class(self, load_plugin):
         from ovos_plugin_manager.stt import OVOSSTTFactory
-        global_config = {"stt": {"module": "dummy"}}
+        global_config = {"stt": {"module": "ovos-stt-plugin-dummy"}}
         tts_config = {"module": "test-stt-plugin-test"}
 
         # Test load plugin mapped global config
@@ -120,7 +113,7 @@ class TestSTTFactory(unittest.TestCase):
         get_class.return_value = plugin_class
 
         global_config = {"lang": "en-gb",
-                         "stt": {"module": "dummy",
+                         "stt": {"module": "ovos-stt-plugin-dummy",
                                  "ovos-stt-plugin-dummy": {"config": True,
                                                            "lang": "en-ca"}}}
         stt_config = {"lang": "es-es",

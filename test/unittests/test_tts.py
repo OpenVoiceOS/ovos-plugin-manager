@@ -206,18 +206,11 @@ class TestTTS(unittest.TestCase):
 
 
 class TestTTSFactory(unittest.TestCase):
-    def test_mappings(self):
-        from ovos_plugin_manager.tts import OVOSTTSFactory
-        self.assertIsInstance(OVOSTTSFactory.MAPPINGS, dict)
-        for key in OVOSTTSFactory.MAPPINGS:
-            self.assertIsInstance(key, str)
-            self.assertIsInstance(OVOSTTSFactory.MAPPINGS[key], str)
-            self.assertNotEqual(key, OVOSTTSFactory.MAPPINGS[key])
 
     @patch("ovos_plugin_manager.tts.load_tts_plugin")
     def test_get_class(self, load_plugin):
         from ovos_plugin_manager.tts import OVOSTTSFactory
-        global_config = {"tts": {"module": "dummy"}}
+        global_config = {"tts": {"module": "ovos-tts-plugin-dummy"}}
         tts_config = {"module": "test-tts-plugin-test"}
 
         # Test load plugin mapped global config
@@ -235,7 +228,7 @@ class TestTTSFactory(unittest.TestCase):
         get_class.return_value = plugin_class
 
         global_config = {"lang": "en-gb",
-                         "tts": {"module": "dummy",
+                         "tts": {"module": "ovos-tts-plugin-dummy",
                                  "ovos-tts-plugin-dummy": {"config": True,
                                                            "lang": "en-ca"}}}
         tts_config = {"lang": "es-es",
