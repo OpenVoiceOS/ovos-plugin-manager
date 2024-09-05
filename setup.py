@@ -65,6 +65,7 @@ setup(
     packages=['ovos_plugin_manager',
               'ovos_plugin_manager.templates',
               'ovos_plugin_manager.utils',
+              'ovos_plugin_manager.thirdparty',
               'ovos_plugin_manager.hardware',
               'ovos_plugin_manager.hardware.led'],
     url='https://github.com/OpenVoiceOS/OVOS-plugin-manager',
