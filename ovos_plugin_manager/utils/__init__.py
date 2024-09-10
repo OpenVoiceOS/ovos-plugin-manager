@@ -22,6 +22,7 @@ from ovos_utils.log import LOG, log_deprecation
 
 
 class PluginTypes(str, Enum):
+    TRIPLES = "opm.triples"
     PIPELINE = "opm.pipeline"
     EMBEDDINGS = "opm.embeddings"
     FACE_EMBEDDINGS = "opm.embeddings.face"
@@ -64,6 +65,7 @@ class PluginTypes(str, Enum):
 
 
 class PluginConfigTypes(str, Enum):
+    TRIPLES = "opm.triples.config"
     PIPELINE = "opm.pipeline.config"
     EMBEDDINGS = "opm.embeddings.config"
     FACE_EMBEDDINGS = "opm.embeddings.face.config"
