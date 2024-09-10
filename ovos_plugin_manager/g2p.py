@@ -3,23 +3,6 @@ from typing import Optional
 from ovos_plugin_manager.utils import normalize_lang, PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.g2p import Grapheme2PhonemePlugin, PhonemeAlphabet
 from ovos_utils.log import LOG
-from ovos_config import Configuration
-
-
-def find_plugins(*args, **kwargs):
-    # TODO: Deprecate in 0.1.0
-    LOG.warning("This reference is deprecated. "
-                "Import from ovos_plugin_manager.utils directly")
-    from ovos_plugin_manager.utils import find_plugins
-    return find_plugins(*args, **kwargs)
-
-
-def load_plugin(*args, **kwargs):
-    # TODO: Deprecate in 0.1.0
-    LOG.warning("This reference is deprecated. "
-                "Import from ovos_plugin_manager.utils directly")
-    from ovos_plugin_manager.utils import load_plugin
-    return load_plugin(*args, **kwargs)
 
 
 def find_g2p_plugins() -> dict:

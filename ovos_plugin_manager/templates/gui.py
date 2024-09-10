@@ -1,6 +1,6 @@
 from ovos_bus_client import Message
 from ovos_bus_client import MessageBusClient
-from ovos_utils.gui import GUIInterface
+from ovos_bus_client.apis.gui import GUIInterface
 from ovos_utils.log import LOG
 from ovos_config import Configuration
 

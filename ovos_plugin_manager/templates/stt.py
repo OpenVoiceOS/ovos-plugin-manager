@@ -8,9 +8,11 @@ import json
 from abc import ABCMeta, abstractmethod
 from queue import Queue
 from threading import Thread, Event
+from typing import List, Tuple, Optional
 
 from ovos_config import Configuration
 from ovos_utils import classproperty
+from ovos_utils.log import deprecated
 from ovos_utils.process_utils import RuntimeRequirements
 
 from ovos_plugin_manager.utils.config import get_plugin_config
@@ -20,8 +22,6 @@ class STT(metaclass=ABCMeta):
     """ STT Base class, all  STT backends derives from this one. """
 
     def __init__(self, config=None):
-        # only imported here to not drag dependency
-        from speech_recognition import Recognizer
         self.config_core = Configuration()
         self._lang = None
         self._credential = None
@@ -30,7 +30,7 @@ class STT(metaclass=ABCMeta):
         self.config = get_plugin_config(config, "stt")
 
         self.can_stream = False
-        self.recognizer = Recognizer()
+        self._recognizer = None
 
     @classproperty
     def runtime_requirements(self):
@@ -63,10 +63,24 @@ class STT(metaclass=ABCMeta):
         return RuntimeRequirements()
 
     @property
+    @deprecated("self.recognizer has been deprecated! "
+                "if you need it 'from speech_recognition import Recognizer' directly", "1.0.0")
+    def recognizer(self):
+        # only imported here to not drag dependency
+        from speech_recognition import Recognizer
+        if not self._recognizer:
+            self._recognizer = Recognizer()
+        return self._recognizer
+
+    @recognizer.setter
+    def recognizer(self, val):
+        self._recognizer = val
+
+    @property
     def lang(self):
         return self._lang or \
-               self.config.get("lang") or \
-               self.init_language(self.config_core)
+            self.config.get("lang") or \
+            Configuration().get("lang", "en-us")
 
     @lang.setter
     def lang(self, val):
@@ -74,6 +88,8 @@ class STT(metaclass=ABCMeta):
         self._lang = val
 
     @property
+    @deprecated("self.keys has been deprecated! "
+                "implement config handling directly instead", "1.0.0")
     def keys(self):
         return self._keys or self.config_core.get("keys", {})
 
@@ -83,6 +99,8 @@ class STT(metaclass=ABCMeta):
         self._keys = val
 
     @property
+    @deprecated("self.credential has been deprecated! "
+                "implement config handling directly instead", "1.0.0")
     def credential(self):
         return self._credential or self.config.get("credential", {})
 
@@ -92,6 +110,8 @@ class STT(metaclass=ABCMeta):
         self._credential = val
 
     @staticmethod
+    @deprecated("self.init_language has been deprecated! "
+                "implement config handling directly instead", "1.0.0")
     def init_language(config_core):
         lang = config_core.get("lang", "en-US")
         langs = lang.split("-")
@@ -99,8 +119,15 @@ class STT(metaclass=ABCMeta):
             return langs[0].lower() + "-" + langs[1].upper()
         return lang
 
-    def execute(self, audio, language=None):
+    @abstractmethod
+    def execute(self, audio, language: Optional[str] = None) -> str:
+        # TODO - eventually deprecate this and make transcribe the @abstractmethod
         pass
+
+    def transcribe(self, audio, lang: Optional[str] = None) -> List[Tuple[str, float]]:
+        """transcribe audio data to a list of
+        possible transcriptions and respective confidences"""
+        return [(self.execute(audio, lang), 1.0)]
 
     @property
     def available_languages(self) -> set:
@@ -114,12 +141,14 @@ class STT(metaclass=ABCMeta):
 
 
 class TokenSTT(STT, metaclass=ABCMeta):
+    @deprecated("TokenSTT is deprecated, please subclass from STT directly", "1.0.0")
     def __init__(self, config=None):
         super().__init__(config)
         self.token = self.credential.get("token")
 
 
 class GoogleJsonSTT(STT, metaclass=ABCMeta):
+    @deprecated("GoogleJsonSTT is deprecated, please subclass from STT directly", "1.0.0")
     def __init__(self, config=None):
         super().__init__(config)
         if not self.credential.get("json") or self.keys.get("google_cloud"):
@@ -128,7 +157,7 @@ class GoogleJsonSTT(STT, metaclass=ABCMeta):
 
 
 class BasicSTT(STT, metaclass=ABCMeta):
-
+    @deprecated("BasicSTT is deprecated, please subclass from STT directly", "1.0.0")
     def __init__(self, config=None):
         super().__init__(config)
         self.username = str(self.credential.get("username"))
@@ -137,6 +166,7 @@ class BasicSTT(STT, metaclass=ABCMeta):
 
 class KeySTT(STT, metaclass=ABCMeta):
 
+    @deprecated("KeySTT is deprecated, please subclass from STT directly", "1.0.0")
     def __init__(self, config=None):
         super().__init__(config)
         self.id = str(self.credential.get("client_id"))
@@ -207,8 +237,15 @@ class StreamingSTT(STT, metaclass=ABCMeta):
             return text
         return None
 
-    def execute(self, audio, language=None):
+    def execute(self, audio: Optional = None,
+                language: Optional[str] = None):
         return self.stream_stop()
+
+    def transcribe(self, audio: Optional = None,
+                   lang: Optional[str] = None) -> List[Tuple[str, float]]:
+        """transcribe audio data to a list of
+        possible transcriptions and respective confidences"""
+        return [(self.execute(audio, lang), 1.0)]
 
     @abstractmethod
     def create_streaming_thread(self):

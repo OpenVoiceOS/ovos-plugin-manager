@@ -1,22 +1,15 @@
-from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import PluginTypes
 from ovos_plugin_manager.templates.ocp import OCPStreamExtractor
 from ovos_utils.log import LOG
+from functools import lru_cache
 
+from ovos_plugin_manager.utils import find_plugins
 
-def find_plugins(*args, **kwargs):
-    # TODO: Deprecate in 0.1.0
-    LOG.warning("This reference is deprecated. "
-                "Import from ovos_plugin_manager.utils directly")
-    from ovos_plugin_manager.utils import find_plugins
-    return find_plugins(*args, **kwargs)
-
-
-def load_plugin(*args, **kwargs):
-    # TODO: Deprecate in 0.1.0
-    LOG.warning("This reference is deprecated. "
-                "Import from ovos_plugin_manager.utils directly")
-    from ovos_plugin_manager.utils import load_plugin
-    return load_plugin(*args, **kwargs)
+try:
+    from ovos_plugin_manager.templates.media import AudioPlayerBackend, VideoPlayerBackend, WebPlayerBackend
+except ImportError:
+    LOG.warning("Please install ovos-utils~=0.1 for `AudioPlayerBackend`, "
+                "`VideoPlayerBackend`, and `WebPlayerBackend` imports.")
 
 
 def find_ocp_plugins() -> dict:
@@ -24,8 +17,31 @@ def find_ocp_plugins() -> dict:
     Find all installed plugins
     @return: dict plugin names to entrypoints
     """
-    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.STREAM_EXTRACTOR)
+
+
+def find_ocp_audio_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
+    return find_plugins(PluginTypes.AUDIO_PLAYER)
+
+
+def find_ocp_video_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
+    return find_plugins(PluginTypes.VIDEO_PLAYER)
+
+
+def find_ocp_web_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
+    return find_plugins(PluginTypes.WEB_PLAYER)
 
 
 class StreamHandler:
@@ -92,3 +108,14 @@ class StreamHandler:
 
         # no extractor available, return raw url
         return meta or {"uri": uri}
+
+
+@lru_cache()  # to avoid loading StreamHandler more than once
+def load_stream_extractors():
+    return StreamHandler()
+
+
+def available_extractors():
+    xtract = load_stream_extractors()
+    return ["/", "http:", "https:", "file:"] + \
+        [f"{sei}//" for sei in xtract.supported_seis]

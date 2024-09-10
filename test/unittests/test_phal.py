@@ -17,12 +17,17 @@ class TestPHALTemplate(unittest.TestCase):
         from ovos_plugin_manager.templates.phal import PHALValidator
         # TODO
 
-    def test_admin_classes(self):
-        from ovos_plugin_manager.templates.phal import AdminPlugin, \
-            AdminValidator, PHALPlugin, PHALValidator
-        self.assertEqual(AdminPlugin, PHALPlugin)
-        self.assertEqual(AdminValidator, PHALValidator)
+    def test_Admin_Validator(self):
+        from ovos_plugin_manager.templates.phal import AdminValidator
+        self.assertTrue(AdminValidator.validate())
+        self.assertTrue(AdminValidator.validate({"test": "val"}))
+        self.assertTrue(AdminValidator.validate({"enabled": True}))
+        self.assertFalse(AdminValidator.validate({"enabled": False}))
+        self.assertFalse(AdminValidator.validate({"enabled": None}))
 
+    def test_Admin_Plugin(self):
+        from ovos_plugin_manager.templates.phal import AdminPlugin
+        # TODO
 
 class TestPHAL(unittest.TestCase):
     PLUGIN_TYPE = PluginTypes.PHAL

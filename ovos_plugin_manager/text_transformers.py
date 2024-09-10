@@ -1,23 +1,6 @@
 from ovos_plugin_manager.utils import normalize_lang, \
     PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.transformers import UtteranceTransformer
-from ovos_utils import LOG
-
-
-def find_plugins(*args, **kwargs):
-    # TODO: Deprecate in 0.1.0
-    LOG.warning("This reference is deprecated. "
-                "Import from ovos_plugin_manager.utils directly")
-    from ovos_plugin_manager.utils import find_plugins
-    return find_plugins(*args, **kwargs)
-
-
-def load_plugin(*args, **kwargs):
-    # TODO: Deprecate in 0.1.0
-    LOG.warning("This reference is deprecated. "
-                "Import from ovos_plugin_manager.utils directly")
-    from ovos_plugin_manager.utils import load_plugin
-    return load_plugin(*args, **kwargs)
 
 
 def find_utterance_transformer_plugins() -> dict:
@@ -84,25 +67,3 @@ def get_utterance_transformer_supported_langs() -> dict:
     from ovos_plugin_manager.utils.config import get_plugin_supported_languages
     return get_plugin_supported_languages(PluginTypes.UTTERANCE_TRANSFORMER)
 
-
-def find_text_transformer_plugins() -> dict:
-    """
-    Find all installed plugins
-    @return: dict plugin names to entrypoints
-    """
-    # TODO: Deprecate in 0.1.0
-    LOG.warning(f"This reference is deprecated. "
-                f"Use `find_utterance_transformer_plugins")
-    return find_utterance_transformer_plugins()
-
-
-def load_text_transformer_plugin(module_name: str) -> type(UtteranceTransformer):
-    """
-    Get an uninstantiated class for the requested module_name
-    @param module_name: Plugin entrypoint name to load
-    @return: Uninstantiated class
-    """
-    # TODO: Deprecate in 0.1.0
-    LOG.warning(f"This reference is deprecated. "
-                f"Use `find_utterance_transformer_plugins")
-    return load_utterance_transformer_plugin(module_name)

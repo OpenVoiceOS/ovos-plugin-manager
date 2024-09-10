@@ -33,7 +33,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        python-version: [ 3.7, 3.8, 3.9, "3.10" ]
+        python-version: [ 3.8, 3.9, "3.10" ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -46,12 +46,12 @@ jobs:
           sudo apt-get update
           sudo apt install python3-dev
           python -m pip install build wheel
-      - name: Install core repo
-        run: |
-          pip install .
       - name: Install test dependencies
         run: |
           pip install -r requirements/test.txt
+      - name: Install core repo
+        run: |
+          pip install .
       - name: Run unittests
         run: |
           pytest --cov=ovos_plugin_manager --cov-report xml test/unittests

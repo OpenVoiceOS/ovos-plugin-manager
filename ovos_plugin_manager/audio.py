@@ -2,14 +2,12 @@ from ovos_plugin_manager.utils import PluginConfigTypes, PluginTypes
 from ovos_utils.log import LOG
 from ovos_bus_client.util import get_mycroft_bus
 from ovos_config import Configuration
+from ovos_utils.log import log_deprecation
 
 
-def find_plugins(*args, **kwargs):
-    # TODO: Deprecate in 0.1.0
-    LOG.warning("This reference is deprecated. "
-                "Import from ovos_plugin_manager.utils directly")
-    from ovos_plugin_manager.utils import find_plugins
-    return find_plugins(*args, **kwargs)
+# TODO - restore this log in next release with updated version string
+#log_deprecation("ovos_plugin_manager.audio has been deprecated on ovos-audio, "
+#                "move to ovos_plugin_manager.media", "1.0.0")
 
 
 def find_audio_service_plugins() -> dict:

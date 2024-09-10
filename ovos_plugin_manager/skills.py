@@ -114,7 +114,7 @@ def get_default_skills_directory(conf: Optional[dict] = None) -> str:
     if path_override:
         log_deprecation("'directory_override' is deprecated!"
                         "add the new path to 'extra_directories' instead",
-                        "0.1.0")
+                        "1.0.0")
         skills_folder = expanduser(path_override)
     elif conf["skills"].get("extra_directories") and \
             len(conf["skills"].get("extra_directories")) > 0:

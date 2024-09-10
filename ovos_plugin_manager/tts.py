@@ -11,22 +11,6 @@ from ovos_utils.xdg_utils import xdg_data_home
 from hashlib import md5
 
 
-def find_plugins(*args, **kwargs):
-    # TODO: Deprecate in 0.1.0
-    LOG.warning("This reference is deprecated. "
-                "Import from ovos_plugin_manager.utils directly")
-    from ovos_plugin_manager.utils import find_plugins
-    return find_plugins(*args, **kwargs)
-
-
-def load_plugin(*args, **kwargs):
-    # TODO: Deprecate in 0.1.0
-    LOG.warning("This reference is deprecated. "
-                "Import from ovos_plugin_manager.utils directly")
-    from ovos_plugin_manager.utils import load_plugin
-    return load_plugin(*args, **kwargs)
-
-
 def find_tts_plugins() -> dict:
     """
     Find all installed plugins
@@ -143,25 +127,6 @@ def get_voices(scan=False):
 
 class OVOSTTSFactory:
     """ replicates the base mycroft class, but uses only OPM enabled plugins"""
-    MAPPINGS = {
-        "dummy": "ovos-tts-plugin-dummy",
-        "mimic": "ovos-tts-plugin-mimic",
-        "mimic2": "ovos-tts-plugin-mimic2",
-        "mimic3": "ovos-tts-plugin-mimic3",
-        "google": "ovos-tts-plugin-google-tx",
-        "marytts": "ovos-tts-plugin-marytts",
-        # "fatts": FATTS,
-        # "festival": Festival,
-        "espeak": "ovos_tts_plugin_espeakng",
-        # "spdsay": SpdSay,
-        # "watson": WatsonTTS,
-        # "bing": BingTTS,
-        "responsive_voice": "ovos-tts-plugin-responsivevoice",
-        # "yandex": YandexTTS,
-        "polly": "ovos-tts-plugin-polly",
-        # "mozilla": MozillaTTS,
-        "pico": "ovos-tts-plugin-pico"
-    }
 
     @staticmethod
     def get_class(config=None):
@@ -175,9 +140,7 @@ class OVOSTTSFactory:
         }
         """
         config = config or get_tts_config()
-        tts_module = config.get("module") or "dummy"
-        if tts_module in OVOSTTSFactory.MAPPINGS:
-            tts_module = OVOSTTSFactory.MAPPINGS[tts_module]
+        tts_module = config.get("module") or "ovos-tts-plugin-dummy"
         return load_tts_plugin(tts_module)
 
     @staticmethod
@@ -192,19 +155,13 @@ class OVOSTTSFactory:
         }
         """
         tts_config = get_tts_config(config)
-        tts_module = tts_config.get('module', 'dummy')
-        if tts_module in OVOSTTSFactory.MAPPINGS:
-            # The configured module maps to a valid plugin; get configuration
-            # again to make sure any module-specific config/overrides are loaded
-            log_deprecation("Module mappings will be deprecated", "0.1.0")
-            tts_module = OVOSTTSFactory.MAPPINGS[tts_module]
-            tts_config = get_tts_config(config, tts_module)
+        tts_module = tts_config.get('module', 'ovos-tts-plugin-dummy')
         try:
             clazz = OVOSTTSFactory.get_class(tts_config)
             if clazz:
                 LOG.info(f'Found plugin {tts_module}')
-                tts = clazz(lang=None,  # explicitly read lang from config
-                            config=tts_config)
+                tts = clazz(config=tts_config)
+                tts._plugin_id = tts_module
                 tts.validator.validate()
                 LOG.info(f'Loaded plugin {tts_module}')
             else:
@@ -216,3 +173,8 @@ class OVOSTTSFactory:
                           f'\nAvailable modules: {modules}')
             raise
         return tts
+
+
+if __name__ == "__main__":
+    lang = "en-us"
+    print(find_tts_plugins())

@@ -5,7 +5,7 @@ from ovos_config import Configuration
 from ovos_utils import camel_case_split
 from ovos_utils import classproperty
 from ovos_utils.log import LOG
-from ovos_utils.messagebus import get_mycroft_bus
+from ovos_bus_client.util import get_mycroft_bus
 from ovos_utils.process_utils import RuntimeRequirements
 
 from ovos_plugin_manager.utils.config import get_plugin_config
@@ -515,7 +515,8 @@ class PHALPlugin(Thread):
         """Disable movement of the mouth with speech"""
         self._mouth_events = False
 
+class AdminPlugin(PHALPlugin):
+    """Running as Admin"""
 
-# Just for api consistency
-AdminPlugin = PHALPlugin
-AdminValidator = PHALValidator
+class AdminValidator(PHALValidator):
+    """Running as Admin"""

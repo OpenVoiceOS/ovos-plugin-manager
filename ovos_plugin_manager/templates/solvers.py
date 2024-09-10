@@ -1,173 +1,298 @@
-# NEON AI (TM) SOFTWARE, Software Development Kit & Application Framework
-# All trademark and other rights reserved by their respective owners
-# Copyright 2008-2022 Neongecko.com Inc.
-# Contributors: Daniel McKnight, Guy Daniels, Elon Gasper, Richard Leeds,
-# Regina Bloomstine, Casimiro Ferreira, Andrii Pernatii, Kirill Hrymailo
-# BSD-3 License
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-# 1. Redistributions of source code must retain the above copyright notice,
-#    this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright notice,
-#    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution.
-# 3. Neither the name of the copyright holder nor the names of its
-#    contributors may be used to endorse or promote products derived from this
-#    software without specific prior written permission.
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
-# CONTRIBUTORS  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
-# OR PROFITS;  OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-# Solver service can be found at: https://github.com/Neongeckocom/neon_solvers
+import abc
+import inspect
+from functools import wraps
+from typing import Optional, List, Iterable, Tuple, Dict, Union, Any
 
 from json_database import JsonStorageXDG
+from ovos_utils.log import LOG, log_deprecation
 from ovos_utils.xdg_utils import xdg_cache_home
-from quebra_frases import sentence_tokenize
-from ovos_utils.log import LOG
-from ovos_plugin_manager.language import OVOSLangTranslationFactory
+
+from ovos_plugin_manager.templates.language import LanguageTranslator, LanguageDetector
+from ovos_plugin_manager.thirdparty.solvers import AbstractSolver
 
 
-class AbstractSolver:
-    # these are defined by the plugin developer
-    priority = 50
-    enable_tx = False
-    enable_cache = False
+def auto_translate(translate_keys: List[str], translate_str_args=True):
+    """ Decorator to ensure all kwargs in 'translate_keys' are translated to self.default_lang.
+    data returned by the decorated function will be translated back to original language
+     NOTE: not meant to be used outside solver plugins"""
 
-    def __init__(self, config=None, translator=None, *args, **kwargs):
-        if args or kwargs:
-            LOG.warning("solver plugins init signature changed, please update to accept config=None, translator=None. "
-                        "an exception will be raised in next stable release")
-            for arg in args:
-                if isinstance(arg, str):
-                    kwargs["name"] = arg
-                if isinstance(arg, int):
-                    kwargs["priority"] = arg
-            if "priority" in kwargs:
-                self.priority = kwargs["priority"]
-            if "enable_tx" in kwargs:
-                self.enable_tx = kwargs["enable_tx"]
-            if "enable_cache" in kwargs:
-                self.enable_cache = kwargs["enable_cache"]
-        self.config = config or {}
-        self.supported_langs = self.config.get("supported_langs") or []
-        self.default_lang = self.config.get("lang", "en")
-        if self.default_lang not in self.supported_langs:
-            self.supported_langs.insert(0, self.default_lang)
-        self.translator = translator or OVOSLangTranslationFactory.create()
+    def func_decorator(func):
 
-    @staticmethod
-    def sentence_split(text, max_sentences=25):
-        return sentence_tokenize(text)[:max_sentences]
+        @wraps(func)
+        def func_wrapper(*args, **kwargs):
+            solver: AbstractSolver = args[0]
+            # check if translation is enabled
+            if not solver.enable_tx:
+                return func(*args, **kwargs)
 
-    def _get_user_lang(self, context, lang=None):
-        context = context or {}
-        lang = lang or context.get("lang") or self.default_lang
-        lang = lang.split("-")[0]
-        return lang
+            lang = kwargs.get("lang")
+            # check if translation can be skipped
+            if any([lang is None,
+                    lang == solver.default_lang,
+                    lang in solver.supported_langs]):
+                LOG.debug(f"skipping translation, 'lang': {lang} is supported by {func}")
+                return func(*args, **kwargs)
 
-    def _tx_query(self, query, context=None, lang=None):
-        if not self.enable_tx:
-            return query, context, lang
-        context = context or {}
-        lang = user_lang = self._get_user_lang(context, lang)
+            # translate string arguments
+            if translate_str_args:
+                args = list(args)
+                for idx, arg in enumerate(args):
+                    if isinstance(arg, str):
+                        LOG.debug(
+                            f"translating string argument with index: '{idx}' from {lang} to {solver.default_lang} for func: {func}")
+                        args[idx] = _do_tx(solver, arg,
+                                           source_lang=lang,
+                                           target_lang=solver.default_lang)
 
-        # translate input to default lang
-        if user_lang not in self.supported_langs:
-            lang = self.default_lang
-            query = self.translator.translate(query, lang, user_lang)
+            # translate input keys
+            for k in translate_keys:
+                v = kwargs.get(k)
+                if not v:
+                    continue
+                kwargs[k] = _do_tx(solver, v,
+                                   source_lang=lang,
+                                   target_lang=solver.default_lang)
 
-        context["lang"] = lang
+            out = func(*args, **kwargs)
 
-        # HACK - cleanup some common translation mess ups
-        # this is properly solving by using a good translate plugin
-        # only common mistakes in default libretranslate plugin are handled
-        if lang.startswith("en"):
-            query = query.replace("who is is ", "who is ")
+            # reverse translate
+            return _do_tx(solver, out,
+                          source_lang=solver.default_lang,
+                          target_lang=lang)
 
-        return query, context, lang
+        return func_wrapper
 
-    def shutdown(self):
-        """ module specific shutdown method """
-        pass
+    return func_decorator
+
+
+def auto_detect_lang(text_keys: List[str]):
+    """ Decorator to auto detect language if needed
+    NOTE: requires "lang" argument, not meant to be used outside solver plugins"""
+
+    def func_decorator(func):
+
+        @wraps(func)
+        def func_wrapper(*args, **kwargs):
+            solver: AbstractSolver = args[0]
+
+            # detect language if needed
+            lang = kwargs.get("lang")
+            if lang is None:
+                LOG.debug(f"'lang' missing in kwargs for func: {func}")
+                for k in text_keys:
+                    v = kwargs.get(k)
+                    if isinstance(v, str):
+                        lang = solver.detect_language(v)
+                        LOG.debug(f"detected 'lang': {lang} in key: '{k}' for func: {func}")
+                        break
+                else:
+                    for idx, v in enumerate(args):
+                        if isinstance(v, str) and len(v.split(" ")) > 1:
+                            lang = solver.detect_language(v)
+                            LOG.debug(f"detected 'lang': {lang} in argument '{idx}' for func: {func}")
+
+            kwargs["lang"] = lang
+            return func(*args, **kwargs)
+
+        return func_wrapper
+
+    return func_decorator
+
+
+def _deprecate_context2lang():
+    """Decorator to deprecate the 'context' kwarg and replace it with 'lang'.
+    NOTE: can only be used in methods that accept "lang" as argument"""
+
+    def func_decorator(func):
+
+        @wraps(func)
+        def func_wrapper(*args, **kwargs):
+
+            # Inspect the function signature to ensure it has both 'lang' and 'context' parameters
+            signature = inspect.signature(func)
+            params = signature.parameters
+
+            if "context" in kwargs:
+                # NOTE: deprecate this at same time we
+                # standardize plugin namespaces to opm.XXX
+                log_deprecation("'context' kwarg has been deprecated, "
+                                "please pass 'lang' as it's own kwarg instead", "1.0.0")
+                if "lang" in kwargs["context"] and "lang" not in kwargs:
+                    kwargs["lang"] = kwargs["context"]["lang"]
+
+            # ensure valid kwargs
+            if "lang" not in params and "lang" in kwargs:
+                kwargs.pop("lang")
+            if "context" not in params and "context" in kwargs:
+                kwargs.pop("context")
+            return func(*args, **kwargs)
+
+        return func_wrapper
+
+    return func_decorator
 
 
 class QuestionSolver(AbstractSolver):
-    """free form unscontrained spoken question solver
-    handling automatic translation back and forth as needed"""
+    """
+    A solver for free-form, unconstrained spoken questions that handles automatic translation as needed.
+    """
 
-    def __init__(self, config=None, translator=None, *args, **kwargs):
-        super().__init__(config, translator, *args, **kwargs)
+    def __init__(self, config: Optional[Dict] = None,
+                 translator: Optional[LanguageTranslator] = None,
+                 detector: Optional[LanguageDetector] = None,
+                 priority: int = 50,
+                 enable_tx: bool = False,
+                 enable_cache: bool = False,
+                 internal_lang: Optional[str] = None,
+                 *args, **kwargs):
+        """
+        Initialize the QuestionSolver.
+
+        Args:
+            config (Optional[Dict]): Optional configuration dictionary.
+            translator (Optional[LanguageTranslator]): Optional language translator.
+            detector (Optional[LanguageDetector]): Optional language detector.
+            priority (int): Priority of the solver.
+            enable_tx (bool): Flag to enable translation.
+            enable_cache (bool): Flag to enable caching.
+            internal_lang (Optional[str]): Internal language code. Defaults to None.
+        """
+        super().__init__(config, translator, detector, priority,
+                         enable_tx, enable_cache, internal_lang,
+                         *args, **kwargs)
         name = kwargs.get("name") or self.__class__.__name__
         if self.enable_cache:
             # cache contains raw data
             self.cache = JsonStorageXDG(name + "_data",
                                         xdg_folder=xdg_cache_home(),
-                                        subfolder="neon_solvers")
+                                        subfolder="ovos_solvers")
             # spoken cache contains dialogs
             self.spoken_cache = JsonStorageXDG(name,
                                                xdg_folder=xdg_cache_home(),
-                                               subfolder="neon_solvers")
+                                               subfolder="ovos_solvers")
         else:
             self.cache = self.spoken_cache = {}
 
     # plugin methods to override
-    def get_spoken_answer(self, query, context):
+    @abc.abstractmethod
+    def get_spoken_answer(self, query: str,
+                          lang: Optional[str] = None,
+                          units: Optional[str] = None) -> Optional[str]:
         """
-        query assured to be in self.default_lang
-        return a single sentence text response
+        Obtain the spoken answer for a given query.
+
+        Args:
+            query (str): The query text.
+            lang (Optional[str]): Optional language code. Defaults to None.
+            units (Optional[str]): Optional units for the query. Defaults to None.
+
+        Returns:
+            str: The spoken answer as a text response.
         """
         raise NotImplementedError
 
-    def get_data(self, query, context):
+    @_deprecate_context2lang()
+    def stream_utterances(self, query: str,
+                          lang: Optional[str] = None,
+                          units: Optional[str] = None) -> Iterable[str]:
         """
-        query assured to be in self.default_lang
-        return a dict response
-        """
-        raise NotImplementedError
+        Stream utterances for the given query as they become available.
 
-    def get_image(self, query, context=None):
-        """
-        query assured to be in self.default_lang
-        return path/url to a single image to acompany spoken_answer
-        """
-        raise NotImplementedError
+        Args:
+            query (str): The query text.
+            lang (Optional[str]): Optional language code. Defaults to None.
+            units (Optional[str]): Optional units for the query. Defaults to None.
 
-    def get_expanded_answer(self, query, context=None):
+        Returns:
+            Iterable[str]: An iterable of utterances.
         """
-        query assured to be in self.default_lang
-        return a list of ordered steps to expand the answer, eg, "tell me more"
-        {
-            "title": "optional",
-            "summary": "speak this",
-            "img": "optional/path/or/url
-        }
-        :return:
+        ans = _call_with_sanitized_kwargs(self.get_spoken_answer, query, lang=lang, units=units)
+        for utt in self.sentence_split(ans):
+            yield utt
+
+    @_deprecate_context2lang()
+    def get_data(self, query: str,
+                 lang: Optional[str] = None,
+                 units: Optional[str] = None) -> Optional[Dict[str, str]]:
         """
-        raise NotImplementedError
+        Retrieve data for the given query.
+
+        Args:
+            query (str): The query text.
+            lang (Optional[str]): Optional language code. Defaults to None.
+            units (Optional[str]): Optional units for the query. Defaults to None.
+
+        Returns:
+            Optional[Dict]: A dictionary containing the answer.
+        """
+        return {"answer": _call_with_sanitized_kwargs(self.get_spoken_answer, query, lang=lang, units=units)}
+
+    @_deprecate_context2lang()
+    def get_image(self, query: str,
+                  lang: Optional[str] = None,
+                  units: Optional[str] = None) -> Optional[str]:
+        """
+        Get the path or URL to an image associated with the query.
+
+        Args:
+            query (str): The query text.
+            lang (Optional[str]): Optional language code. Defaults to None.
+            units (Optional[str]): Optional units for the query. Defaults to None.
+
+        Returns:
+            Optional[str]: The path or URL to a single image.
+        """
+        return None
+
+    @_deprecate_context2lang()
+    def get_expanded_answer(self, query: str,
+                            lang: Optional[str] = None,
+                            units: Optional[str] = None) -> List[Dict[str, str]]:
+        """
+        Get an expanded list of steps to elaborate on the answer.
+
+        Args:
+            query (str): The query text.
+            lang (Optional[str]): Optional language code. Defaults to None.
+            units (Optional[str]): Optional units for the query. Defaults to None.
+
+        Returns:
+            List[Dict]: A list of dictionaries with each step containing a title, summary, and optional image.
+        """
+        return [{"title": query,
+                 "summary": _call_with_sanitized_kwargs(self.get_spoken_answer, query, lang=lang, units=units),
+                 "img": _call_with_sanitized_kwargs(self.get_image, query, lang=lang, units=units)}]
 
     # user facing methods
-    def search(self, query, context=None, lang=None):
+    @_deprecate_context2lang()
+    @auto_detect_lang(text_keys=["query"])
+    @auto_translate(translate_keys=["query"])
+    def search(self, query: str,
+               lang: Optional[str] = None,
+               units: Optional[str] = None) -> Optional[Dict]:
         """
-        cache and auto translate query if needed
-        returns translated response from self.get_data
+        Perform a search with automatic translation and caching.
+
+        NOTE: "lang" assured to be in self.supported_langs,
+            otherwise "query"  automatically translated to self.default_lang.
+            If translations happens, the returned value of this method will also
+            be automatically translated back
+
+        Args:
+            query (str): The query text.
+            lang (Optional[str]): Optional language code. Defaults to None.
+            units (Optional[str]): Optional units for the query. Defaults to None.
+
+        Returns:
+            Dict: The data dictionary retrieved from the cache or computed anew.
         """
-        user_lang = self._get_user_lang(context, lang)
-        query, context, lang = self._tx_query(query, context, lang)
         # read from cache
         if self.enable_cache and query in self.cache:
             data = self.cache[query]
         else:
             # search data
             try:
-                data = self.get_data(query, context)
+                data = _call_with_sanitized_kwargs(self.get_data, query, lang=lang, units=units)
             except:
                 return {}
 
@@ -175,187 +300,407 @@ class QuestionSolver(AbstractSolver):
         if self.enable_cache:
             self.cache[query] = data
             self.cache.store()
-
-        # translate english output to user lang
-        if self.enable_tx and user_lang not in self.supported_langs:
-            return self.translator.translate_dict(data, user_lang, lang)
         return data
 
-    def visual_answer(self, query, context=None, lang=None):
+    @_deprecate_context2lang()
+    @auto_detect_lang(text_keys=["query"])
+    @auto_translate(translate_keys=["query"])
+    def visual_answer(self, query: str,
+                      lang: Optional[str] = None,
+                      units: Optional[str] = None) -> Optional[str]:
         """
-        cache and auto translate query if needed
-        returns image that answers query
-        """
-        query, context, lang = self._tx_query(query, context, lang)
-        return self.get_image(query, context)
+        Retrieve the image associated with the query with automatic translation and caching.
 
-    def spoken_answer(self, query, context=None, lang=None):
-        """
-        cache and auto translate query if needed
-        returns chunked and translated response from self.get_spoken_answer
-        """
-        user_lang = self._get_user_lang(context, lang)
-        query, context, lang = self._tx_query(query, context, lang)
+        NOTE: "lang" assured to be in self.supported_langs,
+            otherwise "query"  automatically translated to self.default_lang.
+            If translations happens, the returned value of this method will also
+            be automatically translated back
 
+        Args:
+            query (str): The query text.
+            lang (Optional[str]): Optional language code. Defaults to None.
+            units (Optional[str]): Optional units for the query. Defaults to None.
+
+        Returns:
+            str: The path or URL to the image.
+        """
+        return _call_with_sanitized_kwargs(self.get_image, query, lang=lang, units=units)
+
+    @_deprecate_context2lang()
+    @auto_detect_lang(text_keys=["query"])
+    @auto_translate(translate_keys=["query"])
+    def spoken_answer(self, query: str,
+                      lang: Optional[str] = None,
+                      units: Optional[str] = None) -> Optional[str]:
+        """
+        Retrieve the spoken answer for the query with automatic translation and caching.
+
+        NOTE: "lang" assured to be in self.supported_langs,
+            otherwise "query"  automatically translated to self.default_lang.
+            If translations happens, the returned value of this method will also
+            be automatically translated back
+
+        Args:
+            query (str): The query text.
+            lang (Optional[str]): Optional language code. Defaults to None.
+            units (Optional[str]): Optional units for the query. Defaults to None.
+
+        Returns:
+            str: The spoken answer as a text response.
+        """
         # get answer
         if self.enable_cache and query in self.spoken_cache:
             # read from cache
             summary = self.spoken_cache[query]
         else:
-            summary = self.get_spoken_answer(query, context)
+
+            summary = _call_with_sanitized_kwargs(self.get_spoken_answer, query, lang=lang, units=units)
             # save to cache
             if self.enable_cache:
                 self.spoken_cache[query] = summary
                 self.spoken_cache.store()
+        return summary
 
-        # summarize
-        if summary:
-            # translate english output to user lang
-            if self.enable_tx and user_lang not in self.supported_langs:
-                return self.translator.translate(summary, user_lang, lang)
-            else:
-                return summary
-
-    def long_answer(self, query, context=None, lang=None):
+    @_deprecate_context2lang()
+    @auto_detect_lang(text_keys=["query"])
+    @auto_translate(translate_keys=["query"])
+    def long_answer(self, query: str,
+                    lang: Optional[str] = None,
+                    units: Optional[str] = None) -> List[Dict[str, str]]:
         """
-        return a list of ordered steps to expand the answer, eg, "tell me more"
-        step0 is always self.spoken_answer and self.get_image
-        {
-            "title": "optional",
-            "summary": "speak this",
-            "img": "optional/path/or/url
-        }
-        :return:
-        """
-        user_lang = self._get_user_lang(context, lang)
-        query, context, lang = self._tx_query(query, context, lang)
-        steps = self.get_expanded_answer(query, context)
+        Retrieve a detailed list of steps to expand the answer.
 
+        NOTE: "lang" assured to be in self.supported_langs,
+            otherwise "query"  automatically translated to self.default_lang.
+            If translations happens, the returned value of this method will also
+            be automatically translated back
+
+        Args:
+            query (str): The query text.
+            lang (Optional[str]): Optional language code. Defaults to None.
+            units (Optional[str]): Optional units for the query. Defaults to None.
+
+        Returns:
+            List[Dict]: A list of steps to elaborate on the answer, with each step containing a title, summary, and optional image.
+        """
+        steps = _call_with_sanitized_kwargs(self.get_expanded_answer, query, lang=lang, units=units)
         # use spoken_answer as last resort
         if not steps:
-            summary = self.get_spoken_answer(query, context)
+            summary = _call_with_sanitized_kwargs(self.get_spoken_answer, query, lang=lang, units=units)
             if summary:
-                img = self.get_image(query, context)
-                steps = [{"title": query, "summary": step0, "img": img}
-                         for step0 in self.sentence_split(summary, -1)]
-
-        # translate english output to user lang
-        if self.enable_tx and user_lang not in self.supported_langs:
-            return self.translator.translate_list(steps, user_lang, lang)
+                img = _call_with_sanitized_kwargs(self.get_image, query, lang=lang, units=units)
+                steps = [{"title": query, "summary": step, "img": img} for step in self.sentence_split(summary, -1)]
         return steps
 
 
-class TldrSolver(AbstractSolver):
-    """perform NLP summarization task,
-    handling automatic translation back and forth as needed"""
+class CorpusSolver(QuestionSolver):
+    """Retrieval based question solver"""
 
-    # plugin methods to override
-    def get_tldr(self, document, context):
+    def __init__(self, config=None,
+                 translator: Optional[LanguageTranslator] = None,
+                 detector: Optional[LanguageDetector] = None,
+                 priority: int = 50,
+                 enable_tx: bool = False,
+                 enable_cache: bool = False,
+                 *args, **kwargs):
+        super().__init__(config, translator, detector,
+                         priority, enable_tx, enable_cache,
+                         *args, **kwargs)
+        LOG.debug(f"corpus presumed to be in language: {self.default_lang}")
+
+    @abc.abstractmethod
+    def load_corpus(self, corpus: List[str]):
+        """index the provided list of sentences"""
+
+    @abc.abstractmethod
+    def query(self, query: str, lang: Optional[str], k: int = 3) -> Iterable[Tuple[str, float]]:
+        """return top_k matches from indexed corpus"""
+
+    @auto_detect_lang(text_keys=["query"])
+    @auto_translate(translate_keys=["query"])
+    def retrieve_from_corpus(self, query: str, k: int = 3, lang: Optional[str] = None) -> List[Tuple[float, str]]:
+        """return top_k matches from indexed corpus"""
+        res = []
+        for doc, score in self.query(query, lang, k=k):
+            LOG.debug(f"Rank {len(res) + 1} (score: {score}): {doc}")
+            if self.config.get("min_conf"):
+                if score >= self.config["min_conf"]:
+                    res.append((score, doc))
+            else:
+                res.append((score, doc))
+        return res
+
+    @auto_detect_lang(text_keys=["query"])
+    @auto_translate(translate_keys=["query"])
+    def get_spoken_answer(self, query: str, lang: Optional[str] = None) -> Optional[str]:
+        # Query the corpus
+        answers = [a[1] for a in self.retrieve_from_corpus(query, lang=lang,
+                                                           k=self.config.get("n_answer", 1))]
+        if answers:
+            return ". ".join(answers[:self.config.get("n_answer", 1)])
+
+
+class QACorpusSolver(CorpusSolver):
+    def __init__(self, config=None,
+                 translator: Optional[LanguageTranslator] = None,
+                 detector: Optional[LanguageDetector] = None,
+                 priority: int = 50,
+                 enable_tx: bool = False,
+                 enable_cache: bool = False,
+                 *args, **kwargs):
+        self.answers = {}
+        super().__init__(config, translator, detector,
+                         priority, enable_tx, enable_cache,
+                         *args, **kwargs)
+
+    def load_corpus(self, corpus: Dict):
+        self.answers = corpus
+        super().load_corpus(list(self.answers.keys()))
+
+    @auto_detect_lang(text_keys=["query"])
+    @auto_translate(translate_keys=["query"])
+    def retrieve_from_corpus(self, query: str, k: int = 1, lang: Optional[str] = None) -> List[Tuple[float, str]]:
+        res = []
+        for doc, score in super().retrieve_from_corpus(query, k, lang):
+            LOG.debug(f"Answer {len(res) + 1} (score: {score}): {self.answers[doc]}")
+            res.append((score, self.answers[doc]))
+        return res
+
+
+class TldrSolver(AbstractSolver):
+    """
+    Solver for performing NLP summarization tasks,
+    handling automatic translation as needed.
+    """
+
+    @abc.abstractmethod
+    def get_tldr(self, document: str,
+                 lang: Optional[str] = None) -> str:
         """
-        document assured to be in self.default_lang
-         returns summary of provided document
+        Summarize the provided document.
+
+        :param document: The text of the document to summarize, assured to be in the default language.
+        :param lang: Optional language code.
+        :return: A summary of the provided document.
         """
         raise NotImplementedError
 
     # user facing methods
-    def tldr(self, document, context=None, lang=None):
-        """
-        cache and auto translate query if needed
-        returns summary of provided document
-        """
-        user_lang = self._get_user_lang(context, lang)
-        document, context, lang = self._tx_query(document, context, lang)
 
+    @_deprecate_context2lang()
+    @auto_detect_lang(text_keys=["document"])
+    @auto_translate(translate_keys=["document"])
+    def tldr(self, document: str, lang: Optional[str] = None) -> str:
+        """
+        Summarize the provided document with automatic translation and caching if needed.
+
+        NOTE: "lang" assured to be in self.supported_langs,
+            otherwise "document"  automatically translated to self.default_lang.
+            If translations happens, the returned value of this method will also
+            be automatically translated back
+
+        :param document: The text of the document to summarize.
+        :param lang: Optional language code.
+        :return: A summary of the provided document.
+        """
         # summarize
-        tldr = self.get_tldr(document, context)
-
-        # translate output to user lang
-        if self.enable_tx and user_lang not in self.supported_langs:
-            return self.translator.translate(tldr, user_lang, lang)
-        return tldr
+        return _call_with_sanitized_kwargs(self.get_tldr, document, lang=lang)
 
 
 class EvidenceSolver(AbstractSolver):
-    """perform NLP reading comprehension task,
-    handling automatic translation back and forth as needed"""
+    """
+    Solver for NLP reading comprehension tasks,
+    handling automatic translation as needed.
+    """
 
-    # plugin methods to override
-    def get_best_passage(self, evidence, question, context):
+    @abc.abstractmethod
+    def get_best_passage(self, evidence: str, question: str,
+                         lang: Optional[str] = None) -> str:
         """
-        evidence and question assured to be in self.default_lang
-         returns summary of provided document
+        Extract the best passage from evidence that answers the given question.
+
+        :param evidence: The text containing the evidence, assured to be in the default language.
+        :param question: The question to answer, assured to be in the default language.
+        :param lang: Optional language code.
+        :return: The passage from the evidence that best answers the question.
         """
         raise NotImplementedError
 
     # user facing methods
-    def extract_answer(self, evidence, question, context=None, lang=None):
+    @_deprecate_context2lang()
+    @auto_detect_lang(text_keys=["evidence", "question"])
+    @auto_translate(translate_keys=["evidence", "question"])
+    def extract_answer(self, evidence: str, question: str,
+                       lang: Optional[str] = None) -> str:
         """
-        cache and auto translate evidence and question if needed
-        returns passage from evidence that answers question
-        """
-        user_lang = self._get_user_lang(context, lang)
-        evidence, context, lang = self._tx_query(evidence, context, lang)
-        question, context, lang = self._tx_query(question, context, lang)
+        Extract the best passage from evidence that answers the question with automatic translation and caching if needed.
 
+        NOTE: "lang" assured to be in self.supported_langs,
+            otherwise "evidence" and "question" are automatically translated to self.default_lang.
+            If translations happens, the returned value of this method will also
+            be automatically translated back
+
+        :param evidence: The text containing the evidence.
+        :param question: The question to answer.
+        :param lang: Optional language code.
+        :return: The passage from the evidence that answers the question.
+        """
         # extract answer from doc
-        ans = self.get_best_passage(evidence, question, context)
-
-        # translate output to user lang
-        if self.enable_tx and user_lang not in self.supported_langs:
-            return self.translator.translate(ans, user_lang, lang)
-        return ans
+        return self.get_best_passage(evidence, question, lang=lang)
 
 
 class MultipleChoiceSolver(AbstractSolver):
-    """ select best answer from question + multiple choice
-    handling automatic translation back and forth as needed"""
+    """
+    Solver for selecting the best answer from a question with multiple choices,
+    handling automatic translation as needed.
+    """
 
-    # plugin methods to override
-    def select_answer(self, query, options, context):
+    @abc.abstractmethod
+    def rerank(self, query: str, options: List[str],
+               lang: Optional[str] = None,
+               return_index: bool = False) -> List[Tuple[float, Union[str, int]]]:
         """
-        query and options assured to be in self.default_lang
-        return best answer from options list
+        Rank the provided options based on the query.
+
+        :param query: The query text, assured to be in the default language.
+        :param options: A list of answer options, each assured to be in the default language.
+        :param lang: Optional language code.
+        :param return_index: If True, return the index of the best option; otherwise, return the best option text.
+        :return: A list of tuples where each tuple contains a score and the corresponding option text, sorted by score.
         """
         raise NotImplementedError
 
-    # user facing methods
-    def solve(self, query, options, context=None, lang=None):
+    @_deprecate_context2lang()
+    @auto_detect_lang(text_keys=["query", "options"])
+    @auto_translate(translate_keys=["query", "options"])
+    def select_answer(self, query: str, options: List[str],
+                      lang: Optional[str] = None,
+                      return_index: bool = False) -> Union[str, int]:
         """
-        cache and auto translate query and options if needed
-        returns best answer from provided options
+        Select the best answer from the provided options based on the query with automatic translation and caching if needed.
+
+        NOTE: "lang" assured to be in self.supported_langs,
+            otherwise "query" and "options"  are automatically translated to self.default_lang.
+            If translations happens, the returned value of this method will also
+            be automatically translated back
+
+        :param query: The query text.
+        :param options: A list of answer options.
+        :param lang: Optional language code.
+        :param return_index: If True, return the index of the best option; otherwise, return the best option text.
+        :return: The best answer from the options list, or the index of the best option if `return_index` is True.
         """
-        user_lang = self._get_user_lang(context, lang)
-        query, context, lang = self._tx_query(query, context, lang)
-        opts = [self.translator.translate(opt, lang, user_lang)
-                for opt in options]
-
-        # select best answer
-        ans = self.select_answer(query, opts, context)
-
-        idx = opts.index(ans)
-        return options[idx]
+        return self.rerank(query, options, lang=lang, return_index=return_index)[0][1]
 
 
 class EntailmentSolver(AbstractSolver):
     """ select best answer from question + multiple choice
     handling automatic translation back and forth as needed"""
 
-    # plugin methods to override
-    def check_entailment(self, premise, hypothesis, context):
+    @abc.abstractmethod
+    def check_entailment(self, premise: str, hypothesis: str,
+                         lang: Optional[str] = None) -> bool:
         """
-        premise and hyopithesis assured to be in self.default_lang
-        return Bool, True if premise entails the hypothesis False otherwise
+        Check if the premise entails the hypothesis.
+
+        :param premise: The premise text, assured to be in the default language.
+        :param hypothesis: The hypothesis text, assured to be in the default language.
+        :param lang: Optional language code.
+        :return: True if the premise entails the hypothesis; False otherwise.
         """
         raise NotImplementedError
 
     # user facing methods
-    def entails(self, premise, hypothesis, context=None, lang=None):
+    @_deprecate_context2lang()
+    @auto_detect_lang(text_keys=["premise", "hypothesis"])
+    @auto_translate(translate_keys=["premise", "hypothesis"])
+    def entails(self, premise: str, hypothesis: str, lang: Optional[str] = None) -> bool:
         """
-        cache and auto translate premise and hypothesis if needed
-        return Bool, True if premise entails the hypothesis False otherwise
-        """
-        user_lang = self._get_user_lang(context, lang)
-        query, context, lang = self._tx_query(query, context, lang)
+        Determine if the premise entails the hypothesis with automatic translation and caching if needed.
 
-        # summarize
-        return self.check_entailment(premise, hypothesis)
+        NOTE: "lang" assured to be in self.supported_langs,
+            otherwise "premise" and "hypothesis" are automatically translated to self.default_lang.
+            If translations happens, the returned value of this method will also
+            be automatically translated back
+
+        :param premise: The premise text.
+        :param hypothesis: The hypothesis text.
+        :param lang: Optional language code.
+        :return: True if the premise entails the hypothesis; False otherwise.
+        """
+        # check for entailment
+        return self.check_entailment(premise, hypothesis, lang=lang)
+
+
+def _do_tx(solver, data: Any, source_lang: str, target_lang: str) -> Any:
+    """
+    Translate the given data from source language to target language using the provided solver.
+
+    Args:
+        solver: The translation solver.
+        data (Any): The data to translate. Can be a string, list, dictionary, or tuple.
+        source_lang (str): The source language code.
+        target_lang (str): The target language code.
+
+    Returns:
+        Any: The translated data in the same structure as the input data.
+    """
+    if isinstance(data, str):
+        return solver.translate(data,
+                                source_lang=source_lang, target_lang=target_lang)
+    elif isinstance(data, list):
+        for idx, e in enumerate(data):
+            data[idx] = _do_tx(solver, e, source_lang=source_lang, target_lang=target_lang)
+    elif isinstance(data, dict):
+        for k, v in data.items():
+            data[k] = _do_tx(solver, v, source_lang=source_lang, target_lang=target_lang)
+    elif isinstance(data, tuple) and len(data) == 2:
+        if isinstance(data[0], str):
+            a = _do_tx(solver, data[0], source_lang=source_lang, target_lang=target_lang)
+        else:
+            a = data[0]
+        if isinstance(data[1], str):
+            b = _do_tx(solver, data[1], source_lang=source_lang, target_lang=target_lang)
+        else:
+            b = data[1]
+        return (a, b)
+    return data
+
+
+def _call_with_sanitized_kwargs(func, *args: Any,
+                                lang: Optional[str] = None,
+                                units: Optional[str] = None) -> Any:
+    """
+    Call a function with sanitized keyword arguments for language and units.
+
+    Args:
+        func: The function to call.
+        args (Any): Positional arguments to pass to the function.
+        lang (Optional[str]): Optional language code. Defaults to None.
+        units (Optional[str]): Optional units for the query. Defaults to None.
+
+    Returns:
+        Any: The result of the function call.
+    """
+    params = inspect.signature(func).parameters
+    kwargs = {}
+
+    # ensure context is passed, it didn't used to be optional
+    if "context" in params and "context" not in kwargs:
+        kwargs["context"] = {}
+
+    if "lang" in params:
+        # new style - only lang/units is passed
+        kwargs["lang"] = lang
+    elif "context" in kwargs:
+        # old style - when plugins received context only
+        kwargs["context"]["lang"] = lang
+
+    if "units" in params:
+        # new style - only lang/units is passed
+        kwargs["units"] = units
+    elif "context" in kwargs:
+        # old style - when plugins received context only
+        kwargs["context"]["units"] = units
+
+    return func(*args, **kwargs)

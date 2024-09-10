@@ -7,22 +7,6 @@ from ovos_utils.log import LOG, log_deprecation
 from ovos_plugin_manager.templates.stt import STT, StreamingSTT, StreamThread
 
 
-def find_plugins(*args, **kwargs):
-    # TODO: Deprecate in 0.1.0
-    LOG.warning("This reference is deprecated. "
-                "Import from ovos_plugin_manager.utils directly")
-    from ovos_plugin_manager.utils import find_plugins
-    return find_plugins(*args, **kwargs)
-
-
-def load_plugin(*args, **kwargs):
-    # TODO: Deprecate in 0.1.0
-    LOG.warning("This reference is deprecated. "
-                "Import from ovos_plugin_manager.utils directly")
-    from ovos_plugin_manager.utils import load_plugin
-    return load_plugin(*args, **kwargs)
-
-
 def find_stt_plugins() -> dict:
     """
     Find all installed plugins
@@ -103,25 +87,6 @@ def get_stt_config(config: dict = None, module: str = None) -> dict:
 
 class OVOSSTTFactory:
     """ replicates the base mycroft class, but uses only OPM enabled plugins"""
-    MAPPINGS = {
-        "mycroft": "ovos-stt-plugin-selene",
-        "dummy": "ovos-stt-plugin-dummy",
-        "google": "ovos-stt-plugin-chromium",
-        #    "google_cloud": GoogleCloudSTT,
-        #    "google_cloud_streaming": GoogleCloudStreamingSTT,
-        #    "wit": WITSTT,
-        #    "ibm": IBMSTT,
-        #    "kaldi": KaldiSTT,
-        #    "bing": BingSTT,
-        #    "govivace": GoVivaceSTT,
-        #    "houndify": HoundifySTT,
-        #    "deepspeech_server": DeepSpeechServerSTT,
-        #    "deepspeech_stream_server": DeepSpeechStreamServerSTT,
-        #    "mycroft_deepspeech": MycroftDeepSpeechSTT,
-        #    "yandex": YandexSTT
-        "vosk": "ovos-stt-plugin-vosk",
-        "vosk_streaming": "ovos-stt-plugin-vosk-streaming"
-    }
 
     @staticmethod
     def get_class(config=None):
@@ -136,8 +101,6 @@ class OVOSSTTFactory:
         """
         config = get_stt_config(config)
         stt_module = config["module"]
-        if stt_module in OVOSSTTFactory.MAPPINGS:
-            stt_module = OVOSSTTFactory.MAPPINGS[stt_module]
         return load_stt_plugin(stt_module)
 
     @staticmethod
@@ -152,11 +115,6 @@ class OVOSSTTFactory:
         }
         """
         stt_config = get_stt_config(config)
-        plugin = stt_config.get("module", "dummy")
-        if plugin in OVOSSTTFactory.MAPPINGS:
-            log_deprecation("Module mappings will be deprecated", "0.1.0")
-            plugin = OVOSSTTFactory.MAPPINGS[plugin]
-            stt_config = get_stt_config(config, plugin)
         try:
             clazz = OVOSSTTFactory.get_class(stt_config)
             return clazz(stt_config)
