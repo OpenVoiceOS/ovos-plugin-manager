@@ -1,3 +1,6 @@
+from os import environ
+import os
+import pwd
 import unittest
 from unittest.mock import MagicMock
 from unittest.mock import patch, Mock
@@ -5,7 +8,7 @@ from unittest.mock import patch, Mock
 from ovos_bus_client.session import Session
 from ovos_utils.fakebus import FakeBus, Message
 
-from ovos_plugin_manager.templates.tts import TTS, TTSContext
+from ovos_plugin_manager.templates.tts import TTS, StreamingTTSCallbacks, TTSContext
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
@@ -349,3 +352,22 @@ class TestSession(unittest.TestCase):
         self.assertEqual(ctxt.lang, sess.lang)
         self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/Daghor/klingon")
         self.assertEqual(ctxt.synth_kwargs, {'lang': 'klingon', 'voice': 'Daghor'})
+
+class TestStreamingTTSCallbacks(unittest.TestCase):
+    def test_play_args_passed_in(self):
+        tts_callbacks = StreamingTTSCallbacks(FakeBus(), ["vlc"])
+        self.assertEqual(tts_callbacks.play_args, ["vlc"])
+
+    def test_default_play_args(self):
+        # TODO: This test only works on a Linux system using pulseaudio, which may not be every situation
+        return
+        # tts_callbacks = StreamingTTSCallbacks(FakeBus())
+        # self.assertEqual(tts_callbacks.play_args, ["paplay"])
+
+    def test_play_args_from_tts_config(self):
+        tts_callbacks = StreamingTTSCallbacks(FakeBus(), None, {"streaming_tts_cmd": "vlc"})
+        self.assertEqual(tts_callbacks.play_args, ["vlc"])
+
+    def test_play_args_from_default_config(self):
+        # TODO: Mock out a config XDG location and set play_wav_cmdline, validate that it is used
+        return

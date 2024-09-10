@@ -4,28 +4,28 @@ on:
     branches:
       - dev
     paths-ignore:
-      - 'ovos_plugin_manager/version.py'
-      - 'examples/**'
-      - '.github/**'
-      - '.gitignore'
-      - 'LICENSE'
-      - 'CHANGELOG.md'
-      - 'MANIFEST.in'
-      - 'README.md'
-      - 'scripts/**'
+      - "ovos_plugin_manager/version.py"
+      - "examples/**"
+      - ".github/**"
+      - ".gitignore"
+      - "LICENSE"
+      - "CHANGELOG.md"
+      - "MANIFEST.in"
+      - "README.md"
+      - "scripts/**"
   push:
     branches:
       - master
     paths-ignore:
-      - 'ovos_plugin_manager/version.py'
-      - 'examples/**'
-      - '.github/**'
-      - '.gitignore'
-      - 'LICENSE'
-      - 'CHANGELOG.md'
-      - 'MANIFEST.in'
-      - 'README.md'
-      - 'scripts/**'
+      - "ovos_plugin_manager/version.py"
+      - "examples/**"
+      - ".github/**"
+      - ".gitignore"
+      - "LICENSE"
+      - "CHANGELOG.md"
+      - "MANIFEST.in"
+      - "README.md"
+      - "scripts/**"
   workflow_dispatch:
 
 jobs:
@@ -33,19 +33,19 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        python-version: [ 3.8, 3.9, "3.10" ]
+        python-version: [3.8, 3.9, "3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt install python3-dev
-          python -m pip install build wheel
+          python -m pip install build wheel setuptools
       - name: Install test dependencies
         run: |
           pip install -r requirements/test.txt
@@ -61,4 +61,4 @@ jobs:
       - name: Upload coverage
         env:
           CODECOV_TOKEN: ${{secrets.CODECOV_TOKEN}}
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v4
