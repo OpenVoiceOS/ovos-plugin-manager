@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.2.0a1) (2024-09-10)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.1.1a1...0.2.0a1)
+
+**Implemented enhancements:**
+
+- feat/triples\_plugins [\#257](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/257) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.1.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.1.1a1) (2024-09-10)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.1.1...0.1.1a1)
