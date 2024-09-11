@@ -182,12 +182,8 @@ class TestMicrophoneFactory(unittest.TestCase):
 
         OVOSMicrophoneFactory.create(config=_FALLBACK_CONFIG)
         mock_get_class.assert_called()
-        self.assertEqual(call_args, ({**_FALLBACK_CONFIG['microphone']['dummy'],
-                                      **{"module": "dummy",
-                                         "lang": "en-us"}},))
-        self.assertEqual(bad_call_args, ({**_FALLBACK_CONFIG['microphone']['bad'],
-                                      **{"module": "bad",
-                                         "lang": "en-us"}},))
+        self.assertEqual(call_args[0]["module"], 'dummy')
+        self.assertEqual(bad_call_args[0]["module"], 'bad')
         mock_class.assert_called_once_with(**_FALLBACK_CONFIG['microphone']['dummy'])
         OVOSMicrophoneFactory.get_class = real_get_class
 

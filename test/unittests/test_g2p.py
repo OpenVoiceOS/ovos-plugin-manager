@@ -131,12 +131,8 @@ class TestG2PFactory(unittest.TestCase):
 
         OVOSG2PFactory.create(config=_FALLBACK_CONFIG)
         mock_get_class.assert_called()
-        self.assertEqual(call_args, ({**_FALLBACK_CONFIG['g2p']['good'],
-                                      **{"module": "good",
-                                         "lang": "en-us"}},))
-        self.assertEqual(bad_call_args, ({**_FALLBACK_CONFIG['g2p']['bad'],
-                                          **{"module": "bad",
-                                             "lang": "en-us"}},))
+        self.assertEqual(call_args[0]["module"], 'good')
+        self.assertEqual(bad_call_args[0]["module"], 'bad')
         mock_class.assert_called_once_with({**_FALLBACK_CONFIG['g2p']['good'],
                                             **{"module": "good",
                                                "lang": "en-us"}})

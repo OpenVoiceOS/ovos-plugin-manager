@@ -124,6 +124,7 @@ class OVOSLangDetectionFactory:
         cfg = config.get(lang_module, {})
         fallback = cfg.get("fallback_module")
         try:
+            config["module"] = lang_module
             clazz = OVOSLangDetectionFactory.get_class(config)
             if clazz is None:
                 raise ValueError(f"Failed to load module: {lang_module}")
@@ -180,6 +181,7 @@ class OVOSLangTranslationFactory:
         cfg = config.get(lang_module, {})
         fallback = cfg.get("fallback_module")
         try:
+            config["module"] = lang_module
             clazz = OVOSLangTranslationFactory.get_class(config)
             if clazz is None:
                 raise ValueError(f"Failed to load module: {lang_module}")
