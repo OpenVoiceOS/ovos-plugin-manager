@@ -11,7 +11,7 @@ _TEST_CONFIG = {
             "active": True
         },
         "hey_mycroft": {
-            "module": "precise",
+            "module": "ovos-ww-plugin-precise",
             "listen": True,
             "active": True
         }
@@ -103,7 +103,7 @@ class TestWakeWordFactory(unittest.TestCase):
         OVOSWakeWordFactory.load_module = mock_load
 
         OVOSWakeWordFactory.create_hotword(config=_TEST_CONFIG)
-        mock_load.assert_called_once_with("precise", "hey_mycroft",
+        mock_load.assert_called_once_with("ovos-ww-plugin-precise", "hey_mycroft",
                                           _TEST_CONFIG["hotwords"]
                                           ['hey_mycroft'], "en-us", None)
 
@@ -148,7 +148,7 @@ class TestWakeWordFactory(unittest.TestCase):
         mock_return = Mock()
         mock_get_class.return_value = mock_return
         module = OVOSWakeWordFactory.load_module(
-            "precise", "hey_mycroft", _TEST_CONFIG['hotwords']['hey_mycroft'],
+            "ovos-ww-plugin-precise", "hey_mycroft", _TEST_CONFIG['hotwords']['hey_mycroft'],
             'en-us')
         mock_get_class.assert_called_once_with(
             "hey_mycroft", {"lang": "en-us", "hotwords": {

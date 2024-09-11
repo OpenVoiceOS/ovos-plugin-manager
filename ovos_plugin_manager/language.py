@@ -83,24 +83,7 @@ def get_lang_detect_module_configs(module_name: str):
     return load_plugin_configs(module_name, PluginConfigTypes.LANG_DETECT)
 
 
-_fallback_lang_detect_plugin = "ovos-lang-detect-ngram-lm"
-_fallback_translate_plugin = "ovos-translate-plugin-server"
-
-
 class OVOSLangDetectionFactory:
-    """
-    replicates the base neon class, but uses only OPM enabled plugins
-    """
-    MAPPINGS = {
-        "libretranslate": "libretranslate_detection_plug",
-        "google": "googletranslate_detection_plug",
-        "amazon": "amazontranslate_detection_plug",
-        "cld2": "cld2_plug",
-        "cld3": "cld3_plug",
-        "langdetect": "langdetect_plug",
-        "fastlang": "fastlang_plug",
-        "lingua_podre": "lingua_podre_plug"
-    }
 
     @staticmethod
     def get_class(config=None):
@@ -120,12 +103,10 @@ class OVOSLangDetectionFactory:
         lang_module = config.get("detection_module", config.get("module"))
         if not lang_module:
             raise ValueError("`language.detection_module` not configured")
-        if lang_module in OVOSLangDetectionFactory.MAPPINGS:
-            lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
         return load_lang_detect_plugin(lang_module)
 
-    @staticmethod
-    def create(config=None) -> LanguageDetector:
+    @classmethod
+    def create(cls, config=None) -> LanguageDetector:
         """
         Factory method to create a LangDetection engine based on configuration
 
@@ -140,37 +121,26 @@ class OVOSLangDetectionFactory:
         if "language" in config:
             config = config["language"]
         lang_module = config.get("detection_module", config.get("module"))
+        cfg = config.get(lang_module, {})
+        fallback = cfg.get("fallback_module")
         try:
+            config["module"] = lang_module
             clazz = OVOSLangDetectionFactory.get_class(config)
             if clazz is None:
                 raise ValueError(f"Failed to load module: {lang_module}")
             LOG.info(f'Loaded the Language Detection plugin {lang_module}')
-            if lang_module in OVOSLangDetectionFactory.MAPPINGS:
-                lang_module = OVOSLangDetectionFactory.MAPPINGS[lang_module]
             return clazz(config=get_plugin_config(config, "language",
                                                   lang_module))
         except Exception:
-            # The Language Detection backend failed to start, fall back if appropriate.
-            if lang_module != _fallback_lang_detect_plugin:
-                lang_module = _fallback_lang_detect_plugin
-                LOG.error(f'Language Detection plugin {lang_module} not found. '
-                          f'Falling back to {_fallback_lang_detect_plugin}')
-                clazz = load_lang_detect_plugin(_fallback_lang_detect_plugin)
-                if clazz:
-                    return clazz(config=get_plugin_config(config, "language",
-                                                          lang_module))
-            
+            LOG.exception(f'Language Detection plugin {lang_module} could not be loaded!')
+            if fallback in config and fallback != lang_module:
+                LOG.info(f"Attempting to load fallback plugin instead: {fallback}")
+                config["detection_module"] = fallback
+                return cls.create(config)
             raise
 
 
 class OVOSLangTranslationFactory:
-    """ replicates the base neon class, but uses only OPM enabled plugins"""
-    MAPPINGS = {
-        "libretranslate": "libretranslate_plug",
-        "google": "googletranslate_plug",
-        "amazon": "amazontranslate_plug",
-        "apertium": "apertium_plug"
-    }
 
     @staticmethod
     def get_class(config=None):
@@ -190,12 +160,10 @@ class OVOSLangTranslationFactory:
         lang_module = config.get("translation_module", config.get("module"))
         if not lang_module:
             raise ValueError("`language.translation_module` not configured")
-        if lang_module in OVOSLangTranslationFactory.MAPPINGS:
-            lang_module = OVOSLangTranslationFactory.MAPPINGS[lang_module]
         return load_tx_plugin(lang_module)
 
-    @staticmethod
-    def create(config=None) -> LanguageTranslator:
+    @classmethod
+    def create(cls, config=None) -> LanguageTranslator:
         """
         Factory method to create a LangTranslation engine based on configuration
 
@@ -210,24 +178,20 @@ class OVOSLangTranslationFactory:
         if "language" in config:
             config = config["language"]
         lang_module = config.get("translation_module", config.get("module"))
+        cfg = config.get(lang_module, {})
+        fallback = cfg.get("fallback_module")
         try:
+            config["module"] = lang_module
             clazz = OVOSLangTranslationFactory.get_class(config)
             if clazz is None:
                 raise ValueError(f"Failed to load module: {lang_module}")
             LOG.info(f'Loaded the Language Translation plugin {lang_module}')
-            if lang_module in OVOSLangTranslationFactory.MAPPINGS:
-                lang_module = OVOSLangTranslationFactory.MAPPINGS[lang_module]
             return clazz(config=get_plugin_config(config, "language",
                                                   lang_module))
         except Exception:
-            # The Language Translation backend failed to start, fall back if appropriate.
-            if lang_module != _fallback_translate_plugin:
-                lang_module = _fallback_translate_plugin
-                LOG.error(f'Language Translation plugin {lang_module} '
-                          f'not found. Falling back to {_fallback_translate_plugin}')
-                clazz = load_tx_plugin(_fallback_translate_plugin)
-                if clazz:
-                    return clazz(config=get_plugin_config(config, "language",
-                                                          lang_module))
-
+            LOG.exception(f'Language Translation plugin {lang_module} could not be loaded!')
+            if fallback in config and fallback != lang_module:
+                LOG.info(f"Attempting to load fallback plugin instead: {fallback}")
+                config["translation_module"] = fallback
+                return cls.create(config)
             raise

@@ -1,8 +1,23 @@
 import unittest
-
-from unittest.mock import patch
+from copy import deepcopy
 from enum import Enum
+from unittest.mock import patch, Mock
+
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
+
+_TEST_CONFIG = {
+    "g2p": {
+        "module": "good",
+        "good": {"a": "b"}
+    }
+}
+_FALLBACK_CONFIG = {
+    "g2p": {
+        "module": "bad",
+        "bad": {"fallback_module": "good"},
+        "good": {"a": "b"}
+    }
+}
 
 
 class TestG2PTemplate(unittest.TestCase):
@@ -72,5 +87,53 @@ class TestG2P(unittest.TestCase):
 
 
 class TestG2PFactory(unittest.TestCase):
-    from ovos_plugin_manager.g2p import OVOSG2PFactory
-    # TODO
+    def test_create_g2p(self):
+        from ovos_plugin_manager.g2p import OVOSG2PFactory
+        real_get_class = OVOSG2PFactory.get_class
+        mock_class = Mock()
+        call_args = None
+
+        def _copy_args(*args):
+            nonlocal call_args
+            call_args = deepcopy(args)
+            return mock_class
+
+        mock_get_class = Mock(side_effect=_copy_args)
+        OVOSG2PFactory.get_class = mock_get_class
+
+        OVOSG2PFactory.create(config=_TEST_CONFIG)
+        mock_get_class.assert_called_once()
+        self.assertEqual(call_args, ({**_TEST_CONFIG['g2p']['good'],
+                                      **{"module": "good",
+                                         "lang": "en-us"}},))
+        mock_class.assert_called_once_with({**_TEST_CONFIG['g2p']['good'],
+                                            **{"module": "good",
+                                               "lang": "en-us"}})
+        OVOSG2PFactory.get_class = real_get_class
+
+    def test_create_fallback(self):
+        from ovos_plugin_manager.g2p import OVOSG2PFactory
+        real_get_class = OVOSG2PFactory.get_class
+        mock_class = Mock()
+        call_args = None
+        bad_call_args = None
+
+        def _copy_args(*args):
+            nonlocal call_args, bad_call_args
+            if args[0]["module"] == "bad":
+                bad_call_args = deepcopy(args)
+                return None
+            call_args = deepcopy(args)
+            return mock_class
+
+        mock_get_class = Mock(side_effect=_copy_args)
+        OVOSG2PFactory.get_class = mock_get_class
+
+        OVOSG2PFactory.create(config=_FALLBACK_CONFIG)
+        mock_get_class.assert_called()
+        self.assertEqual(call_args[0]["module"], 'good')
+        self.assertEqual(bad_call_args[0]["module"], 'bad')
+        mock_class.assert_called_once_with({**_FALLBACK_CONFIG['g2p']['good'],
+                                            **{"module": "good",
+                                               "lang": "en-us"}})
+        OVOSG2PFactory.get_class = real_get_class

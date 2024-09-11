@@ -3,6 +3,22 @@ import unittest
 from unittest.mock import patch, Mock
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
+_TEST_CONFIG = {
+    "language": {
+        "detection_module": "good",
+        "translation_module": "good",
+        "good": {"a": "b"}
+    }
+}
+_FALLBACK_CONFIG = {
+    "language": {
+        "detection_module": "bad",
+        "translation_module": "bad",
+        "bad": {"fallback_module": "good"},
+        "good": {"a": "b"}
+    }
+}
+
 
 class TestLanguageTemplate(unittest.TestCase):
     def test_language_detector(self):
@@ -83,39 +99,15 @@ class TestLanguageDetector(unittest.TestCase):
 
 
 class TestLangDetectionFactory(unittest.TestCase):
-    def test_mappings(self):
-        from ovos_plugin_manager.language import OVOSLangDetectionFactory
-        self.assertIsInstance(OVOSLangDetectionFactory.MAPPINGS, dict)
-        for conf in OVOSLangDetectionFactory.MAPPINGS:
-            self.assertIsInstance(conf, str)
-            self.assertIsInstance(OVOSLangDetectionFactory.MAPPINGS[conf],
-                                  str)
-            self.assertNotEqual(conf, OVOSLangDetectionFactory.MAPPINGS[conf])
-
     @patch("ovos_plugin_manager.language.load_lang_detect_plugin")
-    @patch("ovos_plugin_manager.language.Configuration")
-    def test_get_class(self, config, load_plugin):
+    def test_get_class(self, load_plugin):
         from ovos_plugin_manager.language import OVOSLangDetectionFactory
-        test_config = {"language": {
-            "detection_module": "libretranslate"
-        }}
+
         mock_class = Mock()
-        config.return_value = test_config
         load_plugin.return_value = mock_class
 
-        # Test mapped plugin from config
-        self.assertEquals(OVOSLangDetectionFactory.get_class(), mock_class)
-        load_plugin.assert_called_with("libretranslate_detection_plug")
-
-        # Test explicitly specified mapped plugin
-        conf = {"module": "google"}
-        self.assertEquals(OVOSLangDetectionFactory.get_class(conf), mock_class)
-        load_plugin.assert_called_with("googletranslate_detection_plug")
-
-        # Test unmapped plugin
-        conf = {"language": {"detection_module": "real-detect-plug"}}
-        self.assertEquals(OVOSLangDetectionFactory.get_class(conf), mock_class)
-        load_plugin.assert_called_with("real-detect-plug")
+        self.assertEqual(OVOSLangDetectionFactory.get_class(_TEST_CONFIG), mock_class)
+        load_plugin.assert_called_with("good")
 
         # Test invalid module config
         conf = {"language": {}}
@@ -128,78 +120,64 @@ class TestLangDetectionFactory(unittest.TestCase):
         from ovos_plugin_manager.language import OVOSLangDetectionFactory
         plug_instance = Mock()
         mock_plugin = Mock(return_value=plug_instance)
-        default_config = {
-            "lang": "core_lang",
-            "language": {
-                "detection_module": "google",
-                "lang": "detect"
-            }
-        }
-        config.return_value = default_config
+
+        config.return_value = _TEST_CONFIG
         load_plugin.return_value = mock_plugin
 
         # Create from core config
         plug = OVOSLangDetectionFactory.create()
-        load_plugin.assert_called_once_with('googletranslate_detection_plug')
-        mock_plugin.assert_called_once_with(
-            config={'lang': "detect",
-                    "module": "googletranslate_detection_plug"})
+        load_plugin.assert_called_once_with('good')
+        mock_plugin.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
+                                                    **{'module': 'good', 'lang': 'en-us'}})
         self.assertEquals(plug_instance, plug)
 
         # Create plugin fully specified in passed config
-        config_with_module = {"detection_module": "detect-plugin",
-                              "lang": "lang"}
-        plug = OVOSLangDetectionFactory.create(config_with_module)
-        load_plugin.assert_called_with("detect-plugin")
-        mock_plugin.assert_called_with(config={"module": "detect-plugin",
-                                               "lang": "lang"})
+        mock_plugin.reset_mock()
+        plug = OVOSLangDetectionFactory.create(_TEST_CONFIG)
+        load_plugin.assert_called_with("good")
+        mock_plugin.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
+                                                    **{'module': 'good', 'lang': 'en-us'}})
         self.assertEquals(plug_instance, plug)
 
-        # Create plugin fallback module config parsing
-        config_with_fallback_module = {"module": "test-detect-plugin",
-                                       "lang": "lang"}
-        plug = OVOSLangDetectionFactory.create(config_with_fallback_module)
-        load_plugin.assert_called_with("test-detect-plugin")
-        mock_plugin.assert_called_with(config=config_with_fallback_module)
-        self.assertEquals(plug_instance, plug)
-        # TODO: Test exception handling fallback to libretranslate
+    def test_create_fallback(self):
+        from ovos_plugin_manager.language import OVOSLangDetectionFactory
+        real_get_class = OVOSLangDetectionFactory.get_class
+        mock_class = Mock()
+        call_args = None
+        bad_call_args = None
+        from copy import deepcopy
+
+        def _copy_args(*args):
+            nonlocal call_args, bad_call_args
+            if args[0]["module"] == "bad":
+                bad_call_args = deepcopy(args)
+                return None
+            call_args = deepcopy(args)
+            return mock_class
+
+        mock_get_class = Mock(side_effect=_copy_args)
+        OVOSLangDetectionFactory.get_class = mock_get_class
+
+        OVOSLangDetectionFactory.create(config=_FALLBACK_CONFIG)
+        mock_get_class.assert_called()
+        self.assertEqual(call_args[0]["module"], 'good')
+        self.assertEqual(bad_call_args[0]["module"], 'bad')
+        mock_class.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
+                                                    **{'module': 'good', 'lang': 'en-us'}})
+        OVOSLangDetectionFactory.get_class = real_get_class
 
 
 class TestLangTranslationFactory(unittest.TestCase):
-    def test_mappings(self):
-        from ovos_plugin_manager.language import OVOSLangTranslationFactory
-        self.assertIsInstance(OVOSLangTranslationFactory.MAPPINGS, dict)
-        for conf in OVOSLangTranslationFactory.MAPPINGS:
-            self.assertIsInstance(conf, str)
-            self.assertIsInstance(OVOSLangTranslationFactory.MAPPINGS[conf],
-                                  str)
-            self.assertNotEqual(conf, OVOSLangTranslationFactory.MAPPINGS[conf])
 
     @patch("ovos_plugin_manager.language.load_tx_plugin")
-    @patch("ovos_plugin_manager.language.Configuration")
-    def test_get_class(self, config, load_plugin):
+    def test_get_class(self, load_plugin):
         from ovos_plugin_manager.language import OVOSLangTranslationFactory
-        test_config = {"language": {
-            "translation_module": "libretranslate"
-        }}
+
         mock_class = Mock()
-        config.return_value = test_config
         load_plugin.return_value = mock_class
 
-        # Test mapped plugin from config
-        self.assertEquals(OVOSLangTranslationFactory.get_class(), mock_class)
-        load_plugin.assert_called_with("libretranslate_plug")
-
-        # Test explicitly specified mapped plugin
-        conf = {"module": "google"}
-        self.assertEquals(OVOSLangTranslationFactory.get_class(conf),
-                          mock_class)
-        load_plugin.assert_called_with("googletranslate_plug")
-
-        # Test unmapped plugin
-        conf = {"language": {"translation_module": "real-detect-plug"}}
-        self.assertEquals(OVOSLangTranslationFactory.get_class(conf), mock_class)
-        load_plugin.assert_called_with("real-detect-plug")
+        self.assertEqual(OVOSLangTranslationFactory.get_class(_TEST_CONFIG), mock_class)
+        load_plugin.assert_called_with("good")
 
         # Test invalid module config
         conf = {"language": {}}
@@ -212,38 +190,48 @@ class TestLangTranslationFactory(unittest.TestCase):
         from ovos_plugin_manager.language import OVOSLangTranslationFactory
         plug_instance = Mock()
         mock_plugin = Mock(return_value=plug_instance)
-        default_config = {
-            "lang": "core_lang",
-            "language": {
-                "translation_module": "google",
-                "lang": "tx"
-            }
-        }
-        config.return_value = default_config
+
+        config.return_value = _TEST_CONFIG
         load_plugin.return_value = mock_plugin
 
         # Create from core config
         plug = OVOSLangTranslationFactory.create()
-        load_plugin.assert_called_once_with('googletranslate_plug')
-        mock_plugin.assert_called_once_with(
-            config={'lang': "tx", "module": "googletranslate_plug"})
+        load_plugin.assert_called_once_with('good')
+        mock_plugin.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
+                                                    **{'module': 'good', 'lang': 'en-us'}})
         self.assertEquals(plug_instance, plug)
 
         # Create plugin fully specified in passed config
-        config_with_module = {"translation_module": "translate-plugin",
-                              "lang": "lang"}
-        plug = OVOSLangTranslationFactory.create(config_with_module)
-        load_plugin.assert_called_with("translate-plugin")
-        mock_plugin.assert_called_with(config={"module": "translate-plugin",
-                                               "lang": "lang"})
+        mock_plugin.reset_mock()
+        plug = OVOSLangTranslationFactory.create(_TEST_CONFIG)
+        load_plugin.assert_called_with("good")
+        mock_plugin.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
+                                                    **{'module': 'good', 'lang': 'en-us'}})
         self.assertEquals(plug_instance, plug)
 
-        # Create plugin fallback module config parsing
-        config_with_fallback_module = {"module": "test-translate-plugin",
-                                       "lang": "lang"}
-        plug = OVOSLangTranslationFactory.create(config_with_fallback_module)
-        load_plugin.assert_called_with("test-translate-plugin")
-        mock_plugin.assert_called_with(config=config_with_fallback_module)
-        self.assertEquals(plug_instance, plug)
+    def test_create_fallback(self):
+        from ovos_plugin_manager.language import OVOSLangTranslationFactory
+        real_get_class = OVOSLangTranslationFactory.get_class
+        mock_class = Mock()
+        call_args = None
+        bad_call_args = None
+        from copy import deepcopy
 
-        # TODO: Test exception handling fallback to libretranslate
+        def _copy_args(*args):
+            nonlocal call_args, bad_call_args
+            if args[0]["module"] == "bad":
+                bad_call_args = deepcopy(args)
+                return None
+            call_args = deepcopy(args)
+            return mock_class
+
+        mock_get_class = Mock(side_effect=_copy_args)
+        OVOSLangTranslationFactory.get_class = mock_get_class
+
+        OVOSLangTranslationFactory.create(config=_FALLBACK_CONFIG)
+        mock_get_class.assert_called()
+        self.assertEqual(call_args[0]["module"], 'good')
+        self.assertEqual(bad_call_args[0]["module"], 'bad')
+        mock_class.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
+                                                    **{'module': 'good', 'lang': 'en-us'}})
+        OVOSLangTranslationFactory.get_class = real_get_class
