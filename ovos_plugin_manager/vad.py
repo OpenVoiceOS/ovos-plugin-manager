@@ -92,6 +92,7 @@ class OVOSVADFactory:
             "module": <engine_name>
         }
         """
+        config = config or Configuration()
         if "listener" in config:
             config = config["listener"]
         if "VAD" in config:
