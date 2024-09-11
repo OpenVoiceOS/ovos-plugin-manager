@@ -19,6 +19,23 @@ _TEST_CONFIG = {
         }
     }
 }
+_FALLBACK_CONFIG = {
+    "lang": "en-us",
+    "microphone": {
+        "module": "bad",
+        "bad": {
+            "sample_width": 1,
+            "sample_channels": 1,
+            "chunk_size": 2048,
+            "fallback_module": "dummy"
+        },
+        "dummy": {
+            "sample_width": 1,
+            "sample_channels": 1,
+            "chunk_size": 2048
+        },
+    }
+}
 
 
 class TestMicrophoneTemplate(unittest.TestCase):
@@ -143,6 +160,35 @@ class TestMicrophoneFactory(unittest.TestCase):
                                       **{"module": "dummy",
                                          "lang": "en-us"}},))
         mock_class.assert_called_once_with(**_TEST_CONFIG['microphone']['dummy'])
+        OVOSMicrophoneFactory.get_class = real_get_class
+
+    def test_create_microphone_fallback(self):
+        from ovos_plugin_manager.microphone import OVOSMicrophoneFactory
+        real_get_class = OVOSMicrophoneFactory.get_class
+        mock_class = Mock()
+        call_args = None
+        bad_call_args = None
+
+        def _copy_args(*args):
+            nonlocal call_args, bad_call_args
+            if args[0]["module"] == "bad":
+                bad_call_args = deepcopy(args)
+                return None
+            call_args = deepcopy(args)
+            return mock_class
+
+        mock_get_class = Mock(side_effect=_copy_args)
+        OVOSMicrophoneFactory.get_class = mock_get_class
+
+        OVOSMicrophoneFactory.create(config=_FALLBACK_CONFIG)
+        mock_get_class.assert_called()
+        self.assertEqual(call_args, ({**_FALLBACK_CONFIG['microphone']['dummy'],
+                                      **{"module": "dummy",
+                                         "lang": "en-us"}},))
+        self.assertEqual(bad_call_args, ({**_FALLBACK_CONFIG['microphone']['bad'],
+                                      **{"module": "bad",
+                                         "lang": "en-us"}},))
+        mock_class.assert_called_once_with(**_FALLBACK_CONFIG['microphone']['dummy'])
         OVOSMicrophoneFactory.get_class = real_get_class
 
     @patch("ovos_plugin_manager.utils.load_plugin")

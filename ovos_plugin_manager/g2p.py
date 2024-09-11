@@ -107,6 +107,8 @@ class OVOSG2PFactory:
             "module": <engine_name>
         }
         """
+        if "g2p" in config:
+            config = config["g2p"]
         g2p_config = get_g2p_config(config)
         g2p_module = g2p_config.get('module', 'dummy')
         fallback = g2p_config.get("fallback_module")

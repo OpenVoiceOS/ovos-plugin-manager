@@ -92,16 +92,19 @@ class OVOSVADFactory:
             "module": <engine_name>
         }
         """
-        vad_config = get_vad_config(config)
-        plugin = vad_config.get("module")
-        fallback = vad_config.get("fallback_module")
+        if "listener" in config:
+            config = config["listener"]
+        if "VAD" in config:
+            config = config["VAD"]
+        plugin = config.get("module")
         if not plugin:
-            raise ValueError(f"VAD Plugin not configured in: {vad_config}")
+            raise ValueError(f"VAD Plugin not configured in: {config}")
+
+        plugin_config = config.get(plugin, {})
+        fallback = plugin_config.get("fallback_module")
+
         try:
-            clazz = OVOSVADFactory.get_class(vad_config)
-            # module name not expected in config; don't change passed config
-            plugin_config = dict(vad_config)
-            plugin_config.pop("module")
+            clazz = OVOSVADFactory.get_class(config)
             return clazz(plugin_config)
         except Exception:
             LOG.exception(f'VAD plugin {plugin} could not be loaded!')

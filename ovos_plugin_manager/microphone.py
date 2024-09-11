@@ -60,6 +60,8 @@ class OVOSMicrophoneFactory:
             "module": <engine_name>
         }
         """
+        if "microphone" in config:
+            config = config["microphone"]
         microphone_config = get_microphone_config(config)
         microphone_module = microphone_config.get('module')
         fallback = microphone_config.get("fallback_module")
@@ -70,7 +72,8 @@ class OVOSMicrophoneFactory:
             # as other plugin types
             microphone_config.pop('lang')
             microphone_config.pop('module')
-            microphone_config.pop('fallback_module')
+            if fallback:
+                microphone_config.pop('fallback_module')
             microphone = clazz(**microphone_config)
             LOG.debug(f'Loaded microphone plugin {microphone_module}')
         except Exception:
