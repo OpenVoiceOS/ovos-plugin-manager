@@ -1,6 +1,7 @@
 import unittest
-from unittest.mock import patch, Mock
 from copy import copy, deepcopy
+from unittest.mock import patch, Mock
+
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 _TEST_CONFIG = {
@@ -15,6 +16,13 @@ _TEST_CONFIG = {
                 "vad_mode": 2
             }
         }
+    }
+}
+_FALLBACK_CONFIG = {
+    "VAD": {
+        "module": "bad",
+        "bad": {"fallback_module": "good"},
+        "good": {"a": "b"}
     }
 }
 
@@ -74,15 +82,38 @@ class TestVADFactory(unittest.TestCase):
         OVOSVADFactory.get_class = mock_get_class
 
         OVOSVADFactory.create(config=_TEST_CONFIG)
-        mock_get_class.assert_called_once_with(
-            {**_TEST_CONFIG['listener']['VAD']['dummy'], **{"module": "dummy"}})
-        mock_class.assert_called_once_with(
-            _TEST_CONFIG['listener']["VAD"]['dummy'])
+        mock_get_class.assert_called_once_with(_TEST_CONFIG['listener']['VAD'])
+        mock_class.assert_called_once_with(_TEST_CONFIG['listener']["VAD"]['dummy'])
 
         # Test invalid config
         with self.assertRaises(ValueError):
             OVOSVADFactory.create({'VAD': {'value': None}})
 
+        OVOSVADFactory.get_class = real_get_class
+
+    def test_create_fallback(self):
+        from ovos_plugin_manager.vad import OVOSVADFactory
+        real_get_class = OVOSVADFactory.get_class
+        mock_class = Mock()
+        call_args = None
+        bad_call_args = None
+
+        def _copy_args(*args):
+            nonlocal call_args, bad_call_args
+            if args[0]["module"] == "bad":
+                bad_call_args = deepcopy(args)
+                return None
+            call_args = deepcopy(args)
+            return mock_class
+
+        mock_get_class = Mock(side_effect=_copy_args)
+        OVOSVADFactory.get_class = mock_get_class
+
+        OVOSVADFactory.create(config=_FALLBACK_CONFIG)
+        mock_get_class.assert_called()
+        self.assertEqual(call_args[0]["module"], 'good')
+        self.assertEqual(bad_call_args[0]["module"], 'bad')
+        mock_class.assert_called_once_with(_FALLBACK_CONFIG['VAD']['good'])
         OVOSVADFactory.get_class = real_get_class
 
     @patch("ovos_plugin_manager.utils.load_plugin")
@@ -121,7 +152,7 @@ class TestVADFactory(unittest.TestCase):
         webrtc_config = get_vad_config(config)
         self.assertEqual(webrtc_config,
                          {**_TEST_CONFIG['listener']['VAD']
-                          ['ovos-vad-plugin-webrtcvad'],
+                         ['ovos-vad-plugin-webrtcvad'],
                           **{'module': 'ovos-vad-plugin-webrtcvad'}})
         config = copy(_TEST_CONFIG)
         config['VAD'] = {'module': 'fake'}

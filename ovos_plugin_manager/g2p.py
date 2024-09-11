@@ -77,12 +77,6 @@ def get_g2p_config(config: Optional[dict] = None) -> dict:
 
 
 class OVOSG2PFactory:
-    """ replicates the base mycroft class, but uses only OPM enabled plugins"""
-    MAPPINGS = {
-        "dummy": "ovos-g2p-plugin-dummy",
-        "phoneme_guesser": "neon-g2p-plugin-phoneme-guesser",
-        "gruut": "neon-g2p-plugin-gruut"
-    }
 
     @staticmethod
     def get_class(config=None):
@@ -97,15 +91,13 @@ class OVOSG2PFactory:
         """
         config = get_g2p_config(config)
         g2p_module = config.get("module") or 'dummy'
-        if g2p_module in OVOSG2PFactory.MAPPINGS:
-            g2p_module = OVOSG2PFactory.MAPPINGS[g2p_module]
-        if g2p_module == 'ovos-g2p-plugin-dummy':
+        if g2p_module == 'dummy':
             return Grapheme2PhonemePlugin
 
         return load_g2p_plugin(g2p_module)
 
-    @staticmethod
-    def create(config=None):
+    @classmethod
+    def create(cls, config=None):
         """Factory method to create a G2P engine based on configuration.
 
         The configuration file ``mycroft.conf`` contains a ``g2p`` section with
@@ -115,13 +107,20 @@ class OVOSG2PFactory:
             "module": <engine_name>
         }
         """
+        if "g2p" in config:
+            config = config["g2p"]
         g2p_config = get_g2p_config(config)
         g2p_module = g2p_config.get('module', 'dummy')
+        fallback = g2p_config.get("fallback_module")
         try:
             clazz = OVOSG2PFactory.get_class(g2p_config)
             g2p = clazz(g2p_config)
             LOG.debug(f'Loaded plugin {g2p_module}')
         except Exception:
             LOG.exception('The selected G2P plugin could not be loaded.')
+            if fallback in config and fallback != g2p_module:
+                LOG.info(f"Attempting to load fallback plugin instead: {fallback}")
+                config["module"] = fallback
+                return cls.create(config)
             raise
         return g2p

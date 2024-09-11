@@ -49,8 +49,8 @@ class OVOSMicrophoneFactory:
         microphone_module = config.get("module")
         return load_microphone_plugin(microphone_module)
 
-    @staticmethod
-    def create(config=None):
+    @classmethod
+    def create(cls, config=None):
         """Factory method to create a microphone engine based on configuration.
 
         The configuration file ``mycroft.conf`` contains a ``microphone`` section with
@@ -60,8 +60,11 @@ class OVOSMicrophoneFactory:
             "module": <engine_name>
         }
         """
+        if "microphone" in config:
+            config = config["microphone"]
         microphone_config = get_microphone_config(config)
         microphone_module = microphone_config.get('module')
+        fallback = microphone_config.get("fallback_module")
         try:
             clazz = OVOSMicrophoneFactory.get_class(microphone_config)
             # Note that configuration is expanded for this class of plugins
@@ -69,9 +72,15 @@ class OVOSMicrophoneFactory:
             # as other plugin types
             microphone_config.pop('lang')
             microphone_config.pop('module')
+            if fallback:
+                microphone_config.pop('fallback_module')
             microphone = clazz(**microphone_config)
             LOG.debug(f'Loaded microphone plugin {microphone_module}')
         except Exception:
             LOG.exception('The selected microphone plugin could not be loaded.')
+            if fallback in config and fallback != microphone_module:
+                LOG.info(f"Attempting to load fallback plugin instead: {fallback}")
+                config["module"] = fallback
+                return cls.create(config)
             raise
         return microphone

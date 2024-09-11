@@ -1,54 +1,13 @@
 # Changelog
 
-## [0.2.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.2.0a1) (2024-09-10)
+## [0.3.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.3.0a1) (2024-09-11)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.1.1a1...0.2.0a1)
-
-**Implemented enhancements:**
-
-- feat/triples\_plugins [\#257](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/257) ([JarbasAl](https://github.com/JarbasAl))
-
-## [0.1.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.1.1a1) (2024-09-10)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/V0.1.1...0.1.1a1)
-
-**Implemented enhancements:**
-
-- feat/units\_kwarg\_solvers [\#247](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/247) ([JarbasAl](https://github.com/JarbasAl))
-- feat/metadata [\#246](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/246) ([JarbasAl](https://github.com/JarbasAl))
-- feat/embeddings\_metadata\_support [\#245](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/245) ([JarbasAl](https://github.com/JarbasAl))
-- feat/add\_rerank\_method [\#243](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/243) ([JarbasAl](https://github.com/JarbasAl))
-- feat/pipeline\_intent\_match [\#242](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/242) ([JarbasAl](https://github.com/JarbasAl))
-- feat/pipeline\_plugin\_placeholder [\#241](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/241) ([JarbasAl](https://github.com/JarbasAl))
-- feat/embeddings plugins [\#240](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/240) ([JarbasAl](https://github.com/JarbasAl))
-- feat/alternative\_transcripts [\#236](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/236) ([JarbasAl](https://github.com/JarbasAl))
-- feat/lang\_detection\_plugin [\#220](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/220) ([JarbasAl](https://github.com/JarbasAl))
-- feat/restore phonetic spellings [\#195](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/195) ([JarbasAl](https://github.com/JarbasAl))
-
-**Fixed bugs:**
-
-- fix/restore\_dead\_code [\#256](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/256) ([JarbasAl](https://github.com/JarbasAl))
-- fix/context\_kwarg\_backwards\_compat [\#248](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/248) ([JarbasAl](https://github.com/JarbasAl))
-- refactor/solver\_decorators [\#244](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/244) ([JarbasAl](https://github.com/JarbasAl))
-- fix/missing\_property [\#239](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/239) ([JarbasAl](https://github.com/JarbasAl))
-- ensure cache dir exists [\#232](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/232) ([JarbasAl](https://github.com/JarbasAl))
-- fix/playback\_time\_not\_abstract [\#230](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/230) ([JarbasAl](https://github.com/JarbasAl))
-- fix/legacy\_playlist\_queue [\#227](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/227) ([JarbasAl](https://github.com/JarbasAl))
-- hotfix/voice\_kwarg [\#223](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/223) ([JarbasAl](https://github.com/JarbasAl))
-- hotfix/clean\_shutdown [\#222](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/222) ([JarbasAl](https://github.com/JarbasAl))
-- fix/tts\_reload [\#219](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/219) ([JarbasAl](https://github.com/JarbasAl))
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.2.0...0.3.0a1)
 
 **Merged pull requests:**
 
-- chore:semver\_automations [\#259](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/259) ([JarbasAl](https://github.com/JarbasAl))
-- license compliance [\#255](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/255) ([JarbasAl](https://github.com/JarbasAl))
-- planned\_deprecations [\#254](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/254) ([JarbasAl](https://github.com/JarbasAl))
-- refactor/improve\_readwritestream [\#234](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/234) ([JarbasAl](https://github.com/JarbasAl))
-- refactor/deprecation\_warnings [\#233](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/233) ([JarbasAl](https://github.com/JarbasAl))
-- fix/py3.12 [\#231](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/231) ([JarbasAl](https://github.com/JarbasAl))
-- refactor/legacy\_audio [\#226](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/226) ([JarbasAl](https://github.com/JarbasAl))
-- Fix file path handling in setup.py [\#225](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/225) ([NeonDaniel](https://github.com/NeonDaniel))
-- Update for ovos-utils 0.0.X compat. [\#224](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/224) ([NeonDaniel](https://github.com/NeonDaniel))
+- feat:fallback\_plugins [\#263](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/263) ([JarbasAl](https://github.com/JarbasAl))
+- chore:semver\_versioning [\#262](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/262) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
