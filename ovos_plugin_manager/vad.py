@@ -61,11 +61,6 @@ def get_vad_config(config: dict = None) -> dict:
 
 
 class OVOSVADFactory:
-    """ replicates the base mycroft class, but uses only OPM enabled plugins"""
-    MAPPINGS = {
-        "silero": "ovos-vad-plugin-silero",
-        "webrtcvad": "ovos-vad-plugin-webrtcvad"
-    }
 
     @staticmethod
     def get_class(config=None):
@@ -84,12 +79,10 @@ class OVOSVADFactory:
             raise ValueError(f"VAD Plugin not configured in: {config}")
         if vad_module == "dummy":
             return VADEngine
-        if vad_module in OVOSVADFactory.MAPPINGS:
-            vad_module = OVOSVADFactory.MAPPINGS[vad_module]
         return load_vad_plugin(vad_module)
 
-    @staticmethod
-    def create(config=None):
+    @classmethod
+    def create(cls, config=None):
         """Factory method to create a VAD engine based on configuration.
 
         The configuration file ``mycroft.conf`` contains a ``VAD`` section with
@@ -101,6 +94,7 @@ class OVOSVADFactory:
         """
         vad_config = get_vad_config(config)
         plugin = vad_config.get("module")
+        fallback = vad_config.get("fallback_module")
         if not plugin:
             raise ValueError(f"VAD Plugin not configured in: {vad_config}")
         try:
@@ -111,4 +105,8 @@ class OVOSVADFactory:
             return clazz(plugin_config)
         except Exception:
             LOG.exception(f'VAD plugin {plugin} could not be loaded!')
+            if fallback in config and fallback != plugin:
+                LOG.info(f"Attempting to load fallback plugin instead: {fallback}")
+                config["module"] = fallback
+                return cls.create(config)
             raise

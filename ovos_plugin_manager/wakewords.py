@@ -105,14 +105,6 @@ def get_wws(scan=False):
 
 
 class OVOSWakeWordFactory:
-    """ replicates the base mycroft class, but uses only OPM enabled plugins"""
-    MAPPINGS = {
-        "dummy": "ovos-ww-plugin-dummy",
-        "pocketsphinx": "ovos-ww-plugin-pocketsphinx",
-        "precise": "ovos-ww-plugin-precise",
-        "snowboy": "ovos-ww-plugin-snowboy",
-        "porcupine": "porcupine_wakeword_plug"
-    }
 
     @staticmethod
     def get_class(hotword: str, config: Optional[dict] = None) -> type:
@@ -128,8 +120,6 @@ class OVOSWakeWordFactory:
                         f"Returning base HotWordEngine")
             return HotWordEngine
         ww_module = hotword_config[hotword]["module"]
-        if ww_module in OVOSWakeWordFactory.MAPPINGS:
-            ww_module = OVOSWakeWordFactory.MAPPINGS[ww_module]
         return load_wake_word_plugin(ww_module)
 
     @staticmethod
