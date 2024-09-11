@@ -60,6 +60,7 @@ class OVOSMicrophoneFactory:
             "module": <engine_name>
         }
         """
+        config = config or Configuration()
         if "microphone" in config:
             config = config["microphone"]
         microphone_config = get_microphone_config(config)

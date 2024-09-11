@@ -1,13 +1,12 @@
 # Changelog
 
-## [0.3.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.3.0a1) (2024-09-11)
+## [0.3.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.3.1a1) (2024-09-11)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.2.0...0.3.0a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.3.0...0.3.1a1)
 
 **Merged pull requests:**
 
-- feat:fallback\_plugins [\#263](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/263) ([JarbasAl](https://github.com/JarbasAl))
-- chore:semver\_versioning [\#262](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/262) ([JarbasAl](https://github.com/JarbasAl))
+- fix:default\_config [\#265](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/265) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
