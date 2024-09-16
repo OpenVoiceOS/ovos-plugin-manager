@@ -175,23 +175,9 @@ def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
 
 
 def normalize_lang(lang):
-    # TODO consider moving to LF or ovos_utils
-    # special handling, the parse sometimes messes this up
-    # eg, uk-ua gets normalized to uk-gb
-    # this also makes lookup easier as we
-    # often get duplicate entries with both variants
-    if "-" in lang:
-        pieces = lang.split("-")
-        if len(pieces) == 2 and pieces[0] == pieces[1]:
-            lang = pieces[0]
-
-    try:
-        from langcodes import standardize_tag as _normalize_lang
-        lang = _normalize_lang(lang, macro=True)
-    except ValueError:
-        # this lang code is apparently not valid ?
-        pass
-    return lang
+    # TODO - add deprecation warning
+    from ovos_utils.lang import standardize_lang_tag
+    return standardize_lang_tag(lang)
 
 
 class ReadWriteStream:

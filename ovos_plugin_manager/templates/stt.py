@@ -14,7 +14,7 @@ from ovos_config import Configuration
 from ovos_utils import classproperty
 from ovos_utils.log import deprecated
 from ovos_utils.process_utils import RuntimeRequirements
-
+from ovos_utils.lang import standardize_lang_tag
 from ovos_plugin_manager.utils.config import get_plugin_config
 
 
@@ -78,9 +78,9 @@ class STT(metaclass=ABCMeta):
 
     @property
     def lang(self):
-        return self._lang or \
+        return standardize_lang_tag(self._lang or \
             self.config.get("lang") or \
-            Configuration().get("lang", "en-us")
+            Configuration().get("lang", "en-us"))
 
     @lang.setter
     def lang(self, val):
@@ -114,10 +114,7 @@ class STT(metaclass=ABCMeta):
                 "implement config handling directly instead", "1.0.0")
     def init_language(config_core):
         lang = config_core.get("lang", "en-US")
-        langs = lang.split("-")
-        if len(langs) == 2:
-            return langs[0].lower() + "-" + langs[1].upper()
-        return lang
+        return standardize_lang_tag(lang, macro=True)
 
     @abstractmethod
     def execute(self, audio, language: Optional[str] = None) -> str:

@@ -2,6 +2,7 @@ import json
 from typing import Optional
 
 from ovos_utils import flatten_list
+from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.log import LOG
 from ovos_plugin_manager import PluginTypes
 from ovos_plugin_manager.stt import get_stt_lang_configs
@@ -40,7 +41,7 @@ class PluginUIHelper:
         """
         cfg = cls._migrate_old_cfg(cfg)
         engine = cfg["module"]
-        lang = lang or cfg.get("lang")
+        lang = standardize_lang_tag(lang or cfg.get("lang"), macro=True)
 
         plugin_display_name = engine.replace("_", " ").replace("-",
                                                                " ").title()
