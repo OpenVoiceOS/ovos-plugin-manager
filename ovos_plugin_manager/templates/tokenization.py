@@ -1,5 +1,6 @@
 from ovos_bus_client.message import dig_for_message
 from ovos_utils import classproperty
+from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.process_utils import RuntimeRequirements
 from quebra_frases import span_indexed_word_tokenize, word_tokenize
 
@@ -49,14 +50,12 @@ class Tokenizer:
         msg = dig_for_message()
         if msg:
             lang = msg.data.get("lang")
-        return lang or "en-us"
+        return standardize_lang_tag(lang or "en-us")
 
     def span_tokenize(self, text, lang=None):
-        lang = lang or self.lang
         return span_indexed_word_tokenize(text)
 
     def tokenize(self, text, lang=None):
-        lang = lang or self.lang
         return word_tokenize(text)
 
     @staticmethod

@@ -1,6 +1,6 @@
 from ovos_bus_client.message import dig_for_message
-from ovos_utils import classproperty
-from ovos_utils import flatten_list
+from ovos_utils import classproperty, flatten_list
+from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.process_utils import RuntimeRequirements
 from quebra_frases import sentence_tokenize
 
@@ -58,7 +58,7 @@ class Segmenter:
         msg = dig_for_message()
         if msg:
             lang = msg.data.get("lang")
-        return lang or "en-us"
+        return standardize_lang_tag(lang or "en-us")
 
     @staticmethod
     def __extract(text, markers):

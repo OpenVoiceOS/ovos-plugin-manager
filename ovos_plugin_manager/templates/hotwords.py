@@ -6,6 +6,7 @@ The main use case is for plugins to be used across different projects
 """
 from ovos_config import Configuration
 from ovos_utils import classproperty
+from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.process_utils import RuntimeRequirements
 
 
@@ -49,7 +50,7 @@ class HotWordEngine:
         self.expected_duration = self.num_phonemes * phoneme_duration
 
         self.listener_config = mycroft_config.get("listener") or {}
-        self.lang = str(self.config.get("lang", lang)).lower()
+        self.lang = standardize_lang_tag(self.config.get("lang", lang))
 
     @classproperty
     def runtime_requirements(self):
