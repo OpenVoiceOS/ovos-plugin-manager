@@ -128,7 +128,7 @@ class TestTTS(unittest.TestCase):
     CONFIG_TYPE = PluginConfigTypes.TTS
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = "tts"
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):
@@ -317,14 +317,14 @@ class TestTTSCache(unittest.TestCase):
 
 class TestSession(unittest.TestCase):
     def test_tts_session(self):
-        sess = Session(session_id="123", lang="en-us")
+        sess = Session(session_id="123", lang="en-US")
         m = Message("speak",
                     context={"session": sess.serialize()})
 
         tts = TTS()
         self.assertEqual(tts.plugin_id, "ovos-tts-plugin-dummy")
         self.assertEqual(tts.voice, "default")  # no voice set
-        self.assertEqual(tts.lang, "en-us")  # from config
+        self.assertEqual(tts.lang, "en-US")  # from config
 
         # test that session makes it all the way to the TTS.queue
         kwargs = {"message": m}
@@ -337,8 +337,8 @@ class TestSession(unittest.TestCase):
         ctxt = tts._get_ctxt(kwargs)
         self.assertEqual(ctxt.plugin_id, tts.plugin_id)
         self.assertEqual(ctxt.lang, sess.lang)
-        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/default/en-us")
-        self.assertEqual(ctxt.synth_kwargs, {'lang': 'en-us', "voice": "default"})
+        self.assertEqual(ctxt.tts_id, f"{tts.plugin_id}/default/en-US")
+        self.assertEqual(ctxt.synth_kwargs, {'lang': 'en-US', "voice": "default"})
 
         sess = Session(session_id="123",
                        lang="klingon")

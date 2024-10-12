@@ -156,7 +156,7 @@ class TestQuestionSolver(unittest.TestCase):
     CONFIG_TYPE = PluginConfigTypes.QUESTION_SOLVER
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = ""
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):
@@ -205,7 +205,7 @@ class TestTldrSolver(unittest.TestCase):
     CONFIG_TYPE = PluginConfigTypes.TLDR_SOLVER
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = ""
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):
@@ -254,7 +254,7 @@ class TestEntailmentSolver(unittest.TestCase):
     CONFIG_TYPE = PluginConfigTypes.ENTAILMENT_SOLVER
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = ""
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):
@@ -303,7 +303,7 @@ class TestMultipleChoiceSolver(unittest.TestCase):
     CONFIG_TYPE = PluginConfigTypes.MULTIPLE_CHOICE_SOLVER
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = ""
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):
@@ -355,7 +355,7 @@ class TestReadingComprehensionSolver(unittest.TestCase):
     CONFIG_TYPE = PluginConfigTypes.READING_COMPREHENSION_SOLVER
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = ""
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):

@@ -2,6 +2,7 @@ import json
 from typing import Optional
 
 from ovos_utils import flatten_list
+from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.log import LOG
 from ovos_plugin_manager import PluginTypes
 from ovos_plugin_manager.stt import get_stt_lang_configs
@@ -40,7 +41,7 @@ class PluginUIHelper:
         """
         cfg = cls._migrate_old_cfg(cfg)
         engine = cfg["module"]
-        lang = lang or cfg.get("lang")
+        lang = standardize_lang_tag(lang or cfg.get("lang"), macro=True)
 
         plugin_display_name = engine.replace("_", " ").replace("-",
                                                                " ").title()
@@ -135,6 +136,7 @@ class PluginUIHelper:
         @param include_dialects: If True, include any ISO 639-1 matched codes
         @return: list of valid GUI-compatible config dicts
         """
+        lang = standardize_lang_tag(lang)
         # NOTE: mycroft-gui will crash if theres more than 20 options according to @aiix
         # TODO - validate that this is true and 20 is a real limit
         blacklist = blacklist or []
@@ -187,6 +189,7 @@ class PluginUIHelper:
         @param plugin_type: Type of plugins to return
         @return: list of plugin specs with capabilities and config options
         """
+        lang = standardize_lang_tag(lang)
         plugs = {}
         for entry in cls.get_config_options(lang, plugin_type):
             engine = entry["engine"]
