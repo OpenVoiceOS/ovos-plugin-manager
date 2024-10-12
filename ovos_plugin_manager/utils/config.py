@@ -141,10 +141,8 @@ def get_plugin_supported_languages(plug_type: PluginTypes) -> dict:
     """
     lang_configs = dict()
     for plug in find_plugins(plug_type):
-        configs = \
-            load_plugin_configs(plug,
-                                PluginConfigTypes(f"{plug_type.value}.config"))
-        for lang, config in configs:
+        configs = load_plugin_configs(plug, PluginConfigTypes(f"{plug_type.value}.config")) or {}
+        for lang, config in configs.items():
             lang = standardize_lang_tag(lang)
             lang_configs.setdefault(lang, list())
             lang_configs[lang].append(plug)
