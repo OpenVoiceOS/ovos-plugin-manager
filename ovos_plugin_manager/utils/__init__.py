@@ -18,7 +18,7 @@ from threading import Event, Lock
 from typing import Optional
 
 import pkg_resources
-from ovos_utils.log import LOG, log_deprecation
+from ovos_utils.log import LOG, log_deprecation, deprecated
 
 
 class PluginTypes(str, Enum):
@@ -173,9 +173,8 @@ def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
     LOG.warning(f'Could not find the plugin {plug_type}.{plug_name}')
     return None
 
-
+@deprecated("normalize_lang has been deprecated! update to 'from ovos_utils.lang import standardize_lang_tag'", "1.0.0")
 def normalize_lang(lang):
-    # TODO - add deprecation warning
     from ovos_utils.lang import standardize_lang_tag
     return standardize_lang_tag(lang)
 
