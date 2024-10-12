@@ -85,7 +85,7 @@ class STT(metaclass=ABCMeta):
     @lang.setter
     def lang(self, val):
         # backwards compat
-        self._lang = val
+        self._lang = standardize_lang_tag(val)
 
     @property
     @deprecated("self.keys has been deprecated! "
@@ -177,7 +177,7 @@ class StreamThread(Thread, metaclass=ABCMeta):
 
     def __init__(self, queue, language):
         super().__init__()
-        self.language = language
+        self.language = standardize_lang_tag(language)
         self.queue = queue
         self.text = None
 
@@ -216,7 +216,7 @@ class StreamingSTT(STT, metaclass=ABCMeta):
         self.stream_stop()
         self.queue = Queue()
         self.stream = self.create_streaming_thread()
-        self.stream.language = language or self.lang
+        self.stream.language = standardize_lang_tag(language or self.lang)
         self.transcript_ready.clear()
         self.stream.start()
 

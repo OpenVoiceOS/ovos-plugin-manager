@@ -52,7 +52,7 @@ class PosTagger:
         return standardize_lang_tag(lang or "en-US")
 
     def postag(self, spans, lang=None):
-        lang = lang or self.lang
+        lang = standardize_lang_tag(lang or self.lang)
         # this should be implemented by plugins!
         if lang.startswith("pt"):
             return _dummy_postag_pt(spans)
