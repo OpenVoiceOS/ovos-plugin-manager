@@ -65,7 +65,7 @@ class CoreferenceSolverEngine:
         msg = dig_for_message()
         if msg:
             lang = msg.data.get("lang")
-        return standardize_lang_tag(lang or "en-us")
+        return standardize_lang_tag(lang or "en-US")
 
     def contains_corefs(self, text, lang=None):
         lang = standardize_lang_tag(lang or self.lang, macro=True)

@@ -31,7 +31,7 @@ class HotWordEngine:
         lang (str): language code (BCP-47)
     """
 
-    def __init__(self, key_phrase="hey mycroft", config=None, lang="en-us"):
+    def __init__(self, key_phrase="hey mycroft", config=None, lang="en-US"):
         self.key_phrase = str(key_phrase).lower()
         mycroft_config = Configuration()
         if config is None:

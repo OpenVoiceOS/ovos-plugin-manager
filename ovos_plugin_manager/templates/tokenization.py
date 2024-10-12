@@ -50,7 +50,7 @@ class Tokenizer:
         msg = dig_for_message()
         if msg:
             lang = msg.data.get("lang")
-        return standardize_lang_tag(lang or "en-us")
+        return standardize_lang_tag(lang or "en-US")
 
     def span_tokenize(self, text, lang=None):
         return span_indexed_word_tokenize(text)

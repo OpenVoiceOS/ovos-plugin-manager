@@ -594,7 +594,7 @@ class TTS:
 
         LOG.debug(f"TTS kwargs: {kwargs}")
         return TTSContext(plugin_id=self.plugin_id,
-                          lang=kwargs.get("lang") or Configuration().get("lang", "en-us"),
+                          lang=kwargs.get("lang") or Configuration().get("lang", "en-US"),
                           voice=kwargs.get("voice", "default"),
                           synth_kwargs=kwargs)
 
@@ -934,7 +934,7 @@ class TTS:
         if message:
             sess = SessionManager.get(message)
             return sess.lang
-        return self.config.get("lang") or 'en-us'
+        return self.config.get("lang") or 'en-US'
 
     @lang.setter
     @deprecated("language is defined per request in get_tts, self.lang is not used",

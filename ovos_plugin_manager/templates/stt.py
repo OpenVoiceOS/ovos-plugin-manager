@@ -80,7 +80,7 @@ class STT(metaclass=ABCMeta):
     def lang(self):
         return standardize_lang_tag(self._lang or \
             self.config.get("lang") or \
-            Configuration().get("lang", "en-us"))
+            Configuration().get("lang", "en-US"))
 
     @lang.setter
     def lang(self, val):

@@ -136,6 +136,7 @@ class PluginUIHelper:
         @param include_dialects: If True, include any ISO 639-1 matched codes
         @return: list of valid GUI-compatible config dicts
         """
+        lang = standardize_lang_tag(lang)
         # NOTE: mycroft-gui will crash if theres more than 20 options according to @aiix
         # TODO - validate that this is true and 20 is a real limit
         blacklist = blacklist or []
@@ -188,6 +189,7 @@ class PluginUIHelper:
         @param plugin_type: Type of plugins to return
         @return: list of plugin specs with capabilities and config options
         """
+        lang = standardize_lang_tag(lang)
         plugs = {}
         for entry in cls.get_config_options(lang, plugin_type):
             engine = entry["engine"]

@@ -1,13 +1,14 @@
 import json
 import os
-
 from hashlib import md5
 from typing import Optional
+
+from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_data_home
+
 from ovos_plugin_manager.templates.hotwords import HotWordEngine
-from ovos_plugin_manager.utils import normalize_lang, \
-    PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
 def find_wake_word_plugins() -> dict:
@@ -135,6 +136,7 @@ class OVOSWakeWordFactory:
         @param loop: Unused
         @return: Initialized HotWordEngine
         """
+        lang = standardize_lang_tag(lang)
         # config here is config['hotwords'][module]
         LOG.info(f'Loading "{hotword}" wake word via {module} with '
                  f'config: {hotword_config}')
@@ -149,7 +151,7 @@ class OVOSWakeWordFactory:
     @classmethod
     def create_hotword(cls, hotword: str = "hey mycroft",
                        config: Optional[dict] = None,
-                       lang: str = "en-us", loop=None) -> HotWordEngine:
+                       lang: str = "en-US", loop=None) -> HotWordEngine:
         """
         Get an initialized HotWordEngine by configured name
         @param hotword: string hotword to load
@@ -158,6 +160,7 @@ class OVOSWakeWordFactory:
         @param loop: Unused
         @return: Initialized HotWordEngine
         """
+        lang = standardize_lang_tag(lang)
         ww_configs = get_hotwords_config(config)
         if hotword not in ww_configs:
             LOG.warning(f"replace ` ` in {hotword} with `_`")

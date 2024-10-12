@@ -58,7 +58,7 @@ class Segmenter:
         msg = dig_for_message()
         if msg:
             lang = msg.data.get("lang")
-        return standardize_lang_tag(lang or "en-us")
+        return standardize_lang_tag(lang or "en-US")
 
     @staticmethod
     def __extract(text, markers):

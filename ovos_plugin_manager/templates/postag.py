@@ -49,7 +49,7 @@ class PosTagger:
         msg = dig_for_message()
         if msg:
             lang = msg.data.get("lang")
-        return standardize_lang_tag(lang or "en-us")
+        return standardize_lang_tag(lang or "en-US")
 
     def postag(self, spans, lang=None):
         lang = lang or self.lang
