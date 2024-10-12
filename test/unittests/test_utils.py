@@ -635,7 +635,7 @@ class TestConfigUtils(unittest.TestCase):
             "tts": {
                 "module": "ovos_tts_plugin_espeakng",
                 "ovos_tts_plugin_espeakng": {
-                  "lang": "de-de",
+                  "lang": "de-DE",
                   "voice": "german-mbrola-5",
                   "speed": "135",
                   "amplitude": "80",
@@ -644,7 +644,7 @@ class TestConfigUtils(unittest.TestCase):
             }
         }
         tts_config = get_plugin_config(config, "tts")
-        self.assertEqual(tts_config['lang'], 'de-de')
+        self.assertEqual(tts_config['lang'], 'de-DE')
         self.assertEqual(tts_config['module'], 'ovos_tts_plugin_espeakng')
         self.assertEqual(tts_config['voice'], 'german-mbrola-5')
         self.assertNotIn("ovos_tts_plugin_espeakng", tts_config)
@@ -657,6 +657,7 @@ class TestConfigUtils(unittest.TestCase):
                                                'en-US', False)
         self.assertEqual(len(valid_en_us), 1)
         valid_en = get_valid_plugin_configs(_MOCK_PLUGIN_CONFIG, 'en-US', True)
+
         self.assertEqual(len(valid_en), 9)
         invalid_lang = get_valid_plugin_configs(_MOCK_PLUGIN_CONFIG, 'en-ZZ',
                                                 False)

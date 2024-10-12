@@ -3,6 +3,7 @@ from ovos_config.config import Configuration
 from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.log import LOG
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes
+from langcodes import tag_distance
 
 
 def get_plugin_config(config: Optional[dict] = None, section: str = None,
@@ -56,7 +57,7 @@ def get_valid_plugin_configs(configs: dict, lang: str,
         # Check other dialects of the requested language
         base_lang = standardize_lang_tag(lang, macro=True)
         for language, confs in configs.items():
-            if language.startswith(base_lang):
+            if tag_distance(base_lang, language) < 10:
                 for config in confs:
                     try:
                         if language != lang:
