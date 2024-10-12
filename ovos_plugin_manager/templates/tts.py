@@ -934,7 +934,7 @@ class TTS:
         if message:
             sess = SessionManager.get(message)
             return sess.lang
-        return self.config.get("lang") or 'en-US'
+        return standardize_lang_tag(self.config.get("lang") or 'en-US')
 
     @lang.setter
     @deprecated("language is defined per request in get_tts, self.lang is not used",
