@@ -5,7 +5,7 @@ from unittest.mock import patch, Mock
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 _TEST_CONFIG = {
-    "lang": "en-us",
+    "lang": "en-US",
     "listener": {
         "VAD": {
             "module": "dummy",
@@ -37,7 +37,7 @@ class TestVAD(unittest.TestCase):
     CONFIG_TYPE = PluginConfigTypes.VAD
     TEST_CONFIG = _TEST_CONFIG['listener']
     CONFIG_SECTION = "VAD"
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):

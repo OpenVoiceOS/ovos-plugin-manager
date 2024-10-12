@@ -34,7 +34,7 @@ class TestPHAL(unittest.TestCase):
     CONFIG_TYPE = PluginConfigTypes.PHAL
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = ""
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):
@@ -61,7 +61,7 @@ class TestAdminPHAL(unittest.TestCase):
     CONFIG_TYPE = PluginConfigTypes.ADMIN
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = ""
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):

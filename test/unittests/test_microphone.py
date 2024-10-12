@@ -4,7 +4,7 @@ from copy import copy, deepcopy
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 _TEST_CONFIG = {
-    "lang": "en-us",
+    "lang": "en-US",
     "microphone": {
         "module": "dummy",
         "dummy": {
@@ -20,7 +20,7 @@ _TEST_CONFIG = {
     }
 }
 _FALLBACK_CONFIG = {
-    "lang": "en-us",
+    "lang": "en-US",
     "microphone": {
         "module": "bad",
         "bad": {
@@ -117,7 +117,7 @@ class TestMicrophone(unittest.TestCase):
     CONFIG_TYPE = PluginConfigTypes.MIC
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = "microphone"
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):
@@ -158,7 +158,7 @@ class TestMicrophoneFactory(unittest.TestCase):
         mock_get_class.assert_called_once()
         self.assertEqual(call_args, ({**_TEST_CONFIG['microphone']['dummy'],
                                       **{"module": "dummy",
-                                         "lang": "en-us"}},))
+                                         "lang": "en-US"}},))
         mock_class.assert_called_once_with(**_TEST_CONFIG['microphone']['dummy'])
         OVOSMicrophoneFactory.get_class = real_get_class
 
@@ -204,7 +204,7 @@ class TestMicrophoneFactory(unittest.TestCase):
         dummy_config = get_microphone_config(config)
         self.assertEqual(dummy_config, {**_TEST_CONFIG['microphone']['dummy'],
                                         **{'module': 'dummy',
-                                           'lang': 'en-us'}})
+                                           'lang': 'en-US'}})
         config = copy(_TEST_CONFIG)
         config['microphone']['module'] = 'ovos-microphone-plugin-alsa'
         alsa_config = get_microphone_config(config)
@@ -212,8 +212,8 @@ class TestMicrophoneFactory(unittest.TestCase):
                          {**_TEST_CONFIG['microphone']
                           ['ovos-microphone-plugin-alsa'],
                           **{'module': 'ovos-microphone-plugin-alsa',
-                             'lang': 'en-us'}})
+                             'lang': 'en-US'}})
         config = copy(_TEST_CONFIG)
         config['microphone']['module'] = 'fake'
         fake_config = get_microphone_config(config)
-        self.assertEqual(fake_config, {'module': 'fake', 'lang': 'en-us'})
+        self.assertEqual(fake_config, {'module': 'fake', 'lang': 'en-US'})

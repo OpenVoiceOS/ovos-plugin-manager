@@ -38,7 +38,7 @@ class TestG2P(unittest.TestCase):
     CONFIG_TYPE = PluginConfigTypes.PHONEME
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = "g2p"
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):
@@ -105,10 +105,10 @@ class TestG2PFactory(unittest.TestCase):
         mock_get_class.assert_called_once()
         self.assertEqual(call_args, ({**_TEST_CONFIG['g2p']['good'],
                                       **{"module": "good",
-                                         "lang": "en-us"}},))
+                                         "lang": "en-US"}},))
         mock_class.assert_called_once_with({**_TEST_CONFIG['g2p']['good'],
                                             **{"module": "good",
-                                               "lang": "en-us"}})
+                                               "lang": "en-US"}})
         OVOSG2PFactory.get_class = real_get_class
 
     def test_create_fallback(self):
@@ -135,5 +135,5 @@ class TestG2PFactory(unittest.TestCase):
         self.assertEqual(bad_call_args[0]["module"], 'bad')
         mock_class.assert_called_once_with({**_FALLBACK_CONFIG['g2p']['good'],
                                             **{"module": "good",
-                                               "lang": "en-us"}})
+                                               "lang": "en-US"}})
         OVOSG2PFactory.get_class = real_get_class

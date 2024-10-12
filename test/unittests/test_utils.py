@@ -631,7 +631,7 @@ class TestConfigUtils(unittest.TestCase):
 
         # Test TTS config with plugin `lang` override
         config = {
-            "lang": "en-us",
+            "lang": "en-US",
             "tts": {
                 "module": "ovos_tts_plugin_espeakng",
                 "ovos_tts_plugin_espeakng": {
@@ -656,7 +656,7 @@ class TestConfigUtils(unittest.TestCase):
         valid_en_us = get_valid_plugin_configs(_MOCK_PLUGIN_CONFIG,
                                                'en-US', False)
         self.assertEqual(len(valid_en_us), 1)
-        valid_en = get_valid_plugin_configs(_MOCK_PLUGIN_CONFIG, 'en-us', True)
+        valid_en = get_valid_plugin_configs(_MOCK_PLUGIN_CONFIG, 'en-US', True)
         self.assertEqual(len(valid_en), 9)
         invalid_lang = get_valid_plugin_configs(_MOCK_PLUGIN_CONFIG, 'en-ZZ',
                                                 False)
