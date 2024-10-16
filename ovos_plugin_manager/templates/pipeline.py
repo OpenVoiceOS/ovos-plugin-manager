@@ -37,7 +37,7 @@ class IntentHandlerMatch:
 
 
 @dataclass
-class PipelineMatch:
+class PipelineMatch(IntentHandlerMatch):
     """
     Represents a match in a pipeline that does not trigger an intent message directly.
 
@@ -48,11 +48,11 @@ class PipelineMatch:
         skill_id (Optional[str]): The skill this handler belongs to.
         utterance (Optional[str]): The original utterance triggering the match.
     """
-    match_type: bool = True
     handled: bool = True
     match_data: Optional[Dict] = None
     skill_id: Optional[str] = None
     utterance: Optional[str] = None
+    match_type: bool = True  # compat
 
 
 class PipelinePlugin:
@@ -84,7 +84,7 @@ class ConfidenceMatcherPipeline(PipelinePlugin):
         super().__init__(config=config)
 
     @abc.abstractmethod
-    def match_high(self, utterances: List[str], lang: str, message: Message) -> Optional[IntentMatch]:
+    def match_high(self, utterances: List[str], lang: str, message: Message) -> Optional[IntentHandlerMatch]:
         """
         Match an utterance with high confidence.
 
@@ -94,12 +94,11 @@ class ConfidenceMatcherPipeline(PipelinePlugin):
             message (Message): The message containing the utterance.
 
         Returns:
-            Optional[IntentMatch]: The match result or None if no match is found.
+            Optional[IntentHandlerMatch]: The match result or None if no match is found.
         """
-        pass
 
     @abc.abstractmethod
-    def match_medium(self, utterances: List[str], lang: str, message: Message) -> Optional[IntentMatch]:
+    def match_medium(self, utterances: List[str], lang: str, message: Message) -> Optional[IntentHandlerMatch]:
         """
         Match an utterance with medium confidence.
 
@@ -109,12 +108,11 @@ class ConfidenceMatcherPipeline(PipelinePlugin):
             message (Message): The message containing the utterance.
 
         Returns:
-            Optional[IntentMatch]: The match result or None if no match is found.
+            Optional[IntentHandlerMatch]: The match result or None if no match is found.
         """
-        pass
 
     @abc.abstractmethod
-    def match_low(self, utterances: List[str], lang: str, message: Message) -> Optional[IntentMatch]:
+    def match_low(self, utterances: List[str], lang: str, message: Message) -> Optional[IntentHandlerMatch]:
         """
         Match an utterance with low confidence.
 
@@ -124,9 +122,8 @@ class ConfidenceMatcherPipeline(PipelinePlugin):
             message (Message): The message containing the utterance.
 
         Returns:
-            Optional[IntentMatch]: The match result or None if no match is found.
+            Optional[IntentHandlerMatch]: The match result or None if no match is found.
         """
-        pass
 
 
 class PipelineStageMatcher(PipelinePlugin):
@@ -206,7 +203,7 @@ class PipelineStageConfidenceMatcher(PipelineStageMatcher, ConfidenceMatcherPipe
             message (Message): The message containing the utterance.
 
         Returns:
-            Optional[IntentMatch]: The match result or None if no match is found.
+            Optional[PipelineMatch]: The match result or None if no match is found.
         """
 
     @abc.abstractmethod
@@ -220,7 +217,7 @@ class PipelineStageConfidenceMatcher(PipelineStageMatcher, ConfidenceMatcherPipe
             message (Message): The message containing the utterance.
 
         Returns:
-            Optional[IntentMatch]: The match result or None if no match is found.
+            Optional[PipelineMatch]: The match result or None if no match is found.
         """
 
     @abc.abstractmethod
@@ -234,5 +231,5 @@ class PipelineStageConfidenceMatcher(PipelineStageMatcher, ConfidenceMatcherPipe
             message (Message): The message containing the utterance.
 
         Returns:
-            Optional[IntentMatch]: The match result or None if no match is found.
+            Optional[PipelineMatch]: The match result or None if no match is found.
         """
