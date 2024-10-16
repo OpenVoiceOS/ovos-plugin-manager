@@ -5,6 +5,7 @@ from ovos_utils.fakebus import FakeBus
 from ovos_config import Configuration
 from ovos_plugin_manager.templates.pipeline import ConfidenceMatcherPipeline, PipelineStageMatcher, PipelinePlugin
 from ovos_plugin_manager.utils import PluginTypes
+from ovos_utils.log import log_deprecation
 
 
 def find_pipeline_plugins() -> dict:
@@ -43,26 +44,6 @@ class OVOSPipelineFactory:
 
     @staticmethod
     def get_pipeline_classes(pipeline: Optional[List[str]] = None) -> List[Tuple[str, type(PipelinePlugin)]]:
-
-        default_p = [
-            "stop_high",
-            "converse",
-            "ocp_high",
-            "padatious_high",
-            "adapt_high",
-            "ocp_medium",
-            "fallback_high",
-            "stop_medium",
-            "adapt_medium",
-            "padatious_medium",
-            "adapt_low",
-            "common_qa",
-            "fallback_medium",
-            "fallback_low"
-        ]
-        pipeline = pipeline or Configuration().get("intents", {}).get("pipeline", default_p)
-
-        # TODO - deprecate around ovos-core 2.0.0
         MAP = {
             "converse": "ovos-converse-pipeline-plugin",
             "common_qa": "ovos-common-query-pipeline-plugin",
@@ -86,6 +67,29 @@ class OVOSPipelineFactory:
             "ocp_low": "ovos-ocp-pipeline-plugin-low",
             "ocp_legacy": "ovos-ocp-pipeline-plugin-legacy"
         }
+        default_p = [
+            "stop_high",
+            "converse",
+            "ocp_high",
+            "padatious_high",
+            "adapt_high",
+            "ocp_medium",
+            "fallback_high",
+            "stop_medium",
+            "adapt_medium",
+            "padatious_medium",
+            "adapt_low",
+            "common_qa",
+            "fallback_medium",
+            "fallback_low"
+        ]
+        pipeline = pipeline or Configuration().get("intents", {}).get("pipeline", [MAP[p] for p in default_p])
+
+        deprecated = [p for p in pipeline if p in MAP]
+        if deprecated:
+            log_deprecation(f"pipeline names have changed, "
+                            f"please migrate: '{deprecated}' to '{[MAP[p] for p in deprecated]}'", "1.0.0")
+
         valid_pipeline = [MAP.get(p, p) for p in pipeline]
         matchers = []
         for plug_id, clazz in find_pipeline_plugins().items():
