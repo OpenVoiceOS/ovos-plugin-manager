@@ -3,13 +3,11 @@ from collections import namedtuple
 from dataclasses import dataclass
 from typing import Optional, Dict, List, Union
 
-from ovos_bus_client.message import Message
 from ovos_bus_client.client import MessageBusClient
+from ovos_bus_client.message import Message
 from ovos_utils.fakebus import FakeBus
 
-
-
-# Intent match response tuple, ovos-core expects PipelinePlugin to return this data structure
+# LEGACY: Intent match response tuple, ovos-core~=0.2 expects PipelinePlugin to return this data structure
 # intent_service: Name of the service that matched the intent
 # intent_type: intent name (used to call intent handler over the message bus)
 # intent_data: data provided by the intent match
@@ -21,25 +19,36 @@ IntentMatch = namedtuple('IntentMatch',
                          )
 
 
-@dataclass()
+@dataclass
 class IntentHandlerMatch:
-    # ovos-core expects PipelinePlugins to return this data structure
-    # replaces old IntentMatch response namedtuple
-    # intent_service: Name of the service that matched the intent
-    # intent_type: intent name (used to call intent handler over the message bus)
-    # intent_data: data provided by the intent match
-    # skill_id: the skill this handler belongs to
+    """
+    Represents an intent handler match result, expected by ovos-core plugins.
+
+    Attributes:
+        match_type (str): Name of the service that matched the intent.
+        match_data (Optional[Dict]): Additional data provided by the intent match.
+        skill_id (Optional[str]): The skill this handler belongs to.
+        utterance (Optional[str]): The original utterance triggering the intent.
+    """
     match_type: str
     match_data: Optional[Dict] = None
     skill_id: Optional[str] = None
     utterance: Optional[str] = None
 
 
-@dataclass()
-class PipelineMatch(IntentMatch):
-    # same as above, but does not emit intent message on match
-    # the process of matching already handles the utterance
-    match_type: bool = True  # for compat only
+@dataclass
+class PipelineMatch:
+    """
+    Represents a match in a pipeline that does not trigger an intent message directly.
+
+    Attributes:
+        match_type (bool): Indicates if the utterance was matched (compatibility only).
+        handled (bool): Whether the match has already handled the utterance.
+        match_data (Optional[Dict]): Data provided by the intent match.
+        skill_id (Optional[str]): The skill this handler belongs to.
+        utterance (Optional[str]): The original utterance triggering the match.
+    """
+    match_type: bool = True
     handled: bool = True
     match_data: Optional[Dict] = None
     skill_id: Optional[str] = None
@@ -47,15 +56,27 @@ class PipelineMatch(IntentMatch):
 
 
 class PipelinePlugin:
+    """
+    Base class for intent matching pipeline plugins. Mainly useful for typing
+
+    Attributes:
+        config (Dict): Configuration for the plugin.
+    """
+
     def __init__(self, config: Optional[Dict] = None):
         self.config = config or {}
 
 
 class ConfidenceMatcherPipeline(PipelinePlugin):
-    """these plugins return a match to the utterance,
-    but do not trigger an action directly during the match
+    """
+    Base class for plugins that match utterances with confidence levels,
+    but do not directly trigger actions.
 
-     eg. adapt, padatious"""
+    Example plugins: adapt, padatious.
+
+    Attributes:
+        bus (Union[MessageBusClient, FakeBus]): The message bus client for communication.
+    """
 
     def __init__(self, bus: Optional[Union[MessageBusClient, FakeBus]] = None,
                  config: Optional[Dict] = None):
@@ -64,26 +85,65 @@ class ConfidenceMatcherPipeline(PipelinePlugin):
 
     @abc.abstractmethod
     def match_high(self, utterances: List[str], lang: str, message: Message) -> Optional[IntentMatch]:
+        """
+        Match an utterance with high confidence.
+
+        Args:
+            utterances (List[str]): List of utterances to match.
+            lang (str): The language of the utterances.
+            message (Message): The message containing the utterance.
+
+        Returns:
+            Optional[IntentMatch]: The match result or None if no match is found.
+        """
         pass
 
     @abc.abstractmethod
     def match_medium(self, utterances: List[str], lang: str, message: Message) -> Optional[IntentMatch]:
+        """
+        Match an utterance with medium confidence.
+
+        Args:
+            utterances (List[str]): List of utterances to match.
+            lang (str): The language of the utterances.
+            message (Message): The message containing the utterance.
+
+        Returns:
+            Optional[IntentMatch]: The match result or None if no match is found.
+        """
         pass
 
     @abc.abstractmethod
     def match_low(self, utterances: List[str], lang: str, message: Message) -> Optional[IntentMatch]:
+        """
+        Match an utterance with low confidence.
+
+        Args:
+            utterances (List[str]): List of utterances to match.
+            lang (str): The language of the utterances.
+            message (Message): The message containing the utterance.
+
+        Returns:
+            Optional[IntentMatch]: The match result or None if no match is found.
+        """
         pass
 
 
 class PipelineStageMatcher(PipelinePlugin):
-    """WARNING: has side effects when match is used
+    """
+    Base class for plugins that consume an utterance during matching,
+    aborting subsequent pipeline stages if a match is found.
+
+    WARNING: has side effects when match is used
 
     these plugins will consume an utterance during the match process,
-    aborting the next pipeline stages if a match is returned.
-
     it is not known if this component will match without going through the match process
 
-    eg. converse, common_query """
+    Example plugins: converse, common_query.
+
+    Attributes:
+        bus (Union[MessageBusClient, FakeBus]): The message bus client for communication.
+    """
 
     def __init__(self, bus: Optional[Union[MessageBusClient, FakeBus]] = None,
                  config: Optional[Dict] = None):
@@ -92,35 +152,87 @@ class PipelineStageMatcher(PipelinePlugin):
 
     @abc.abstractmethod
     def match(self, utterances: List[str], lang: str, message: Message) -> Optional[PipelineMatch]:
+        """
+        Match an utterance, potentially aborting further stages in the pipeline.
+
+        Args:
+            utterances (List[str]): List of utterances to match.
+            lang (str): The language of the utterances.
+            message (Message): The message containing the utterance.
+
+        Returns:
+            Optional[PipelineMatch]: The match result or None if no match is found.
+        """
         pass
 
 
 class PipelineStageConfidenceMatcher(PipelineStageMatcher, ConfidenceMatcherPipeline):
-    """WARNING: has side effects when match is used
+    """
+    A specialized matcher that consumes utterances during the matching process
+    and supports confidence levels. It aborts further pipeline stages if a match is found.
 
-    these plugins will consume an utterance during the match process,
-    aborting the next pipeline stages if a match is returned.
+    Example plugins: fallback, stop.
 
-    it is not known if this component will match without going through the match process
-
-    eg. fallback, stop """
+    Attributes:
+        bus (Union[MessageBusClient, FakeBus]): The message bus client for communication.
+    """
 
     def __init__(self, bus: Optional[Union[MessageBusClient, FakeBus]] = None,
                  config: Optional[Dict] = None):
         super().__init__(bus=bus, config=config)
 
     def match(self, utterances: List[str], lang: str, message: Message) -> Optional[PipelineMatch]:
-        # no match level specified, method still needs to be implmented since its a subclass of PipelineStageMatcher
+        """
+        Match an utterance using high confidence, with no specific match level defined.
+
+        Args:
+            utterances (List[str]): List of utterances to match.
+            lang (str): The language of the utterances.
+            message (Message): The message containing the utterance.
+
+        Returns:
+            Optional[PipelineMatch]: The match result or None if no match is found.
+        """
         return self.match_high(utterances, lang, message)
 
     @abc.abstractmethod
     def match_high(self, utterances: List[str], lang: str, message: Message) -> Optional[PipelineMatch]:
-        pass
+        """
+        Match an utterance with high confidence.
+
+        Args:
+            utterances (List[str]): List of utterances to match.
+            lang (str): The language of the utterances.
+            message (Message): The message containing the utterance.
+
+        Returns:
+            Optional[IntentMatch]: The match result or None if no match is found.
+        """
 
     @abc.abstractmethod
     def match_medium(self, utterances: List[str], lang: str, message: Message) -> Optional[PipelineMatch]:
-        pass
+        """
+        Match an utterance with medium confidence.
+
+        Args:
+            utterances (List[str]): List of utterances to match.
+            lang (str): The language of the utterances.
+            message (Message): The message containing the utterance.
+
+        Returns:
+            Optional[IntentMatch]: The match result or None if no match is found.
+        """
 
     @abc.abstractmethod
     def match_low(self, utterances: List[str], lang: str, message: Message) -> Optional[PipelineMatch]:
-        pass
+        """
+        Match an utterance with low confidence.
+
+        Args:
+            utterances (List[str]): List of utterances to match.
+            lang (str): The language of the utterances.
+            message (Message): The message containing the utterance.
+
+        Returns:
+            Optional[IntentMatch]: The match result or None if no match is found.
+        """
