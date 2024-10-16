@@ -30,6 +30,18 @@ class OVOSPipelineFactory:
     _CACHE = {}
 
     @staticmethod
+    def get_installed_pipelines() -> List[str]:
+        pipelines = []
+        for plug_id, clazz in find_pipeline_plugins().items():
+            if issubclass(clazz, ConfidenceMatcherPipeline):
+                pipelines.append(f"{plug_id}-low")
+                pipelines.append(f"{plug_id}-medium")
+                pipelines.append(f"{plug_id}-high")
+            else:
+                pipelines.append(plug_id)
+        return pipelines
+
+    @staticmethod
     def get_pipeline_classes(pipeline: Optional[List[str]] = None) -> List[Tuple[str, type(PipelinePlugin)]]:
 
         default_p = [
