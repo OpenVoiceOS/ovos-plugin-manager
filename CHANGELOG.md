@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.0a1) (2024-10-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.4.0a1...0.5.0a1)
+
+**Merged pull requests:**
+
+- feat:pipeline plugin factory [\#270](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/270) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.4.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.4.0a1) (2024-10-12)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.3.1...0.4.0a1)
