@@ -1,4 +1,5 @@
 import abc
+from collections import namedtuple
 from dataclasses import dataclass
 from typing import Optional, Dict, List, Union
 
@@ -7,8 +8,21 @@ from ovos_bus_client.client import MessageBusClient
 from ovos_utils.fakebus import FakeBus
 
 
+
+# Intent match response tuple, ovos-core expects PipelinePlugin to return this data structure
+# intent_service: Name of the service that matched the intent
+# intent_type: intent name (used to call intent handler over the message bus)
+# intent_data: data provided by the intent match
+# skill_id: the skill this handler belongs to
+# TODO - deprecated
+IntentMatch = namedtuple('IntentMatch',
+                         ['intent_service', 'intent_type',
+                          'intent_data', 'skill_id', 'utterance']
+                         )
+
+
 @dataclass()
-class IntentMatch:
+class IntentHandlerMatch:
     # ovos-core expects PipelinePlugins to return this data structure
     # replaces old IntentMatch response namedtuple
     # intent_service: Name of the service that matched the intent
