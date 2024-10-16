@@ -83,7 +83,8 @@ class OVOSPipelineFactory:
             "padatious_low": "ovos-padatious-pipeline-plugin-low",
             "ocp_high": "ovos-ocp-pipeline-plugin-high",
             "ocp_medium": "ovos-ocp-pipeline-plugin-medium",
-            "ocp_low": "ovos-ocp-pipeline-plugin-low"
+            "ocp_low": "ovos-ocp-pipeline-plugin-low",
+            "ocp_legacy": "ovos-ocp-pipeline-plugin-legacy"
         }
         valid_pipeline = [MAP.get(p, p) for p in pipeline]
         matchers = []
@@ -102,7 +103,8 @@ class OVOSPipelineFactory:
 
     @staticmethod
     def create(pipeline: Optional[List[str]] = None, use_cache: bool = True,
-               bus: Optional[Union[MessageBusClient, FakeBus]] = None) -> List[Tuple[str, Callable]]:
+               bus: Optional[Union[MessageBusClient, FakeBus]] = None,
+               skip_stage_matchers: bool =False) -> List[Tuple[str, Callable]]:
         """Factory method to create pipeline matchers"""
         default_p = [
             "stop_high",
@@ -138,7 +140,7 @@ class OVOSPipelineFactory:
                     matchers.append((pipe_id, m.match_medium))
                 elif pipe_id.endswith("-low"):
                     matchers.append((pipe_id, m.match_low))
-            elif isinstance(m, PipelineStageMatcher):
+            elif isinstance(m, PipelineStageMatcher) and not skip_stage_matchers:
                 matchers.append((pipe_id, m.match))
         return matchers
 
