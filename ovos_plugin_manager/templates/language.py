@@ -2,6 +2,7 @@ import abc
 
 from ovos_config.config import Configuration
 from ovos_utils import classproperty
+from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.process_utils import RuntimeRequirements
 from typing import Optional, Dict, Union, List, Set
 
@@ -16,8 +17,10 @@ class LanguageDetector:
                 Can contain "lang" for default language, "hint_lang" for a hint language, and "boost" for language boost score.
         """
         self.config = config or {}
-        self.default_language = self.config.get("lang", "en-us")
-        self.hint_language = self.config.get("hint_lang") or self.config.get('user') or self.default_language
+        self.default_language = standardize_lang_tag(self.config.get("lang", "en-US"))
+        self.hint_language = standardize_lang_tag(self.config.get("hint_lang") or
+                                                  self.config.get('user') or
+                                                  self.default_language)
         self.boost = self.config.get("boost")
 
     @classproperty
@@ -46,7 +49,7 @@ class LanguageDetector:
             text (str): The text to detect the language of.
 
         Returns:
-            str: The detected language code (e.g., 'en-us').
+            str: The detected language code (e.g., 'en-US').
         """
 
     @abc.abstractmethod
@@ -85,11 +88,10 @@ class LanguageTranslator:
         """
         self.config = config or {}
         # translate from, unless specified/detected otherwise
-        self.default_language = self.config.get("lang") or "en-us"
+        self.default_language = standardize_lang_tag(self.config.get("lang") or "en-US")
         # translate to
-        self.internal_language = (Configuration().get('language') or
-                                  dict()).get("internal") or \
-                                 self.default_language
+        self.internal_language = standardize_lang_tag(Configuration().get('language', {}).get("internal") or \
+                                 self.default_language)
 
     @classproperty
     def runtime_requirements(self) -> RuntimeRequirements:

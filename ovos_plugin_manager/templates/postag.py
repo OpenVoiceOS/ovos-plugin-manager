@@ -1,5 +1,6 @@
 from ovos_bus_client.message import dig_for_message
 from ovos_utils import classproperty
+from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.process_utils import RuntimeRequirements
 
 
@@ -48,10 +49,10 @@ class PosTagger:
         msg = dig_for_message()
         if msg:
             lang = msg.data.get("lang")
-        return lang or "en-us"
+        return standardize_lang_tag(lang or "en-US")
 
     def postag(self, spans, lang=None):
-        lang = lang or self.lang
+        lang = standardize_lang_tag(lang or self.lang)
         # this should be implemented by plugins!
         if lang.startswith("pt"):
             return _dummy_postag_pt(spans)

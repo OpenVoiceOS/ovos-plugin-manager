@@ -22,6 +22,7 @@ from ovos_utils import classproperty
 from ovos_utils.fakebus import FakeBus
 from ovos_utils.file_utils import get_cache_directory
 from ovos_utils.lang.visimes import VISIMES
+from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.log import LOG, deprecated, log_deprecation
 from ovos_utils.metrics import Stopwatch
 from ovos_utils.process_utils import RuntimeRequirements
@@ -62,7 +63,7 @@ class TTSContext:
             synth_kwargs (dict, optional): Additional keyword arguments for the synthesizer.
         """
         self.plugin_id = plugin_id
-        self.lang = lang
+        self.lang = standardize_lang_tag(lang)
         self.voice = voice
         self.synth_kwargs = synth_kwargs or {}
 
@@ -593,7 +594,7 @@ class TTS:
 
         LOG.debug(f"TTS kwargs: {kwargs}")
         return TTSContext(plugin_id=self.plugin_id,
-                          lang=kwargs.get("lang") or Configuration().get("lang", "en-us"),
+                          lang=kwargs.get("lang") or Configuration().get("lang", "en-US"),
                           voice=kwargs.get("voice", "default"),
                           synth_kwargs=kwargs)
 
@@ -933,7 +934,7 @@ class TTS:
         if message:
             sess = SessionManager.get(message)
             return sess.lang
-        return self.config.get("lang") or 'en-us'
+        return standardize_lang_tag(self.config.get("lang") or 'en-US')
 
     @lang.setter
     @deprecated("language is defined per request in get_tts, self.lang is not used",

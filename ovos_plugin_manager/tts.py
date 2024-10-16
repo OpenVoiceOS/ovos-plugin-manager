@@ -173,8 +173,3 @@ class OVOSTTSFactory:
                           f'\nAvailable modules: {modules}')
             raise
         return tts
-
-
-if __name__ == "__main__":
-    lang = "en-us"
-    print(find_tts_plugins())

@@ -48,7 +48,7 @@ class TestCoref(unittest.TestCase):
     CONFIG_TYPE = PluginConfigTypes.COREFERENCE_SOLVER
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = "coref"
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):

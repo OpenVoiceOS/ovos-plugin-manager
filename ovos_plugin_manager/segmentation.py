@@ -5,7 +5,6 @@ from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.segmentation import Segmenter
 
 
-
 def find_segmentation_plugins() -> dict:
     """
     Find all installed plugins

@@ -8,7 +8,7 @@ class TestPersona(unittest.TestCase):
     PLUGIN_TYPE = PluginTypes.PERSONA
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = "persona"
-    TEST_LANG = "en-us"
+    TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_plugins(self, find_plugins):
