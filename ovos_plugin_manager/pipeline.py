@@ -1,11 +1,12 @@
 from typing import List, Optional, Tuple, Callable, Union
 
 from ovos_bus_client.client import MessageBusClient
-from ovos_utils.fakebus import FakeBus
 from ovos_config import Configuration
+from ovos_utils.fakebus import FakeBus
+from ovos_utils.log import log_deprecation
+
 from ovos_plugin_manager.templates.pipeline import ConfidenceMatcherPipeline, PipelineStageMatcher, PipelinePlugin
 from ovos_plugin_manager.utils import PluginTypes
-from ovos_utils.log import log_deprecation
 
 
 def find_pipeline_plugins() -> dict:
@@ -108,26 +109,8 @@ class OVOSPipelineFactory:
     @staticmethod
     def create(pipeline: Optional[List[str]] = None, use_cache: bool = True,
                bus: Optional[Union[MessageBusClient, FakeBus]] = None,
-               skip_stage_matchers: bool =False) -> List[Tuple[str, Callable]]:
+               skip_stage_matchers: bool = False) -> List[Tuple[str, Callable]]:
         """Factory method to create pipeline matchers"""
-        default_p = [
-            "stop_high",
-            "converse",
-            "ocp_high",
-            "padatious_high",
-            "adapt_high",
-            "ocp_medium",
-            "fallback_high",
-            "stop_medium",
-            "adapt_medium",
-            "padatious_medium",
-            "adapt_low",
-            "common_qa",
-            "fallback_medium",
-            "fallback_low"
-        ]
-        pipeline = pipeline or Configuration().get("intents", {}).get("pipeline", default_p)
-
         matchers = []
         for pipe_id, clazz in OVOSPipelineFactory.get_pipeline_classes(pipeline):
             if use_cache and pipe_id in OVOSPipelineFactory._CACHE:
@@ -156,8 +139,3 @@ class OVOSPipelineFactory:
                     pipe.shutdown()
                 except:
                     continue
-
-
-if __name__ == "__main__":
-    matchers = OVOSPipelineFactory.create()
-    print(matchers)
