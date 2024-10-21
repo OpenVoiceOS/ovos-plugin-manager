@@ -1,12 +1,12 @@
 # Changelog
 
-## [0.5.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.1a1) (2024-10-16)
+## [0.5.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.2a1) (2024-10-21)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.0...0.5.1a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.1...0.5.2a1)
 
 **Merged pull requests:**
 
-- fix:Typing [\#272](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/272) ([JarbasAl](https://github.com/JarbasAl))
+- fix:phal config loading [\#274](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/274) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
