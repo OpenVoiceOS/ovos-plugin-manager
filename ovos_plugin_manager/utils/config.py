@@ -27,16 +27,23 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
     if module:
         module_config = dict(config.get(module) or dict())
         module_config.setdefault('module', module)
-        for key, val in config.items():
-            # Configured module name is not part of that module's config
-            if key in ("module", "translation_module", "detection_module"):
-                continue
-            elif isinstance(val, dict):
-                continue
-            # Use section-scoped config as defaults (i.e. TTS.lang)
-            module_config.setdefault(key, val)
+        if config == Configuration():
+            LOG.debug(f"No `{section}` config in Configuration")
+        else:
+            # If the config section exists (i.e. `stt`), then handle any default
+            # values in that section (i.e. `lang`)
+            for key, val in config.items():
+                # Configured module name is not part of that module's config
+                if key in ("module", "translation_module", "detection_module"):
+                    continue
+                elif isinstance(val, dict):
+                    continue
+                # Use section-scoped config as defaults (i.e. TTS.lang)
+                module_config.setdefault(key, val)
         config = module_config
     if section not in ["hotwords", "VAD", "listener", "gui"]:
+        # With some exceptions, plugins will want a `lang` value. If it was not
+        # set in the section or module config, use the default top-level config.
         config.setdefault('lang', lang)
     LOG.debug(f"Loaded configuration: {config}")
     return config
