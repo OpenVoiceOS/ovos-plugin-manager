@@ -8,8 +8,6 @@ from ovos_utils.log import LOG
 from ovos_bus_client.util import get_mycroft_bus
 from ovos_utils.process_utils import RuntimeRequirements
 
-from ovos_plugin_manager.utils.config import get_plugin_config
-
 
 class PHALValidator:
     @staticmethod
@@ -37,8 +35,7 @@ class PHALPlugin(Thread):
         super().__init__(daemon=True)
         self.config_core = Configuration()
         name = name or camel_case_split(self.__class__.__name__).replace(" ", "-").lower()
-        self.config = config or get_plugin_config(self.config_core,
-                                                  "PHAL", name)
+        self.config = config or self.config_core.get("PHAL", {}).get(name, {})
         self._mouth_events = False
         self._running = False
         self.bus = bus or get_mycroft_bus()
