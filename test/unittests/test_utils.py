@@ -649,11 +649,12 @@ class TestConfigUtils(unittest.TestCase):
         self.assertEqual(tts_config['voice'], 'german-mbrola-5')
         self.assertNotIn("ovos_tts_plugin_espeakng", tts_config)
 
-        # Test PHAL with no configuration only `lang` is populated
+        # Test PHAL with no configuration
         phal_config = get_plugin_config(config, "PHAL")
-        self.assertEqual(set(phal_config.keys()), {"lang"})
+        self.assertEqual(set(phal_config.keys()), config.keys())
         phal_config = get_plugin_config(config, "PHAL", "test_plugin")
-        self.assertEqual(set(phal_config.keys()), {"lang"})
+        self.assertEqual(phal_config, {"module": "test_plugin",
+                                       "lang": config["lang"]})
 
         self.assertEqual(_MOCK_CONFIG, start_config)
 

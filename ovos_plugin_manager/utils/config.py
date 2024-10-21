@@ -14,6 +14,11 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
     - module-specific configurations take priority
     - section-specific configuration is appended (new keys only)
     - global `lang` configuration is appended (if not already set)
+
+    If no module is specified, then the requested section configuration is
+    assumed to be a top-level key in the base configuration, defaulting to the
+    base configuration if that section is not found. If both `module` and
+    `section` are unspecified, then the base configuration is returned.
     @param config: Base configuration to parse, defaults to `Configuration()`
     @param section: Config section for the plugin (i.e. TTS, STT, language)
     @param module: Module/plugin to get config for, default reads from config
@@ -41,7 +46,7 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
                 # Use section-scoped config as defaults (i.e. TTS.lang)
                 module_config.setdefault(key, val)
         config = module_config
-    if section not in ["hotwords", "VAD", "listener", "gui"]:
+    if section not in ["hotwords", "VAD", "listener", "gui", None]:
         # With some exceptions, plugins will want a `lang` value. If it was not
         # set in the section or module config, use the default top-level config.
         config.setdefault('lang', lang)
