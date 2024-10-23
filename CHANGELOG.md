@@ -1,12 +1,12 @@
 # Changelog
 
-## [0.5.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.2a1) (2024-10-21)
+## [0.5.3a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.3a1) (2024-10-23)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.1...0.5.2a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.2...0.5.3a1)
 
 **Merged pull requests:**
 
-- fix:phal config loading [\#274](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/274) ([JarbasAl](https://github.com/JarbasAl))
+- fix:deprecate G2P [\#277](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/277) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
