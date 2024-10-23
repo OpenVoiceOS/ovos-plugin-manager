@@ -1,5 +1,5 @@
 from typing import Optional
-
+from ovos_config import Configuration
 from ovos_plugin_manager.utils import normalize_lang, PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.g2p import Grapheme2PhonemePlugin, PhonemeAlphabet
 from ovos_utils.log import LOG
