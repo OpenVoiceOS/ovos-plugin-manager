@@ -26,9 +26,6 @@ from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.log import LOG, deprecated, log_deprecation
 from ovos_utils.metrics import Stopwatch
 from ovos_utils.process_utils import RuntimeRequirements
-
-from ovos_plugin_manager.g2p import OVOSG2PFactory, find_g2p_plugins
-from ovos_plugin_manager.templates.g2p import OutOfVocabulary
 from ovos_plugin_manager.utils.config import get_plugin_config
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 
@@ -225,8 +222,6 @@ class TTS:
             TTS.queue = Queue()
 
         self.spellings: Dict[str, dict] = self.load_spellings()
-        self._init_g2p()
-
         self.add_metric({"metric_type": "tts.init"})
 
         # unused by plugins, assigned in init method by ovos-audio,
@@ -234,6 +229,15 @@ class TTS:
         self.bus = None
 
         self._plugin_id = ""  # the plugin name
+
+    @property
+    def g2p(self) -> None:
+        log_deprecation("G2P plugins moved to PlaybackThread in ovos-audio, self.g2p is deprecated!", "1.0.0")
+        return None
+
+    @g2p.setter
+    def g2p(self, val):
+        log_deprecation("G2P plugins moved to PlaybackThread in ovos-audio, self.g2p is deprecated!", "1.0.0")
 
     @property
     def plugin_id(self) -> str:
@@ -409,28 +413,6 @@ class TTS:
         return utterance.replace("  ", " ")
 
     # init helpers
-    def _init_g2p(self):
-        """
-        Initializes the grapheme-to-phoneme (G2P) conversion for the TTS engine.
-        """
-        cfg = Configuration()
-        g2pm = self.config.get("g2p_module")
-        if g2pm:
-            if g2pm in find_g2p_plugins():
-                cfg.setdefault("g2p", {})
-                globl = cfg["g2p"].get("module") or g2pm
-                if globl != g2pm:
-                    LOG.info(f"TTS requested {g2pm} explicitly, ignoring global module {globl} ")
-                cfg["g2p"]["module"] = g2pm
-            else:
-                LOG.warning(f"TTS selected {g2pm}, but it is not available!")
-
-        try:
-            self.g2p = OVOSG2PFactory.create(cfg)
-        except:
-            LOG.debug("G2P plugin not loaded, there will be no mouth movements")
-            self.g2p = None
-
     def init(self, bus=None, playback=None):
         """ Connects TTS object to PlaybackQueue in ovos-audio.
 
@@ -556,15 +538,6 @@ class TTS:
         viseme = []
         if phonemes:
             viseme = self.viseme(phonemes)
-        elif self.g2p is not None:
-            try:
-                viseme = self.g2p.utterance2visemes(sentence, ctxt.lang)
-            except OutOfVocabulary:
-                pass
-            except:
-                # this one is unplanned, let devs know all the info so they can fix it
-                LOG.exception(f"Unexpected failure in G2P plugin: {self.g2p}")
-
         if not viseme:
             # Debug level because this is expected in default installs
             LOG.debug(f"no mouth movements available! unknown visemes for {sentence}")
@@ -717,12 +690,6 @@ class TTS:
             sentence_hash (str, optional): The hash of the sentence.
         """
         sentence_hash = sentence_hash or hash_sentence(sentence)
-        if not phonemes and self.g2p is not None:
-            try:
-                phonemes = self.g2p.utterance2arpa(sentence, lang)
-                self.add_metric({"metric_type": "tts.phonemes.g2p"})
-            except Exception as e:
-                self.add_metric({"metric_type": "tts.phonemes.g2p.error", "error": str(e)})
         if phonemes:
             phoneme_file = cache.define_phoneme_file(sentence_hash)
             phoneme_file.save(phonemes)
