@@ -1,12 +1,12 @@
 # Changelog
 
-## [0.5.3a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.3a1) (2024-10-23)
+## [0.5.4a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.4a1) (2024-10-24)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.2...0.5.3a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.3...0.5.4a1)
 
 **Merged pull requests:**
 
-- fix:deprecate G2P [\#277](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/277) ([JarbasAl](https://github.com/JarbasAl))
+- fix:missing import [\#279](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/279) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
