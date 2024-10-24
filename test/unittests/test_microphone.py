@@ -131,13 +131,6 @@ class TestMicrophone(unittest.TestCase):
         load_microphone_plugin("test_mod")
         load_plugin.assert_called_once_with("test_mod", self.PLUGIN_TYPE)
 
-    @patch("ovos_plugin_manager.utils.config.get_plugin_config")
-    def test_get_config(self, get_config):
-        from ovos_plugin_manager.microphone import get_microphone_config
-        get_microphone_config(self.TEST_CONFIG)
-        get_config.assert_called_once_with(self.TEST_CONFIG,
-                                           self.CONFIG_SECTION)
-
 
 class TestMicrophoneFactory(unittest.TestCase):
     def test_create_microphone(self):
@@ -154,11 +147,9 @@ class TestMicrophoneFactory(unittest.TestCase):
         mock_get_class = Mock(side_effect=_copy_args)
         OVOSMicrophoneFactory.get_class = mock_get_class
 
-        OVOSMicrophoneFactory.create(config=_TEST_CONFIG)
+        OVOSMicrophoneFactory.create(config=_TEST_CONFIG['microphone'])
         mock_get_class.assert_called_once()
-        self.assertEqual(call_args, ({**_TEST_CONFIG['microphone']['dummy'],
-                                      **{"module": "dummy",
-                                         "lang": "en-US"}},))
+        self.assertEqual(call_args, ({**_TEST_CONFIG['microphone']},))
         mock_class.assert_called_once_with(**_TEST_CONFIG['microphone']['dummy'])
         OVOSMicrophoneFactory.get_class = real_get_class
 
@@ -171,7 +162,7 @@ class TestMicrophoneFactory(unittest.TestCase):
 
         def _copy_args(*args):
             nonlocal call_args, bad_call_args
-            if args[0]["module"] == "bad":
+            if args[0].get("module", "") == "bad":
                 bad_call_args = deepcopy(args)
                 return None
             call_args = deepcopy(args)
@@ -180,7 +171,7 @@ class TestMicrophoneFactory(unittest.TestCase):
         mock_get_class = Mock(side_effect=_copy_args)
         OVOSMicrophoneFactory.get_class = mock_get_class
 
-        OVOSMicrophoneFactory.create(config=_FALLBACK_CONFIG)
+        OVOSMicrophoneFactory.create(config=_FALLBACK_CONFIG['microphone'])
         mock_get_class.assert_called()
         self.assertEqual(call_args[0]["module"], 'dummy')
         self.assertEqual(bad_call_args[0]["module"], 'bad')
@@ -193,27 +184,7 @@ class TestMicrophoneFactory(unittest.TestCase):
         load_plugin.return_value = mock
         from ovos_plugin_manager.microphone import OVOSMicrophoneFactory
         # Test valid module
-        module = OVOSMicrophoneFactory.get_class(_TEST_CONFIG)
+        module = OVOSMicrophoneFactory.get_class(_TEST_CONFIG['microphone'])
         load_plugin.assert_called_once_with("dummy",
                                             PluginTypes.MIC)
         self.assertEqual(mock, module)
-
-    def test_get_microphone_config(self):
-        from ovos_plugin_manager.microphone import get_microphone_config
-        config = copy(_TEST_CONFIG)
-        dummy_config = get_microphone_config(config)
-        self.assertEqual(dummy_config, {**_TEST_CONFIG['microphone']['dummy'],
-                                        **{'module': 'dummy',
-                                           'lang': 'en-US'}})
-        config = copy(_TEST_CONFIG)
-        config['microphone']['module'] = 'ovos-microphone-plugin-alsa'
-        alsa_config = get_microphone_config(config)
-        self.assertEqual(alsa_config,
-                         {**_TEST_CONFIG['microphone']
-                          ['ovos-microphone-plugin-alsa'],
-                          **{'module': 'ovos-microphone-plugin-alsa',
-                             'lang': 'en-US'}})
-        config = copy(_TEST_CONFIG)
-        config['microphone']['module'] = 'fake'
-        fake_config = get_microphone_config(config)
-        self.assertEqual(fake_config, {'module': 'fake', 'lang': 'en-US'})
