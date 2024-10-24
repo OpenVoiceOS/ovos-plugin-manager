@@ -1,6 +1,7 @@
 from ovos_plugin_manager.utils import PluginTypes
 from ovos_plugin_manager.templates.microphone import Microphone
 from ovos_utils.log import LOG
+from ovos_config import Configuration
 
 
 def find_microphone_plugins() -> dict:
