@@ -147,11 +147,9 @@ class TestMicrophoneFactory(unittest.TestCase):
         mock_get_class = Mock(side_effect=_copy_args)
         OVOSMicrophoneFactory.get_class = mock_get_class
 
-        OVOSMicrophoneFactory.create(config=_TEST_CONFIG)
+        OVOSMicrophoneFactory.create(config=_TEST_CONFIG['microphone'])
         mock_get_class.assert_called_once()
-        self.assertEqual(call_args, ({**_TEST_CONFIG['microphone']['dummy'],
-                                      **{"module": "dummy",
-                                         "lang": "en-US"}},))
+        self.assertEqual(call_args, ({**_TEST_CONFIG['microphone']},))
         mock_class.assert_called_once_with(**_TEST_CONFIG['microphone']['dummy'])
         OVOSMicrophoneFactory.get_class = real_get_class
 
@@ -164,7 +162,7 @@ class TestMicrophoneFactory(unittest.TestCase):
 
         def _copy_args(*args):
             nonlocal call_args, bad_call_args
-            if args[0]["module"] == "bad":
+            if args[0].get("module", "") == "bad":
                 bad_call_args = deepcopy(args)
                 return None
             call_args = deepcopy(args)
@@ -173,7 +171,7 @@ class TestMicrophoneFactory(unittest.TestCase):
         mock_get_class = Mock(side_effect=_copy_args)
         OVOSMicrophoneFactory.get_class = mock_get_class
 
-        OVOSMicrophoneFactory.create(config=_FALLBACK_CONFIG)
+        OVOSMicrophoneFactory.create(config=_FALLBACK_CONFIG['microphone'])
         mock_get_class.assert_called()
         self.assertEqual(call_args[0]["module"], 'dummy')
         self.assertEqual(bad_call_args[0]["module"], 'bad')
@@ -186,7 +184,7 @@ class TestMicrophoneFactory(unittest.TestCase):
         load_plugin.return_value = mock
         from ovos_plugin_manager.microphone import OVOSMicrophoneFactory
         # Test valid module
-        module = OVOSMicrophoneFactory.get_class(_TEST_CONFIG)
+        module = OVOSMicrophoneFactory.get_class(_TEST_CONFIG['microphone'])
         load_plugin.assert_called_once_with("dummy",
                                             PluginTypes.MIC)
         self.assertEqual(mock, module)
