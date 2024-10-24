@@ -1,7 +1,8 @@
-from ovos_plugin_manager.utils import PluginTypes
-from ovos_plugin_manager.templates.microphone import Microphone
-from ovos_utils.log import LOG
 from ovos_config import Configuration
+from ovos_utils.log import LOG, deprecated
+
+from ovos_plugin_manager.templates.microphone import Microphone
+from ovos_plugin_manager.utils import PluginTypes
 
 
 def find_microphone_plugins() -> dict:
@@ -23,6 +24,7 @@ def load_microphone_plugin(module_name: str) -> type(Microphone):
     return load_plugin(module_name, PluginTypes.MIC)
 
 
+@deprecated("get_microphone_config is deprecated, use Configuration() directly", "1.0.0")
 def get_microphone_config(config=None):
     """
     Get relevant configuration for factory methods
@@ -46,7 +48,7 @@ class OVOSMicrophoneFactory:
             "module": <engine_name>
         }
         """
-        config = get_microphone_config(config)
+        config = config or Configuration().get("listener", {}).get("microphone", {})
         microphone_module = config.get("module")
         return load_microphone_plugin(microphone_module)
 
@@ -61,19 +63,12 @@ class OVOSMicrophoneFactory:
             "module": <engine_name>
         }
         """
-        config = config or Configuration()
-        if "microphone" in config:
-            config = config["microphone"]
-        microphone_config = get_microphone_config(config)
-        microphone_module = microphone_config.get('module')
+        config = config or Configuration().get("listener", {}).get("microphone", {})
+        microphone_module = config.get('module')
+        microphone_config = config.get(microphone_module, {})
         fallback = microphone_config.get("fallback_module")
         try:
-            clazz = OVOSMicrophoneFactory.get_class(microphone_config)
-            # Note that configuration is expanded for this class of plugins
-            # since they are dataclasses and don't have the same init signature
-            # as other plugin types
-            microphone_config.pop('lang')
-            microphone_config.pop('module')
+            clazz = OVOSMicrophoneFactory.get_class(config)
             if fallback:
                 microphone_config.pop('fallback_module')
             microphone = clazz(**microphone_config)
