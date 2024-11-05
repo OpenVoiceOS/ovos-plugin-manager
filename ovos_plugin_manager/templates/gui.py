@@ -11,8 +11,12 @@ try:
 except ImportError as _exc:
 
     class HomescreenManager:
-        # delay exception until init is attempted, this may not necessarily be used
-        # also allows typing
+        """Fallback class when ovos-gui is not installed.
+
+        Raises the original ImportError when instantiated to
+        provide clear error messaging while still allowing type hints to work.
+        """
+
         def __init__(self, *args, **kwargs):
             LOG.error("you seem to be running GUIExtensions without ovos-gui installed...")
             # raise the original ImportError
