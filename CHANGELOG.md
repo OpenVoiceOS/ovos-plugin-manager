@@ -1,12 +1,12 @@
 # Changelog
 
-## [0.5.5a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.5a1) (2024-11-05)
+## [0.5.6a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.6a1) (2024-11-05)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.4...0.5.5a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.5...0.5.6a1)
 
 **Merged pull requests:**
 
-- fix: gui extensions homescreen init [\#281](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/281) ([JarbasAl](https://github.com/JarbasAl))
+- fix: allow latest bus client version [\#283](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/283) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
