@@ -1,12 +1,12 @@
 # Changelog
 
-## [0.5.4a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.4a1) (2024-10-24)
+## [0.5.5a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.5a1) (2024-11-05)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.3...0.5.4a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.4...0.5.5a1)
 
 **Merged pull requests:**
 
-- fix:missing import [\#279](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/279) ([JarbasAl](https://github.com/JarbasAl))
+- fix: gui extensions homescreen init [\#281](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/281) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
