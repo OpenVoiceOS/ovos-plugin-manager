@@ -422,11 +422,11 @@ class ChatMessageSolver(QuestionSolver):
         return self.continue_chat(messages=messages, lang=lang, units=units)
 
     @_deprecate_context2lang()
-    def stream_utterances(self, messages: List[Dict[str, str]],
-                          lang: Optional[str] = None,
-                          units: Optional[str] = None) -> Iterable[str]:
+    def stream_chat_utterances(self, messages: List[Dict[str, str]],
+                               lang: Optional[str] = None,
+                               units: Optional[str] = None) -> Iterable[str]:
         """
-        Stream utterances for the given query as they become available.
+        Stream utterances for the given chat history as they become available.
 
         Args:
             messages: The chat messages.
