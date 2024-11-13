@@ -398,6 +398,32 @@ class QuestionSolver(AbstractSolver):
         return steps
 
 
+class ChatMessageSolver(QuestionSolver):
+    """take chat history as input LLM style
+    messages = [
+       {"role": "system", "content": "You are a helpful assistant."},
+       {"role": "user", "content": "Knock knock."},
+       {"role": "assistant", "content": "Who's there?"},
+       {"role": "user", "content": "Orange."},
+    ]
+    """
+    @abc.abstractmethod
+    def continue_chat(self, messages: List[Dict[str, str]],
+                      lang: Optional[str]) -> Optional[str]:
+        pass
+
+    @auto_detect_lang(text_keys=["messages"])
+    @auto_translate(translate_keys=["messages"])
+    def get_chat_completion(self, messages: List[Dict[str, str]],
+                            lang: Optional[str] = None) -> Optional[str]:
+        return self.continue_chat(messages=messages, lang=lang)
+
+    @auto_detect_lang(text_keys=["query"])
+    @auto_translate(translate_keys=["query"])
+    def get_spoken_answer(self, query: str, lang: Optional[str] = None) -> Optional[str]:
+        return self.continue_chat(messages=[{"role": "user", "content": query}], lang=lang)
+
+
 class CorpusSolver(QuestionSolver):
     """Retrieval based question solver"""
 
