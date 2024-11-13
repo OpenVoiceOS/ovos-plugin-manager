@@ -421,7 +421,6 @@ class ChatMessageSolver(QuestionSolver):
                             units: Optional[str] = None) -> Optional[str]:
         return self.continue_chat(messages=messages, lang=lang, units=units)
 
-    @_deprecate_context2lang()
     def stream_chat_utterances(self, messages: List[Dict[str, str]],
                                lang: Optional[str] = None,
                                units: Optional[str] = None) -> Iterable[str]:
