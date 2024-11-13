@@ -399,20 +399,33 @@ class QuestionSolver(AbstractSolver):
 
 
 class ChatMessageSolver(QuestionSolver):
-    """take chat history as input LLM style
-    messages = [
-       {"role": "system", "content": "You are a helpful assistant."},
-       {"role": "user", "content": "Knock knock."},
-       {"role": "assistant", "content": "Who's there?"},
-       {"role": "user", "content": "Orange."},
-    ]
-    """
+    """A solver that processes chat history in LLM-style format to generate contextual responses.
+
+    This class extends QuestionSolver to handle multi-turn conversations, maintaining
+    context across messages. It expects chat messages in a format similar to LLM APIs:
+
+     messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Knock knock."},
+        {"role": "assistant", "content": "Who's there?"},
+        {"role": "user", "content": "Orange."},
+     ]
+     """
 
     @abc.abstractmethod
     def continue_chat(self, messages: List[Dict[str, str]],
                       lang: Optional[str],
                       units: Optional[str] = None) -> Optional[str]:
-        pass
+        """Generate a response based on the chat history.
+
+        Args:
+            messages (List[Dict[str, str]]): List of chat messages, each containing 'role' and 'content'.
+            lang (Optional[str]): The language code for the response. If None, will be auto-detected.
+            units (Optional[str]): Optional unit system for numerical values.
+
+        Returns:
+            Optional[str]: The generated response or None if no response could be generated.
+        """
 
     @auto_detect_lang(text_keys=["messages"])
     @auto_translate(translate_keys=["messages"])
@@ -442,6 +455,12 @@ class ChatMessageSolver(QuestionSolver):
     def get_spoken_answer(self, query: str,
                           lang: Optional[str] = None,
                           units: Optional[str] = None) -> Optional[str]:
+        """Override of QuestionSolver.get_spoken_answer for API compatibility.
+
+        This implementation converts the single query into a chat message format
+        and delegates to continue_chat. While functional, direct use of chat-specific
+        methods is recommended for chat-based interactions.
+        """
         # just for api compat since it's a subclass, shouldn't be directly used
         return self.continue_chat(messages=[{"role": "user", "content": query}], lang=lang, units=units)
 
