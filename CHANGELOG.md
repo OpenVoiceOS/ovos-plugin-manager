@@ -1,12 +1,12 @@
 # Changelog
 
-## [0.5.6a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.6a1) (2024-11-05)
+## [0.5.7a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.7a1) (2024-11-18)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.5...0.5.6a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.6...0.5.7a1)
 
 **Merged pull requests:**
 
-- fix: allow latest bus client version [\#283](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/283) ([JarbasAl](https://github.com/JarbasAl))
+- Update `config` default value handling with updated unit test [\#276](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/276) ([NeonDaniel](https://github.com/NeonDaniel))
 
 
 
