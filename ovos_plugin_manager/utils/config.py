@@ -14,6 +14,11 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
     - module-specific configurations take priority
     - section-specific configuration is appended (new keys only)
     - global `lang` configuration is appended (if not already set)
+
+    If no module is specified, then the requested section configuration is
+    assumed to be a top-level key in the base configuration, defaulting to the
+    base configuration if that section is not found. If both `module` and
+    `section` are unspecified, then the base configuration is returned.
     @param config: Base configuration to parse, defaults to `Configuration()`
     @param section: Config section for the plugin (i.e. TTS, STT, language)
     @param module: Module/plugin to get config for, default reads from config
@@ -27,16 +32,23 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
     if module:
         module_config = dict(config.get(module) or dict())
         module_config.setdefault('module', module)
-        for key, val in config.items():
-            # Configured module name is not part of that module's config
-            if key in ("module", "translation_module", "detection_module"):
-                continue
-            elif isinstance(val, dict):
-                continue
-            # Use section-scoped config as defaults (i.e. TTS.lang)
-            module_config.setdefault(key, val)
+        if config == Configuration():
+            LOG.debug(f"No `{section}` config in Configuration")
+        else:
+            # If the config section exists (i.e. `stt`), then handle any default
+            # values in that section (i.e. `lang`)
+            for key, val in config.items():
+                # Configured module name is not part of that module's config
+                if key in ("module", "translation_module", "detection_module"):
+                    continue
+                elif isinstance(val, dict):
+                    continue
+                # Use section-scoped config as defaults (i.e. TTS.lang)
+                module_config.setdefault(key, val)
         config = module_config
-    if section not in ["hotwords", "VAD", "listener", "gui"]:
+    if section not in ["hotwords", "VAD", "listener", "gui", None]:
+        # With some exceptions, plugins will want a `lang` value. If it was not
+        # set in the section or module config, use the default top-level config.
         config.setdefault('lang', lang)
     LOG.debug(f"Loaded configuration: {config}")
     return config
