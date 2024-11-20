@@ -1,9 +1,25 @@
-from ovos_plugin_manager.utils import normalize_lang, \
-    PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.solvers import QuestionSolver, TldrSolver, \
-    EntailmentSolver, MultipleChoiceSolver, EvidenceSolver
-from ovos_utils.log import LOG
+    EntailmentSolver, MultipleChoiceSolver, EvidenceSolver, ChatMessageSolver
+from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
+
+def find_chat_solver_plugins() -> dict:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(PluginTypes.CHAT_SOLVER)
+
+
+def load_chat_solver_plugin(module_name: str) -> type(ChatMessageSolver):
+    """
+    Get an uninstantiated class for the requested module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(module_name, PluginTypes.CHAT_SOLVER)
 
 
 def find_question_solver_plugins() -> dict:
@@ -172,7 +188,7 @@ def get_entailment_solver_module_configs(module_name: str) -> dict:
 
 
 def get_entailment_solver_lang_configs(lang: str,
-                                     include_dialects: bool = False) -> dict:
+                                       include_dialects: bool = False) -> dict:
     """
     Get a dict of plugin names to list valid configurations for the requested
     lang.
@@ -303,7 +319,7 @@ def get_reading_comprehension_solver_module_configs(module_name: str) -> dict:
 
 
 def get_reading_comprehension_solver_lang_configs(lang: str,
-                                     include_dialects: bool = False) -> dict:
+                                                  include_dialects: bool = False) -> dict:
     """
     Get a dict of plugin names to list valid configurations for the requested
     lang.
@@ -324,4 +340,3 @@ def get_reading_comprehension_solver_supported_langs() -> dict:
     from ovos_plugin_manager.utils.config import get_plugin_supported_languages
     return get_plugin_supported_languages(
         PluginTypes.READING_COMPREHENSION_SOLVER)
-
