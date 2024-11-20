@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.6.0a1) (2024-11-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.7a1...0.6.0a1)
+
+**Merged pull requests:**
+
+- feat: chat history [\#286](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/286) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.5.7a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.7a1) (2024-11-18)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.6...0.5.7a1)
