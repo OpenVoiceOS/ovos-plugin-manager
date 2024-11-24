@@ -8,7 +8,7 @@ import json
 from abc import ABCMeta, abstractmethod
 from queue import Queue
 from threading import Thread, Event
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Set, Union
 
 from ovos_config import Configuration
 from ovos_utils import classproperty
@@ -38,10 +38,10 @@ class STT(metaclass=ABCMeta):
         self._detector = detector
         LOG.debug(f"{self.__class__.__name__} - Assigned lang detector: {detector}")
 
-    def detect_language(self, audio) -> Tuple[str, float]:
+    def detect_language(self, audio, valid_langs: Optional[Union[Set[str], List[str]]] = None) -> Tuple[str, float]:
         if self._detector is None:
             raise NotImplementedError(f"{self.__class__.__name__} does not support audio language detection")
-        return self._detector.detect(audio, valid_langs=self.available_languages)
+        return self._detector.detect(audio, valid_langs=valid_langs or self.available_languages)
 
     @classproperty
     def runtime_requirements(self):
@@ -136,11 +136,11 @@ class STT(metaclass=ABCMeta):
         """transcribe audio data to a list of
         possible transcriptions and respective confidences"""
         if lang is not None and lang == "auto":
-            lang, prob = self.detect_language(audio)
+            lang, prob = self.detect_language(audio, self.available_languages)
         return [(self.execute(audio, lang), 1.0)]
 
     @property
-    def available_languages(self) -> set:
+    def available_languages(self) -> Set[str]:
         """Return languages supported by this STT implementation in this state
         This property should be overridden by the derived class to advertise
         what languages that engine supports.
