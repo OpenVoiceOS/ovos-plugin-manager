@@ -38,12 +38,10 @@ class STT(metaclass=ABCMeta):
         self._detector = detector
         LOG.debug(f"{self.__class__.__name__} - Assigned lang detector: {detector}")
 
-    def detect_language(self, audio) -> str:
-        from speech_recognition import AudioData
-        assert isinstance(audio, AudioData)
+    def detect_language(self, audio) -> Tuple[str, float]:
         if self._detector is None:
             raise NotImplementedError(f"{self.__class__.__name__} does not support audio language detection")
-        return self._detector.detect(audio)
+        return self._detector.detect(audio, valid_langs=self.available_languages)
 
     @classproperty
     def runtime_requirements(self):
@@ -138,7 +136,7 @@ class STT(metaclass=ABCMeta):
         """transcribe audio data to a list of
         possible transcriptions and respective confidences"""
         if lang is not None and lang == "auto":
-            lang = self.detect_language(audio)
+            lang, prob = self.detect_language(audio)
         return [(self.execute(audio, lang), 1.0)]
 
     @property
