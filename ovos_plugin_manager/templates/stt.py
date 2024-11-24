@@ -12,11 +12,12 @@ from typing import List, Tuple, Optional, Set, Union
 
 from ovos_config import Configuration
 from ovos_utils import classproperty
+from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.log import deprecated, LOG
 from ovos_utils.process_utils import RuntimeRequirements
-from ovos_utils.lang import standardize_lang_tag
-from ovos_plugin_manager.utils.config import get_plugin_config
+
 from ovos_plugin_manager.templates.transformers import AudioLanguageDetector
+from ovos_plugin_manager.utils.config import get_plugin_config
 
 
 class STT(metaclass=ABCMeta):
@@ -90,8 +91,8 @@ class STT(metaclass=ABCMeta):
     @property
     def lang(self):
         return standardize_lang_tag(self._lang or \
-            self.config.get("lang") or \
-            Configuration().get("lang", "en-US"))
+                                    self.config.get("lang") or \
+                                    Configuration().get("lang", "en-US"))
 
     @lang.setter
     def lang(self, val):
@@ -136,7 +137,11 @@ class STT(metaclass=ABCMeta):
         """transcribe audio data to a list of
         possible transcriptions and respective confidences"""
         if lang is not None and lang == "auto":
-            lang, prob = self.detect_language(audio, self.available_languages)
+            try:
+                lang, prob = self.detect_language(audio, self.available_languages)
+            except Exception as e:
+                LOG.error(f"Language detection failed: {e}. Falling back to default language.")
+                lang = self.lang  # Fall back to default language
         return [(self.execute(audio, lang), 1.0)]
 
     @property
