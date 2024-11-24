@@ -12,10 +12,11 @@ from typing import List, Tuple, Optional
 
 from ovos_config import Configuration
 from ovos_utils import classproperty
-from ovos_utils.log import deprecated
+from ovos_utils.log import deprecated, LOG
 from ovos_utils.process_utils import RuntimeRequirements
 from ovos_utils.lang import standardize_lang_tag
 from ovos_plugin_manager.utils.config import get_plugin_config
+from ovos_plugin_manager.templates.transformers import AudioLanguageDetector
 
 
 class STT(metaclass=ABCMeta):
@@ -31,6 +32,18 @@ class STT(metaclass=ABCMeta):
 
         self.can_stream = False
         self._recognizer = None
+        self._detector = None
+
+    def bind(self, detector: AudioLanguageDetector):
+        self._detector = detector
+        LOG.debug(f"{self.__class__.__name__} - Assigned lang detector: {detector}")
+
+    def detect_language(self, audio) -> str:
+        from speech_recognition import AudioData
+        assert isinstance(audio, AudioData)
+        if self._detector is None:
+            raise NotImplementedError(f"{self.__class__.__name__} does not support audio language detection")
+        return self._detector.detect(audio)
 
     @classproperty
     def runtime_requirements(self):
@@ -124,6 +137,8 @@ class STT(metaclass=ABCMeta):
     def transcribe(self, audio, lang: Optional[str] = None) -> List[Tuple[str, float]]:
         """transcribe audio data to a list of
         possible transcriptions and respective confidences"""
+        if lang is not None and lang == "auto":
+            lang = self.detect_language(audio)
         return [(self.execute(audio, lang), 1.0)]
 
     @property
