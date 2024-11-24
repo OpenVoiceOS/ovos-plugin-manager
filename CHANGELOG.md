@@ -1,20 +1,12 @@
 # Changelog
 
-## [0.6.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.6.0a1) (2024-11-20)
+## [0.7.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.7.0a1) (2024-11-24)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.7a1...0.6.0a1)
-
-**Merged pull requests:**
-
-- feat: chat history [\#286](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/286) ([JarbasAl](https://github.com/JarbasAl))
-
-## [0.5.7a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.5.7a1) (2024-11-18)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.5.6...0.5.7a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.6.0...0.7.0a1)
 
 **Merged pull requests:**
 
-- Update `config` default value handling with updated unit test [\#276](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/276) ([NeonDaniel](https://github.com/NeonDaniel))
+- feat: STT lang detector [\#289](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/289) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
