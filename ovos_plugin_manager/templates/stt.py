@@ -8,13 +8,15 @@ import json
 from abc import ABCMeta, abstractmethod
 from queue import Queue
 from threading import Thread, Event
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Set, Union
 
 from ovos_config import Configuration
 from ovos_utils import classproperty
-from ovos_utils.log import deprecated
-from ovos_utils.process_utils import RuntimeRequirements
 from ovos_utils.lang import standardize_lang_tag
+from ovos_utils.log import deprecated, LOG
+from ovos_utils.process_utils import RuntimeRequirements
+
+from ovos_plugin_manager.templates.transformers import AudioLanguageDetector
 from ovos_plugin_manager.utils.config import get_plugin_config
 
 
@@ -31,6 +33,16 @@ class STT(metaclass=ABCMeta):
 
         self.can_stream = False
         self._recognizer = None
+        self._detector = None
+
+    def bind(self, detector: AudioLanguageDetector):
+        self._detector = detector
+        LOG.debug(f"{self.__class__.__name__} - Assigned lang detector: {detector}")
+
+    def detect_language(self, audio, valid_langs: Optional[Union[Set[str], List[str]]] = None) -> Tuple[str, float]:
+        if self._detector is None:
+            raise NotImplementedError(f"{self.__class__.__name__} does not support audio language detection")
+        return self._detector.detect(audio, valid_langs=valid_langs or self.available_languages)
 
     @classproperty
     def runtime_requirements(self):
@@ -79,8 +91,8 @@ class STT(metaclass=ABCMeta):
     @property
     def lang(self):
         return standardize_lang_tag(self._lang or \
-            self.config.get("lang") or \
-            Configuration().get("lang", "en-US"))
+                                    self.config.get("lang") or \
+                                    Configuration().get("lang", "en-US"))
 
     @lang.setter
     def lang(self, val):
@@ -124,10 +136,16 @@ class STT(metaclass=ABCMeta):
     def transcribe(self, audio, lang: Optional[str] = None) -> List[Tuple[str, float]]:
         """transcribe audio data to a list of
         possible transcriptions and respective confidences"""
+        if lang is not None and lang == "auto":
+            try:
+                lang, prob = self.detect_language(audio, self.available_languages)
+            except Exception as e:
+                LOG.error(f"Language detection failed: {e}. Falling back to default language.")
+                lang = self.lang  # Fall back to default language
         return [(self.execute(audio, lang), 1.0)]
 
     @property
-    def available_languages(self) -> set:
+    def available_languages(self) -> Set[str]:
         """Return languages supported by this STT implementation in this state
         This property should be overridden by the derived class to advertise
         what languages that engine supports.
