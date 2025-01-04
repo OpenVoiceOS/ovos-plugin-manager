@@ -6,7 +6,7 @@ from ovos_plugin_manager.utils import PluginTypes, normalize_lang, \
     PluginConfigTypes
 from ovos_plugin_manager.utils.config import get_valid_plugin_configs, \
     sort_plugin_configs, get_plugin_config
-from ovos_utils.log import LOG, log_deprecation
+from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_data_home
 from hashlib import md5
 
