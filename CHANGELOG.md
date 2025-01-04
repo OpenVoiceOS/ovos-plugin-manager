@@ -1,12 +1,12 @@
 # Changelog
 
-## [0.7.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.7.0a1) (2024-11-24)
+## [0.7.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.7.1a1) (2025-01-04)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.6.0...0.7.0a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.7.0...0.7.1a1)
 
 **Merged pull requests:**
 
-- feat: STT lang detector [\#289](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/289) ([JarbasAl](https://github.com/JarbasAl))
+- chore: add warnings [\#291](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/291) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
