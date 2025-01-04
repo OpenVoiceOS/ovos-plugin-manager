@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.1a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.7.1a2) (2025-01-04)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.7.1a1...0.7.1a2)
+
+**Merged pull requests:**
+
+- fix log spam [\#293](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/293) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.7.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.7.1a1) (2025-01-04)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.7.0...0.7.1a1)
