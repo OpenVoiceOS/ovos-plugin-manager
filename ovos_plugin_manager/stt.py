@@ -3,7 +3,7 @@ from ovos_plugin_manager.utils import normalize_lang, \
 from ovos_config import Configuration
 from ovos_plugin_manager.utils.config import get_valid_plugin_configs, \
     sort_plugin_configs, get_plugin_config
-from ovos_utils.log import LOG, log_deprecation
+from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.stt import STT, StreamingSTT, StreamThread
 
 
