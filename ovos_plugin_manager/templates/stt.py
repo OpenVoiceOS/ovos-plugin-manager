@@ -9,7 +9,7 @@ from abc import ABCMeta, abstractmethod
 from queue import Queue
 from threading import Thread, Event
 from typing import List, Tuple, Optional, Set, Union
-
+import warnings
 from ovos_config import Configuration
 from ovos_utils import classproperty
 from ovos_utils.lang import standardize_lang_tag
@@ -78,6 +78,11 @@ class STT(metaclass=ABCMeta):
     @deprecated("self.recognizer has been deprecated! "
                 "if you need it 'from speech_recognition import Recognizer' directly", "1.0.0")
     def recognizer(self):
+        warnings.warn(
+            "use 'from speech_recognition import Recognizer' directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         # only imported here to not drag dependency
         from speech_recognition import Recognizer
         if not self._recognizer:
@@ -103,6 +108,11 @@ class STT(metaclass=ABCMeta):
     @deprecated("self.keys has been deprecated! "
                 "implement config handling directly instead", "1.0.0")
     def keys(self):
+        warnings.warn(
+            "self.keys has been deprecated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._keys or self.config_core.get("keys", {})
 
     @keys.setter
@@ -114,6 +124,11 @@ class STT(metaclass=ABCMeta):
     @deprecated("self.credential has been deprecated! "
                 "implement config handling directly instead", "1.0.0")
     def credential(self):
+        warnings.warn(
+            "self.credential has been deprecated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._credential or self.config.get("credential", {})
 
     @credential.setter
@@ -125,6 +140,11 @@ class STT(metaclass=ABCMeta):
     @deprecated("self.init_language has been deprecated! "
                 "implement config handling directly instead", "1.0.0")
     def init_language(config_core):
+        warnings.warn(
+            "implement config handling directly instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         lang = config_core.get("lang", "en-US")
         return standardize_lang_tag(lang, macro=True)
 
@@ -158,6 +178,11 @@ class STT(metaclass=ABCMeta):
 class TokenSTT(STT, metaclass=ABCMeta):
     @deprecated("TokenSTT is deprecated, please subclass from STT directly", "1.0.0")
     def __init__(self, config=None):
+        warnings.warn(
+            "please subclass from STT directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(config)
         self.token = self.credential.get("token")
 
@@ -165,6 +190,11 @@ class TokenSTT(STT, metaclass=ABCMeta):
 class GoogleJsonSTT(STT, metaclass=ABCMeta):
     @deprecated("GoogleJsonSTT is deprecated, please subclass from STT directly", "1.0.0")
     def __init__(self, config=None):
+        warnings.warn(
+            "please subclass from STT directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(config)
         if not self.credential.get("json") or self.keys.get("google_cloud"):
             self.credential["json"] = self.keys["google_cloud"]
@@ -174,6 +204,11 @@ class GoogleJsonSTT(STT, metaclass=ABCMeta):
 class BasicSTT(STT, metaclass=ABCMeta):
     @deprecated("BasicSTT is deprecated, please subclass from STT directly", "1.0.0")
     def __init__(self, config=None):
+        warnings.warn(
+            "please subclass from STT directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(config)
         self.username = str(self.credential.get("username"))
         self.password = str(self.credential.get("password"))
@@ -183,6 +218,11 @@ class KeySTT(STT, metaclass=ABCMeta):
 
     @deprecated("KeySTT is deprecated, please subclass from STT directly", "1.0.0")
     def __init__(self, config=None):
+        warnings.warn(
+            "please subclass from STT directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(config)
         self.id = str(self.credential.get("client_id"))
         self.key = str(self.credential.get("client_key"))

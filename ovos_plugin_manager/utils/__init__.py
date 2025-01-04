@@ -16,7 +16,7 @@ from collections import deque
 from enum import Enum
 from threading import Event, Lock
 from typing import Optional
-
+import warnings
 import pkg_resources
 from ovos_utils.log import LOG, log_deprecation, deprecated
 
@@ -178,6 +178,11 @@ def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
 
 @deprecated("normalize_lang has been deprecated! update to 'from ovos_utils.lang import standardize_lang_tag'", "1.0.0")
 def normalize_lang(lang):
+    warnings.warn(
+        "update to 'from ovos_utils.lang import standardize_lang_tag'",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     from ovos_utils.lang import standardize_lang_tag
     return standardize_lang_tag(lang)
 

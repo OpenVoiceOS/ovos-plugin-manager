@@ -28,6 +28,7 @@ from ovos_utils.metrics import Stopwatch
 from ovos_utils.process_utils import RuntimeRequirements
 from ovos_plugin_manager.utils.config import get_plugin_config
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
+import warnings
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
 SSML_TAGS = re.compile(r'<[^>]*>')
@@ -133,16 +134,31 @@ class TTSContext:
     # deprecated methods
     @deprecated("'get_message' has been deprecated without replacement", "1.0.0")
     def get_message(self, kwargs) -> Optional[Message]:
+        warnings.warn(
+            "deprecated without replacement",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         msg = kwargs.get("message") or dig_for_message()
         if msg and isinstance(msg, Message):
             return msg
 
     @deprecated("'self.get_lang' has been deprecated, access self.lang directly", "1.0.0")
     def get_lang(self, kwargs) -> str:
+        warnings.warn(
+            "access self.lang directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return kwargs.get("lang") or self.lang
 
     @deprecated("'self.get_gender' has been deprecated, access self.voice and self.lang directly", "1.0.0")
     def get_gender(self, kwargs) -> Optional[str]:
+        warnings.warn(
+            "access self.lang and self.voice directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         gender = kwargs.get("gender")
         message = self.get_message(kwargs)
         if not gender and message:
@@ -152,6 +168,11 @@ class TTSContext:
 
     @deprecated("'self.get_voice' has been deprecated, access self.voice directly", "1.0.0")
     def get_voice(self, kwargs):
+        warnings.warn(
+            "access self.voice directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         voice = kwargs.get("voice")
         message = self.get_message(kwargs)
         if not voice and message:
@@ -162,6 +183,11 @@ class TTSContext:
 
     @deprecated("'self.get' has been deprecated, access self.voice and self.lang directly", "1.0.0")
     def get(self, kwargs=None) -> Tuple[str, Optional[str]]:
+        warnings.warn(
+            "access self.lang and self.voice directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         kwargs = kwargs or {}
         return self.get_lang(kwargs), self.get_voice(kwargs)
 
@@ -232,11 +258,21 @@ class TTS:
 
     @property
     def g2p(self) -> None:
+        warnings.warn(
+            "moved to PlaybackThread in ovos-audio",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         log_deprecation("G2P plugins moved to PlaybackThread in ovos-audio, self.g2p is deprecated!", "1.0.0")
         return None
 
     @g2p.setter
     def g2p(self, val):
+        warnings.warn(
+            "moved to PlaybackThread in ovos-audio",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         log_deprecation("G2P plugins moved to PlaybackThread in ovos-audio, self.g2p is deprecated!", "1.0.0")
 
     @property
@@ -743,6 +779,11 @@ class TTS:
         Returns:
             EnclosureAPI: The EnclosureAPI instance associated with the TTS playback.
         """
+        warnings.warn(
+            "use EnclosureAPI directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if not TTS.playback.enclosure:
             bus = TTS.playback.bus or self.bus
             TTS.playback.enclosure = EnclosureAPI(bus)
@@ -757,6 +798,11 @@ class TTS:
         Arguments:
             val (EnclosureAPI): The EnclosureAPI instance to set.
         """
+        warnings.warn(
+            "use EnclosureAPI directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         TTS.playback.enclosure = val
 
     @property
@@ -768,6 +814,11 @@ class TTS:
         Returns:
             str: The filename for the TTS audio.
         """
+        warnings.warn(
+            "deprecated without replacement",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         cache_dir = get_cache_directory(self.tts_name)
         return join(cache_dir, 'tts.' + self.audio_ext)
 
@@ -780,6 +831,11 @@ class TTS:
         Arguments:
             val (str): The filename to set.
         """
+        warnings.warn(
+            "deprecated without replacement",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     @property
     @deprecated("self.tts_id has been deprecated, use TTSContext().tts_id",
@@ -790,6 +846,11 @@ class TTS:
         Returns:
             str: The ID associated with the TTS context.
         """
+        warnings.warn(
+            "use TTSContext().tts_id",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._get_ctxt().tts_id
 
     @property
@@ -801,6 +862,11 @@ class TTS:
         Returns:
             TextToSpeechCache: The cache associated with the TTS context.
         """
+        warnings.warn(
+            "use TTSContext().get_cache",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return TTSContext._caches.get(self.tts_id) or \
             self.get_cache()
 
@@ -813,6 +879,11 @@ class TTS:
         Arguments:
             val (TextToSpeechCache): The cache to set.
         """
+        warnings.warn(
+            "use TTSContext().get_cache",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         TTSContext._caches[self.tts_id] = val
 
     @deprecated("get_voice was never formally adopted and is unused, it will be removed",
@@ -827,6 +898,11 @@ class TTS:
         Returns:
             str: The selected voice.
         """
+        warnings.warn(
+            "deprecated without replacement",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return gender
 
     @deprecated("get_cache has been deprecated, use TTSContext().get_cache directly",
@@ -841,12 +917,22 @@ class TTS:
         Returns:
             TextToSpeechCache: The cache associated with the TTS context.
         """
+        warnings.warn(
+            "use TTSContext().get_cache",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._get_ctxt().get_cache(self.audio_ext, self.config)
 
     @deprecated("clear_cache has been deprecated, use TTSContext().get_cache directly",
                 "1.0.0")
     def clear_cache(self):
         """Deprecated. Clear all cached files."""
+        warnings.warn(
+            "use TTSContext().get_cache",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         cache = self._get_ctxt().get_cache(self.audio_ext, self.config)
         cache.clear()
 
@@ -862,6 +948,11 @@ class TTS:
         Returns:
             PhonemeFile: The PhonemeFile instance.
         """
+        warnings.warn(
+            "use TTSContext().get_cache",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         cache = self._get_ctxt().get_cache(self.audio_ext, self.config)
         phoneme_file = cache.define_phoneme_file(key)
         phoneme_file.save(phonemes)
@@ -878,6 +969,11 @@ class TTS:
         Returns:
             str: Phonemes loaded from the cache file.
         """
+        warnings.warn(
+            "use TTSContext().get_cache",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         cache = self._get_ctxt().get_cache(self.audio_ext, self.config)
         phoneme_file = cache.define_phoneme_file(key)
         return phoneme_file.load()
@@ -893,6 +989,11 @@ class TTS:
         Returns:
             tuple: Tuple containing the audio and phonemes.
         """
+        warnings.warn(
+            "use TTSContext().get_cache",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._get_ctxt().get_from_cache(sentence, self.audio_ext, self.config)
 
     @property
@@ -1191,6 +1292,11 @@ class RemoteTTS(TTS):
     @deprecated("RemoteTTS has been deprecated, please use the regular TTS class",
                 "1.0.0")
     def __init__(self, lang, config, url, api_path, validator):
+        warnings.warn(
+            "please subclass from TTS directly",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super(RemoteTTS, self).__init__(lang, config, validator)
         self.api_path = api_path
         self.auth = None
