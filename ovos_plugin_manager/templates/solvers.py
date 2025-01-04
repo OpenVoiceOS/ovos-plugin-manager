@@ -494,7 +494,8 @@ class CorpusSolver(QuestionSolver):
         """return top_k matches from indexed corpus"""
         res = []
         for doc, score in self.query(query, lang, k=k):
-            LOG.debug(f"Rank {len(res) + 1} (score: {score}): {doc}")
+            # this log can be very spammy, only enable for debug during dev
+            #LOG.debug(f"Rank {len(res) + 1} (score: {score}): {doc}")
             if self.config.get("min_conf"):
                 if score >= self.config["min_conf"]:
                     res.append((score, doc))
