@@ -17,8 +17,8 @@ from enum import Enum
 from threading import Event, Lock
 from typing import Optional
 import warnings
-import pkg_resources
 from ovos_utils.log import LOG, log_deprecation, deprecated
+from importlib.metadata import entry_points
 
 
 class PluginTypes(str, Enum):
@@ -126,7 +126,7 @@ def find_plugins(plug_type: PluginTypes = None) -> dict:
     else:
         plugs = plug_type
     for plug in plugs:
-        for entry_point in _iter_entrypoints(plug):
+        for entry_point in entry_points(group=plug):
             try:
                 entrypoints[entry_point.name] = entry_point.load()
                 if entry_point.name not in entrypoints:
@@ -141,21 +141,6 @@ def find_plugins(plug_type: PluginTypes = None) -> dict:
 
 
 find_plugins._errored = []
-
-
-def _iter_entrypoints(plug_type: Optional[str]):
-    """
-    Return an iterator containing all entrypoints of the requested type
-    @param plug_type: entrypoint name to load
-    @return: iterator of all entrypoints
-    """
-    try:
-        from importlib_metadata import entry_points
-        for entry_point in entry_points(group=plug_type):
-            yield entry_point
-    except ImportError:
-        for entry_point in pkg_resources.iter_entry_points(plug_type):
-            yield entry_point
 
 
 def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
