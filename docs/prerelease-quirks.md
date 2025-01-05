@@ -4,6 +4,14 @@ Behavior changes since the last stable release, newest first. This file is
 reset at each stable release; entries that remove or deprecate behavior
 become the deprecation ledger for the next semver cycle.
 
+## 2.11.2a2
+
+- Plugin entry-point discovery now imports `entry_points` from the standard
+  library `importlib.metadata` unconditionally. The `importlib_metadata`
+  backport and the `pkg_resources` fallback (deprecated by setuptools) are
+  gone; `requires-python` is already `>=3.10`, where the stdlib module has
+  always supported the `group=` keyword used here, so behavior is unchanged.
+
 ## 2.11.1a5
 
 - `ChatEngine`'s built-in `stream_tokens`, `stream_sentences`, and
