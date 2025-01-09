@@ -1,20 +1,12 @@
 # Changelog
 
-## [0.7.1a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.7.1a2) (2025-01-04)
+## [0.8.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.0a1) (2025-01-09)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.7.1a1...0.7.1a2)
-
-**Merged pull requests:**
-
-- fix log spam [\#293](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/293) ([JarbasAl](https://github.com/JarbasAl))
-
-## [0.7.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.7.1a1) (2025-01-04)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.7.0...0.7.1a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.7.1...0.8.0a1)
 
 **Merged pull requests:**
 
-- chore: add warnings [\#291](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/291) ([JarbasAl](https://github.com/JarbasAl))
+- feat:allow pipelines to return a modified session [\#296](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/296) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
