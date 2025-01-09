@@ -5,6 +5,7 @@ from typing import Optional, Dict, List, Union
 
 from ovos_bus_client.client import MessageBusClient
 from ovos_bus_client.message import Message
+from ovos_bus_client.session import Session
 from ovos_utils.fakebus import FakeBus
 
 # LEGACY: Intent match response tuple, ovos-core~=0.2 expects PipelinePlugin to return this data structure
@@ -34,6 +35,7 @@ class IntentHandlerMatch:
     match_data: Optional[Dict] = None
     skill_id: Optional[str] = None
     utterance: Optional[str] = None
+    updated_session: Optional[Session] = None
 
 
 @dataclass
@@ -52,6 +54,7 @@ class PipelineMatch(IntentHandlerMatch):
     match_data: Optional[Dict] = None
     skill_id: Optional[str] = None
     utterance: Optional[str] = None
+    updated_session: Optional[Session] = None
     match_type: bool = True  # compat
 
 
