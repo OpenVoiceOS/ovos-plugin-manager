@@ -1121,13 +1121,15 @@ class StreamingTTSCallbacks:
         self.bus = bus
         self.config = tts_config or {}
         if not play_args:
-            # Check for the available player depending on the system's audio server.
-            player = shutil.which("pw-play") or shutil.which("paplay") or shutil.which("ffplay")
+            # Check for the best available player depending on the system's audio server.
+            # anything that accepts audio via stdin should work
+            player = shutil.which("ffplay") or shutil.which("pw-play") or shutil.which("paplay") or shutil.which("aplay")
             if not player:
-                raise RuntimeError("No audio player found (please install 'ffmpeg' or 'pulseaudio-utils').")
+                raise RuntimeError("No audio player found (please install 'ffmpeg', 'pulseaudio-utils' or 'alsa-utils').")
             self.play_args = [player]
             if player.endswith("ffplay"):
-                self.play_args += ["-autoexit", "-nodisp", "-"]
+                self.play_args += ["-autoexit", "-nodisp"]
+            self.play_args += ["-"]
         else:
             self.play_args = play_args
         self._process = None
