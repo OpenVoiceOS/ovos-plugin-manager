@@ -1223,6 +1223,12 @@ class StreamingTTS(TTS):
 
     def _execute(self, sentence, ident, listen, **kwargs):
 
+        if not self.config.get("enable_streaming"):
+            # by default use the shared Queue for audio playback
+            # use streaming only if explicitly enabled until it is better supported
+            super()._execute(sentence, ident, listen, **kwargs)
+            return
+
         # parse requested language for this TTS request
         ctxt = self._get_ctxt(kwargs)
         cache = ctxt.get_cache(self.audio_ext, self.config)
