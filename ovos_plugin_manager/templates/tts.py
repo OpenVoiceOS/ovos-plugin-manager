@@ -5,6 +5,7 @@ import os.path
 import re
 import sys
 import subprocess
+import shutil
 from os.path import isfile, join
 from pathlib import Path
 from queue import Queue
@@ -1119,7 +1120,19 @@ class StreamingTTSCallbacks:
     def __init__(self, bus, play_args=None, tts_config=None):
         self.bus = bus
         self.config = tts_config or {}
-        self.play_args = play_args or ["paplay"]
+        if not play_args:
+            # Check for the best available player depending on the system's audio server.
+            # anything that accepts audio via stdin should work
+            # TODO - pw-play only outputs high pitched noise, investigate and add it here for pipewire systems
+            player = shutil.which("ffplay") or shutil.which("paplay") or shutil.which("aplay")
+            if not player:
+                raise RuntimeError("No audio player found (please install 'ffmpeg', 'pulseaudio-utils' or 'alsa-utils').")
+            self.play_args = [player]
+            if player.endswith("ffplay"):
+                self.play_args += ["-autoexit", "-nodisp"]
+            self.play_args += ["-"]
+        else:
+            self.play_args = play_args
         self._process = None
 
     def stream_start(self, message=None):
@@ -1129,9 +1142,7 @@ class StreamingTTSCallbacks:
         - "recognizer_loop:audio_output_start"
         """
         LOG.info(f"TTS stream start: {self.__class__.__name__}")
-        message = message or \
-                  dig_for_message() or \
-                  Message("speak")
+        message = message or dig_for_message() or Message("speak")
 
         # we don't use the regular PlaybackThread here, we need to handle recognizer_loop:audio_output_start
         if not self.config.get("pulse_duck", False):
@@ -1144,7 +1155,7 @@ class StreamingTTSCallbacks:
         self._process = subprocess.Popen(self.play_args, stdin=subprocess.PIPE)
 
     def stream_chunk(self, chunk):
-        """play streamed chunk of audio"""
+        """Play streamed chunk of audio"""
         LOG.debug(f"TTS stream chunk: {self.__class__.__name__} - {len(chunk)} bytes")
         if self._process:
             self._process.stdin.write(chunk)
@@ -1158,9 +1169,7 @@ class StreamingTTSCallbacks:
         - 'mycroft.mic.listen'
         """
         LOG.info(f"TTS stream stop: {self.__class__.__name__}")
-        message = message or \
-                  dig_for_message() or \
-                  Message("speak")
+        message = message or dig_for_message() or Message("speak")
 
         if self._process:
             self._process.stdin.close()
@@ -1222,6 +1231,12 @@ class StreamingTTS(TTS):
         return wav_file
 
     def _execute(self, sentence, ident, listen, **kwargs):
+
+        if not self.config.get("enable_streaming"):
+            # by default use the shared Queue for audio playback
+            # use streaming only if explicitly enabled until it is better supported
+            super()._execute(sentence, ident, listen, **kwargs)
+            return
 
         # parse requested language for this TTS request
         ctxt = self._get_ctxt(kwargs)
