@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.2a1) (2025-01-30)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.1a1...0.8.2a1)
+
+**Merged pull requests:**
+
+- fix:disable\_tts\_stream\_config [\#300](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/300) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.8.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.1a1) (2025-01-30)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.0...0.8.1a1)
