@@ -1123,7 +1123,8 @@ class StreamingTTSCallbacks:
         if not play_args:
             # Check for the best available player depending on the system's audio server.
             # anything that accepts audio via stdin should work
-            player = shutil.which("ffplay") or shutil.which("pw-play") or shutil.which("paplay") or shutil.which("aplay")
+            # TODO - pw-play only outputs high pitched noise, investigate and add it here for pipewire systems
+            player = shutil.which("ffplay") or shutil.which("paplay") or shutil.which("aplay")
             if not player:
                 raise RuntimeError("No audio player found (please install 'ffmpeg', 'pulseaudio-utils' or 'alsa-utils').")
             self.play_args = [player]
