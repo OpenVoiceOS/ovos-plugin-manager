@@ -1,12 +1,12 @@
 # Changelog
 
-## [0.8.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.0a1) (2025-01-09)
+## [0.8.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.1a1) (2025-01-30)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.7.1...0.8.0a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.0...0.8.1a1)
 
 **Merged pull requests:**
 
-- feat:allow pipelines to return a modified session [\#296](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/296) ([JarbasAl](https://github.com/JarbasAl))
+- fix: streaming TTS in non pulseaudio systems [\#298](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/298) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
