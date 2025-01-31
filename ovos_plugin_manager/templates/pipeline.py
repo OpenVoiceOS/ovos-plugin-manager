@@ -179,7 +179,8 @@ class PipelineStageConfidenceMatcher(PipelineStageMatcher, ConfidenceMatcherPipe
 
     def __init__(self, bus: Optional[Union[MessageBusClient, FakeBus]] = None,
                  config: Optional[Dict] = None):
-        super().__init__(bus=bus, config=config)
+        PipelineStageMatcher.__init__(self, bus, config)
+        ConfidenceMatcherPipeline.__init__(self, bus, config)
 
     def match(self, utterances: List[str], lang: str, message: Message) -> Optional[PipelineMatch]:
         """
