@@ -1,12 +1,12 @@
 # Changelog
 
-## [0.8.3a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.3a1) (2025-01-31)
+## [0.8.4a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.4a1) (2025-03-19)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.2...0.8.3a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.3...0.8.4a1)
 
 **Merged pull requests:**
 
-- Fix/pipeline bus [\#302](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/302) ([JarbasAl](https://github.com/JarbasAl))
+- fix/allow latest ovos-config [\#305](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/305) ([JarbasAl](https://github.com/JarbasAl))
 
 
 

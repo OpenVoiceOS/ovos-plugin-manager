@@ -1,0 +1,51 @@
+name: Track Downstream Dependencies
+
+on:
+  push:
+    branches: [dev]
+  schedule:
+    - cron: "0 0 * * *"  # Runs daily at midnight UTC
+  workflow_dispatch:  # Allows manual triggering
+
+env:
+  TARGET_PACKAGE: "ovos-plugin-manager"  # Set the package to track here
+
+jobs:
+  check-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download requirements file
+        run: |
+          curl -o constraints-alpha.txt https://raw.githubusercontent.com/OpenVoiceOS/ovos-releases/refs/heads/main/constraints-alpha.txt
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt install python3-dev swig libssl-dev libfann-dev portaudio19-dev libpulse-dev python3-fann2
+          python -m venv venv
+          source venv/bin/activate
+          pip install build wheel
+          pip install -r constraints-alpha.txt
+          pip install pipdeptree
+
+      - name: Find downstream dependencies
+        run: |
+          source venv/bin/activate
+          pipdeptree -r -p "$TARGET_PACKAGE" > downstream_report.txt || echo "No dependencies found"
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout dev || git checkout -b dev
+          git add downstream_report.txt
+          git commit -m "Update downstream dependencies for $TARGET_PACKAGE" || echo "No changes to commit"
+          git push origin dev
