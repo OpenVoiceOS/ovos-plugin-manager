@@ -33,7 +33,7 @@ from ovos_utils import flatten_list
 from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.log import LOG
 from quebra_frases import sentence_tokenize
-
+from ovos_config import Configuration
 from ovos_plugin_manager.language import OVOSLangTranslationFactory, OVOSLangDetectionFactory
 from ovos_plugin_manager.templates.language import LanguageTranslator, LanguageDetector
 
@@ -54,11 +54,14 @@ class AbstractSolver:
         self.enable_cache = enable_cache
         self.config = config or {}
         self.supported_langs = self.config.get("supported_langs") or []
-        self.default_lang = standardize_lang_tag(internal_lang or self.config.get("lang", "en"), macro=True)
+        self.default_lang = standardize_lang_tag(internal_lang or
+                                                 self.config.get("lang") or
+                                                 Configuration().get("lang", "en"),
+                                                 macro=True)
         if self.default_lang not in self.supported_langs:
             self.supported_langs.insert(0, self.default_lang)
-        self._translator = translator or OVOSLangTranslationFactory.create() if self.enable_tx else None
-        self._detector = detector or OVOSLangDetectionFactory.create() if self.enable_tx else None
+        self._translator = translator or (OVOSLangTranslationFactory.create() if self.enable_tx else None)
+        self._detector = detector or (OVOSLangDetectionFactory.create() if self.enable_tx else None)
         LOG.debug(f"{self.__class__.__name__} default language: {self.default_lang}")
 
     @property
