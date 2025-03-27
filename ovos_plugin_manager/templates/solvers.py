@@ -85,8 +85,12 @@ def auto_detect_lang(text_keys: List[str]):
                 for k in text_keys:
                     v = kwargs.get(k)
                     if isinstance(v, str):
-                        lang = solver.detect_language(v)
-                        LOG.debug(f"detected 'lang': {lang} in key: '{k}' for func: {func}")
+                        try:
+                            lang = solver.detect_language(v)
+                            LOG.debug(f"detected 'lang': {lang} in key: '{k}' for func: {func}")
+                        except Exception as e:
+                            LOG.error(f"failed to detect 'lang': {e}")
+                            continue
                         break
                 else:
                     for idx, v in enumerate(args):
@@ -719,8 +723,13 @@ def _do_tx(solver, data: Any, source_lang: str, target_lang: str) -> Any:
         Any: The translated data in the same structure as the input data.
     """
     if isinstance(data, str):
-        return solver.translate(data,
-                                source_lang=source_lang, target_lang=target_lang)
+        try:
+            return solver.translate(data,
+                                    source_lang=source_lang, target_lang=target_lang)
+        except Exception as e:
+            LOG.error(f"Failed to translate '{data}' - ({e})")
+            return data
+
     elif isinstance(data, list):
         for idx, e in enumerate(data):
             data[idx] = _do_tx(solver, e, source_lang=source_lang, target_lang=target_lang)
