@@ -97,6 +97,9 @@ class AbstractSolver:
         :param max_sentences: Maximum number of sentences to return.
         :return: List of sentences.
         """
+        if not text:
+            LOG.warning("empty text received in sentence_split")
+            return []
         try:
             # sentence_tokenize occasionally has issues with \n for some reason
             return flatten_list([sentence_tokenize(t)
