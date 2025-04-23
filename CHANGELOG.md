@@ -1,12 +1,12 @@
 # Changelog
 
-## [0.8.6a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.6a1) (2025-03-27)
+## [0.8.7a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.7a1) (2025-04-23)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.5...0.8.6a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.6...0.8.7a1)
 
 **Merged pull requests:**
 
-- fix: handle plugin failures in auto translation decorators for Solver… [\#309](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/309) ([JarbasAl](https://github.com/JarbasAl))
+- Fix/error handling autotx [\#311](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/311) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
