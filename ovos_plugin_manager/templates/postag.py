@@ -1,7 +1,12 @@
-from ovos_bus_client.message import dig_for_message
+import abc
+from typing import Tuple, List
+from ovos_bus_client.session import SessionManager
 from ovos_utils import classproperty
 from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.process_utils import RuntimeRequirements
+
+
+Tag = Tuple[int, int, str, str]  # start_idx, end_idx, word, tag
 
 
 class PosTagger:
@@ -9,7 +14,7 @@ class PosTagger:
         self.config = config or {}
 
     @classproperty
-    def runtime_requirements(self):
+    def runtime_requirements(cls):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:
@@ -44,76 +49,10 @@ class PosTagger:
                                    no_network_fallback=True)
 
     @property
-    def lang(self):
-        lang = self.config.get("lang")
-        msg = dig_for_message()
-        if msg:
-            lang = msg.data.get("lang")
-        return standardize_lang_tag(lang or "en-US")
+    def lang(self) -> str:
+        lang = self.config.get("lang") or SessionManager.get().lang
+        return standardize_lang_tag(lang)
 
-    def postag(self, spans, lang=None):
-        lang = standardize_lang_tag(lang or self.lang)
-        # this should be implemented by plugins!
-        if lang.startswith("pt"):
-            return _dummy_postag_pt(spans)
-        elif lang.startswith("en"):
-            return _dummy_postag_en(spans)
-        return _dummy_postag(spans)
-
-
-def _dummy_postag_pt(spans):
-    pos = []
-    for s, e, t in spans:
-        if t == "e":
-            pos.append((s, e, t, "CONJ"))
-        elif t in ["o", "a", "os", "as"]:
-            pos.append((s, e, t, "DET"))
-        elif t.lower() in ["ele", "ela", "eles", "elas", "nós", "vós"]:
-            pos.append((s, e, t, "PRON"))
-        elif t in ["do", "da", "dos", "das"]:
-            pos.append((s, e, t, "ADP"))
-        elif t.isdigit():
-            pos.append((s, e, t, "NUMBER"))
-        elif t[0].isupper() and len(t) >= 5:
-            pos.append((s, e, t, "PROPN"))
-        elif len(t) >= 4:
-            pos.append((s, e, t, "NOUN"))
-        else:
-            pos.append((s, e, t, "VERB"))
-    return pos
-
-
-def _dummy_postag_en(spans):
-    pos = []
-    for s, e, t in spans:
-        if t == "and":
-            pos.append((s, e, t, "CONJ"))
-        elif t in ["the", "a", "an"]:
-            pos.append((s, e, t, "DET"))
-        elif t.lower() in ["he", "she", "it", "they"]:
-            pos.append((s, e, t, "PRON"))
-        elif t in ["of", "for"]:
-            pos.append((s, e, t, "ADP"))
-        elif t.isdigit():
-            pos.append((s, e, t, "NUMBER"))
-        elif t[0].isupper() and len(t) >= 5:
-            pos.append((s, e, t, "PROPN"))
-        elif len(t) >= 4:
-            pos.append((s, e, t, "NOUN"))
-        else:
-            pos.append((s, e, t, "VERB"))
-    return pos
-
-
-def _dummy_postag(spans):
-    pos = []
-    for s, e, t in spans:
-        if t.isdigit():
-            pos.append((s, e, t, "NUMBER"))
-        elif t[0].isupper() and len(t) >= 4:
-            pos.append((s, e, t, "PROPN"))
-        elif len(t) >= 5:
-            pos.append((s, e, t, "NOUN"))
-        else:
-            pos.append((s, e, t, "VERB"))
-    return pos
+    @abc.abstractmethod
+    def postag(self, spans, lang=None) -> List[Tag]:
+        raise NotImplementedError()

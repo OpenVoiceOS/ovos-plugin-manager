@@ -6,7 +6,6 @@ BASEDIR = os.path.abspath(os.path.dirname(__file__))
 
 def get_version():
     """ Find the version of the package"""
-    version = None
     version_file = os.path.join(BASEDIR, 'ovos_plugin_manager', 'version.py')
     major, minor, build, alpha = (None, None, None, None)
     with open(version_file) as f:
@@ -48,13 +47,7 @@ def required(requirements_file):
                 if pkg.strip() and not pkg.startswith("#")]
 
 
-SEG_PLUGIN_ENTRY_POINT = 'ovos-segmentation-plugin-quebrafrases=ovos_plugin_manager.templates.segmentation:Segmenter'
 TOK_PLUGIN_ENTRY_POINT = 'ovos-tokenization-plugin-quebrafrases=ovos_plugin_manager.templates.tokenization:Tokenizer'
-POSTAG_PLUGIN_ENTRY_POINT = 'ovos-postag-plugin-dummy=ovos_plugin_manager.templates.postag:PosTagger'
-KW_PLUGIN_ENTRY_POINT = 'ovos-keyword-plugin-dummy=ovos_plugin_manager.templates.keywords:KeywordExtractor'
-TTS_PLUGIN_ENTRY_POINT = 'ovos-tts-plugin-dummy=ovos_plugin_manager.templates.tts:TTS'
-STT_PLUGIN_ENTRY_POINT = 'ovos-stt-plugin-dummy=ovos_plugin_manager.templates.stt:STT'
-WW_PLUGIN_ENTRY_POINT = 'ovos-ww-plugin-dummy=ovos_plugin_manager.templates.hotwords:HotWordEngine'
 
 with open(os.path.join(BASEDIR, "README.md"), "r") as f:
     long_description = f.read()
@@ -78,12 +71,6 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     entry_points={
-        'intentbox.segmentation': SEG_PLUGIN_ENTRY_POINT,
-        'intentbox.tokenization': TOK_PLUGIN_ENTRY_POINT,
-        'intentbox.postag': POSTAG_PLUGIN_ENTRY_POINT,
-        'intentbox.keywords': KW_PLUGIN_ENTRY_POINT,
-        'mycroft.plugin.tts': TTS_PLUGIN_ENTRY_POINT,
-        'mycroft.plugin.stt': STT_PLUGIN_ENTRY_POINT,
-        'mycroft.plugin.wake_word': WW_PLUGIN_ENTRY_POINT
+        'intentbox.tokenization': TOK_PLUGIN_ENTRY_POINT
     }
 )
