@@ -4,6 +4,7 @@ from typing import List, Tuple, Optional
 from ovos_bus_client.util import get_mycroft_bus
 from ovos_config.config import Configuration
 from ovos_config.locale import get_default_lang
+from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
 from ovos_utils.log import LOG
 
 from ovos_plugin_manager.utils import ReadWriteStream
@@ -77,6 +78,39 @@ class UtteranceTransformer:
     def default_shutdown(self):
         """ perform any shutdown actions """
         pass
+
+
+class IntentTransformer:
+    """ runs before selected intent is triggered, can be used to inject message.data"""
+
+    def __init__(self, name, priority=50, config=None):
+        self.name = name
+        self.bus = None
+        self.priority = priority
+        if not config:
+            config_core = dict(Configuration())
+            config = config_core.get("intent_transformers", {}).get(self.name)
+        self.config = config or {}
+
+    def bind(self, bus=None):
+        """ attach messagebus """
+        self.bus = bus or get_mycroft_bus()
+
+    def initialize(self):
+        """ perform any initialization actions """
+        pass
+
+    def transform(self, intent: IntentHandlerMatch) -> IntentHandlerMatch:
+        """
+        Optionally transform intent handler data
+        e.g. NER could be performed here by modifying intent.match_data
+        """
+        return intent
+
+    def default_shutdown(self):
+        """ perform any shutdown actions """
+        pass
+
 
 
 class AudioTransformer:
