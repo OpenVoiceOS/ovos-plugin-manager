@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.0a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.9.0a2) (2025-05-27)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.9.0a1...0.9.0a2)
+
+**Merged pull requests:**
+
+- Create intent\_transformers.py [\#319](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/319) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.9.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.9.0a1) (2025-05-27)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.7...0.9.0a1)
