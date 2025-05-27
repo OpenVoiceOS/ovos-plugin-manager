@@ -1,23 +1,12 @@
-from ovos_bus_client.message import dig_for_message
+from ovos_bus_client.session import SessionManager
 from ovos_utils import classproperty
 from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.process_utils import RuntimeRequirements
 from quebra_frases import word_tokenize
+import abc
 
 
 class CoreferenceSolverEngine:
-    # TODO move lang data elsewhere
-    COREFERENCE_INDICATORS_EN = ["he", "she", "it", "they", "them", "these", "whom",
-                                 "whose", "who", "its", "it's", "him", "her", "we",
-                                 "us"]
-    COREFERENCE_INDICATORS_PT = [
-        'ele', "lo", "dele", "nele", "seu", 'ela', "la", "dela", "nela", "sua",
-        'eu', 'me', 'mim', 'nós', "comigo", "meu", "minha", "meus", "minhas",
-        "tu", "te", "ti", "lhe", "contigo", "consigo", "si", 'eles', 'elas',
-        "vós", "vocês", "lhes", "los", "las", "neles", "nelas", "convosco",
-        "conosco", "connosco", "teus", "tuas", "seus", "suas", "nossos",
-        "vossos", "nossas", "vossas"]
-
     def __init__(self, config=None):
         self.config = config or {}
         self._prev_sentence = ""
@@ -25,7 +14,7 @@ class CoreferenceSolverEngine:
         self.contexts = {}
 
     @classproperty
-    def runtime_requirements(self):
+    def runtime_requirements(cls):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:
@@ -60,26 +49,9 @@ class CoreferenceSolverEngine:
                                    no_network_fallback=True)
 
     @property
-    def lang(self):
-        lang = self.config.get("lang")
-        msg = dig_for_message()
-        if msg:
-            lang = msg.data.get("lang")
-        return standardize_lang_tag(lang or "en-US")
-
-    def contains_corefs(self, text, lang=None):
-        lang = standardize_lang_tag(lang or self.lang, macro=True)
-        if lang.startswith("en"):
-            indicators = self.COREFERENCE_INDICATORS_EN
-        elif lang.startswith("pt"):
-            indicators = self.COREFERENCE_INDICATORS_PT
-        else:
-            indicators = []
-        words = text.split(" ")
-        for indicator in indicators:
-            if indicator in words:
-                return True
-        return False
+    def lang(self) -> str:
+        lang = self.config.get("lang") or SessionManager.get().lang
+        return standardize_lang_tag(lang)
 
     @staticmethod
     def extract_replacements(original, solved):
@@ -168,8 +140,13 @@ class CoreferenceSolverEngine:
             self.extract_context(text, solved, lang=lang)
         return solved
 
-    def solve_corefs(self, text, lang=None):
-        return text
+    @abc.abstractmethod
+    def contains_corefs(self, text: str, lang: str) -> bool:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def solve_corefs(self, text: str, lang: str):
+        raise NotImplementedError()
 
 
 def replace_coreferences(text, smart=True, lang=None,
