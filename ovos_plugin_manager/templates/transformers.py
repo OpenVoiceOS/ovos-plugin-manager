@@ -1,10 +1,10 @@
 import abc
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
 
 from ovos_bus_client.util import get_mycroft_bus
 from ovos_config.config import Configuration
 from ovos_config.locale import get_default_lang
-from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch, PipelineMatch
 from ovos_utils.log import LOG
 
 from ovos_plugin_manager.utils import ReadWriteStream
@@ -100,7 +100,8 @@ class IntentTransformer:
         """ perform any initialization actions """
         pass
 
-    def transform(self, intent: IntentHandlerMatch) -> IntentHandlerMatch:
+    @abc.abstractmethod
+    def transform(self, intent: Union[IntentHandlerMatch, PipelineMatch]) -> Union[IntentHandlerMatch, PipelineMatch]:
         """
         Optionally transform intent handler data
         e.g. NER could be performed here by modifying intent.match_data
