@@ -1,9 +1,10 @@
 import abc
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
 
 from ovos_bus_client.util import get_mycroft_bus
 from ovos_config.config import Configuration
 from ovos_config.locale import get_default_lang
+from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch, PipelineMatch
 from ovos_utils.log import LOG
 
 from ovos_plugin_manager.utils import ReadWriteStream
@@ -75,8 +76,70 @@ class UtteranceTransformer:
         return utterances, {}
 
     def default_shutdown(self):
-        """ perform any shutdown actions """
+        """
+        Performs any necessary shutdown or cleanup actions.
+        
+        Intended to be overridden by subclasses to implement custom shutdown logic.
+        """
         pass
+
+
+class IntentTransformer:
+    """ runs before selected intent is triggered, can be used to inject message.data"""
+
+    def __init__(self, name, priority=50, config=None):
+        """
+        Initializes the IntentTransformer with a name, priority, and optional configuration.
+        
+        If no configuration is provided, attempts to load it from the global configuration under "intent_transformers" using the given name.
+        """
+        self.name = name
+        self.bus = None
+        self.priority = priority
+        if not config:
+            config_core = dict(Configuration())
+            config = config_core.get("intent_transformers", {}).get(self.name)
+        self.config = config or {}
+
+    def bind(self, bus=None):
+        """
+        Attach a message bus instance to the transformer.
+        
+        If no bus is provided, the default Mycroft message bus is used.
+        """
+        self.bus = bus or get_mycroft_bus()
+
+    def initialize(self):
+        """
+        Performs any necessary initialization actions for the transformer.
+        
+        Intended to be overridden by subclasses to implement custom setup logic.
+        """
+        pass
+
+    @abc.abstractmethod
+    def transform(self, intent: Union[IntentHandlerMatch, PipelineMatch]) -> Union[IntentHandlerMatch, PipelineMatch]:
+        """
+        Transforms the intent match object before the intent handler is triggered.
+        
+        This method can be used to modify or inject data into the intent, such as performing named entity recognition (NER) or altering match data. By default, it returns the intent unchanged.
+        
+        Args:
+            intent: The intent match object to be transformed.
+        
+        Returns:
+            The transformed intent match object.
+        """
+        return intent
+
+    def default_shutdown(self):
+        """
+        Performs any necessary shutdown actions for the transformer.
+        
+        Intended to be overridden by subclasses to implement cleanup procedures.
+        """
+        pass
+
 
 
 class AudioTransformer:
