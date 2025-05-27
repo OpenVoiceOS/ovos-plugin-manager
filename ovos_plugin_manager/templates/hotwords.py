@@ -8,13 +8,14 @@ from ovos_config import Configuration
 
 
 def msec_to_sec(msecs):
-    """Convert milliseconds to seconds.
-
-    Arguments:
-        msecs: milliseconds
-
+    """
+    Converts a time value from milliseconds to seconds.
+    
+    Args:
+        msecs: Time duration in milliseconds.
+    
     Returns:
-        int: input converted from milliseconds to seconds
+        The equivalent time in seconds.
     """
     return msecs / 1000
 
@@ -29,36 +30,22 @@ class HotWordEngine:
     """
 
     def __init__(self, key_phrase: str, config: Optional[Dict[str, Any]] = None):
+        """
+        Initializes the hotword detection engine with a key phrase and optional configuration.
+        
+        Args:
+            key_phrase: The wake word or phrase to detect, case-insensitive.
+            config: Optional dictionary of configuration parameters for the engine. If not provided, configuration is loaded from the global "hotwords" section using the key phrase.
+        """
         self.key_phrase = str(key_phrase).lower()
         self.config = config or Configuration().get("hotwords", {}).get(self.key_phrase, {})
 
     @classproperty
     def runtime_requirements(cls):
-        """ skill developers should override this if they do not require connectivity
-         some examples:
-         IOT plugin that controls devices via LAN could return:
-            scans_on_init = True
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=scans_on_init,
-                                 requires_internet=False,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=False)
-         online search plugin with a local cache:
-            has_cache = False
-            RuntimeRequirements(internet_before_load=not has_cache,
-                                 network_before_load=not has_cache,
-                                 requires_internet=True,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
-         a fully offline plugin:
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=False,
-                                 requires_internet=False,
-                                 requires_network=False,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
+        """
+        Describes the runtime connectivity requirements for the hotword engine.
+        
+        By default, indicates that no internet or network connectivity is required before loading or during operation, and that the engine supports fallback modes without connectivity. Subclasses should override this property to specify their own requirements.
         """
         return RuntimeRequirements(internet_before_load=False,
                                    network_before_load=False,
@@ -69,38 +56,38 @@ class HotWordEngine:
 
     @abc.abstractmethod
     def found_wake_word(self) -> bool:
-        """Check if wake word has been found.
-
-        Checks if the wake word has been found. Should reset any internal
-        tracking of the wake word state.
-
+        """
+        Determines whether the wake word has been detected.
+        
+        Should also reset any internal detection state after checking.
+        
         Returns:
-            bool: True if a wake word was detected, else False
+            True if the wake word was detected; otherwise, False.
         """
         raise NotImplementedError()
 
     def reset(self):
         """
-        Reset the WW engine to prepare for a new detection
+        Resets the hotword engine state in preparation for new wake word detection.
+        
+        Intended to be overridden by subclasses if stateful reset is required.
         """
         pass
 
     @abc.abstractmethod
     def update(self, chunk):
-        """Updates the hotword engine with new audio data.
-
-        The engine should process the data and update internal trigger state.
-
-        Arguments:
-            chunk (bytes): Chunk of audio data to process
+        """
+        Processes a chunk of audio data and updates the internal detection state.
+        
+        Subclasses must implement this method to handle incoming audio data for wake word detection.
         """
         raise NotImplementedError()
 
     def stop(self):
         """
-        Perform any actions needed to shut down the wake word engine.
-        This may include things such as unloading data or shutdown
-        external processes.
+        Performs shutdown actions for the wake word engine.
+        
+        This method can be overridden by subclasses to unload resources or stop external processes as needed.
         """
 
     def shutdown(self):

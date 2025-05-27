@@ -8,6 +8,12 @@ import abc
 
 class CoreferenceSolverEngine:
     def __init__(self, config=None):
+        """
+        Initializes the coreference solver engine with optional configuration.
+        
+        Args:
+            config: Optional dictionary of configuration parameters.
+        """
         self.config = config or {}
         self._prev_sentence = ""
         self._prev_solved = ""
@@ -15,31 +21,12 @@ class CoreferenceSolverEngine:
 
     @classproperty
     def runtime_requirements(cls):
-        """ skill developers should override this if they do not require connectivity
-         some examples:
-         IOT plugin that controls devices via LAN could return:
-            scans_on_init = True
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=scans_on_init,
-                                 requires_internet=False,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=False)
-         online search plugin with a local cache:
-            has_cache = False
-            RuntimeRequirements(internet_before_load=not has_cache,
-                                 network_before_load=not has_cache,
-                                 requires_internet=True,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
-         a fully offline plugin:
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=False,
-                                 requires_internet=False,
-                                 requires_network=False,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
+        """
+        Returns the runtime connectivity requirements for the coreference solver engine.
+        
+        By default, specifies that no internet or network connectivity is required. Subclasses
+        should override this method to declare their specific connectivity needs by returning
+        a customized `RuntimeRequirements` object.
         """
         return RuntimeRequirements(internet_before_load=False,
                                    network_before_load=False,
@@ -50,11 +37,28 @@ class CoreferenceSolverEngine:
 
     @property
     def lang(self) -> str:
+        """
+        Returns the standardized language code for the current configuration or session.
+        
+        If a language is specified in the configuration, it is used; otherwise, the language
+        from the current session is used. The returned language code is standardized for
+        consistency.
+        """
         lang = self.config.get("lang") or SessionManager.get().lang
         return standardize_lang_tag(lang)
 
     @staticmethod
     def extract_replacements(original, solved):
+        """
+        Identifies and maps words or phrases in the original text that have been replaced in the solved (coreference-resolved) text.
+        
+        Args:
+            original: The original input string.
+            solved: The coreference-resolved version of the input string.
+        
+        Returns:
+            A dictionary mapping each replaced word from the original text to a list of its replacements in the solved text.
+        """
         a = original.lower()
         b = solved.lower()
         chunk = a.split(" ")
@@ -121,6 +125,20 @@ class CoreferenceSolverEngine:
         return solved
 
     def replace_coreferences_with_context(self, text, lang=None, context=None, set_context=False):
+        """
+        Resolves coreferences in text and applies contextual replacements.
+        
+        If a context mapping is provided or available for the language, replaces words in the resolved text with their contextual forms. Optionally updates the context with new replacements.
+        
+        Args:
+            text: The input text to process.
+            lang: Optional language code; defaults to the engine's language.
+            context: Optional dictionary mapping words to their resolved forms.
+            set_context: If True, updates the context with replacements found in this operation.
+        
+        Returns:
+            The text with coreferences resolved and contextual replacements applied.
+        """
         lang = standardize_lang_tag(lang or self.lang)
         lang_context = self.contexts.get(lang) or {}
         default_context = {k: v[0] for k, v in lang_context.items() if v}
@@ -142,16 +160,49 @@ class CoreferenceSolverEngine:
 
     @abc.abstractmethod
     def contains_corefs(self, text: str, lang: str) -> bool:
+        """
+        Determines whether the given text contains coreferences for the specified language.
+        
+        Subclasses must implement this method to detect the presence of coreferential expressions in the input text.
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
     def solve_corefs(self, text: str, lang: str):
+        """
+        Resolves coreferences in the given text for the specified language.
+        
+        This abstract method must be implemented by subclasses to perform coreference resolution, replacing pronouns or referring expressions with their antecedents.
+        
+        Args:
+            text: The input text containing potential coreferences.
+            lang: The language code of the input text.
+        
+        Returns:
+            The text with coreferences resolved.
+        """
         raise NotImplementedError()
 
 
 def replace_coreferences(text, smart=True, lang=None,
                          solver=None, use_context=True, set_context=True):
-    if smart and solver:
+    """
+                         Resolves coreferences in the given text using the specified solver.
+                         
+                         If `smart` is True, the function first checks whether the text contains coreferences before attempting resolution. If `use_context` is True, contextual information is used to improve resolution. If no solver is provided or no coreferences are detected, the original text is returned.
+                         
+                         Args:
+                             text: The input text to process.
+                             smart: Whether to check for coreferences before resolving.
+                             lang: Optional language code for processing.
+                             solver: CoreferenceSolverEngine instance to use for resolution.
+                             use_context: Whether to use contextual information during resolution.
+                             set_context: Whether to update the solver's context after resolution.
+                         
+                         Returns:
+                             The text with coreferences resolved, or the original text if no resolution is performed.
+                         """
+                         if smart and solver:
         if not solver.contains_corefs(text, lang):
             return text
     if solver:

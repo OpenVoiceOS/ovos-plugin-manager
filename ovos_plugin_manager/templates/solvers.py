@@ -69,8 +69,11 @@ def auto_translate(translate_keys: List[str], translate_str_args=True):
 
 
 def auto_detect_lang(text_keys: List[str]):
-    """ Decorator to auto detect language if needed
-    NOTE: requires "lang" argument, not meant to be used outside solver plugins"""
+    """
+    Decorator that automatically detects and injects the language code into the "lang" argument if it is missing.
+    
+    If "lang" is not provided, attempts language detection on specified keyword arguments or, if unsuccessful, on positional string arguments containing multiple words. The detected language is standardized and passed to the decorated function.
+    """
 
     def func_decorator(func):
 
@@ -155,32 +158,32 @@ class QuestionSolver(AbstractSolver):
                           lang: Optional[str] = None,
                           units: Optional[str] = None) -> Optional[str]:
         """
-        Obtain the spoken answer for a given query.
-
-        Args:
-            query (str): The query text.
-            lang (Optional[str]): Optional language code. Defaults to None.
-            units (Optional[str]): Optional units for the query. Defaults to None.
-
-        Returns:
-            str: The spoken answer as a text response.
-        """
+                          Returns a spoken answer string for the given query.
+                          
+                          Args:
+                              query: The input query to answer.
+                              lang: Optional language code for the answer.
+                              units: Optional units relevant to the query.
+                          
+                          Returns:
+                              The spoken answer as a string, or None if not implemented.
+                          """
         raise NotImplementedError
 
     def stream_utterances(self, query: str,
                           lang: Optional[str] = None,
                           units: Optional[str] = None) -> Iterable[str]:
         """
-        Stream utterances for the given query as they become available.
-
-        Args:
-            query (str): The query text.
-            lang (Optional[str]): Optional language code. Defaults to None.
-            units (Optional[str]): Optional units for the query. Defaults to None.
-
-        Returns:
-            Iterable[str]: An iterable of utterances.
-        """
+                          Yields sentence-split utterances from the spoken answer to a query.
+                          
+                          Args:
+                              query: The input query text.
+                              lang: Optional language code.
+                              units: Optional units for the query.
+                          
+                          Yields:
+                              Individual utterances as strings, split from the spoken answer.
+                          """
         ans = _call_with_sanitized_kwargs(self.get_spoken_answer, query, lang=lang, units=units)
         for utt in self.sentence_split(ans):
             yield utt
@@ -189,48 +192,30 @@ class QuestionSolver(AbstractSolver):
                  lang: Optional[str] = None,
                  units: Optional[str] = None) -> Optional[Dict[str, str]]:
         """
-        Retrieve data for the given query.
-
-        Args:
-            query (str): The query text.
-            lang (Optional[str]): Optional language code. Defaults to None.
-            units (Optional[str]): Optional units for the query. Defaults to None.
-
-        Returns:
-            Optional[Dict]: A dictionary containing the answer.
-        """
+                 Returns a dictionary containing the spoken answer for the given query.
+                 
+                 The answer is provided under the "answer" key. Language and units can be specified to control the response.
+                 """
         return {"answer": _call_with_sanitized_kwargs(self.get_spoken_answer, query, lang=lang, units=units)}
 
     def get_image(self, query: str,
                   lang: Optional[str] = None,
                   units: Optional[str] = None) -> Optional[str]:
         """
-        Get the path or URL to an image associated with the query.
-
-        Args:
-            query (str): The query text.
-            lang (Optional[str]): Optional language code. Defaults to None.
-            units (Optional[str]): Optional units for the query. Defaults to None.
-
-        Returns:
-            Optional[str]: The path or URL to a single image.
-        """
+                  Returns the path or URL to an image associated with the query, or None if not available.
+                  
+                  This method is intended to be overridden by subclasses to provide relevant images for a given query.
+                  """
         return None
 
     def get_expanded_answer(self, query: str,
                             lang: Optional[str] = None,
                             units: Optional[str] = None) -> List[Dict[str, str]]:
         """
-        Get an expanded list of steps to elaborate on the answer.
-
-        Args:
-            query (str): The query text.
-            lang (Optional[str]): Optional language code. Defaults to None.
-            units (Optional[str]): Optional units for the query. Defaults to None.
-
-        Returns:
-            List[Dict]: A list of dictionaries with each step containing a title, summary, and optional image.
-        """
+                            Returns a list containing an expanded answer with title, summary, and image.
+                            
+                            The returned list contains a single dictionary with the original query as the title, the spoken answer as the summary, and an image (if available).
+                            """
         return [{"title": query,
                  "summary": _call_with_sanitized_kwargs(self.get_spoken_answer, query, lang=lang, units=units),
                  "img": _call_with_sanitized_kwargs(self.get_image, query, lang=lang, units=units)}]
@@ -242,21 +227,18 @@ class QuestionSolver(AbstractSolver):
                lang: Optional[str] = None,
                units: Optional[str] = None) -> Optional[Dict]:
         """
-        Perform a search with automatic translation and caching.
-
-        NOTE: "lang" assured to be in self.supported_langs,
-            otherwise "query"  automatically translated to self.default_lang.
-            If translations happens, the returned value of this method will also
-            be automatically translated back
-
-        Args:
-            query (str): The query text.
-            lang (Optional[str]): Optional language code. Defaults to None.
-            units (Optional[str]): Optional units for the query. Defaults to None.
-
-        Returns:
-            Dict: The data dictionary retrieved from the cache or computed anew.
-        """
+               Performs a search for the given query, handling translation and caching as needed.
+               
+               If the query result is cached, returns the cached data. Otherwise, computes the result, optionally translating the query and response based on the specified or detected language. The result is cached for future use.
+               
+               Args:
+                   query: The query text to search for.
+                   lang: Optional language code. If not provided or unsupported, translation is applied.
+                   units: Optional units relevant to the query.
+               
+               Returns:
+                   A dictionary containing the search result data, or an empty dictionary if an error occurs.
+               """
         # read from cache
         if self.enable_cache and query in self.cache:
             data = self.cache[query]
@@ -279,21 +261,13 @@ class QuestionSolver(AbstractSolver):
                       lang: Optional[str] = None,
                       units: Optional[str] = None) -> Optional[str]:
         """
-        Retrieve the image associated with the query with automatic translation and caching.
-
-        NOTE: "lang" assured to be in self.supported_langs,
-            otherwise "query"  automatically translated to self.default_lang.
-            If translations happens, the returned value of this method will also
-            be automatically translated back
-
-        Args:
-            query (str): The query text.
-            lang (Optional[str]): Optional language code. Defaults to None.
-            units (Optional[str]): Optional units for the query. Defaults to None.
-
-        Returns:
-            str: The path or URL to the image.
-        """
+                      Returns the image path or URL associated with the query, with automatic language translation and caching.
+                      
+                      If the input language is not supported, the query is translated to the solver's default language before processing, and the result is translated back to the original language if necessary.
+                      
+                      Returns:
+                          The image path or URL if available; otherwise, None.
+                      """
         return _call_with_sanitized_kwargs(self.get_image, query, lang=lang, units=units)
 
     @auto_detect_lang(text_keys=["query"])
@@ -302,21 +276,18 @@ class QuestionSolver(AbstractSolver):
                       lang: Optional[str] = None,
                       units: Optional[str] = None) -> Optional[str]:
         """
-        Retrieve the spoken answer for the query with automatic translation and caching.
-
-        NOTE: "lang" assured to be in self.supported_langs,
-            otherwise "query"  automatically translated to self.default_lang.
-            If translations happens, the returned value of this method will also
-            be automatically translated back
-
-        Args:
-            query (str): The query text.
-            lang (Optional[str]): Optional language code. Defaults to None.
-            units (Optional[str]): Optional units for the query. Defaults to None.
-
-        Returns:
-            str: The spoken answer as a text response.
-        """
+                      Returns the spoken answer for a query, applying automatic translation and caching.
+                      
+                      If the input language is not supported, the query is translated to the default language before processing, and the answer is translated back to the original language if needed. Results may be cached for faster retrieval.
+                      
+                      Args:
+                          query: The input query text.
+                          lang: Optional language code for the query.
+                          units: Optional units relevant to the query.
+                      
+                      Returns:
+                          The spoken answer as a string, or None if unavailable.
+                      """
         # get answer
         if self.enable_cache and query in self.spoken_cache:
             # read from cache
@@ -336,21 +307,18 @@ class QuestionSolver(AbstractSolver):
                     lang: Optional[str] = None,
                     units: Optional[str] = None) -> List[Dict[str, str]]:
         """
-        Retrieve a detailed list of steps to expand the answer.
-
-        NOTE: "lang" assured to be in self.supported_langs,
-            otherwise "query"  automatically translated to self.default_lang.
-            If translations happens, the returned value of this method will also
-            be automatically translated back
-
-        Args:
-            query (str): The query text.
-            lang (Optional[str]): Optional language code. Defaults to None.
-            units (Optional[str]): Optional units for the query. Defaults to None.
-
-        Returns:
-            List[Dict]: A list of steps to elaborate on the answer, with each step containing a title, summary, and optional image.
-        """
+                    Returns a detailed, step-by-step expanded answer for a given query.
+                    
+                    If no expanded answer is available, falls back to splitting the spoken answer into steps. Each step includes a title, summary, and optionally an image. Input and output are automatically translated as needed based on the specified or detected language.
+                    
+                    Args:
+                        query: The input query to elaborate.
+                        lang: Optional language code for translation.
+                        units: Optional units relevant to the query.
+                    
+                    Returns:
+                        A list of dictionaries, each representing a step with keys "title", "summary", and optionally "img".
+                    """
         steps = _call_with_sanitized_kwargs(self.get_expanded_answer, query, lang=lang, units=units)
         # use spoken_answer as last resort
         if not steps:
@@ -513,12 +481,18 @@ class TldrSolver(AbstractSolver):
     def get_tldr(self, document: str,
                  lang: Optional[str] = None) -> str:
         """
-        Summarize the provided document.
-
-        :param document: The text of the document to summarize, assured to be in the default language.
-        :param lang: Optional language code.
-        :return: A summary of the provided document.
-        """
+                 Generates a summary of the provided document in the default language.
+                 
+                 Args:
+                     document: The text to be summarized, guaranteed to be in the solver's default language.
+                     lang: Optional language code for the summary.
+                 
+                 Returns:
+                     A concise summary of the input document.
+                 
+                 Raises:
+                     NotImplementedError: If the method is not implemented by a subclass.
+                 """
         raise NotImplementedError
 
     # user facing methods
@@ -526,16 +500,16 @@ class TldrSolver(AbstractSolver):
     @auto_translate(translate_keys=["document"])
     def tldr(self, document: str, lang: Optional[str] = None) -> str:
         """
-        Summarize the provided document with automatic translation and caching if needed.
-
-        NOTE: "lang" assured to be in self.supported_langs,
-            otherwise "document"  automatically translated to self.default_lang.
-            If translations happens, the returned value of this method will also
-            be automatically translated back
-
-        :param document: The text of the document to summarize.
-        :param lang: Optional language code.
-        :return: A summary of the provided document.
+        Summarizes a document, automatically handling translation to and from the solver's default language if needed.
+        
+        If the input language is not supported, the document is translated to the default language before summarization, and the summary is translated back to the original language.
+        
+        Args:
+            document: The text to summarize.
+            lang: Optional language code for the summary.
+        
+        Returns:
+            A summary of the provided document in the requested language.
         """
         # summarize
         return _call_with_sanitized_kwargs(self.get_tldr, document, lang=lang)
@@ -551,13 +525,16 @@ class EvidenceSolver(AbstractSolver):
     def get_best_passage(self, evidence: str, question: str,
                          lang: Optional[str] = None) -> str:
         """
-        Extract the best passage from evidence that answers the given question.
-
-        :param evidence: The text containing the evidence, assured to be in the default language.
-        :param question: The question to answer, assured to be in the default language.
-        :param lang: Optional language code.
-        :return: The passage from the evidence that best answers the question.
-        """
+                         Extracts the passage from the provided evidence that best answers the given question.
+                         
+                         Args:
+                             evidence: Text containing the evidence in the default language.
+                             question: Question to be answered, in the default language.
+                             lang: Optional language code.
+                         
+                         Returns:
+                             The passage from the evidence that most effectively answers the question.
+                         """
         raise NotImplementedError
 
     # user facing methods
@@ -566,18 +543,18 @@ class EvidenceSolver(AbstractSolver):
     def extract_answer(self, evidence: str, question: str,
                        lang: Optional[str] = None) -> str:
         """
-        Extract the best passage from evidence that answers the question with automatic translation and caching if needed.
-
-        NOTE: "lang" assured to be in self.supported_langs,
-            otherwise "evidence" and "question" are automatically translated to self.default_lang.
-            If translations happens, the returned value of this method will also
-            be automatically translated back
-
-        :param evidence: The text containing the evidence.
-        :param question: The question to answer.
-        :param lang: Optional language code.
-        :return: The passage from the evidence that answers the question.
-        """
+                       Extracts the best passage from the provided evidence that answers the question, with automatic translation and optional caching.
+                       
+                       If the specified language is not supported, the evidence and question are translated to the default language before extraction, and the result is translated back to the original language.
+                       
+                       Args:
+                           evidence: The text containing the evidence.
+                           question: The question to answer.
+                           lang: Optional language code.
+                       
+                       Returns:
+                           The passage from the evidence that best answers the question.
+                       """
         # extract answer from doc
         return self.get_best_passage(evidence, question, lang=lang)
 
@@ -593,14 +570,17 @@ class MultipleChoiceSolver(AbstractSolver):
                lang: Optional[str] = None,
                return_index: bool = False) -> List[Tuple[float, Union[str, int]]]:
         """
-        Rank the provided options based on the query.
-
-        :param query: The query text, assured to be in the default language.
-        :param options: A list of answer options, each assured to be in the default language.
-        :param lang: Optional language code.
-        :param return_index: If True, return the index of the best option; otherwise, return the best option text.
-        :return: A list of tuples where each tuple contains a score and the corresponding option text, sorted by score.
-        """
+               Ranks answer options by relevance to the query.
+               
+               Args:
+                   query: The query text in the default language.
+                   options: List of answer options in the default language.
+                   lang: Optional language code for additional context.
+                   return_index: If True, returns option indices instead of texts.
+               
+               Returns:
+                   A list of (score, option) or (score, index) tuples, sorted by score descending.
+               """
         raise NotImplementedError
 
     @auto_detect_lang(text_keys=["query", "options"])
@@ -609,19 +589,18 @@ class MultipleChoiceSolver(AbstractSolver):
                       lang: Optional[str] = None,
                       return_index: bool = False) -> Union[str, int]:
         """
-        Select the best answer from the provided options based on the query with automatic translation and caching if needed.
-
-        NOTE: "lang" assured to be in self.supported_langs,
-            otherwise "query" and "options"  are automatically translated to self.default_lang.
-            If translations happens, the returned value of this method will also
-            be automatically translated back
-
-        :param query: The query text.
-        :param options: A list of answer options.
-        :param lang: Optional language code.
-        :param return_index: If True, return the index of the best option; otherwise, return the best option text.
-        :return: The best answer from the options list, or the index of the best option if `return_index` is True.
-        """
+                      Selects the best answer from a list of options for a given query, with automatic translation and optional index return.
+                      
+                      If the specified language is not supported, the query and options are translated to the default language before selection, and the result is translated back if necessary.
+                      
+                      Args:
+                          query: The question or prompt to evaluate.
+                          options: List of possible answer choices.
+                          return_index: If True, returns the index of the best option; otherwise, returns the option text.
+                      
+                      Returns:
+                          The best answer option or its index, depending on the value of return_index.
+                      """
         return self.rerank(query, options, lang=lang, return_index=return_index)[0][1]
 
 
@@ -633,13 +612,16 @@ class EntailmentSolver(AbstractSolver):
     def check_entailment(self, premise: str, hypothesis: str,
                          lang: Optional[str] = None) -> bool:
         """
-        Check if the premise entails the hypothesis.
-
-        :param premise: The premise text, assured to be in the default language.
-        :param hypothesis: The hypothesis text, assured to be in the default language.
-        :param lang: Optional language code.
-        :return: True if the premise entails the hypothesis; False otherwise.
-        """
+                         Determines whether a given premise entails a hypothesis.
+                         
+                         Args:
+                             premise: The premise text in the default language.
+                             hypothesis: The hypothesis text in the default language.
+                             lang: Optional language code.
+                         
+                         Returns:
+                             True if the premise entails the hypothesis; False otherwise.
+                         """
         raise NotImplementedError
 
     # user facing methods
@@ -647,17 +629,17 @@ class EntailmentSolver(AbstractSolver):
     @auto_translate(translate_keys=["premise", "hypothesis"])
     def entails(self, premise: str, hypothesis: str, lang: Optional[str] = None) -> bool:
         """
-        Determine if the premise entails the hypothesis with automatic translation and caching if needed.
-
-        NOTE: "lang" assured to be in self.supported_langs,
-            otherwise "premise" and "hypothesis" are automatically translated to self.default_lang.
-            If translations happens, the returned value of this method will also
-            be automatically translated back
-
-        :param premise: The premise text.
-        :param hypothesis: The hypothesis text.
-        :param lang: Optional language code.
-        :return: True if the premise entails the hypothesis; False otherwise.
+        Determines whether the given premise entails the hypothesis, with automatic language translation if needed.
+        
+        If the provided language is not supported, the premise and hypothesis are translated to the default language before entailment checking. The result is returned as a boolean value.
+        	
+        Args:
+        	premise: The premise text.
+        	hypothesis: The hypothesis text.
+        	lang: Optional language code.
+        
+        Returns:
+        	True if the premise entails the hypothesis; False otherwise.
         """
         # check for entailment
         return self.check_entailment(premise, hypothesis, lang=lang)

@@ -11,35 +11,20 @@ Tag = Tuple[int, int, str, str]  # start_idx, end_idx, word, tag
 
 class PosTagger:
     def __init__(self, config=None):
+        """
+        Initializes the POS tagger with an optional configuration dictionary.
+        
+        Args:
+            config: Optional dictionary containing configuration parameters for the tagger.
+        """
         self.config = config or {}
 
     @classproperty
     def runtime_requirements(cls):
-        """ skill developers should override this if they do not require connectivity
-         some examples:
-         IOT plugin that controls devices via LAN could return:
-            scans_on_init = True
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=scans_on_init,
-                                 requires_internet=False,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=False)
-         online search plugin with a local cache:
-            has_cache = False
-            RuntimeRequirements(internet_before_load=not has_cache,
-                                 network_before_load=not has_cache,
-                                 requires_internet=True,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
-         a fully offline plugin:
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=False,
-                                 requires_internet=False,
-                                 requires_network=False,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
+        """
+        Describes the runtime connectivity requirements for the POS tagger.
+        
+        By default, indicates that no internet or network connectivity is required before or during loading, and that fallback modes are supported when connectivity is unavailable. Subclasses can override this property to specify different requirements based on their implementation.
         """
         return RuntimeRequirements(internet_before_load=False,
                                    network_before_load=False,
@@ -50,9 +35,27 @@ class PosTagger:
 
     @property
     def lang(self) -> str:
+        """
+        Returns the standardized language code for the tagger.
+        
+        If a language is specified in the configuration, it is used; otherwise, the current session's language is returned. The language code is standardized before being returned.
+        """
         lang = self.config.get("lang") or SessionManager.get().lang
         return standardize_lang_tag(lang)
 
     @abc.abstractmethod
     def postag(self, spans, lang=None) -> List[Tag]:
+        """
+        Assigns part-of-speech tags to the provided spans.
+        
+        Args:
+            spans: A list of text spans to be tagged.
+            lang: Optional language code to specify the language for tagging.
+        
+        Returns:
+            A list of Tag tuples, each containing the start index, end index, word, and its POS tag.
+        
+        Raises:
+            NotImplementedError: This method must be implemented by subclasses.
+        """
         raise NotImplementedError()

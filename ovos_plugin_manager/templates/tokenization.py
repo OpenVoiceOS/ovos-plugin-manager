@@ -7,35 +7,24 @@ from quebra_frases import span_indexed_word_tokenize, word_tokenize
 
 class Tokenizer:
     def __init__(self, config=None):
+        """
+        Initializes the Tokenizer instance with an optional configuration.
+        
+        Args:
+            config: Optional dictionary specifying tokenizer settings.
+        """
         self.config = config or {}
 
     @classproperty
     def runtime_requirements(cls):
-        """ skill developers should override this if they do not require connectivity
-         some examples:
-         IOT plugin that controls devices via LAN could return:
-            scans_on_init = True
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=scans_on_init,
-                                 requires_internet=False,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=False)
-         online search plugin with a local cache:
-            has_cache = False
-            RuntimeRequirements(internet_before_load=not has_cache,
-                                 network_before_load=not has_cache,
-                                 requires_internet=True,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
-         a fully offline plugin:
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=False,
-                                 requires_internet=False,
-                                 requires_network=False,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
+        """
+        Specifies the runtime connectivity requirements for the Tokenizer.
+        
+        Returns:
+            RuntimeRequirements: Indicates that the Tokenizer does not require internet
+            or network connectivity before or during loading, and supports operation
+            without either. Skill developers can override this method to declare
+            different connectivity needs for their own plugins.
         """
         return RuntimeRequirements(internet_before_load=False,
                                    network_before_load=False,
@@ -46,10 +35,25 @@ class Tokenizer:
 
     @property
     def lang(self) -> str:
+        """
+        Returns the standardized language code for the tokenizer.
+        
+        The language is determined from the instance configuration if available; otherwise, it is retrieved from the current session.
+        """
         lang = self.config.get("lang") or SessionManager.get().lang
         return standardize_lang_tag(lang)
 
     def span_tokenize(self, text, lang=None):
+        """
+        Tokenizes text into spans indicating the start and end indices of each token.
+        
+        Args:
+            text: The input string to tokenize.
+            lang: Optional language code (currently unused).
+        
+        Returns:
+            A list of tuples, each containing the start index, end index, and token string.
+        """
         return span_indexed_word_tokenize(text)
 
     def tokenize(self, text, lang=None):

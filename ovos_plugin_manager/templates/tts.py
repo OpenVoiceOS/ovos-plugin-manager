@@ -125,6 +125,11 @@ class TTSContext:
 
     @classmethod
     def curate_caches(cls):
+        """
+        Curates all TTS caches managed by TTSContext.
+        
+        Calls the `curate` method on each cached `TextToSpeechCache` instance to perform maintenance or cleanup operations.
+        """
         for cache in TTSContext._caches.values():
             cache.curate()
 
@@ -153,15 +158,17 @@ class TTS:
     def __init__(self, config=None, validator=None,
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
         """
-        Initializes the TTS engine with specified parameters.
-
-        Args:
-            config (dict): Configuration settings for the TTS engine.
-            validator (TTSValidator): Validator for verifying installation.
-            audio_ext (str): Default audio file extension (default is 'wav').
-            phonetic_spelling (bool): Whether to use phonetic spelling (default is True).
-            ssml_tags (list): Supported SSML tags (default is None).
-        """
+                 Initializes a TTS engine instance with configuration, validation, and feature settings.
+                 
+                 Args:
+                     config (dict, optional): Configuration dictionary for the TTS engine.
+                     validator (TTSValidator, optional): Validator instance for installation and runtime checks.
+                     audio_ext (str, optional): Default audio file extension for output (default: 'wav').
+                     phonetic_spelling (bool, optional): Enables phonetic spelling support if True.
+                     ssml_tags (list, optional): List of supported SSML tags.
+                 
+                 This sets up core attributes, loads phonetic spellings, initializes the metric system, and prepares the shared playback queue.
+                 """
         self.log_timestamps = False
         self.root_dir = os.path.dirname(os.path.abspath(sys.modules[self.__module__].__file__))
         self.config = config or get_plugin_config(config, "tts")
@@ -192,10 +199,10 @@ class TTS:
     @property
     def plugin_id(self) -> str:
         """
-        Retrieves the plugin ID for the TTS engine.
-
-        Returns:
-            str: The plugin ID associated with the TTS engine.
+        Returns the unique plugin ID associated with this TTS engine instance.
+        
+        If the plugin ID is not already set, it is determined by matching the instance's class
+        against registered TTS plugins.
         """
         if not self._plugin_id:
             from ovos_plugin_manager.tts import find_tts_plugins
@@ -328,15 +335,16 @@ class TTS:
             return to_speak.lstrip("<speak>").rstrip("</speak>")
 
     def validate_ssml(self, utterance):
-        """Check if engine supports ssml, if not remove all tags.
-
-        Remove unsupported / invalid tags
-
-        Arguments:
-            utterance (str): Sentence to validate
-
+        """
+        Validates and sanitizes SSML tags in the given utterance based on engine support.
+        
+        If the TTS engine does not support SSML, all tags are removed. Otherwise, only supported tags are retained, and unsupported tags are stripped from the utterance.
+        
+        Args:
+            utterance (str): The sentence to validate and sanitize.
+        
         Returns:
-            str: validated_sentence
+            str: The utterance with only supported SSML tags, or with all tags removed if unsupported.
         """
 
         # Validate speak tags
@@ -364,14 +372,13 @@ class TTS:
 
     # init helpers
     def init(self, bus, playback):
-        """ Connects TTS object to PlaybackQueue in ovos-audio.
-
-        This method needs to be called in order for self.execute to do anything
-
-        not needed if using get_tts / synth  methods directly as intended in standalone usage
-
-        Arguments:
-            bus:    OpenVoiceOS messagebus connection
+        """
+        Initializes the TTS engine by connecting it to the message bus and playback queue.
+        
+        This method must be called before using `execute` to synthesize and play audio. Not required for standalone usage with direct synthesis methods.
+        
+        Raises:
+            ValueError: If the playback argument is not provided.
         """
         self.bus = bus or FakeBus()
         if playback is None:
@@ -454,16 +461,15 @@ class TTS:
         self.stopwatch.stop()
 
     def execute(self, sentence, ident=None, listen=False, **kwargs):
-        """Convert sentence to speech, preprocessing out unsupported ssml
-
-        The method caches results if possible using the hash of the
-        sentence.
-
-        Arguments:
-            sentence: (str) Sentence to be spoken
-            ident: (str) session_id from Message
-            listen: (bool) True if listen should be triggered at the end
-                    of the utterance.
+        """
+        Synthesizes speech from a sentence, handling SSML validation, preprocessing, and playback.
+        
+        The method validates and preprocesses the input sentence, manages audio playback events, and triggers speech synthesis. Results may be cached based on the sentence content.
+        
+        Args:
+            sentence: The text to be converted to speech.
+            ident: Optional session identifier.
+            listen: If True, triggers listening after playback.
         """
         self.begin_audio()
         sentence = self.validate_ssml(sentence)
@@ -474,6 +480,19 @@ class TTS:
     ## synth
     def _replace_phonetic_spellings(self, sentence: str, lang: str) -> str:
         # TODO match lang code
+        """
+        Replaces words in the sentence with their phonetic spellings for the specified language.
+        
+        If phonetic spelling is enabled and phonetic spellings are available for the given language,
+        each word in the sentence that has a corresponding phonetic spelling is replaced accordingly.
+        
+        Args:
+            sentence: The input sentence to process.
+            lang: The language code used to select phonetic spellings.
+        
+        Returns:
+            The sentence with applicable words replaced by their phonetic spellings.
+        """
         if self.phonetic_spelling and lang in self.spellings:
             for word in re.findall(r"[\w']+", sentence):
                 if word.lower() in self.spellings[lang]:
@@ -678,7 +697,9 @@ class TTS:
         self.stop()
 
     def __del__(self):
-        """Destructor for the TTS object."""
+        """
+        Ensures the TTS engine is properly shut down when the object is destroyed.
+        """
         self.shutdown()
 
 
@@ -788,6 +809,11 @@ class StreamingTTSCallbacks:
     """handle the playback of streaming TTS, can be overrided in StreamingTTS"""
 
     def __init__(self, bus, play_args=None, tts_config=None):
+        """
+        Initializes streaming TTS playback callbacks with audio player selection.
+        
+        Selects an appropriate audio playback command if not provided, defaulting to 'ffplay', 'paplay', or 'aplay' based on system availability. Raises an error if no suitable player is found. Stores the message bus, playback arguments, and TTS configuration for managing streaming audio output.
+        """
         self.bus = bus
         self.config = tts_config or {}
         if not play_args:
@@ -952,7 +978,16 @@ class StreamingTTS(TTS):
             self.add_metric({"metric_type": "tts.stream.end"})
 
     def get_tts(self, sentence, wav_file, **kwargs):
-        """wrap streaming TTS into sync usage"""
+        """
+        Synthesizes speech from text using streaming TTS in a synchronous manner.
+        
+        Args:
+            sentence: The text to be synthesized.
+            wav_file: Path to the output WAV file.
+        
+        Returns:
+            A tuple containing the path to the generated WAV file and None for phonemes.
+        """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:

@@ -121,6 +121,19 @@ class Grapheme2PhonemePlugin:
         raise OutOfVocabulary
 
     def utterance2visemes(self, utterance, lang, default_dur=0.4):
+        """
+        Converts an utterance into a sequence of viseme-duration pairs.
+        
+        Each word in the utterance is converted to ARPAbet phonemes, which are then mapped to visemes. If a word's phonemes cannot be determined, a fallback phoneme sequence is used. Each viseme is paired with the specified default duration.
+        
+        Args:
+            utterance: The input string containing words to convert.
+            lang: The language code for phoneme conversion.
+            default_dur: Duration assigned to each viseme, in seconds.
+        
+        Returns:
+            A list of tuples, each containing a viseme identifier and its duration.
+        """
         arpa = []
         for w in utterance.split():
             phones = self.get_arpa(w, lang) or \
@@ -130,10 +143,9 @@ class Grapheme2PhonemePlugin:
 
     @classproperty
     def available_languages(cls) -> Set[str]:
-        """Return languages supported by this G2P implementation in this state
-        This property should be overridden by the derived class to advertise
-        what languages that engine supports.
-        Returns:
-            set: supported languages
+        """
+        Returns the set of language codes supported by this G2P plugin.
+        
+        This class-level property should be overridden by subclasses to specify the languages supported by the plugin. By default, it returns an empty set, indicating no supported languages.
         """
         return set()

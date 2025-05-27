@@ -19,6 +19,14 @@ class AudioBackend(metaclass=ABCMeta):
     """
 
     def __init__(self, config=None, bus=None, name=None):
+        """
+        Initializes the audio backend with optional configuration, message bus, and name.
+        
+        Args:
+            config: Optional dictionary of backend configuration settings.
+            bus: Optional message bus client for event communication.
+            name: Optional name for the backend instance.
+        """
         self.name = name or self.__class__.__name__
         self._now_playing = None  # single uri
         self._tracks = []  # list of dicts for OCP entries
@@ -30,31 +38,12 @@ class AudioBackend(metaclass=ABCMeta):
 
     @classproperty
     def runtime_requirements(cls):
-        """ skill developers should override this if they do not require connectivity
-         some examples:
-         IOT plugin that controls devices via LAN could return:
-            scans_on_init = True
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=scans_on_init,
-                                 requires_internet=False,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=False)
-         online search plugin with a local cache:
-            has_cache = False
-            RuntimeRequirements(internet_before_load=not has_cache,
-                                 network_before_load=not has_cache,
-                                 requires_internet=True,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
-         a fully offline plugin:
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=False,
-                                 requires_internet=False,
-                                 requires_network=False,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
+        """
+        Returns the runtime connectivity requirements for the audio backend.
+        
+        Skill developers can override this method to specify whether their backend requires
+        internet or network connectivity, or supports offline operation. By default, no
+        internet or network connectivity is required.
         """
         return RuntimeRequirements(internet_before_load=False,
                                    network_before_load=False,

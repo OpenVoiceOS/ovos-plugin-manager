@@ -34,42 +34,43 @@ class STT(metaclass=ABCMeta):
         LOG.debug(f"{self.__class__.__name__} - Assigned lang detector: {detector}")
 
     def detect_language(self, audio, valid_langs: Optional[Union[Set[str], List[str]]] = None) -> Tuple[str, float]:
+        """
+        Detects the language of the provided audio using the bound language detector.
+        
+        Args:
+            audio: The audio data to analyze.
+            valid_langs: Optional set or list of language codes to restrict detection.
+        
+        Returns:
+            A tuple containing the detected language code and its confidence score.
+        
+        Raises:
+            NotImplementedError: If no language detector is bound to the instance.
+        """
         if self._detector is None:
             raise NotImplementedError(f"{self.__class__.__name__} does not support audio language detection")
         return self._detector.detect(audio, valid_langs=valid_langs or self.available_languages)
 
     @classproperty
     def runtime_requirements(cls):
-        """ skill developers should override this if they do not require connectivity
-         some examples:
-         IOT plugin that controls devices via LAN could return:
-            scans_on_init = True
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=scans_on_init,
-                                 requires_internet=False,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=False)
-         online search plugin with a local cache:
-            has_cache = False
-            RuntimeRequirements(internet_before_load=not has_cache,
-                                 network_before_load=not has_cache,
-                                 requires_internet=True,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
-         a fully offline plugin:
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=False,
-                                 requires_internet=False,
-                                 requires_network=False,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
+        """
+        Returns the runtime requirements for the STT implementation.
+        
+        This class method should be overridden by subclasses to specify network and internet
+        dependencies required for the plugin to function correctly. By default, it returns
+        a `RuntimeRequirements` object with default settings, indicating no special
+        requirements.
         """
         return RuntimeRequirements()
 
     @property
     def lang(self):
+        """
+        Gets the current language tag in standardized format.
+        
+        Returns:
+            The standardized language tag, determined by the instance, configuration, or session language.
+        """
         return standardize_lang_tag(self._lang or \
                                     self.config.get("lang") or \
                                     SessionManager.get().lang)
@@ -77,16 +78,41 @@ class STT(metaclass=ABCMeta):
     @lang.setter
     def lang(self, val):
         # backwards compat
+        """
+        Sets the language tag for speech recognition, standardizing its format.
+        """
         self._lang = standardize_lang_tag(val)
 
     @abstractmethod
     def execute(self, audio, language: Optional[str] = None) -> str:
         # TODO - eventually deprecate this and make transcribe the @abstractmethod
+        """
+        Performs speech recognition on the provided audio input using the specified language.
+        
+        This method must be implemented by subclasses to return the recognized text from the audio data.
+        
+        Args:
+            audio: The audio data to be transcribed.
+            language: Optional language tag specifying the language for recognition.
+        
+        Returns:
+            The transcribed text from the audio input.
+        """
         pass
 
     def transcribe(self, audio, lang: Optional[str] = None) -> List[Tuple[str, float]]:
-        """transcribe audio data to a list of
-        possible transcriptions and respective confidences"""
+        """
+        Transcribes audio data into a list of possible transcriptions with confidence scores.
+        
+        If `lang` is set to "auto", attempts to detect the language from the audio and falls back to the default language if detection fails.
+        
+        Args:
+            audio: The audio data to transcribe.
+            lang: The language code to use for transcription, or "auto" to enable automatic language detection.
+        
+        Returns:
+            A list containing a single tuple with the transcription and a confidence score of 1.0.
+        """
         if lang is not None and lang == "auto":
             try:
                 lang, prob = self.detect_language(audio, self.available_languages)
@@ -97,11 +123,13 @@ class STT(metaclass=ABCMeta):
 
     @classproperty
     def available_languages(cls) -> Set[str]:
-        """Return languages supported by this STT implementation in this state
-        This property should be overridden by the derived class to advertise
-        what languages that engine supports.
+        """
+        Returns the set of languages supported by this STT implementation.
+        
+        This class property should be overridden by subclasses to specify the supported language tags.
+        
         Returns:
-            set: supported languages
+            Set[str]: Supported language tags.
         """
         return set()
 

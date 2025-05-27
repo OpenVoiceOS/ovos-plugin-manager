@@ -102,31 +102,13 @@ class PHALPlugin(Thread):
 
     @classproperty
     def runtime_requirements(cls):
-        """ skill developers should override this if they do not require connectivity
-         some examples:
-         IOT plugin that controls devices via LAN could return:
-            scans_on_init = True
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=scans_on_init,
-                                 requires_internet=False,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=False)
-         online search plugin with a local cache:
-            has_cache = False
-            RuntimeRequirements(internet_before_load=not has_cache,
-                                 network_before_load=not has_cache,
-                                 requires_internet=True,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
-         a fully offline plugin:
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=False,
-                                 requires_internet=False,
-                                 requires_network=False,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
+        """
+        Specifies the runtime connectivity requirements for the plugin.
+        
+        By default, indicates that no internet or network connectivity is required before loading or during operation, and that offline operation is fully supported. Plugin developers should override this method to declare specific connectivity needs for their plugin.
+        	
+        Returns:
+        	A RuntimeRequirements object describing the plugin's connectivity requirements.
         """
         return RuntimeRequirements(internet_before_load=False,
                                    network_before_load=False,

@@ -8,21 +8,21 @@ from ovos_utils.process_utils import RuntimeRequirements
 class LanguageDetector:
     def __init__(self, config: Optional[Dict[str, Union[str, int]]] = None):
         """
-        Initialize the LanguageDetector with configuration settings.
-
+        Initializes the LanguageDetector with optional configuration settings.
+        
         Args:
-            config (Optional[Dict[str, Union[str, int]]]): Configuration dictionary.
-                Can contain "lang" for default language, "hint_lang" for a hint language, and "boost" for language boost score.
+            config: Optional dictionary that may specify default language ("lang"), hint language ("hint_lang"), or a language boost score ("boost").
         """
         self.config = config or {}
 
     @classproperty
     def runtime_requirements(cls) -> RuntimeRequirements:
         """
-        Define the runtime requirements for this language detector.
-
+        Specifies the runtime requirements for the language detector.
+        
         Returns:
-            RuntimeRequirements: Object indicating the runtime needs, including internet and network requirements.
+            A RuntimeRequirements object indicating that no internet or network access
+            is required before or during use, and fallback is supported without them.
         """
         return RuntimeRequirements(
             internet_before_load=False,
@@ -48,25 +48,26 @@ class LanguageDetector:
     @abc.abstractmethod
     def detect_probs(self, text: str) -> Dict[str, float]:
         """
-        Detect the language of the text and return probabilities.
-
+        Returns a mapping of detected language codes to their probabilities for the given text.
+        
         Args:
-            text (str): The text to detect the language of.
-
+            text: The input text whose language probabilities are to be determined.
+        
         Returns:
-            Dict[str, float]: A dictionary with the detected language as the key and its probability as the value.
+            A dictionary where keys are language codes and values are the corresponding probabilities.
         """
 
     @classproperty
     @abc.abstractmethod
     def available_languages(cls) -> Set[str]:
         """
-        Return languages supported by this detector implementation in this state.
-        This should be a set of languages this detector is capable of recognizing.
-        This property should be overridden by the derived class to advertise
-        what languages that engine supports.
+        Returns the set of language codes supported by this detector implementation.
+        
+        This class property must be overridden by subclasses to specify which languages
+        the detector can recognize.
+        
         Returns:
-            Set[str]: A set of language codes supported by this detector.
+            Set[str]: Supported language codes.
         """
         return set()
 
@@ -74,21 +75,20 @@ class LanguageDetector:
 class LanguageTranslator:
     def __init__(self, config: Optional[Dict[str, str]] = None):
         """
-        Initialize the LanguageTranslator with configuration settings.
-
+        Initializes the LanguageTranslator with optional configuration settings.
+        
         Args:
-            config (Optional[Dict[str, str]]): Configuration dictionary.
-                Can contain "lang" for the default language and "internal" for the internal language.
+            config: Optional dictionary that may specify a default language ("lang") and an internal language ("internal").
         """
         self.config = config or {}
 
     @classproperty
     def runtime_requirements(cls) -> RuntimeRequirements:
         """
-        Define the runtime requirements for this language translator.
-
+        Specifies the runtime requirements for the language translator.
+        
         Returns:
-            RuntimeRequirements: Object indicating the runtime needs, including internet and network requirements.
+            A RuntimeRequirements object indicating that no internet or network access is required before or during load, and that fallback is supported without internet or network connectivity.
         """
         return RuntimeRequirements(
             internet_before_load=False,
@@ -102,29 +102,31 @@ class LanguageTranslator:
     @abc.abstractmethod
     def translate(self, text: str, target: Optional[str] = None, source: Optional[str] = None) -> str:
         """
-        Translate the given text from the source language to the target language.
-
+        Translates text from a source language to a target language.
+        
+        If `target` is not specified, the internal language is used as the target. If `source` is not specified, the default language is used as the source.
+        
         Args:
-            text (str): The text to translate.
-            target (Optional[str]): The target language code. If None, the internal language is used.
-            source (Optional[str]): The source language code. If None, the default language is used.
-
+            text: The text to translate.
+            target: The target language code, or None to use the internal language.
+            source: The source language code, or None to use the default language.
+        
         Returns:
-            str: The translated text.
+            The translated text.
         """
 
     def translate_dict(self, data: Dict[str, Union[str, Dict, List]], lang_tgt: str, lang_src: str = "en") -> Dict[
         str, Union[str, Dict, List]]:
         """
-        Translate the values in a dictionary from one language to another.
-
+        Recursively translates all string values within a nested dictionary from the source language to the target language.
+        
         Args:
-            data (Dict[str, Union[str, Dict, List]]): The dictionary containing text to translate.
-            lang_tgt (str): The target language code.
-            lang_src (str): The source language code.
-
+            data: A dictionary containing strings, dictionaries, or lists to translate.
+            lang_tgt: The target language code.
+            lang_src: The source language code (default is "en").
+        
         Returns:
-            Dict[str, Union[str, Dict, List]]: The dictionary with translated values.
+            The input dictionary with all string values translated to the target language.
         """
         for k, v in data.items():
             if isinstance(v, dict):
@@ -138,15 +140,15 @@ class LanguageTranslator:
     def translate_list(self, data: List[Union[str, Dict, List]], lang_tgt: str, lang_src: str = "en") -> List[
         Union[str, Dict, List]]:
         """
-        Translate the values in a list from one language to another.
-
+        Recursively translates all string values within a nested list from the source language to the target language.
+        
         Args:
-            data (List[Union[str, Dict, List]]): The list containing text to translate.
-            lang_tgt (str): The target language code.
-            lang_src (str): The source language code.
-
+            data: A list containing strings, dictionaries, or nested lists to translate.
+            lang_tgt: The target language code.
+            lang_src: The source language code. Defaults to "en".
+        
         Returns:
-            List[Union[str, Dict, List]]: The list with translated values.
+            A list with all string values translated to the target language, preserving the original structure.
         """
         for idx, v in enumerate(data):
             if isinstance(v, dict):
@@ -161,12 +163,14 @@ class LanguageTranslator:
     @abc.abstractmethod
     def available_languages(cls) -> Set[str]:
         """
-        Return languages supported by this translator implementation in this state.
-        Any language in this set should be translatable to any other language in the set.
-        This property should be overridden by the derived class to advertise
-        what languages that engine supports.
+        Returns the set of language codes supported by this translator implementation.
+        
+        This class property should be overridden by subclasses to specify which languages
+        are available for translation. All languages in the returned set are expected to
+        be mutually translatable by the implementation.
+        
         Returns:
-            Set[str]: A set of language codes supported by this translator.
+            Set[str]: Set of supported language codes.
         """
         return set()
 
@@ -174,12 +178,12 @@ class LanguageTranslator:
     @abc.abstractmethod
     def supported_translations(cls, source_lang: str) -> Set[str]:
         """
-        Get the set of target languages to which the source language can be translated.
-
+        Returns the set of target languages available for translation from the specified source language.
+        
         Args:
-            source_lang (Optional[str]): The source language code.
-
+            source_lang: The source language code.
+        
         Returns:
-            Set[str]: A set of language codes that the source language can be translated to.
+            A set of language codes representing valid translation targets for the given source language.
         """
         return cls.available_languages

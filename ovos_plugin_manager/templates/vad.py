@@ -19,6 +19,11 @@ class AudioFrame:
 
 class VADEngine:
     def __init__(self, config=None, sample_rate=None):
+        """
+        Initializes the VADEngine with configuration parameters for audio processing.
+        
+        If no configuration or sample rate is provided, defaults are loaded from the core configuration or set to standard values. Sets up frame and padding durations, speech detection threshold, and calculates the number of padding frames used for voice activity detection.
+        """
         self.config_core = Configuration()
         self.config = config or {}
         self.sample_rate = sample_rate or \
@@ -31,31 +36,10 @@ class VADEngine:
 
     @classproperty
     def runtime_requirements(cls):
-        """ skill developers should override this if they do not require connectivity
-         some examples:
-         IOT plugin that controls devices via LAN could return:
-            scans_on_init = True
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=scans_on_init,
-                                 requires_internet=False,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=False)
-         online search plugin with a local cache:
-            has_cache = False
-            RuntimeRequirements(internet_before_load=not has_cache,
-                                 network_before_load=not has_cache,
-                                 requires_internet=True,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
-         a fully offline plugin:
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=False,
-                                 requires_internet=False,
-                                 requires_network=False,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
+        """
+        Returns the default runtime requirements for the VAD engine.
+        
+        By default, indicates that no internet or network connectivity is required and that offline fallback is supported. Skill developers should override this property if their implementation requires specific connectivity or fallback behavior.
         """
         return RuntimeRequirements(internet_before_load=False,
                                    network_before_load=False,
@@ -65,10 +49,10 @@ class VADEngine:
                                    no_network_fallback=True)
 
     def _frame_generator(self, audio: bytes) -> Iterable[AudioFrame]:
-        """Generates audio frames from PCM audio data.
-        Takes the desired frame duration in milliseconds, the PCM data, and
-        the sample rate.
-        Yields Frames of the requested duration.
+        """
+        Yields sequential AudioFrame objects from raw PCM audio bytes.
+        
+        Splits the input audio into frames of the configured duration and sample rate, assigning each frame a timestamp and duration.
         """
         n = int(self.sample_rate * (self.frame_duration_ms / 1000.0) * 2)
         offset = 0
@@ -81,7 +65,11 @@ class VADEngine:
             offset += n
 
     def extract_speech(self, audio: bytes) -> bytes:
-        """returns the audio data with speech only, removing all noise before and after speech"""
+        """
+        Extracts and returns only the speech segments from the provided audio.
+        
+        Removes non-speech (noise or silence) from the beginning and end of the audio, returning a bytes object containing only the detected speech portion.
+        """
         # We use a deque for our sliding window/ring buffer.
         ring_buffer = collections.deque(maxlen=self.num_padding_frames)
         triggered = False
@@ -122,6 +110,15 @@ class VADEngine:
     @abc.abstractmethod
     def is_silence(self, chunk) -> bool:
         # return True or False
+        """
+        Determines whether the given audio chunk is silence.
+        
+        Args:
+            chunk: An audio segment to analyze.
+        
+        Returns:
+            True if the chunk is considered silence, otherwise False.
+        """
         return False
 
     def reset(self):

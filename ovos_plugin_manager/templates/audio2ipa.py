@@ -7,35 +7,27 @@ from ovos_utils.process_utils import RuntimeRequirements
 class Audio2IPA:
 
     def __init__(self, config=None):
+        """
+        Initializes the Audio2IPA instance with an optional configuration.
+        
+        Args:
+            config: Optional dictionary of configuration parameters. If not provided, an empty dictionary is used.
+        """
         self.config = config or {}
 
     @classproperty
     def runtime_requirements(cls):
-        """ skill developers should override this if they do not require connectivity
-         some examples:
-         IOT plugin that controls devices via LAN could return:
-            scans_on_init = True
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=scans_on_init,
-                                 requires_internet=False,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=False)
-         online search plugin with a local cache:
-            has_cache = False
-            RuntimeRequirements(internet_before_load=not has_cache,
-                                 network_before_load=not has_cache,
-                                 requires_internet=True,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
-         a fully offline plugin:
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=False,
-                                 requires_internet=False,
-                                 requires_network=False,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
+        """
+        Specifies the runtime connectivity requirements for the plugin.
+        
+        Returns:
+            A RuntimeRequirements object indicating that no internet or network connectivity
+            is required before or during runtime, and that fallback behavior is allowed
+            when offline or without network.
+        
+        Subclasses should override this property to declare their specific connectivity
+        needs, such as requiring network access for device control or internet access
+        for online services.
         """
         return RuntimeRequirements(internet_before_load=False,
                                    network_before_load=False,
