@@ -76,7 +76,11 @@ class UtteranceTransformer:
         return utterances, {}
 
     def default_shutdown(self):
-        """ perform any shutdown actions """
+        """
+        Performs any necessary shutdown or cleanup actions.
+        
+        Intended to be overridden by subclasses to implement custom shutdown logic.
+        """
         pass
 
 
@@ -84,6 +88,11 @@ class IntentTransformer:
     """ runs before selected intent is triggered, can be used to inject message.data"""
 
     def __init__(self, name, priority=50, config=None):
+        """
+        Initializes the IntentTransformer with a name, priority, and optional configuration.
+        
+        If no configuration is provided, attempts to load it from the global configuration under "intent_transformers" using the given name.
+        """
         self.name = name
         self.bus = None
         self.priority = priority
@@ -93,23 +102,42 @@ class IntentTransformer:
         self.config = config or {}
 
     def bind(self, bus=None):
-        """ attach messagebus """
+        """
+        Attach a message bus instance to the transformer.
+        
+        If no bus is provided, the default Mycroft message bus is used.
+        """
         self.bus = bus or get_mycroft_bus()
 
     def initialize(self):
-        """ perform any initialization actions """
+        """
+        Performs any necessary initialization actions for the transformer.
+        
+        Intended to be overridden by subclasses to implement custom setup logic.
+        """
         pass
 
     @abc.abstractmethod
     def transform(self, intent: Union[IntentHandlerMatch, PipelineMatch]) -> Union[IntentHandlerMatch, PipelineMatch]:
         """
-        Optionally transform intent handler data
-        e.g. NER could be performed here by modifying intent.match_data
+        Transforms the intent match object before the intent handler is triggered.
+        
+        This method can be used to modify or inject data into the intent, such as performing named entity recognition (NER) or altering match data. By default, it returns the intent unchanged.
+        
+        Args:
+            intent: The intent match object to be transformed.
+        
+        Returns:
+            The transformed intent match object.
         """
         return intent
 
     def default_shutdown(self):
-        """ perform any shutdown actions """
+        """
+        Performs any necessary shutdown actions for the transformer.
+        
+        Intended to be overridden by subclasses to implement cleanup procedures.
+        """
         pass
 
 
