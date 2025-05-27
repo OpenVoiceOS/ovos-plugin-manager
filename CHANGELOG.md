@@ -1,12 +1,12 @@
 # Changelog
 
-## [0.8.7a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.7a1) (2025-04-23)
+## [0.9.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.9.0a1) (2025-05-27)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.6...0.8.7a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.7...0.9.0a1)
 
 **Merged pull requests:**
 
-- Fix/error handling autotx [\#311](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/311) ([JarbasAl](https://github.com/JarbasAl))
+- feat: intent transformers [\#316](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/316) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
