@@ -101,7 +101,7 @@ class PHALPlugin(Thread):
 
 
     @classproperty
-    def runtime_requirements(self):
+    def runtime_requirements(cls):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:

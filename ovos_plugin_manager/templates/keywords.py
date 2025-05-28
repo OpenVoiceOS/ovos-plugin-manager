@@ -1,5 +1,10 @@
-from ovos_utils import classproperty
+import abc
+from typing import List, Dict, Optional
 from ovos_utils.process_utils import RuntimeRequirements
+
+from ovos_bus_client.session import SessionManager
+from ovos_utils import classproperty
+from ovos_utils.lang import standardize_lang_tag
 
 
 class KeywordExtractor:
@@ -7,7 +12,7 @@ class KeywordExtractor:
         self.config = config or {}
 
     @classproperty
-    def runtime_requirements(self):
+    def runtime_requirements(cls):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:
@@ -41,5 +46,11 @@ class KeywordExtractor:
                                    no_internet_fallback=True,
                                    no_network_fallback=True)
 
-    def extract(self, text, lang):
-        return {text: 0.0}
+    @property
+    def lang(self) -> str:
+        lang = self.config.get("lang") or SessionManager.get().lang
+        return standardize_lang_tag(lang)
+
+    @abc.abstractmethod
+    def extract(self, text: str, lang: Optional[str] = None) -> Dict[str, float]:
+        raise NotImplementedError()

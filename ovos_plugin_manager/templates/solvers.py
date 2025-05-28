@@ -108,39 +108,6 @@ def auto_detect_lang(text_keys: List[str]):
     return func_decorator
 
 
-def _deprecate_context2lang():
-    """Decorator to deprecate the 'context' kwarg and replace it with 'lang'.
-    NOTE: can only be used in methods that accept "lang" as argument"""
-
-    def func_decorator(func):
-
-        @wraps(func)
-        def func_wrapper(*args, **kwargs):
-
-            # Inspect the function signature to ensure it has both 'lang' and 'context' parameters
-            signature = inspect.signature(func)
-            params = signature.parameters
-
-            if "context" in kwargs:
-                # NOTE: deprecate this at same time we
-                # standardize plugin namespaces to opm.XXX
-                log_deprecation("'context' kwarg has been deprecated, "
-                                "please pass 'lang' as it's own kwarg instead", "1.0.0")
-                if "lang" in kwargs["context"] and "lang" not in kwargs:
-                    kwargs["lang"] = kwargs["context"]["lang"]
-
-            # ensure valid kwargs
-            if "lang" not in params and "lang" in kwargs:
-                kwargs.pop("lang")
-            if "context" not in params and "context" in kwargs:
-                kwargs.pop("context")
-            return func(*args, **kwargs)
-
-        return func_wrapper
-
-    return func_decorator
-
-
 class QuestionSolver(AbstractSolver):
     """
     A solver for free-form, unconstrained spoken questions that handles automatic translation as needed.
@@ -200,7 +167,6 @@ class QuestionSolver(AbstractSolver):
         """
         raise NotImplementedError
 
-    @_deprecate_context2lang()
     def stream_utterances(self, query: str,
                           lang: Optional[str] = None,
                           units: Optional[str] = None) -> Iterable[str]:
@@ -219,7 +185,6 @@ class QuestionSolver(AbstractSolver):
         for utt in self.sentence_split(ans):
             yield utt
 
-    @_deprecate_context2lang()
     def get_data(self, query: str,
                  lang: Optional[str] = None,
                  units: Optional[str] = None) -> Optional[Dict[str, str]]:
@@ -236,7 +201,6 @@ class QuestionSolver(AbstractSolver):
         """
         return {"answer": _call_with_sanitized_kwargs(self.get_spoken_answer, query, lang=lang, units=units)}
 
-    @_deprecate_context2lang()
     def get_image(self, query: str,
                   lang: Optional[str] = None,
                   units: Optional[str] = None) -> Optional[str]:
@@ -253,7 +217,6 @@ class QuestionSolver(AbstractSolver):
         """
         return None
 
-    @_deprecate_context2lang()
     def get_expanded_answer(self, query: str,
                             lang: Optional[str] = None,
                             units: Optional[str] = None) -> List[Dict[str, str]]:
@@ -273,7 +236,6 @@ class QuestionSolver(AbstractSolver):
                  "img": _call_with_sanitized_kwargs(self.get_image, query, lang=lang, units=units)}]
 
     # user facing methods
-    @_deprecate_context2lang()
     @auto_detect_lang(text_keys=["query"])
     @auto_translate(translate_keys=["query"])
     def search(self, query: str,
@@ -311,7 +273,6 @@ class QuestionSolver(AbstractSolver):
             self.cache.store()
         return data
 
-    @_deprecate_context2lang()
     @auto_detect_lang(text_keys=["query"])
     @auto_translate(translate_keys=["query"])
     def visual_answer(self, query: str,
@@ -335,7 +296,6 @@ class QuestionSolver(AbstractSolver):
         """
         return _call_with_sanitized_kwargs(self.get_image, query, lang=lang, units=units)
 
-    @_deprecate_context2lang()
     @auto_detect_lang(text_keys=["query"])
     @auto_translate(translate_keys=["query"])
     def spoken_answer(self, query: str,
@@ -370,7 +330,6 @@ class QuestionSolver(AbstractSolver):
                 self.spoken_cache.store()
         return summary
 
-    @_deprecate_context2lang()
     @auto_detect_lang(text_keys=["query"])
     @auto_translate(translate_keys=["query"])
     def long_answer(self, query: str,
@@ -563,8 +522,6 @@ class TldrSolver(AbstractSolver):
         raise NotImplementedError
 
     # user facing methods
-
-    @_deprecate_context2lang()
     @auto_detect_lang(text_keys=["document"])
     @auto_translate(translate_keys=["document"])
     def tldr(self, document: str, lang: Optional[str] = None) -> str:
@@ -604,7 +561,6 @@ class EvidenceSolver(AbstractSolver):
         raise NotImplementedError
 
     # user facing methods
-    @_deprecate_context2lang()
     @auto_detect_lang(text_keys=["evidence", "question"])
     @auto_translate(translate_keys=["evidence", "question"])
     def extract_answer(self, evidence: str, question: str,
@@ -647,7 +603,6 @@ class MultipleChoiceSolver(AbstractSolver):
         """
         raise NotImplementedError
 
-    @_deprecate_context2lang()
     @auto_detect_lang(text_keys=["query", "options"])
     @auto_translate(translate_keys=["query", "options"])
     def select_answer(self, query: str, options: List[str],
@@ -688,7 +643,6 @@ class EntailmentSolver(AbstractSolver):
         raise NotImplementedError
 
     # user facing methods
-    @_deprecate_context2lang()
     @auto_detect_lang(text_keys=["premise", "hypothesis"])
     @auto_translate(translate_keys=["premise", "hypothesis"])
     def entails(self, premise: str, hypothesis: str, lang: Optional[str] = None) -> bool:
