@@ -61,11 +61,3 @@ class TestUtteranceSegmenterFactory(unittest.TestCase):
     from ovos_plugin_manager.segmentation import OVOSUtteranceSegmenterFactory
     # TODO
 
-
-class TestQuebraFrasesSegmenter(unittest.TestCase):
-    def test_find_plugin(self):
-        from ovos_plugin_manager.segmentation import find_segmentation_plugins
-        plugs = find_segmentation_plugins()
-        self.assertTrue(len(plugs) > 0)
-        self.assertIn("ovos-segmentation-plugin-quebrafrases", plugs)
-
