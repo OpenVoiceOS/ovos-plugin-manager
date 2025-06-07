@@ -34,7 +34,9 @@ class PipelinePlugin:
         config (Dict): Configuration for the plugin.
     """
 
-    def __init__(self, config: Optional[Dict] = None):
+    def __init__(self, bus: Optional[Union[MessageBusClient, FakeBus]] = None,
+                 config: Optional[Dict] = None):
+        self.bus = bus or FakeBus()
         self.config = config or {}
 
     @abc.abstractmethod
@@ -62,11 +64,6 @@ class ConfidenceMatcherPipeline(PipelinePlugin):
     Attributes:
         bus (Union[MessageBusClient, FakeBus]): The message bus client for communication.
     """
-
-    def __init__(self, bus: Optional[Union[MessageBusClient, FakeBus]] = None,
-                 config: Optional[Dict] = None):
-        self.bus = bus or FakeBus()
-        super().__init__(config=config)
 
     def match(self, utterances: List[str], lang: str, message: Message) -> Optional[IntentHandlerMatch]:
         return (self.match_high(utterances, lang, message) or
