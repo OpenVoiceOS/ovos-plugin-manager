@@ -343,7 +343,7 @@ class DummyTTS(TTS):
         Returns:
             tuple: (wav_file, phoneme)
         """
-        return "", None
+        return wav_file, None
 
 class TestSession(unittest.TestCase):
     def test_tts_session(self):
@@ -352,6 +352,7 @@ class TestSession(unittest.TestCase):
                     context={"session": sess.serialize()})
 
         tts = DummyTTS()
+        tts._plugin_id = "dummy"
         self.assertEqual(tts.voice, "default")  # no voice set
         self.assertEqual(tts.lang, "en-US")  # from config
 
