@@ -71,7 +71,7 @@ class TTSContext:
         Returns:
             str: A unique identifier that represents the TTS context.
         """
-        return join(self.plugin_id, self.voice, self.lang)
+        return join(self.plugin_id, self.voice, self.lang).strip("/")
 
     def get_cache(self, audio_ext="wav", cache_config=None):
         """
