@@ -352,6 +352,7 @@ class TestSession(unittest.TestCase):
 
         tts = DummyTTS()
         self.assertEqual(tts.voice, "default")  # no voice set
+        self.assertEqual(tts.lang, "en-US")  # from config
 
         # test that session makes it all the way to the TTS.queue
         kwargs = {"message": m}

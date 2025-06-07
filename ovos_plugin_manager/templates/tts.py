@@ -188,6 +188,17 @@ class TTS:
         self.bus = None
 
         self._plugin_id = ""  # the plugin name
+        self._lang = None
+
+    @property
+    def lang(self):
+        return standardize_lang_tag(self._lang or \
+                                    self.config.get("lang") or \
+                                    SessionManager.get().lang)
+    @lang.setter
+    def lang(self, val):
+        # backwards compat
+        self._lang = standardize_lang_tag(val)
 
     @property
     def plugin_id(self) -> str:
