@@ -1,16 +1,12 @@
-from typing import Any, List, Optional, Tuple, Callable, Union, Dict, Type
 import re
+from typing import Any, List, Optional, Tuple, Callable, Union, Dict, Type
+
 from ovos_bus_client.client import MessageBusClient
 from ovos_bus_client.message import Message
 from ovos_config import Configuration
 from ovos_utils.fakebus import FakeBus
 
-from ovos_plugin_manager.templates.pipeline import (
-    PipelineMatch,
-    ConfidenceMatcherPipeline,
-    PipelineStageMatcher,
-    PipelinePlugin
-)
+from ovos_plugin_manager.templates.pipeline import ConfidenceMatcherPipeline, PipelinePlugin, IntentHandlerMatch
 from ovos_plugin_manager.utils import PluginTypes, find_plugins, load_plugin
 
 # Typing aliases
@@ -19,7 +15,7 @@ LangCode = str
 PipelineID = str
 PipelineMatcherID = str
 PipelineConfig = List[PipelineMatcherID]
-MatcherFunction = Callable[[UtteranceList, LangCode, Message], Optional[PipelineMatch]]
+MatcherFunction = Callable[[UtteranceList, LangCode, Message], Optional[IntentHandlerMatch]]
 
 
 def find_pipeline_plugins() -> Dict[PipelineID, Type[PipelinePlugin]]:
