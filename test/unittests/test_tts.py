@@ -328,6 +328,7 @@ class DummyTTS(TTS):
             phonetic_spelling (bool): Whether to use phonetic spelling (default is True).
             ssml_tags (list): Supported SSML tags (default is None).
         """
+        config = {"lang": "en-US"}
         super().__init__(config, validator, audio_ext, phonetic_spelling, ssml_tags)
 
     def get_tts(self, sentence, wav_file, lang=None, voice=None):

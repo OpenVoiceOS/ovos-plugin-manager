@@ -23,7 +23,7 @@ class STT(metaclass=ABCMeta):
         self._credential = None
         self._keys = None
 
-        self.config = get_plugin_config(config, "stt")
+        self.config = config or {}
 
         self.can_stream = False
         self._recognizer = None

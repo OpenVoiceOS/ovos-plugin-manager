@@ -151,7 +151,9 @@ class OVOSTTSFactory:
         }
         """
         tts_config = get_tts_config(config)
-        tts_module = tts_config.get('module', 'ovos-tts-plugin-dummy')
+        tts_module = tts_config.get('module')
+        if not tts_module:
+            raise ValueError("tts 'module' is not set in config")
         try:
             clazz = OVOSTTSFactory.get_class(tts_config)
             if clazz:

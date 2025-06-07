@@ -164,7 +164,7 @@ class TTS:
         """
         self.log_timestamps = False
         self.root_dir = os.path.dirname(os.path.abspath(sys.modules[self.__module__].__file__))
-        self.config = config or get_plugin_config(config, "tts")
+        self.config = config or {}
 
         self.stopwatch = Stopwatch()
         self.tts_name = self.__class__.__name__
