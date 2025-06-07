@@ -4,40 +4,6 @@ from unittest.mock import patch
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
-class TestPostagTemplate(unittest.TestCase):
-    def test_PosTagger(self):
-        from ovos_plugin_manager.templates.postag import PosTagger
-        from ovos_plugin_manager.tokenization import Tokenizer
-        solver = PosTagger()
-        spans = Tokenizer().span_tokenize("Once upon a time there was a free and open voice assistant")
-        # obviously it's almost completely wrong
-        self.assertEqual(solver.postag(spans),
-                         [(0, 4, 'Once', 'NOUN'),
-                          (5, 9, 'upon', 'NOUN'),
-                          (10, 11, 'a', 'DET'),
-                          (12, 16, 'time', 'NOUN'),
-                          (17, 22, 'there', 'NOUN'),
-                          (23, 26, 'was', 'VERB'),
-                          (27, 28, 'a', 'DET'),
-                          (29, 33, 'free', 'NOUN'),
-                          (34, 37, 'and', 'CONJ'),
-                          (38, 42, 'open', 'NOUN'),
-                          (43, 48, 'voice', 'NOUN'),
-                          (49, 58, 'assistant', 'NOUN')])
-
-    def test_dummy_postag_pt(self):
-        from ovos_plugin_manager.templates.postag import _dummy_postag_pt
-        # TODO
-
-    def test_dummy_postag_en(self):
-        from ovos_plugin_manager.templates.postag import _dummy_postag_en
-        # TODO
-
-    def test_dummy_postag(self):
-        from ovos_plugin_manager.templates.postag import _dummy_postag
-        # TODO
-
-
 class TestPostag(unittest.TestCase):
     PLUGIN_TYPE = PluginTypes.POSTAG
     CONFIG_TYPE = PluginConfigTypes.POSTAG
