@@ -47,8 +47,6 @@ def required(requirements_file):
                 if pkg.strip() and not pkg.startswith("#")]
 
 
-TOK_PLUGIN_ENTRY_POINT = 'ovos-tokenization-plugin-quebrafrases=ovos_plugin_manager.templates.tokenization:Tokenizer'
-
 with open(os.path.join(BASEDIR, "README.md"), "r") as f:
     long_description = f.read()
 
@@ -69,8 +67,5 @@ setup(
     author_email='jarbas@openvoiceos.com',
     description='OpenVoiceOS plugin manager',
     long_description=long_description,
-    long_description_content_type="text/markdown",
-    entry_points={
-        'intentbox.tokenization': TOK_PLUGIN_ENTRY_POINT
-    }
+    long_description_content_type="text/markdown"
 )
