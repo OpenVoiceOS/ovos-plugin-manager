@@ -1,3 +1,5 @@
+import abc
+from typing import Optional, List
 from ovos_utils import classproperty
 from ovos_utils.process_utils import RuntimeRequirements
 
@@ -8,7 +10,7 @@ class OCPStreamExtractor:
         self.ocp_settings = ocp_settings or {}
 
     @classproperty
-    def runtime_requirements(self):
+    def runtime_requirements(cls):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:
@@ -42,8 +44,8 @@ class OCPStreamExtractor:
                                    no_internet_fallback=False,
                                    no_network_fallback=False)
 
-    @property
-    def supported_seis(self):
+    @classproperty
+    def supported_seis(cls) -> List[str]:
         """
         skills may return results requesting a specific extractor to be used
 
@@ -53,11 +55,11 @@ class OCPStreamExtractor:
         """
         return []
 
-    def validate_uri(self, uri):
+    def validate_uri(self, uri) -> bool:
         """ return True if uri can be handled by this extractor, False otherwise"""
-        return any([uri.startswith(f"{sei}//")
-                    for sei in self.supported_seis])
+        return any([uri.startswith(f"{sei}//") for sei in self.supported_seis])
 
-    def extract_stream(self, uri, video=True):
+    @abc.abstractmethod
+    def extract_stream(self, uri, video=True) -> Optional[str]:
         """ return the real uri that can be played by OCP """
-        return None
+        raise NotImplementedError()

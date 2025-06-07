@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch, MagicMock
 
-from ovos_plugin_manager.templates.solvers import QuestionSolver, auto_detect_lang, auto_translate, _deprecate_context2lang, AbstractSolver
+from ovos_plugin_manager.templates.solvers import QuestionSolver, auto_detect_lang, auto_translate, AbstractSolver
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
@@ -448,27 +448,6 @@ class TestAutoDetectLang(unittest.TestCase):
 
         result = test_func(self.solver, 'hello', lang='es')
         self.assertEqual(result, 'es')
-
-
-class TestDeprecateContext2Lang(unittest.TestCase):
-    def setUp(self):
-        self.solver = AbstractSolver()
-
-    def test_deprecate_context2lang(self):
-        @_deprecate_context2lang()
-        def test_func(solver, lang=None):
-            return lang
-
-        result = test_func(self.solver, context={'lang': 'en'})
-        self.assertEqual(result, 'en')
-
-    def test_no_context(self):
-        @_deprecate_context2lang()
-        def test_func(solver, lang=None):
-            return lang
-
-        result = test_func(self.solver, lang='fr')
-        self.assertEqual(result, 'fr')
 
 
 if __name__ == '__main__':

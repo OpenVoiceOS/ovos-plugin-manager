@@ -7,5 +7,5 @@ The main use case is for plugins to be used across different projects
 """
 from ovos_plugin_manager.templates.audio import AudioBackend, RemoteAudioBackend
 from ovos_plugin_manager.templates.tts import TTS, TTSValidator
-from ovos_plugin_manager.templates.stt import STT, StreamingSTT, StreamThread, GoogleJsonSTT, KeySTT, TokenSTT, BasicSTT
+from ovos_plugin_manager.templates.stt import STT, StreamingSTT, StreamThread
 from ovos_plugin_manager.templates.hotwords import HotWordEngine

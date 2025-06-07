@@ -1,10 +1,10 @@
 import abc
-from typing import List, Tuple, Optional, Union
+from typing import List, Tuple, Optional
 
 from ovos_bus_client.util import get_mycroft_bus
 from ovos_config.config import Configuration
 from ovos_config.locale import get_default_lang
-from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch, PipelineMatch
+from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
 from ovos_utils.log import LOG
 
 from ovos_plugin_manager.utils import ReadWriteStream
@@ -118,7 +118,7 @@ class IntentTransformer:
         pass
 
     @abc.abstractmethod
-    def transform(self, intent: Union[IntentHandlerMatch, PipelineMatch]) -> Union[IntentHandlerMatch, PipelineMatch]:
+    def transform(self, intent: IntentHandlerMatch) -> IntentHandlerMatch:
         """
         Transforms the intent match object before the intent handler is triggered.
         

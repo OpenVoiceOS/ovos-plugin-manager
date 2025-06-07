@@ -1,41 +1,56 @@
-from typing import List, Optional, Tuple, Callable, Union, Dict, Type
-
+from typing import Any, List, Optional, Tuple, Callable, Union, Dict, Type
+import re
 from ovos_bus_client.client import MessageBusClient
+from ovos_bus_client.message import Message
 from ovos_config import Configuration
 from ovos_utils.fakebus import FakeBus
-from ovos_utils.log import log_deprecation
 
-from ovos_plugin_manager.templates.pipeline import ConfidenceMatcherPipeline, PipelineStageMatcher, PipelinePlugin
-from ovos_plugin_manager.utils import PluginTypes
+from ovos_plugin_manager.templates.pipeline import (
+    PipelineMatch,
+    ConfidenceMatcherPipeline,
+    PipelineStageMatcher,
+    PipelinePlugin
+)
+from ovos_plugin_manager.utils import PluginTypes, find_plugins, load_plugin
+
+# Typing aliases
+UtteranceList = List[str]
+LangCode = str
+PipelineID = str
+PipelineMatcherID = str
+PipelineConfig = List[PipelineMatcherID]
+MatcherFunction = Callable[[UtteranceList, LangCode, Message], Optional[PipelineMatch]]
 
 
-def find_pipeline_plugins() -> Dict[str, Type[PipelinePlugin]]:
+def find_pipeline_plugins() -> Dict[PipelineID, Type[PipelinePlugin]]:
     """
-    Find all installed plugins
-    @return: dict plugin names to entrypoints
+    Discover and return all installed pipeline plugins.
+
+    Returns:
+        A dictionary mapping pipeline plugin IDs to their classes.
     """
-    from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.PIPELINE)
 
 
 def load_pipeline_plugin(module_name: str) -> Type[PipelinePlugin]:
     """
-    Load and return an uninstantiated class for the specified pipeline plugin.
+    Load a pipeline plugin class by name.
 
-    @param module_name: The name of the plugin to load.
-    @return: The uninstantiated plugin class.
+    Args:
+        module_name: The name of the plugin to load.
+
+    Returns:
+        The uninstantiated plugin class.
     """
-    from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.PIPELINE)
 
 
 class OVOSPipelineFactory:
     """
-    Factory class for managing and creating pipeline plugins.
+    Factory class for discovering, loading, and managing OVOS pipeline plugins.
     """
-
-    _CACHE = {}
-    _MAP = {
+    _CACHE: Dict[PipelineID, PipelinePlugin] = {}
+    _MAP: Dict[str, str] = {
         "converse": "ovos-converse-pipeline-plugin",
         "common_qa": "ovos-common-query-pipeline-plugin",
         "fallback_high": "ovos-fallback-pipeline-plugin-high",
@@ -60,100 +75,129 @@ class OVOSPipelineFactory:
     }
 
     @staticmethod
-    def get_installed_pipelines() -> List[str]:
+    def get_installed_pipeline_ids() -> List[PipelineID]:
         """
-        Get a list of installed pipelines.
+        List all installed pipeline plugin identifiers.
 
-        @return: A list of installed pipeline identifiers.
+        Returns:
+            A list of installed pipeline plugin IDs.
         """
-        pipelines = []
+        return list(find_pipeline_plugins().keys())
+
+    @staticmethod
+    def get_installed_pipeline_matcher_ids() -> List[PipelineMatcherID]:
+        """
+        List all available pipeline matcher identifiers, including confidence levels.
+
+        Returns:
+            A list of matcher IDs.
+        """
+        pipelines: List[PipelineMatcherID] = []
         for plug_id, clazz in find_pipeline_plugins().items():
             if issubclass(clazz, ConfidenceMatcherPipeline):
-                pipelines.append(f"{plug_id}-low")
-                pipelines.append(f"{plug_id}-medium")
-                pipelines.append(f"{plug_id}-high")
+                pipelines.extend([
+                    f"{plug_id}-low",
+                    f"{plug_id}-medium",
+                    f"{plug_id}-high"
+                ])
             else:
                 pipelines.append(plug_id)
         return pipelines
 
-    @staticmethod
-    def get_pipeline_classes(pipeline: Optional[List[str]] = None) -> List[Tuple[str, type(PipelinePlugin)]]:
+    @classmethod
+    def load_plugin(
+            cls,
+            pipe_id: PipelineID,
+            use_cache: bool = True,
+            bus: Optional[Union[MessageBusClient, FakeBus]] = None,
+            config: Optional[Dict[str, Any]] = None
+    ) -> PipelinePlugin:
         """
-        Get a list of pipeline plugin classes based on the pipeline configuration.
+        Load (and optionally cache) a pipeline plugin instance.
 
-        @param pipeline: A list of pipeline plugin identifiers to load.
-        @return: A list of tuples containing the plugin identifier and the corresponding plugin class.
+        Args:
+            pipe_id: The pipeline plugin ID.
+            use_cache: Whether to use a cached instance.
+            bus: Optional message bus client.
+            config: Optional configuration for the plugin.
+
+        Returns:
+            An instance of the loaded pipeline plugin.
         """
-        default_p = [
-            "stop_high", "converse", "ocp_high", "padatious_high", "adapt_high",
-            "ocp_medium", "fallback_high", "stop_medium", "adapt_medium",
-            "padatious_medium", "adapt_low", "common_qa", "fallback_medium", "fallback_low"
-        ]
-        pipeline = pipeline or Configuration().get("intents", {}).get("pipeline",
-                                                                      [OVOSPipelineFactory._MAP[p] for p in default_p])
+        if use_cache and pipe_id in cls._CACHE:
+            return cls._CACHE[pipe_id]
 
-        deprecated = [p for p in pipeline if p in OVOSPipelineFactory._MAP]
-        if deprecated:
-            log_deprecation(f"pipeline names have changed, "
-                            f"please migrate: '{deprecated}' to '{[OVOSPipelineFactory._MAP[p] for p in deprecated]}'",
-                            "1.0.0")
+        config = config or Configuration().get("intents", {}).get(pipe_id, {})
+        clazz = find_pipeline_plugins().get(pipe_id)
+        if not clazz:
+            raise ValueError(f"Unknown pipeline plugin: {pipe_id}")
 
-        valid_pipeline = [OVOSPipelineFactory._MAP.get(p, p) for p in pipeline]
-        matchers = []
-        for plug_id, clazz in find_pipeline_plugins().items():
-            if issubclass(clazz, ConfidenceMatcherPipeline):
-                if f"{plug_id}-low" in valid_pipeline:
-                    matchers.append((f"{plug_id}-low", clazz))
-                if f"{plug_id}-medium" in valid_pipeline:
-                    matchers.append((f"{plug_id}-medium", clazz))
-                if f"{plug_id}-high" in valid_pipeline:
-                    matchers.append((f"{plug_id}-high", clazz))
-            else:
-                matchers.append((plug_id, clazz))
+        plugin_instance = clazz(bus, config)
+        if use_cache:
+            cls._CACHE[pipe_id] = plugin_instance
+        return plugin_instance
 
-        return matchers
-
-    @staticmethod
-    def create(pipeline: Optional[List[str]] = None, use_cache: bool = True,
-               bus: Optional[Union[MessageBusClient, FakeBus]] = None,
-               skip_stage_matchers: bool = False) -> List[Tuple[str, Callable]]:
+    @classmethod
+    def get_pipeline_matcher(
+            cls,
+            matcher_id: PipelineMatcherID,
+            use_cache: bool = True,
+            bus: Optional[Union[MessageBusClient, FakeBus]] = None
+    ) -> MatcherFunction:
         """
-        Factory method to create pipeline matchers.
+        Retrieve a matcher function for a given pipeline matcher ID.
 
-        @param pipeline: A list of pipeline plugin identifiers to load.
-        @param use_cache: Whether to cache the created matchers for reuse.
-        @param bus: The message bus client to use for the pipelines.
-        @param skip_stage_matchers: Whether to skip the stage matchers (i.e., matchers with side effects).
-        @return: A list of tuples containing the pipeline identifier and the matcher callable.
+        Args:
+            matcher_id: The configured matcher ID (e.g. `adapt_high`).
+            use_cache: Whether to use cached plugin instances.
+            bus: Optional message bus client.
+
+        Returns:
+            A callable matcher function.
         """
-        matchers = []
-        for pipe_id, clazz in OVOSPipelineFactory.get_pipeline_classes(pipeline):
-            if use_cache and pipe_id in OVOSPipelineFactory._CACHE:
-                m = OVOSPipelineFactory._CACHE[pipe_id]
-            else:
-                config = Configuration().get("intents", {}).get(pipe_id)
-                m = clazz(bus, config)
-                if use_cache:
-                    OVOSPipelineFactory._CACHE[pipe_id] = m
-            if isinstance(m, ConfidenceMatcherPipeline):
-                if pipe_id.endswith("-high"):
-                    matchers.append((pipe_id, m.match_high))
-                elif pipe_id.endswith("-medium"):
-                    matchers.append((pipe_id, m.match_medium))
-                elif pipe_id.endswith("-low"):
-                    matchers.append((pipe_id, m.match_low))
-            elif isinstance(m, PipelineStageMatcher) and not skip_stage_matchers:
-                matchers.append((pipe_id, m.match))
-        return matchers
+        matcher_id = cls._MAP.get(matcher_id, matcher_id)
+        pipe_id = re.sub(r'-(high|medium|low)$', '', matcher_id)
+        plugin = cls.load_plugin(pipe_id, use_cache, bus)
+
+        if isinstance(plugin, ConfidenceMatcherPipeline):
+            if matcher_id.endswith("-high"):
+                return plugin.match_high
+            if matcher_id.endswith("-medium"):
+                return plugin.match_medium
+            if matcher_id.endswith("-low"):
+                return plugin.match_low
+        return plugin.match
+
+    @classmethod
+    def create(
+            cls,
+            pipeline: Optional[PipelineConfig] = None,
+            use_cache: bool = True,
+            bus: Optional[Union[MessageBusClient, FakeBus]] = None
+    ) -> List[Tuple[PipelineMatcherID, MatcherFunction]]:
+        """
+        Create matcher functions from a list of pipeline matcher IDs.
+
+        Args:
+            pipeline: A list of matcher IDs.
+            use_cache: Whether to use cached plugin instances.
+            bus: Optional message bus client.
+
+        Returns:
+            A list of (matcher ID, matcher function) tuples.
+        """
+        return [(matcher_id, cls.get_pipeline_matcher(matcher_id, use_cache, bus))
+                for matcher_id in (pipeline or [])]
 
     @staticmethod
     def shutdown() -> None:
         """
-        Shutdown all cached pipeline plugins by calling their shutdown methods if available.
+        Call shutdown on all cached plugin instances, if they define it.
         """
-        for pipe in OVOSPipelineFactory._CACHE.values():
-            if hasattr(pipe, "shutdown"):
+        for plugin in OVOSPipelineFactory._CACHE.values():
+            shutdown_fn = getattr(plugin, "shutdown", None)
+            if callable(shutdown_fn):
                 try:
-                    pipe.shutdown()
-                except:
+                    shutdown_fn()
+                except Exception:
                     continue

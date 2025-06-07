@@ -315,14 +315,44 @@ class TestTTSCache(unittest.TestCase):
         self.assertNotIn("fake_hash", tts_context_mock.get_cache.return_value.cached_sentences)
 
 
+class DummyTTS(TTS):
+    def __init__(self, config=None, validator=None,
+                 audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
+        """
+        Initializes the TTS engine with specified parameters.
+
+        Args:
+            config (dict): Configuration settings for the TTS engine.
+            validator (TTSValidator): Validator for verifying installation.
+            audio_ext (str): Default audio file extension (default is 'wav').
+            phonetic_spelling (bool): Whether to use phonetic spelling (default is True).
+            ssml_tags (list): Supported SSML tags (default is None).
+        """
+        config = {"lang": "en-US"}
+        super().__init__(config, validator, audio_ext, phonetic_spelling, ssml_tags)
+
+    def get_tts(self, sentence, wav_file, lang=None, voice=None):
+        """Abstract method that a tts implementation needs to implement.
+
+        Args:
+            sentence (str): The input sentence to synthesize.
+            wav_file (str): The output file path for the synthesized audio.
+            lang (str, optional): The requested language (defaults to self.lang).
+            voice (str, optional): The requested voice (defaults to self.voice).
+
+        Returns:
+            tuple: (wav_file, phoneme)
+        """
+        return wav_file, None
+
 class TestSession(unittest.TestCase):
     def test_tts_session(self):
         sess = Session(session_id="123", lang="en-US")
         m = Message("speak",
                     context={"session": sess.serialize()})
 
-        tts = TTS()
-        self.assertEqual(tts.plugin_id, "ovos-tts-plugin-dummy")
+        tts = DummyTTS()
+        tts._plugin_id = "dummy"
         self.assertEqual(tts.voice, "default")  # no voice set
         self.assertEqual(tts.lang, "en-US")  # from config
 
