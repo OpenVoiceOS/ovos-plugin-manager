@@ -1,11 +1,7 @@
 import json
 import os
-from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, \
-    TextToSpeechCache, ConcatTTS, RemoteTTS
-from ovos_plugin_manager.utils import PluginTypes, normalize_lang, \
-    PluginConfigTypes
-from ovos_plugin_manager.utils.config import get_valid_plugin_configs, \
-    sort_plugin_configs, get_plugin_config
+from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, TextToSpeechCache, ConcatTTS
+from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_data_home
 from hashlib import md5
@@ -155,7 +151,9 @@ class OVOSTTSFactory:
         }
         """
         tts_config = get_tts_config(config)
-        tts_module = tts_config.get('module', 'ovos-tts-plugin-dummy')
+        tts_module = tts_config.get('module')
+        if not tts_module:
+            raise ValueError("tts 'module' is not set in config")
         try:
             clazz = OVOSTTSFactory.get_class(tts_config)
             if clazz:

@@ -1,8 +1,8 @@
-from ovos_bus_client.message import dig_for_message
+from ovos_bus_client.session import SessionManager
 from ovos_utils import classproperty
 from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.process_utils import RuntimeRequirements
-from quebra_frases import span_indexed_word_tokenize, word_tokenize
+import abc
 
 
 class Tokenizer:
@@ -10,7 +10,7 @@ class Tokenizer:
         self.config = config or {}
 
     @classproperty
-    def runtime_requirements(self):
+    def runtime_requirements(cls):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:
@@ -45,18 +45,16 @@ class Tokenizer:
                                    no_network_fallback=True)
 
     @property
-    def lang(self):
-        lang = self.config.get("lang")
-        msg = dig_for_message()
-        if msg:
-            lang = msg.data.get("lang")
-        return standardize_lang_tag(lang or "en-US")
+    def lang(self) -> str:
+        lang = self.config.get("lang") or SessionManager.get().lang
+        return standardize_lang_tag(lang)
 
-    def span_tokenize(self, text, lang=None):
-        return span_indexed_word_tokenize(text)
+    @abc.abstractmethod
+    def span_tokenize(self, text, lang=None) ->  list[tuple[int, int, str]]:
+        raise NotImplementedError
 
-    def tokenize(self, text, lang=None):
-        return word_tokenize(text)
+    def tokenize(self, text, lang=None) -> list[str]:
+        return [s[-1] for s in self.span_tokenize(text, lang or self.lang)]
 
     @staticmethod
     def restore_spans(spans):

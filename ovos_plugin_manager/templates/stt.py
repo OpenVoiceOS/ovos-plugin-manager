@@ -1,23 +1,17 @@
-"""
-This is here to allow importing this module outside mycroft-core, plugins
-using this import instead of mycroft can be used
-
-The main use case is for plugins to be used across different projects
-"""
-import json
 from abc import ABCMeta, abstractmethod
 from queue import Queue
 from threading import Thread, Event
 from typing import List, Tuple, Optional, Set, Union
-import warnings
-from ovos_config import Configuration
-from ovos_utils import classproperty
-from ovos_utils.lang import standardize_lang_tag
-from ovos_utils.log import deprecated, LOG
-from ovos_utils.process_utils import RuntimeRequirements
 
+from ovos_bus_client.session import SessionManager
 from ovos_plugin_manager.templates.transformers import AudioLanguageDetector
 from ovos_plugin_manager.utils.config import get_plugin_config
+from ovos_utils import classproperty
+from ovos_utils.lang import standardize_lang_tag
+from ovos_utils.log import LOG
+from ovos_utils.process_utils import RuntimeRequirements
+
+from ovos_config import Configuration
 
 
 class STT(metaclass=ABCMeta):
@@ -29,7 +23,7 @@ class STT(metaclass=ABCMeta):
         self._credential = None
         self._keys = None
 
-        self.config = get_plugin_config(config, "stt")
+        self.config = config or {}
 
         self.can_stream = False
         self._recognizer = None
@@ -45,7 +39,7 @@ class STT(metaclass=ABCMeta):
         return self._detector.detect(audio, valid_langs=valid_langs or self.available_languages)
 
     @classproperty
-    def runtime_requirements(self):
+    def runtime_requirements(cls):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:
@@ -75,78 +69,15 @@ class STT(metaclass=ABCMeta):
         return RuntimeRequirements()
 
     @property
-    @deprecated("self.recognizer has been deprecated! "
-                "if you need it 'from speech_recognition import Recognizer' directly", "1.0.0")
-    def recognizer(self):
-        warnings.warn(
-            "use 'from speech_recognition import Recognizer' directly",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        # only imported here to not drag dependency
-        from speech_recognition import Recognizer
-        if not self._recognizer:
-            self._recognizer = Recognizer()
-        return self._recognizer
-
-    @recognizer.setter
-    def recognizer(self, val):
-        self._recognizer = val
-
-    @property
     def lang(self):
         return standardize_lang_tag(self._lang or \
                                     self.config.get("lang") or \
-                                    Configuration().get("lang", "en-US"))
+                                    SessionManager.get().lang)
 
     @lang.setter
     def lang(self, val):
         # backwards compat
         self._lang = standardize_lang_tag(val)
-
-    @property
-    @deprecated("self.keys has been deprecated! "
-                "implement config handling directly instead", "1.0.0")
-    def keys(self):
-        warnings.warn(
-            "self.keys has been deprecated",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self._keys or self.config_core.get("keys", {})
-
-    @keys.setter
-    def keys(self, val):
-        # backwards compat
-        self._keys = val
-
-    @property
-    @deprecated("self.credential has been deprecated! "
-                "implement config handling directly instead", "1.0.0")
-    def credential(self):
-        warnings.warn(
-            "self.credential has been deprecated",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self._credential or self.config.get("credential", {})
-
-    @credential.setter
-    def credential(self, val):
-        # backwards compat
-        self._credential = val
-
-    @staticmethod
-    @deprecated("self.init_language has been deprecated! "
-                "implement config handling directly instead", "1.0.0")
-    def init_language(config_core):
-        warnings.warn(
-            "implement config handling directly instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        lang = config_core.get("lang", "en-US")
-        return standardize_lang_tag(lang, macro=True)
 
     @abstractmethod
     def execute(self, audio, language: Optional[str] = None) -> str:
@@ -164,8 +95,8 @@ class STT(metaclass=ABCMeta):
                 lang = self.lang  # Fall back to default language
         return [(self.execute(audio, lang), 1.0)]
 
-    @property
-    def available_languages(self) -> Set[str]:
+    @classproperty
+    def available_languages(cls) -> Set[str]:
         """Return languages supported by this STT implementation in this state
         This property should be overridden by the derived class to advertise
         what languages that engine supports.
@@ -173,59 +104,6 @@ class STT(metaclass=ABCMeta):
             set: supported languages
         """
         return set()
-
-
-class TokenSTT(STT, metaclass=ABCMeta):
-    @deprecated("TokenSTT is deprecated, please subclass from STT directly", "1.0.0")
-    def __init__(self, config=None):
-        warnings.warn(
-            "please subclass from STT directly",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(config)
-        self.token = self.credential.get("token")
-
-
-class GoogleJsonSTT(STT, metaclass=ABCMeta):
-    @deprecated("GoogleJsonSTT is deprecated, please subclass from STT directly", "1.0.0")
-    def __init__(self, config=None):
-        warnings.warn(
-            "please subclass from STT directly",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(config)
-        if not self.credential.get("json") or self.keys.get("google_cloud"):
-            self.credential["json"] = self.keys["google_cloud"]
-        self.json_credentials = json.dumps(self.credential.get("json"))
-
-
-class BasicSTT(STT, metaclass=ABCMeta):
-    @deprecated("BasicSTT is deprecated, please subclass from STT directly", "1.0.0")
-    def __init__(self, config=None):
-        warnings.warn(
-            "please subclass from STT directly",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(config)
-        self.username = str(self.credential.get("username"))
-        self.password = str(self.credential.get("password"))
-
-
-class KeySTT(STT, metaclass=ABCMeta):
-
-    @deprecated("KeySTT is deprecated, please subclass from STT directly", "1.0.0")
-    def __init__(self, config=None):
-        warnings.warn(
-            "please subclass from STT directly",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(config)
-        self.id = str(self.credential.get("client_id"))
-        self.key = str(self.credential.get("client_key"))
 
 
 class StreamThread(Thread, metaclass=ABCMeta):

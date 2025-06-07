@@ -1,8 +1,3 @@
-"""Definition of the audio service backends base classes.
-
-These classes can be used to create an Audioservice plugin extending
-OpenVoiceOS's media playback options.
-"""
 from abc import ABCMeta, abstractmethod
 from typing import List
 
@@ -11,73 +6,8 @@ from ovos_bus_client.message import dig_for_message
 from ovos_utils import classproperty
 from ovos_utils.fakebus import FakeBus
 from ovos_utils.log import LOG
+from ovos_utils.ocp import PlaybackType, TrackState, PlayerState, MediaState
 from ovos_utils.process_utils import RuntimeRequirements
-
-try:
-    from ovos_utils.ocp import PlaybackType, TrackState, PlayerState, MediaState
-except ImportError:
-    LOG.warning("Please update to ovos-utils~=0.1.")
-    from enum import IntEnum
-
-
-    class MediaState(IntEnum):
-        # https://doc.qt.io/qt-5/qmediaplayer.html#MediaStatus-enum
-        # The status of the media cannot be determined.
-        UNKNOWN = 0
-        # There is no current media. PlayerState == STOPPED
-        NO_MEDIA = 1
-        # The current media is being loaded. The player may be in any state.
-        LOADING_MEDIA = 2
-        # The current media has been loaded. PlayerState== STOPPED
-        LOADED_MEDIA = 3
-        # Playback of the current media has stalled due to
-        # insufficient buffering or some other temporary interruption.
-        # PlayerState != STOPPED
-        STALLED_MEDIA = 4
-        # The player is buffering data but has enough data buffered
-        # for playback to continue for the immediate future.
-        # PlayerState != STOPPED
-        BUFFERING_MEDIA = 5
-        # The player has fully buffered the current media. PlayerState != STOPPED
-        BUFFERED_MEDIA = 6
-        # Playback has reached the end of the current media. PlayerState == STOPPED
-        END_OF_MEDIA = 7
-        # The current media cannot be played. PlayerState == STOPPED
-        INVALID_MEDIA = 8
-
-
-    class PlayerState(IntEnum):
-        # https://doc.qt.io/qt-5/qmediaplayer.html#State-enum
-        STOPPED = 0
-        PLAYING = 1
-        PAUSED = 2
-
-
-    class PlaybackType(IntEnum):
-        SKILL = 0  # skills handle playback whatever way they see fit,
-        # eg spotify / mycroft common play
-        VIDEO = 1  # Video results
-        AUDIO = 2  # Results should be played audio only
-        AUDIO_SERVICE = 3  ## DEPRECATED - used in ovos 0.0.7
-        MPRIS = 4  # External MPRIS compliant player
-        WEBVIEW = 5  # webview, render a url instead of media player
-        UNDEFINED = 100  # data not available, hopefully status will be updated soon..
-
-
-    class TrackState(IntEnum):
-        DISAMBIGUATION = 1  # media result, not queued for playback
-        PLAYING_SKILL = 20  # Skill is handling playback internally
-        PLAYING_AUDIOSERVICE = 21  ## DEPRECATED - used in ovos 0.0.7
-        PLAYING_VIDEO = 22  # Skill forwarded playback to video service
-        PLAYING_AUDIO = 23  # Skill forwarded playback to audio service
-        PLAYING_MPRIS = 24  # External media player is handling playback
-        PLAYING_WEBVIEW = 25  # Media playback handled in browser (eg. javascript)
-
-        QUEUED_SKILL = 30  # Waiting playback to be handled inside skill
-        QUEUED_AUDIOSERVICE = 31  ## DEPRECATED - used in ovos 0.0.7
-        QUEUED_VIDEO = 32  # Waiting playback in video service
-        QUEUED_AUDIO = 33  # Waiting playback in audio service
-        QUEUED_WEBVIEW = 34  # Waiting playback in browser service
 
 
 class AudioBackend(metaclass=ABCMeta):
@@ -99,7 +29,7 @@ class AudioBackend(metaclass=ABCMeta):
         self.bus = bus or FakeBus()
 
     @classproperty
-    def runtime_requirements(self):
+    def runtime_requirements(cls):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:

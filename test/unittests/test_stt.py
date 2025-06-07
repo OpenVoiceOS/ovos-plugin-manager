@@ -9,22 +9,6 @@ class TestSTTTemplate(unittest.TestCase):
     def test_stt(self):
         from ovos_plugin_manager.templates.stt import STT
         # TODO
-        
-    def test_token_stt(self):
-        from ovos_plugin_manager.templates.stt import TokenSTT
-        # TODO
-
-    def test_google_json_stt(self):
-        from ovos_plugin_manager.templates.stt import GoogleJsonSTT
-        # TODO
-
-    def test_basic_stt(self):
-        from ovos_plugin_manager.templates.stt import BasicSTT
-        # TODO
-
-    def test_key_stt(self):
-        from ovos_plugin_manager.templates.stt import KeySTT
-        # TODO
 
     def test_stream_thread(self):
         from ovos_plugin_manager.templates.stt import StreamThread

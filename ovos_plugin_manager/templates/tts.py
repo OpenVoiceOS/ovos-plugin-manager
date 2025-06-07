@@ -3,33 +3,30 @@ import asyncio
 import inspect
 import os.path
 import re
-import sys
-import subprocess
 import shutil
+import subprocess
+import sys
 from os.path import isfile, join
 from pathlib import Path
 from queue import Queue
-from threading import Thread
-from typing import AsyncIterable, List, Dict, Tuple, Optional
+from typing import AsyncIterable, List, Dict
 
 import quebra_frases
-import requests
 from ovos_bus_client.apis.enclosure import EnclosureAPI
 from ovos_bus_client.message import Message, dig_for_message
 from ovos_bus_client.session import SessionManager
-from ovos_config import Configuration
-from ovos_config.locations import get_xdg_cache_save_path
-from ovos_utils import classproperty
-from ovos_utils.fakebus import FakeBus
-from ovos_utils.file_utils import get_cache_directory
-from ovos_utils.lang.visimes import VISIMES
-from ovos_utils.lang import standardize_lang_tag
-from ovos_utils.log import LOG, deprecated, log_deprecation
-from ovos_utils.metrics import Stopwatch
-from ovos_utils.process_utils import RuntimeRequirements
 from ovos_plugin_manager.utils.config import get_plugin_config
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
-import warnings
+from ovos_utils import classproperty
+from ovos_utils.fakebus import FakeBus
+from ovos_utils.lang import standardize_lang_tag
+from ovos_utils.lang.visimes import VISIMES
+from ovos_utils.log import LOG
+from ovos_utils.metrics import Stopwatch
+from ovos_utils.process_utils import RuntimeRequirements
+
+from ovos_config import Configuration
+from ovos_config.locations import get_xdg_cache_save_path
 
 EMPTY_PLAYBACK_QUEUE_TUPLE = (None, None, None, None, None)
 SSML_TAGS = re.compile(r'<[^>]*>')
@@ -74,7 +71,7 @@ class TTSContext:
         Returns:
             str: A unique identifier that represents the TTS context.
         """
-        return join(self.plugin_id, self.voice, self.lang)
+        return join(self.plugin_id, self.voice, self.lang).strip("/")
 
     def get_cache(self, audio_ext="wav", cache_config=None):
         """
@@ -131,67 +128,6 @@ class TTSContext:
         for cache in TTSContext._caches.values():
             cache.curate()
 
-    ###########
-    # deprecated methods
-    @deprecated("'get_message' has been deprecated without replacement", "1.0.0")
-    def get_message(self, kwargs) -> Optional[Message]:
-        warnings.warn(
-            "deprecated without replacement",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        msg = kwargs.get("message") or dig_for_message()
-        if msg and isinstance(msg, Message):
-            return msg
-
-    @deprecated("'self.get_lang' has been deprecated, access self.lang directly", "1.0.0")
-    def get_lang(self, kwargs) -> str:
-        warnings.warn(
-            "access self.lang directly",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return kwargs.get("lang") or self.lang
-
-    @deprecated("'self.get_gender' has been deprecated, access self.voice and self.lang directly", "1.0.0")
-    def get_gender(self, kwargs) -> Optional[str]:
-        warnings.warn(
-            "access self.lang and self.voice directly",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        gender = kwargs.get("gender")
-        message = self.get_message(kwargs)
-        if not gender and message:
-            gender = message.data.get("gender") or \
-                     message.context.get("gender")
-        return gender
-
-    @deprecated("'self.get_voice' has been deprecated, access self.voice directly", "1.0.0")
-    def get_voice(self, kwargs):
-        warnings.warn(
-            "access self.voice directly",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        voice = kwargs.get("voice")
-        message = self.get_message(kwargs)
-        if not voice and message:
-            # get voice from message object if possible
-            voice = message.data.get("voice") or \
-                    message.context.get("voice")
-        return voice or self.voice
-
-    @deprecated("'self.get' has been deprecated, access self.voice and self.lang directly", "1.0.0")
-    def get(self, kwargs=None) -> Tuple[str, Optional[str]]:
-        warnings.warn(
-            "access self.lang and self.voice directly",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        kwargs = kwargs or {}
-        return self.get_lang(kwargs), self.get_voice(kwargs)
-
 
 class TTS:
     """TTS abstract class to be implemented by all TTS engines.
@@ -214,25 +150,21 @@ class TTS:
     queue = None
     playback = None
 
-    def __init__(self, lang=None, config=None, validator=None,
+    def __init__(self, config=None, validator=None,
                  audio_ext='wav', phonetic_spelling=True, ssml_tags=None):
         """
         Initializes the TTS engine with specified parameters.
 
         Args:
-            lang (str): The language code (deprecated).
             config (dict): Configuration settings for the TTS engine.
             validator (TTSValidator): Validator for verifying installation.
             audio_ext (str): Default audio file extension (default is 'wav').
             phonetic_spelling (bool): Whether to use phonetic spelling (default is True).
             ssml_tags (list): Supported SSML tags (default is None).
         """
-        if lang is not None:
-            log_deprecation("lang argument for TTS has been deprecated! it will be ignored, "
-                            "pass lang to get_tts directly instead")
         self.log_timestamps = False
         self.root_dir = os.path.dirname(os.path.abspath(sys.modules[self.__module__].__file__))
-        self.config = config or get_plugin_config(config, "tts")
+        self.config = config or {}
 
         self.stopwatch = Stopwatch()
         self.tts_name = self.__class__.__name__
@@ -256,25 +188,17 @@ class TTS:
         self.bus = None
 
         self._plugin_id = ""  # the plugin name
+        self._lang = None
 
     @property
-    def g2p(self) -> None:
-        warnings.warn(
-            "moved to PlaybackThread in ovos-audio",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        log_deprecation("G2P plugins moved to PlaybackThread in ovos-audio, self.g2p is deprecated!", "1.0.0")
-        return None
-
-    @g2p.setter
-    def g2p(self, val):
-        warnings.warn(
-            "moved to PlaybackThread in ovos-audio",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        log_deprecation("G2P plugins moved to PlaybackThread in ovos-audio, self.g2p is deprecated!", "1.0.0")
+    def lang(self):
+        return standardize_lang_tag(self._lang or \
+                                    self.config.get("lang") or \
+                                    SessionManager.get().lang)
+    @lang.setter
+    def lang(self, val):
+        # backwards compat
+        self._lang = standardize_lang_tag(val)
 
     @property
     def plugin_id(self) -> str:
@@ -450,7 +374,7 @@ class TTS:
         return utterance.replace("  ", " ")
 
     # init helpers
-    def init(self, bus=None, playback=None):
+    def init(self, bus, playback):
         """ Connects TTS object to PlaybackQueue in ovos-audio.
 
         This method needs to be called in order for self.execute to do anything
@@ -462,11 +386,8 @@ class TTS:
         """
         self.bus = bus or FakeBus()
         if playback is None:
-            LOG.warning("PlaybackThread should be inited by ovos-audio, initing via plugin has been deprecated, "
-                        "please pass playback=PlaybackThread() to TTS.init")
-            if not TTS.playback:
-                playback = PlaybackThread(TTS.queue, self.bus)  # compat
-                playback.start()
+            raise ValueError("PlaybackThread should be inited by ovos-audio, "
+                             "please pass playback=PlaybackThread() to TTS.init")
         self._init_playback(playback)
         self.add_metric({"metric_type": "tts.setup"})
 
@@ -562,7 +483,8 @@ class TTS:
         self.end_audio()
 
     ## synth
-    def _replace_phonetic_spellings(self, sentence:str, lang: str) -> str:
+    def _replace_phonetic_spellings(self, sentence: str, lang: str) -> str:
+        # TODO match lang code
         if self.phonetic_spelling and lang in self.spellings:
             for word in re.findall(r"[\w']+", sentence):
                 if word.lower() in self.spellings[lang]:
@@ -770,247 +692,6 @@ class TTS:
         """Destructor for the TTS object."""
         self.shutdown()
 
-    # below code is all deprecated and marked for removal in next stable release
-    @property
-    @deprecated("self.enclosure has been deprecated, use EnclosureAPI directly decoupled from the plugin code",
-                "1.0.0")
-    def enclosure(self):
-        """Deprecated. Accessor for the enclosure property.
-
-        Returns:
-            EnclosureAPI: The EnclosureAPI instance associated with the TTS playback.
-        """
-        warnings.warn(
-            "use EnclosureAPI directly",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if not TTS.playback.enclosure:
-            bus = TTS.playback.bus or self.bus
-            TTS.playback.enclosure = EnclosureAPI(bus)
-        return TTS.playback.enclosure
-
-    @enclosure.setter
-    @deprecated("self.enclosure has been deprecated, use EnclosureAPI directly decoupled from the plugin code",
-                "1.0.0")
-    def enclosure(self, val):
-        """Deprecated. Setter for the enclosure property.
-
-        Arguments:
-            val (EnclosureAPI): The EnclosureAPI instance to set.
-        """
-        warnings.warn(
-            "use EnclosureAPI directly",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        TTS.playback.enclosure = val
-
-    @property
-    @deprecated("self.filename has been deprecated, unused for a long time now",
-                "1.0.0")
-    def filename(self):
-        """Deprecated. Accessor for the filename property.
-
-        Returns:
-            str: The filename for the TTS audio.
-        """
-        warnings.warn(
-            "deprecated without replacement",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        cache_dir = get_cache_directory(self.tts_name)
-        return join(cache_dir, 'tts.' + self.audio_ext)
-
-    @filename.setter
-    @deprecated("self.filename has been deprecated, unused for a long time now",
-                "1.0.0")
-    def filename(self, val):
-        """Deprecated. Setter for the filename property.
-
-        Arguments:
-            val (str): The filename to set.
-        """
-        warnings.warn(
-            "deprecated without replacement",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-    @property
-    @deprecated("self.tts_id has been deprecated, use TTSContext().tts_id",
-                "1.0.0")
-    def tts_id(self):
-        """Deprecated. Accessor for the tts_id property.
-
-        Returns:
-            str: The ID associated with the TTS context.
-        """
-        warnings.warn(
-            "use TTSContext().tts_id",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self._get_ctxt().tts_id
-
-    @property
-    @deprecated("self.cache has been deprecated, use TTSContext().get_cache",
-                "1.0.0")
-    def cache(self):
-        """Deprecated. Accessor for the cache property.
-
-        Returns:
-            TextToSpeechCache: The cache associated with the TTS context.
-        """
-        warnings.warn(
-            "use TTSContext().get_cache",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return TTSContext._caches.get(self.tts_id) or \
-            self.get_cache()
-
-    @cache.setter
-    @deprecated("self.cache has been deprecated, use TTSContext().get_cache",
-                "1.0.0")
-    def cache(self, val):
-        """Deprecated. Setter for the cache property.
-
-        Arguments:
-            val (TextToSpeechCache): The cache to set.
-        """
-        warnings.warn(
-            "use TTSContext().get_cache",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        TTSContext._caches[self.tts_id] = val
-
-    @deprecated("get_voice was never formally adopted and is unused, it will be removed",
-                "1.0.0")
-    def get_voice(self, gender, lang=None):
-        """Deprecated. Get a valid voice for the TTS engine.
-
-        Arguments:
-            gender (str): Gender of the voice.
-            lang (str, optional): Language for the voice. Defaults to None.
-
-        Returns:
-            str: The selected voice.
-        """
-        warnings.warn(
-            "deprecated without replacement",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return gender
-
-    @deprecated("get_cache has been deprecated, use TTSContext().get_cache directly",
-                "1.0.0")
-    def get_cache(self, voice=None, lang=None):
-        """Deprecated. Get the cache associated with the TTS context.
-
-        Arguments:
-            voice (str, optional): Voice for the cache. Defaults to None.
-            lang (str, optional): Language for the cache. Defaults to None.
-
-        Returns:
-            TextToSpeechCache: The cache associated with the TTS context.
-        """
-        warnings.warn(
-            "use TTSContext().get_cache",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self._get_ctxt().get_cache(self.audio_ext, self.config)
-
-    @deprecated("clear_cache has been deprecated, use TTSContext().get_cache directly",
-                "1.0.0")
-    def clear_cache(self):
-        """Deprecated. Clear all cached files."""
-        warnings.warn(
-            "use TTSContext().get_cache",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        cache = self._get_ctxt().get_cache(self.audio_ext, self.config)
-        cache.clear()
-
-    @deprecated("save_phonemes has been deprecated, use TTSContext().get_cache directly",
-                "1.0.0")
-    def save_phonemes(self, key, phonemes):
-        """Deprecated. Cache phonemes.
-
-        Arguments:
-            key (str): Hash key for the sentence.
-            phonemes (str): Phoneme string to save.
-
-        Returns:
-            PhonemeFile: The PhonemeFile instance.
-        """
-        warnings.warn(
-            "use TTSContext().get_cache",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        cache = self._get_ctxt().get_cache(self.audio_ext, self.config)
-        phoneme_file = cache.define_phoneme_file(key)
-        phoneme_file.save(phonemes)
-        return phoneme_file
-
-    @deprecated("load_phonemes has been deprecated, use TTSContext().get_cache directly",
-                "1.0.0")
-    def load_phonemes(self, key):
-        """Deprecated. Load phonemes from cache file.
-
-        Arguments:
-            key (str): Key identifying phoneme cache.
-
-        Returns:
-            str: Phonemes loaded from the cache file.
-        """
-        warnings.warn(
-            "use TTSContext().get_cache",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        cache = self._get_ctxt().get_cache(self.audio_ext, self.config)
-        phoneme_file = cache.define_phoneme_file(key)
-        return phoneme_file.load()
-
-    @deprecated("get_from_cache has been deprecated, use TTSContext().get_from_cache directly",
-                "1.0.0")
-    def get_from_cache(self, sentence):
-        """Deprecated. Get data from the cache.
-
-        Arguments:
-            sentence (str): Sentence used as cache key.
-
-        Returns:
-            tuple: Tuple containing the audio and phonemes.
-        """
-        warnings.warn(
-            "use TTSContext().get_cache",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self._get_ctxt().get_from_cache(sentence, self.audio_ext, self.config)
-
-    @property
-    def lang(self):
-        message = dig_for_message()
-        if message:
-            sess = SessionManager.get(message)
-            return sess.lang
-        return standardize_lang_tag(self.config.get("lang") or 'en-US')
-
-    @lang.setter
-    @deprecated("language is defined per request in get_tts, self.lang is not used",
-                "1.0.0")
-    def lang(self, val):
-        LOG.warning("self.lang can not be set! it comes from the bus message")
-
 
 class TTSValidator:
     """TTS Validator abstract class to be implemented by all TTS engines.
@@ -1126,7 +807,8 @@ class StreamingTTSCallbacks:
             # TODO - pw-play only outputs high pitched noise, investigate and add it here for pipewire systems
             player = shutil.which("ffplay") or shutil.which("paplay") or shutil.which("aplay")
             if not player:
-                raise RuntimeError("No audio player found (please install 'ffmpeg', 'pulseaudio-utils' or 'alsa-utils').")
+                raise RuntimeError(
+                    "No audio player found (please install 'ffmpeg', 'pulseaudio-utils' or 'alsa-utils').")
             self.play_args = [player]
             if player.endswith("ffplay"):
                 self.play_args += ["-autoexit", "-nodisp"]
@@ -1293,56 +975,3 @@ class StreamingTTS(TTS):
         finally:
             loop.close()
         return wav_file, None  # No phonemes
-
-
-# below classes are deprecated and will be removed in 0.1.0
-
-class RemoteTTS(TTS):
-    """
-    Abstract class for a Remote TTS engine implementation.
-    This class is only provided for backwards compatibility
-    Usage is discouraged
-    """
-
-    @deprecated("RemoteTTS has been deprecated, please use the regular TTS class",
-                "1.0.0")
-    def __init__(self, lang, config, url, api_path, validator):
-        warnings.warn(
-            "please subclass from TTS directly",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super(RemoteTTS, self).__init__(lang, config, validator)
-        self.api_path = api_path
-        self.auth = None
-        self.url = config.get('url', url).rstrip('/')
-
-    def build_request_params(self, sentence):
-        pass
-
-    def get_tts(self, sentence, wav_file, lang=None):
-        r = requests.get(
-            self.url + self.api_path, params=self.build_request_params(sentence),
-            timeout=10, verify=False, auth=self.auth)
-        if r.status_code != 200:
-            return None
-        with open(wav_file, 'wb') as f:
-            f.write(r.content)
-        return wav_file, None
-
-
-class PlaybackThread(Thread):
-    """ PlaybackThread moved to ovos_audio.playback
-    standalone plugin usage should rely on self.get_tts
-    ovos-audio relies on self.execute and needs this class
-
-    this class was only in ovos-plugin-manager in order to
-    patch usage of our plugins in mycroft-core"""
-
-    def __new__(self, *args, **kwargs):
-        LOG.warning("PlaybackThread moved to ovos_audio.playback")
-        try:
-            from ovos_audio.playback import PlaybackThread
-            return PlaybackThread(*args, **kwargs)
-        except ImportError:
-            raise ImportError("please install ovos-audio for playback handling")
