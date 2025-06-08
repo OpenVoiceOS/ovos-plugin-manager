@@ -1,12 +1,12 @@
 # Changelog
 
-## [1.0.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.1a1) (2025-06-08)
+## [1.0.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.2a1) (2025-06-08)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.0...1.0.1a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.1...1.0.2a1)
 
 **Merged pull requests:**
 
-- fix: typing mistakes from 1.0.0 [\#323](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/323) ([JarbasAl](https://github.com/JarbasAl))
+- fix: wakeword factory [\#325](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/325) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
