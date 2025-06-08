@@ -1,9 +1,11 @@
 import abc
 import collections
+from typing import Iterable
 
-from ovos_config import Configuration
 from ovos_utils import classproperty
 from ovos_utils.process_utils import RuntimeRequirements
+
+from ovos_config import Configuration
 
 
 class AudioFrame:
@@ -28,7 +30,7 @@ class VADEngine:
         self.num_padding_frames = int(self.padding_duration_ms / self.frame_duration_ms)
 
     @classproperty
-    def runtime_requirements(self):
+    def runtime_requirements(cls):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:
@@ -62,7 +64,7 @@ class VADEngine:
                                    no_internet_fallback=True,
                                    no_network_fallback=True)
 
-    def _frame_generator(self, audio: bytes):
+    def _frame_generator(self, audio: bytes) -> Iterable[AudioFrame]:
         """Generates audio frames from PCM audio data.
         Takes the desired frame duration in milliseconds, the PCM data, and
         the sample rate.
@@ -78,7 +80,7 @@ class VADEngine:
             timestamp += duration
             offset += n
 
-    def extract_speech(self, audio: bytes):
+    def extract_speech(self, audio: bytes) -> bytes:
         """returns the audio data with speech only, removing all noise before and after speech"""
         # We use a deque for our sliding window/ring buffer.
         ring_buffer = collections.deque(maxlen=self.num_padding_frames)
@@ -118,7 +120,7 @@ class VADEngine:
                     return b''.join([f.bytes for f in voiced_frames])
 
     @abc.abstractmethod
-    def is_silence(self, chunk):
+    def is_silence(self, chunk) -> bool:
         # return True or False
         return False
 

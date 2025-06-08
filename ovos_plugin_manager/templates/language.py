@@ -1,10 +1,8 @@
 import abc
-
-from ovos_config.config import Configuration
-from ovos_utils import classproperty
-from ovos_utils.lang import standardize_lang_tag
-from ovos_utils.process_utils import RuntimeRequirements
 from typing import Optional, Dict, Union, List, Set
+
+from ovos_utils import classproperty
+from ovos_utils.process_utils import RuntimeRequirements
 
 
 class LanguageDetector:
@@ -17,14 +15,9 @@ class LanguageDetector:
                 Can contain "lang" for default language, "hint_lang" for a hint language, and "boost" for language boost score.
         """
         self.config = config or {}
-        self.default_language = standardize_lang_tag(self.config.get("lang", "en-US"))
-        self.hint_language = standardize_lang_tag(self.config.get("hint_lang") or
-                                                  self.config.get('user') or
-                                                  self.default_language)
-        self.boost = self.config.get("boost")
 
     @classproperty
-    def runtime_requirements(self) -> RuntimeRequirements:
+    def runtime_requirements(cls) -> RuntimeRequirements:
         """
         Define the runtime requirements for this language detector.
 
@@ -64,8 +57,9 @@ class LanguageDetector:
             Dict[str, float]: A dictionary with the detected language as the key and its probability as the value.
         """
 
-    @property  # TODO - make abstract method in future releases (mandatory for plugins to implement)
-    def available_languages(self) -> Set[str]:
+    @classproperty
+    @abc.abstractmethod
+    def available_languages(cls) -> Set[str]:
         """
         Return languages supported by this detector implementation in this state.
         This should be a set of languages this detector is capable of recognizing.
@@ -87,14 +81,9 @@ class LanguageTranslator:
                 Can contain "lang" for the default language and "internal" for the internal language.
         """
         self.config = config or {}
-        # translate from, unless specified/detected otherwise
-        self.default_language = standardize_lang_tag(self.config.get("lang") or "en-US")
-        # translate to
-        self.internal_language = standardize_lang_tag(Configuration().get('language', {}).get("internal") or \
-                                 self.default_language)
 
     @classproperty
-    def runtime_requirements(self) -> RuntimeRequirements:
+    def runtime_requirements(cls) -> RuntimeRequirements:
         """
         Define the runtime requirements for this language translator.
 
@@ -124,7 +113,8 @@ class LanguageTranslator:
             str: The translated text.
         """
 
-    def translate_dict(self, data: Dict[str, Union[str, Dict, List]], lang_tgt: str, lang_src: str = "en") -> Dict[str, Union[str, Dict, List]]:
+    def translate_dict(self, data: Dict[str, Union[str, Dict, List]], lang_tgt: str, lang_src: str = "en") -> Dict[
+        str, Union[str, Dict, List]]:
         """
         Translate the values in a dictionary from one language to another.
 
@@ -145,7 +135,8 @@ class LanguageTranslator:
                 data[k] = self.translate_list(v, lang_tgt, lang_src)
         return data
 
-    def translate_list(self, data: List[Union[str, Dict, List]], lang_tgt: str, lang_src: str = "en") -> List[Union[str, Dict, List]]:
+    def translate_list(self, data: List[Union[str, Dict, List]], lang_tgt: str, lang_src: str = "en") -> List[
+        Union[str, Dict, List]]:
         """
         Translate the values in a list from one language to another.
 
@@ -166,8 +157,9 @@ class LanguageTranslator:
                 data[idx] = self.translate_list(v, lang_tgt, lang_src)
         return data
 
-    @property  # TODO - make abstract method in future releases (mandatory for plugins to implement)
-    def available_languages(self) -> Set[str]:
+    @classproperty
+    @abc.abstractmethod
+    def available_languages(cls) -> Set[str]:
         """
         Return languages supported by this translator implementation in this state.
         Any language in this set should be translatable to any other language in the set.
@@ -178,8 +170,9 @@ class LanguageTranslator:
         """
         return set()
 
-    # TODO - make abstract method in future releases (mandatory for plugins to implement)
-    def supported_translations(self, source_lang: Optional[str] = None) -> Set[str]:
+    @classproperty
+    @abc.abstractmethod
+    def supported_translations(cls, source_lang: str) -> Set[str]:
         """
         Get the set of target languages to which the source language can be translated.
 
@@ -189,4 +182,4 @@ class LanguageTranslator:
         Returns:
             Set[str]: A set of language codes that the source language can be translated to.
         """
-        return self.available_languages
+        return cls.available_languages

@@ -1,13 +1,10 @@
-"""
-This is here to allow importing this module outside mycroft-core, plugins
-using this import instead of mycroft can be used
+import abc
+from typing import Optional, Dict, Any
 
-The main use case is for plugins to be used across different projects
-"""
-from ovos_config import Configuration
 from ovos_utils import classproperty
-from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.process_utils import RuntimeRequirements
+
+from ovos_config import Configuration
 
 
 def msec_to_sec(msecs):
@@ -31,29 +28,12 @@ class HotWordEngine:
         lang (str): language code (BCP-47)
     """
 
-    def __init__(self, key_phrase="hey mycroft", config=None, lang="en-US"):
+    def __init__(self, key_phrase: str, config: Optional[Dict[str, Any]] = None):
         self.key_phrase = str(key_phrase).lower()
-        mycroft_config = Configuration()
-        if config is None:
-            # NOTE there is a bug in upstream,
-            # the correct key is "hotwords" not "hot_words"
-            # in here we account for both, but it's doubtful anyone
-            # is using "hot_words"
-            config = mycroft_config.get("hotwords", {}) or \
-                     mycroft_config.get("hot_words", {})
-            config = config.get(self.key_phrase, {})
-        self.config = config
-
-        # rough estimate 1 phoneme per 2 chars
-        self.num_phonemes = len(key_phrase) / 2 + 1
-        phoneme_duration = msec_to_sec(config.get('phoneme_duration', 120))
-        self.expected_duration = self.num_phonemes * phoneme_duration
-
-        self.listener_config = mycroft_config.get("listener") or {}
-        self.lang = standardize_lang_tag(self.config.get("lang", lang))
+        self.config = config or Configuration().get("hotwords", {}).get(self.key_phrase, {})
 
     @classproperty
-    def runtime_requirements(self):
+    def runtime_requirements(cls):
         """ skill developers should override this if they do not require connectivity
          some examples:
          IOT plugin that controls devices via LAN could return:
@@ -87,21 +67,17 @@ class HotWordEngine:
                                    no_internet_fallback=True,
                                    no_network_fallback=True)
 
-    def found_wake_word(self, frame_data):
+    @abc.abstractmethod
+    def found_wake_word(self) -> bool:
         """Check if wake word has been found.
 
         Checks if the wake word has been found. Should reset any internal
         tracking of the wake word state.
 
-        Arguments:
-            frame_data (binary data): Deprecated. Audio data for large chunk
-                                      of audio to be processed. This should not
-                                      be used to detect audio data instead
-                                      use update() to incrementaly update audio
         Returns:
             bool: True if a wake word was detected, else False
         """
-        return False
+        raise NotImplementedError()
 
     def reset(self):
         """
@@ -109,6 +85,7 @@ class HotWordEngine:
         """
         pass
 
+    @abc.abstractmethod
     def update(self, chunk):
         """Updates the hotword engine with new audio data.
 
@@ -117,6 +94,7 @@ class HotWordEngine:
         Arguments:
             chunk (bytes): Chunk of audio data to process
         """
+        raise NotImplementedError()
 
     def stop(self):
         """
