@@ -96,6 +96,7 @@ class STT(metaclass=ABCMeta):
         return [(self.execute(audio, lang), 1.0)]
 
     @classproperty
+    @abstractmethod
     def available_languages(cls) -> Set[str]:
         """Return languages supported by this STT implementation in this state
         This property should be overridden by the derived class to advertise
@@ -103,7 +104,6 @@ class STT(metaclass=ABCMeta):
         Returns:
             set: supported languages
         """
-        return set()
 
 
 class StreamThread(Thread, metaclass=ABCMeta):
