@@ -9,13 +9,12 @@ import sys
 from os.path import isfile, join
 from pathlib import Path
 from queue import Queue
-from typing import AsyncIterable, List, Dict
+from typing import AsyncIterable, List, Dict, Set
 
 import quebra_frases
 from ovos_bus_client.apis.enclosure import EnclosureAPI
 from ovos_bus_client.message import Message, dig_for_message
 from ovos_bus_client.session import SessionManager
-from ovos_plugin_manager.utils.config import get_plugin_config
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 from ovos_utils import classproperty
 from ovos_utils.fakebus import FakeBus
@@ -224,15 +223,15 @@ class TTS:
         refer to skills to see how it is used"""
         return RuntimeRequirements()
 
-    @property
-    def available_languages(self) -> set:
+    @classproperty
+    @abc.abstractmethod
+    def available_languages(cls) -> Set[str]:
         """Return languages supported by this TTS implementation in this state
         This property should be overridden by the derived class to advertise
         what languages that engine supports.
         Returns:
             set: A set of supported language codes.
         """
-        return set()
 
     @abc.abstractmethod
     def get_tts(self, sentence, wav_file, lang=None, voice=None):

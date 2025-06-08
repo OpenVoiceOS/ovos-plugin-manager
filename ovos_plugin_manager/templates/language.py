@@ -168,9 +168,8 @@ class LanguageTranslator:
         Returns:
             Set[str]: A set of language codes supported by this translator.
         """
-        return set()
 
-    @classproperty
+    @classmethod
     @abc.abstractmethod
     def supported_translations(cls, source_lang: str) -> Set[str]:
         """
@@ -182,4 +181,3 @@ class LanguageTranslator:
         Returns:
             Set[str]: A set of language codes that the source language can be translated to.
         """
-        return cls.available_languages
