@@ -1,4 +1,5 @@
 import enum
+import abc
 from typing import Set
 
 from ovos_utils import classproperty
@@ -129,6 +130,7 @@ class Grapheme2PhonemePlugin:
         return [(VISIMES.get(pho.lower(), '4'), default_dur) for pho in arpa]
 
     @classproperty
+    @abc.abstractmethod
     def available_languages(cls) -> Set[str]:
         """Return languages supported by this G2P implementation in this state
         This property should be overridden by the derived class to advertise
@@ -136,4 +138,3 @@ class Grapheme2PhonemePlugin:
         Returns:
             set: supported languages
         """
-        return set()
