@@ -1,12 +1,12 @@
 # Changelog
 
-## [1.0.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.0a1) (2025-06-07)
+## [1.0.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.1a1) (2025-06-08)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.9.0...1.0.0a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.0...1.0.1a1)
 
-**Breaking changes:**
+**Merged pull requests:**
 
-- refactor!: improve typing and deprecations [\#314](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/314) ([JarbasAl](https://github.com/JarbasAl))
+- fix: typing mistakes from 1.0.0 [\#323](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/323) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
