@@ -1,12 +1,12 @@
 # Changelog
 
-## [1.0.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.2a1) (2025-06-08)
+## [1.0.3a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.3a1) (2025-06-10)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.1...1.0.2a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.2...1.0.3a1)
 
 **Merged pull requests:**
 
-- fix: wakeword factory [\#325](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/325) ([JarbasAl](https://github.com/JarbasAl))
+- refactor: simplify pipeline factory, missed in previous PR [\#327](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/327) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
