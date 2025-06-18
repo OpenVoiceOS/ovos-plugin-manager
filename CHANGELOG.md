@@ -1,12 +1,12 @@
 # Changelog
 
-## [1.0.3a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.3a1) (2025-06-10)
+## [1.0.4a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a1) (2025-06-18)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.2...1.0.3a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.3...1.0.4a1)
 
-**Merged pull requests:**
+**Closed issues:**
 
-- refactor: simplify pipeline factory, missed in previous PR [\#327](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/327) ([JarbasAl](https://github.com/JarbasAl))
+- An error occurred \(InvalidSsmlException\) when calling the SynthesizeSpeech operation: Invalid SSML request [\#221](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/221)
 
 
 
