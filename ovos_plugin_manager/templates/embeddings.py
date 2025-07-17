@@ -25,55 +25,58 @@ class EmbeddingsDB:
     """
 
     def __init__(self, config: Dict[str, Any] = None):
+        """
+        Initialize the embedder with an optional configuration dictionary.
+        """
         self.config = config or {}
 
     @abc.abstractmethod
     def create_collection(self, name: str, metadata: Optional[Dict[str, Any]] = None) -> Any:
         """
-        Create a new collection (vector store).
-
-        Args:
-            name (str): The name of the collection (vector store ID).
-            metadata (Optional[Dict[str, Any]]): Optional metadata for the collection.
-
+        Create a new collection (vector store) with the specified name and optional metadata.
+        
+        Parameters:
+            name (str): The unique identifier for the collection.
+            metadata (Optional[Dict[str, Any]]): Additional metadata describing the collection.
+        
         Returns:
-            Any: A handle or object representing the created collection.
+            A handle or object representing the newly created collection.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def get_collection(self, name: str) -> Any:
         """
-        Retrieve an existing collection by name.
-
-        Args:
-            name (str): The name of the collection.
-
+        Retrieve a collection by its name.
+        
+        Parameters:
+            name (str): Name of the collection to retrieve.
+        
         Returns:
-            Any: A handle or object representing the retrieved collection.
-
+            A handle or object representing the collection.
+        
         Raises:
-            ValueError: If the collection is not found.
+            ValueError: If the specified collection does not exist.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def delete_collection(self, name: str) -> None:
         """
-        Delete a collection by name.
-
-        Args:
-            name (str): The name of the collection to delete.
+        Delete a collection identified by its name.
+        
+        Parameters:
+            name (str): Name of the collection to be deleted.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def list_collections(self) -> List[Any]:
         """
-        List all available collections.
-
+        Return a list of all available collections in the embeddings database.
+        
         Returns:
-            List[Any]: A list of handles or objects representing the collections.
+            List[Any]: Handles or objects representing each collection.
         """
         raise NotImplementedError
 
@@ -81,17 +84,17 @@ class EmbeddingsDB:
     def add_embeddings(self, key: str, embedding: EmbeddingsArray,
                        metadata: Optional[Dict[str, Any]] = None,
                        collection_name: Optional[str] = None) -> EmbeddingsArray:
-        """Store 'embedding' under 'key' with associated metadata.
-
-        Args:
-            key (str): The unique key for the embedding.
-            embedding (np.ndarray): The embedding vector to store.
-            metadata (Optional[Dict[str, Any]]): Optional metadata associated with the embedding.
-            collection_name (Optional[str]): The name of the collection to add the embedding to.
-                                             If None, a default collection should be used.
-
+        """
+        Stores an embedding vector under a unique key in the specified collection, with optional metadata.
+       
+        Parameters:
+            key (str): Unique identifier for the embedding.
+            embedding (EmbeddingsArray): The embedding vector to store.
+            metadata (Optional[Dict[str, Any]]): Optional metadata to associate with the embedding.
+            collection_name (Optional[str]): Name of the collection to store the embedding in; uses a default collection if not specified.
+       
         Returns:
-            np.ndarray: The stored embedding.
+             EmbeddingsArray: The stored embedding vector.
         """
         raise NotImplementedError
 
@@ -99,14 +102,9 @@ class EmbeddingsDB:
                              metadata: Optional[List[Dict[str, Any]]] = None,
                              collection_name: Optional[str] = None) -> None:
         """
-        Add or update multiple embeddings in a batch to a specific collection.
-        Default implementation processes inputs one at a time. Plugins can override for optimization.
-
-        Args:
-            keys (List[str]): List of unique keys for the embeddings.
-            embeddings (List[EmbeddingsArray]): List of embedding vectors to store.
-            metadata (Optional[List[Dict[str, Any]]]): Optional list of metadata dictionaries.
-            collection_name (Optional[str]): The name of the collection to add the embeddings to.
+        Add or update multiple embeddings in a collection in a single batch operation.
+        
+        This default implementation processes each embedding individually; subclasses may override for more efficient bulk handling.
         """
         if metadata is None:
             metadata = [None] * len(keys)
@@ -118,35 +116,31 @@ class EmbeddingsDB:
                        return_metadata: bool = False) -> Union[Optional[EmbeddingsArray],
                                                                Tuple[Optional[EmbeddingsArray], Optional[Dict[str, Any]]]]:
         """
-        Retrieve embeddings stored under 'key' from the specified or default collection.
-
-        Args:
-            key (str): The unique key for the embedding.
-            collection_name (Optional[str]): The name of the collection to retrieve from.
-            return_metadata (bool, optional): Whether to include metadata in the results. Defaults to False.
-
+        Retrieve an embedding by key from a specified collection, optionally including associated metadata.
+       
+        Parameters:
+            key (str): The unique identifier for the embedding.
+            collection_name (Optional[str]): The collection to search within. If not provided, uses the default collection.
+            return_metadata (bool): If True, returns a tuple of (embedding, metadata); otherwise, returns only the embedding.
+           
         Returns:
-            Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], Optional[Dict[str, Any]]]] :
-            If `return_metadata` is False, returns the retrieved embedding (np.ndarray) or None if not found.
-            If `return_metadata` is True, returns a tuple (embedding, metadata_dict) or (None, None) if not found.
+            If `return_metadata` is False, returns the embedding array or None if not found.
+            If `return_metadata` is True, returns a tuple of (embedding array, metadata dictionary), or (None, None) if not found.
         """
         raise NotImplementedError
 
     def get_embeddings_batch(self, keys: List[str], collection_name: Optional[str] = None,
                              return_metadata: bool = False) -> List[RetrievedEmbeddingResult]:
         """
-        Retrieve multiple embeddings and their metadata from a specific collection.
-        Default implementation processes inputs one at a time. Plugins can override for optimization.
-
-        Args:
-            keys (List[str]): List of keys for the embeddings to retrieve.
-            collection_name (Optional[str]): The name of the collection to retrieve from.
-            return_metadata (bool, optional): Whether to include metadata in the results. Defaults to False.
-
+        Retrieve multiple embeddings by key from a specified collection, optionally including metadata.
+         
+        Parameters:
+            keys (List[str]): List of embedding keys to retrieve.
+            collection_name (Optional[str]): Name of the collection to query.
+            return_metadata (bool): If True, includes metadata with each embedding.
+         
         Returns:
-            List[RetrievedEmbeddingResult]: A list of tuples, where each tuple is
-            (key, embedding) if `return_metadata` is False, or (key, embedding, metadata)
-            if `return_metadata` is True.
+            List[RetrievedEmbeddingResult]: List of (key, embedding) or (key, embedding, metadata) tuples for found embeddings.
         """
         results = []
         for key in keys:
@@ -165,22 +159,20 @@ class EmbeddingsDB:
 
     @abc.abstractmethod
     def delete_embeddings(self, key: str, collection_name: Optional[str] = None) -> None:
-        """Delete embeddings stored under 'key'.
-
-        Args:
-            key (str): The unique key for the embedding.
-            collection_name (Optional[str]): The name of the collection to delete from.
+        """
+        Delete the embedding associated with the specified key from the given collection.
+        
+        Parameters:
+            key (str): Unique identifier of the embedding to delete.
+            collection_name (Optional[str]): Name of the collection from which to delete the embedding. If not provided, the default collection is used.
         """
         raise NotImplementedError
 
     def delete_embeddings_batch(self, keys: List[str], collection_name: Optional[str] = None) -> None:
         """
-        Delete multiple embeddings in a batch from a specific collection.
-        Default implementation processes inputs one at a time. Plugins can override for optimization.
-
-        Args:
-            keys (List[str]): List of keys for the embeddings to delete.
-            collection_name (Optional[str]): The name of the collection to delete from.
+        Delete multiple embeddings from a specified collection in a batch operation.
+        
+        This default implementation deletes each embedding individually. Subclasses may override for more efficient batch deletion.
         """
         for key in keys:
             self.delete_embeddings(key, collection_name=collection_name)
@@ -188,29 +180,30 @@ class EmbeddingsDB:
     @abc.abstractmethod
     def query(self, embeddings: EmbeddingsArray, top_k: int = 5,
               return_metadata: bool = False, collection_name: Optional[str] = None) -> List[EmbeddingsTuple]:
-        """Return the top_k embeddings closest to the given 'embeddings'.
-
-        Args:
-            embeddings (np.ndarray): The embedding vector to query.
-            top_k (int, optional): The number of top results to return. Defaults to 5.
-            return_metadata (bool, optional): Whether to include metadata in the results. Defaults to False.
-            collection_name (Optional[str]): The name of the collection to query.
-
+        """
+        Finds and returns the top_k embeddings in the specified collection that are closest to the provided embedding vector.
+          
+        Parameters:
+            embeddings: The embedding vector to use as the query.
+            top_k: Number of closest results to return.
+            return_metadata: If True, includes metadata for each result.
+            collection_name: Name of the collection to search within.
+          
         Returns:
-            List[EmbeddingsTuple]: List of tuples containing the key and distance, and optionally metadata.
+            A list of tuples, each containing the key, distance, and optionally metadata for the closest embeddings.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def count_embeddings_in_collection(self, collection_name: Optional[str] = None) -> int:
         """
-        Count the number of embeddings in a specific collection.
-
-        Args:
-            collection_name (Optional[str]): The name of the collection.
-
+        Return the number of embeddings stored in the specified collection.
+        
+        Parameters:
+        	collection_name (Optional[str]): Name of the collection to count embeddings in.
+        
         Returns:
-            int: The number of embeddings in the collection.
+        	int: Total number of embeddings in the collection.
         """
         raise NotImplementedError
 
@@ -224,59 +217,22 @@ class EmbeddingsDB:
                  # required for mahalanobis distance with user-defined covariance
                  ) -> float:
         """
-        Calculate the distance between two embeddings vectors using the specified distance metric.
-
-        Args:
-            embeddings_a (np.ndarray): The first embedding vector.
-            embeddings_b (np.ndarray): The second embedding vector.
-            metric (str, optional): The distance metric to use. Defaults to "cosine".
-                Supported metrics include:
-                - "cosine": Cosine distance, 1 - cosine similarity. Useful for text similarity and high-dimensional data.
-                - "euclidean": Euclidean distance, L2 norm of the difference. Commonly used in clustering and geometric distance.
-                - "manhattan": Manhattan distance, L1 norm of the difference. Suitable for grid-based maps and robotics.
-                - "chebyshev": Chebyshev distance, maximum absolute difference. Used for chessboard distance and pathfinding.
-                - "minkowski": Minkowski distance, generalization of Euclidean and Manhattan distances. Parameterized by p, flexible use case.
-                - "weighted_minkowski": Weighted Minkowski distance, a generalization of Minkowski with weights. Parameterized by `p`, uses `euclidean_weights`.
-                - "hamming": Hamming distance, proportion of differing elements. Ideal for error detection and binary data.
-                - "jaccard": Jaccard distance, 1 - Jaccard similarity (intersection over union). Used for set similarity and binary attributes.
-                - "canberra": Canberra distance, weighted version of Manhattan distance. Sensitive to small changes, used in environmental data.
-                - "braycurtis": Bray-Curtis distance, dissimilarity between non-negative vectors. Common in ecology and species abundance studies.
-                - "mahalanobis": Mahalanobis distance, considering correlations (requires covariance matrix). Useful for multivariate outlier detection.
-                - "pearson_correlation": Pearson correlation distance, 1 - Pearson correlation coefficient. Used in time series analysis and signal processing.
-                - "spearman_rank": Spearman rank correlation distance, 1 - Spearman rank correlation coefficient. Measures rank correlation for non-linear monotonic relationships.
-                - "wasserstein": Earth Mover's Distance (Wasserstein distance). Compares probability distributions or histograms.
-                - "cosine_squared": Cosine squared distance, 1 - cosine similarity squared. For squared similarity in high-dimensional data.
-                - "kl_divergence": Kullback-Leibler divergence, asymmetric measure of difference between distributions. Applied in information theory and probability distributions.
-                - "bhattacharyya": Bhattacharyya distance, measure of overlap between statistical samples. Useful in classification and image processing.
-                - "hellinger": Hellinger distance, measure of similarity between two probability distributions. Applied in statistical inference.
-                - "ruzicka": Ruzicka distance, similarity measure for non-negative vectors. Used in ecology and species abundance.
-                - "kulczynski": Kulczynski distance, used in ecology to compare similarity. Suitable for ecological studies and species distribution.
-                - "sorensen": Sørensen distance, another name for Dice distance. Applied in binary data comparison and text similarity.
-                - "chi_squared": Chi-squared distance, used for comparing categorical data distributions. Suitable for categorical data analysis and distribution comparison.
-                - "jensen_shannon": Jensen-Shannon divergence, symmetrized and smoothed version of KL divergence. Used in information theory and probability distributions.
-                - "squared_euclidean": Squared Euclidean distance, square of the Euclidean distance. Useful for clustering algorithms and geometric distance.
-                - "weighted_euclidean": Weighted Euclidean distance, L2 norm with weights. Applied when features have different scales or importance.
-                - "log_cosh": Log-Cosh distance, log of the hyperbolic cosine of the difference. Robust to outliers.
-                - "tanimoto": Tanimoto coefficient, similarity measure for binary vectors. Used for binary data comparison.
-                - "rao": Rao's Quadratic Entropy, measure of divergence between distributions. Useful for comparing probability distributions.
-                - "gower": Gower distance, handles mixed types of data. Applied in cases with numerical and categorical data.
-                - "tversky": Tversky index, generalization of Jaccard and Dice for asymmetrical comparison. Parameterized by alpha and beta.
-                - "alpha_divergence": Alpha divergence, generalized divergence measure. Parameterized by alpha, used for comparing distributions.
-                - "kendall_tau": Kendall's Tau distance: 1 - Kendall Tau correlation coefficient. Use case: Rank correlation for ordinal data
-                - "renyi_divergence": Generalized divergence measure. Use case: Comparing probability distributions
-                - "total_variation":  Measure of divergence between distributions. Use case: Probability distributions, statistical inference
-
-            alpha (float, optional): Parameter for `tversky` and `alpha_divergence` metrics. Default is 0.5.
-            beta (float, optional): Parameter for `tversky` metric. Default is 0.5.
-            p (float, optional): Parameter for `minkowski` and `weighted_minkowski` metrics. Default is 3.
-            euclidean_weights (Optional[np.ndarray], optional): Weights for `weighted_euclidean` and `weighted_minkowski` metrics. Must be provided if using these metrics. Default is None.
-            covariance_matrix (Optional[np.ndarray], optional): Covariance matrix for `mahalanobis` distance. Must be provided if using this metric. Default is None.
-
+        Compute the distance or divergence between two embedding vectors using a specified metric.
+         
+        Supports a wide range of distance and similarity metrics, including cosine, Euclidean, Manhattan, Chebyshev, Minkowski (and weighted variants), Hamming, Jaccard, Canberra, Bray-Curtis, Mahalanobis, Pearson and Spearman correlation, Wasserstein, KL and Jensen-Shannon divergence, Bhattacharyya, Hellinger, Ruzicka, Kulczynski, Sørensen, Chi-squared, log-cosh, Tanimoto, Rao's Quadratic Entropy, Gower, Tversky, alpha and Renyi divergence, Kendall Tau, and total variation. Handles normalization and edge cases for each metric. Raises a ValueError if the metric is unsupported or required parameters are missing.
+         
+        Parameters:
+            embeddings_a: The first embedding vector.
+            embeddings_b: The second embedding vector.
+            metric: The distance or similarity metric to use (default: "cosine").
+            alpha: Parameter for alpha_divergence, tversky, and renyi_divergence metrics.
+            beta: Parameter for tversky metric.
+            p: Parameter for minkowski and weighted_minkowski metrics.
+            euclidean_weights: Weights for weighted_euclidean and weighted_minkowski metrics.
+            covariance_matrix: Covariance matrix for mahalanobis distance.
+         
         Returns:
-            float: The calculated distance between the two embedding vectors.
-
-        Raises:
-            ValueError: If the specified metric is unsupported or requires parameters not provided.
+            The computed distance or divergence as a float.
         """
         # Ensure embeddings are numpy arrays for consistent calculations
         embeddings_a = np.asarray(embeddings_a)
@@ -542,17 +498,21 @@ class EmbeddingsDB:
 class TextEmbedder:
 
     def __init__(self, config: Dict[str, Any] = None):
+        """
+        Initialize the embedder with an optional configuration dictionary.
+        """
         self.config = config or {}
 
     @abc.abstractmethod
     def get_embeddings(self, text: str) -> EmbeddingsArray:
-        """Convert text to its corresponding embeddings.
-
-        Args:
-            text (str): The input text to be converted.
-
+        """
+        Generate an embedding vector representation for the given text input.
+        
+        Parameters:
+            text (str): Input text to be embedded.
+        
         Returns:
-            np.ndarray: The resulting embeddings.
+            EmbeddingsArray: Embedding vector corresponding to the input text.
         """
         raise NotImplementedError
 
@@ -560,17 +520,21 @@ class TextEmbedder:
 class ImageEmbedder:
 
     def __init__(self, config: Dict[str, Any] = None):
+        """
+        Initialize the embedder with an optional configuration dictionary.
+        """
         self.config = config or {}
 
     @abc.abstractmethod
     def get_embeddings(self, frame: Array) -> EmbeddingsArray:
-        """Convert an image frame to its corresponding image embeddings.
-
-        Args:
-            frame (np.ndarray): The input image frame containing a image.
-
+        """
+        Generate an embedding vector from an input image frame.
+        
+        Parameters:
+            frame (Array): The image data to be converted into an embedding vector.
+        
         Returns:
-            np.ndarray: The resulting image embeddings.
+            EmbeddingsArray: The embedding representation of the input image.
         """
         raise NotImplementedError
 
@@ -578,17 +542,21 @@ class ImageEmbedder:
 class FaceEmbedder:
 
     def __init__(self, config: Dict[str, Any] = None):
+        """
+        Initialize the embedder with an optional configuration dictionary.
+        """
         self.config = config or {}
 
     @abc.abstractmethod
     def get_embeddings(self, frame: Array) -> EmbeddingsArray:
-        """Convert an image frame to its corresponding face embeddings.
-
-        Args:
-            frame (np.ndarray): The input image frame containing a face.
-
+        """
+        Extracts a face embedding vector from the given image frame.
+        
+        Parameters:
+            frame (Array): An image frame containing a face.
+        
         Returns:
-            np.ndarray: The resulting face embeddings.
+            EmbeddingsArray: The embedding vector representing the face in the input frame.
         """
         raise NotImplementedError
 
@@ -596,16 +564,20 @@ class FaceEmbedder:
 class VoiceEmbedder:
 
     def __init__(self, config: Dict[str, Any] = None):
+        """
+        Initialize the embedder with an optional configuration dictionary.
+        """
         self.config = config or {}
 
     @abc.abstractmethod
     def get_embeddings(self, audio_data: Array) -> EmbeddingsArray:
-        """Convert audio data to its corresponding voice embeddings.
-
-        Args:
-            audio_data (np.ndarray): The input audio data.
-
+        """
+        Generate an embedding vector from the provided audio data.
+        
+        Parameters:
+        	audio_data (Array): The input audio data to be converted into an embedding vector.
+        
         Returns:
-            np.ndarray: The resulting voice embeddings.
+        	EmbeddingsArray: The embedding representation of the input audio.
         """
         raise NotImplementedError

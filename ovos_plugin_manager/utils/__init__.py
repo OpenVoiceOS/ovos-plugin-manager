@@ -179,19 +179,41 @@ try:
 
 
     def _iter_plugins(plug_type):
+        """
+        Yields all entry points for the specified plugin group.
+        
+        Parameters:
+            plug_type: The entry point group name to search for.
+        
+        Yields:
+            Entry points belonging to the specified group.
+        """
         for entry_point in entry_points(group=plug_type):
             yield entry_point
 except ImportError:
     def _iter_plugins(plug_type):
+        """
+        Yield all entry points for the specified plugin group using pkg_resources.
+        
+        Parameters:
+            plug_type (str): The entry point group name to search for.
+        
+        Yields:
+            EntryPoint: Each discovered entry point in the specified group.
+        """
         for entry_point in pkg_resources.iter_entry_points(plug_type):
             yield entry_point
 
 
 def _iter_entrypoints(plug_type: Union[str, PluginTypes]):
     """
-    Return an iterator containing all entrypoints of the requested type
-    @param plug_type: entrypoint name to load
-    @return: iterator of all entrypoints
+    Yield all entry points for the specified plugin type, including deprecated identifiers for backward compatibility.
+    
+    Parameters:
+        plug_type (str or PluginTypes): The entry point group name or PluginTypes enum value to search for.
+    
+    Yields:
+        Entry points matching the requested type, including those found under deprecated group names with a warning.
     """
     OLD = {v: k for k, v in DEPRECATED_ENTRYPOINTS.items()}
     identifier = plug_type.value if isinstance(plug_type, PluginTypes) else plug_type
@@ -218,14 +240,17 @@ _iter_entrypoints._warnings = []
 
 
 def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
-    """Load a specific plugin from a specific plugin type.
-
-    Arguments:
-        plug_type: (str) plugin type name. Ex. "opm.tts".
-        plug_name: (str) specific plugin name (else consider all plugin types)
-
+    """
+    Load a plugin by name from the specified plugin type.
+    
+    If the plugin is found, returns the loaded plugin object; otherwise, returns None and logs a warning.
+    
+    Parameters:
+        plug_name (str): The name of the plugin to load.
+        plug_type (Optional[PluginTypes]): The plugin type to search within. If not provided, searches all plugin types.
+    
     Returns:
-        Loaded plugin Object or None if no matching object was found.
+        The loaded plugin object if found; otherwise, None.
     """
     plugins = find_plugins(plug_type)
     if plug_name in plugins:
