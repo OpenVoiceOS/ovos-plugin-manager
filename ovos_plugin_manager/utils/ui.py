@@ -7,6 +7,7 @@ from ovos_utils.log import LOG
 from ovos_plugin_manager import PluginTypes
 from ovos_plugin_manager.stt import get_stt_lang_configs
 from ovos_plugin_manager.tts import get_tts_lang_configs
+from ovos_plugin_manager.utils import DEPRECATED_ENTRYPOINTS
 
 
 def hash_dict(d):
@@ -39,6 +40,7 @@ class PluginUIHelper:
         @param lang: ISO 639-1 or BCP-47 language requested
         @return: GUI-compatible plugin spec
         """
+        plugin_type = DEPRECATED_ENTRYPOINTS.get(plugin_type, plugin_type)
         cfg = cls._migrate_old_cfg(cfg)
         engine = cfg["module"]
         lang = standardize_lang_tag(lang or cfg.get("lang"), macro=True)
@@ -87,6 +89,7 @@ class PluginUIHelper:
         @return: plugin configuration for requested opt (lang, meta, module)
         """
         plugin_type = plugin_type or opt.get("plugin_type")
+        plugin_type = DEPRECATED_ENTRYPOINTS.get(plugin_type, plugin_type)
         if not plugin_type:
             raise ValueError("Unknown plugin type")
         if plugin_type == PluginTypes.STT:
@@ -136,6 +139,7 @@ class PluginUIHelper:
         @param include_dialects: If True, include any ISO 639-1 matched codes
         @return: list of valid GUI-compatible config dicts
         """
+        plugin_type = DEPRECATED_ENTRYPOINTS.get(plugin_type, plugin_type)
         lang = standardize_lang_tag(lang)
         # NOTE: mycroft-gui will crash if theres more than 20 options according to @aiix
         # TODO - validate that this is true and 20 is a real limit
@@ -189,6 +193,7 @@ class PluginUIHelper:
         @param plugin_type: Type of plugins to return
         @return: list of plugin specs with capabilities and config options
         """
+        plugin_type = DEPRECATED_ENTRYPOINTS.get(plugin_type, plugin_type)
         lang = standardize_lang_tag(lang)
         plugs = {}
         for entry in cls.get_config_options(lang, plugin_type):

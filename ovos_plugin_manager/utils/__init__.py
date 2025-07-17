@@ -11,55 +11,83 @@
 # limitations under the License.
 #
 """Common functions for loading plugins."""
-import time
 from collections import deque
-from enum import Enum
-from threading import Event, Lock
-from typing import Optional
-import warnings
+
 import pkg_resources
+import time
+import warnings
+from enum import Enum
 from ovos_utils.log import LOG, log_deprecation, deprecated
+from threading import Event, Lock
+from typing import Optional, Union
+
+DEPRECATED_ENTRYPOINTS = {
+    "ovos.plugin.gui": "opm.gui",
+    "ovos.plugin.phal": "opm.phal",
+    "ovos.plugin.phal.admin": "opm.phal.admin",
+    "ovos.plugin.skill": "opm.skill",
+    "ovos.plugin.microphone": "opm.microphone",
+    "ovos.plugin.VAD": "opm.vad",
+    "ovos.plugin.g2p": "opm.g2p",
+    "ovos.plugin.audio2ipa": "opm.audio2ipa",
+    'mycroft.plugin.stt': "opm.stt",
+    'mycroft.plugin.tts': "opm.tts",
+    'mycroft.plugin.wake_word': "opm.wake_word",
+    "neon.plugin.lang.translate": "opm.lang.translate",
+    "neon.plugin.lang.detect": "opm.lang.detect",
+    "neon.plugin.text": "opm.transformer.text",
+    "neon.plugin.metadata": "opm.transformer.metadata",
+    "neon.plugin.audio": "opm.transformer.audio",
+    "neon.plugin.solver": "opm.solver.question",
+    "intentbox.coreference": "opm.coreference",
+    "intentbox.keywords": "opm.keywords",
+    "intentbox.segmentation": "opm.segmentation",
+    "intentbox.tokenization": "opm.tokenization",
+    "intentbox.postag": "opm.postag",
+    "ovos.ocp.extractor": "opm.ocp.extractor"
+}
 
 
 class PluginTypes(str, Enum):
     TRIPLES = "opm.triples"
     PIPELINE = "opm.pipeline"
     EMBEDDINGS = "opm.embeddings"
+    IMAGE_EMBEDDINGS = "opm.embeddings.image"
     FACE_EMBEDDINGS = "opm.embeddings.face"
     VOICE_EMBEDDINGS = "opm.embeddings.voice"
     TEXT_EMBEDDINGS = "opm.embeddings.text"
-    GUI = "ovos.plugin.gui"  # TODO rename "opm.gui"
-    PHAL = "ovos.plugin.phal"  # TODO rename "opm.phal"
-    ADMIN = "ovos.plugin.phal.admin"  # TODO rename "opm.phal.admin"
-    SKILL = "ovos.plugin.skill"  # TODO rename "opm.skill"
-    MIC = "ovos.plugin.microphone"  # TODO rename "opm.microphone"
-    VAD = "ovos.plugin.VAD"  # TODO rename "opm.vad"
-    PHONEME = "ovos.plugin.g2p"  # TODO rename "opm.g2p"
-    AUDIO2IPA = "ovos.plugin.audio2ipa"  # TODO rename "opm.audio2ipa"
+    GUI = "opm.gui"
+    PHAL = "opm.phal"
+    ADMIN = "opm.phal.admin"
+    SKILL = "opm.skill"
+    MIC = "opm.microphone"
+    VAD = "opm.VAD"
+    PHONEME = "opm.g2p"
+    AUDIO2IPA = "opm.audio2ipa"
     AUDIO = 'mycroft.plugin.audioservice'  # DEPRECATED
-    STT = 'mycroft.plugin.stt'  # TODO rename "opm.stt"
-    TTS = 'mycroft.plugin.tts'  # TODO rename "opm.tts"
-    WAKEWORD = 'mycroft.plugin.wake_word'  # TODO rename "opm.wake_word"
-    TRANSLATE = "neon.plugin.lang.translate"  # TODO rename "opm.lang.translate"
-    LANG_DETECT = "neon.plugin.lang.detect"  # TODO rename "opm.lang.detect"
-    UTTERANCE_TRANSFORMER = "neon.plugin.text"  # TODO rename "opm.transformer.text"
-    METADATA_TRANSFORMER = "neon.plugin.metadata"  # TODO rename "opm.transformer.metadata"
-    AUDIO_TRANSFORMER = "neon.plugin.audio"  # TODO rename "opm.transformer.audio"
+    STT = 'opm.stt'
+    TTS = 'opm.tts'
+    WAKEWORD = 'opm.wake_word'
+    TRANSLATE = "opm.lang.translate"
+    LANG_DETECT = "opm.lang.detect"
+    UTTERANCE_TRANSFORMER = "opm.transformer.text"
+    METADATA_TRANSFORMER = "opm.transformer.metadata"
+    AUDIO_TRANSFORMER = "opm.transformer.audio"
     DIALOG_TRANSFORMER = "opm.transformer.dialog"
     TTS_TRANSFORMER = "opm.transformer.tts"
     INTENT_TRANSFORMER = "opm.transformer.intent"
-    QUESTION_SOLVER = "neon.plugin.solver"  # TODO rename "opm.solver.question"
+    QUESTION_SOLVER = "opm.solver.question"
     CHAT_SOLVER = "opm.solver.chat"
     TLDR_SOLVER = "opm.solver.summarization"
     ENTAILMENT_SOLVER = "opm.solver.entailment"
     MULTIPLE_CHOICE_SOLVER = "opm.solver.multiple_choice"
     READING_COMPREHENSION_SOLVER = "opm.solver.reading_comprehension"
-    COREFERENCE_SOLVER = "intentbox.coreference"  # TODO rename "opm.coreference"
-    KEYWORD_EXTRACTION = "intentbox.keywords"  # TODO rename "opm.keywords"
-    UTTERANCE_SEGMENTATION = "intentbox.segmentation"  # TODO rename "opm.segmentation"
-    TOKENIZATION = "intentbox.tokenization"  # TODO rename "opm.tokenization"
-    POSTAG = "intentbox.postag"  # TODO rename "opm.postag"
-    STREAM_EXTRACTOR = "ovos.ocp.extractor"  # TODO rename "opm.ocp.extractor"
+    COREFERENCE_SOLVER = "opm.coreference"
+    KEYWORD_EXTRACTION = "opm.keywords"
+    UTTERANCE_SEGMENTATION = "opm.segmentation"
+    TOKENIZATION = "opm.tokenization"
+    POSTAG = "opm.postag"
+    STREAM_EXTRACTOR = "opm.ocp.extractor"
     AUDIO_PLAYER = "opm.media.audio"
     VIDEO_PLAYER = "opm.media.video"
     WEB_PLAYER = "opm.media.web"
@@ -70,41 +98,42 @@ class PluginConfigTypes(str, Enum):
     TRIPLES = "opm.triples.config"
     PIPELINE = "opm.pipeline.config"
     EMBEDDINGS = "opm.embeddings.config"
+    IMAGE_EMBEDDINGS = "opm.embeddings.image.config"
     FACE_EMBEDDINGS = "opm.embeddings.face.config"
     VOICE_EMBEDDINGS = "opm.embeddings.voice.config"
     TEXT_EMBEDDINGS = "opm.embeddings.text.config"
-    GUI = "ovos.plugin.gui.config"
-    PHAL = "ovos.plugin.phal.config"
-    ADMIN = "ovos.plugin.phal.admin.config"
-    SKILL = "ovos.plugin.skill.config"
-    VAD = "ovos.plugin.VAD.config"
-    MIC = "ovos.plugin.microphone.config"
-    PHONEME = "ovos.plugin.g2p.config"
-    AUDIO2IPA = "ovos.plugin.audio2ipa.config"
-    AUDIO = 'mycroft.plugin.audioservice.config'
-    STT = 'mycroft.plugin.stt.config'
-    TTS = 'mycroft.plugin.tts.config'
-    WAKEWORD = 'mycroft.plugin.wake_word.config'
-    TRANSLATE = "neon.plugin.lang.translate.config"
-    LANG_DETECT = "neon.plugin.lang.detect.config"
-    UTTERANCE_TRANSFORMER = "neon.plugin.text.config"
-    METADATA_TRANSFORMER = "neon.plugin.metadata.config"
-    AUDIO_TRANSFORMER = "neon.plugin.audio.config"
+    GUI = "opm.gui.config"
+    PHAL = "opm.phal.config"
+    ADMIN = "opm.phal.admin.config"
+    SKILL = "opm.skill.config"
+    VAD = "opm.VAD.config"
+    MIC = "opm.microphone.config"
+    PHONEME = "opm.g2p.config"
+    AUDIO2IPA = "opm.audio2ipa.config"
+    AUDIO = 'mycroft.plugin.audioservice.config'  # DEPRECATED
+    STT = 'opm.stt.config'
+    TTS = 'opm.tts.config'
+    WAKEWORD = 'opm.wake_word.config'
+    TRANSLATE = "opm.lang.translate.config"
+    LANG_DETECT = "opm.lang.detect.config"
+    UTTERANCE_TRANSFORMER = "opm.transformer.text.config"
+    METADATA_TRANSFORMER = "opm.transformer.metadata.config"
+    AUDIO_TRANSFORMER = "opm.transformer.audio.config"
     DIALOG_TRANSFORMER = "opm.transformer.dialog.config"
     TTS_TRANSFORMER = "opm.transformer.tts.config"
     INTENT_TRANSFORMER = "opm.transformer.intent.config"
-    QUESTION_SOLVER = "neon.plugin.solver.config"
+    QUESTION_SOLVER = "opm.solver.config"
     CHAT_SOLVER = "opm.solver.chat.config"
     TLDR_SOLVER = "opm.solver.summarization.config"
     ENTAILMENT_SOLVER = "opm.solver.entailment.config"
     MULTIPLE_CHOICE_SOLVER = "opm.solver.multiple_choice.config"
     READING_COMPREHENSION_SOLVER = "opm.solver.reading_comprehension.config"
-    COREFERENCE_SOLVER = "intentbox.coreference.config"
-    KEYWORD_EXTRACTION = "intentbox.keywords.config"
-    UTTERANCE_SEGMENTATION = "intentbox.segmentation.config"
-    TOKENIZATION = "intentbox.tokenization.config"
-    POSTAG = "intentbox.postag.config"
-    STREAM_EXTRACTOR = "ovos.ocp.extractor.config"
+    COREFERENCE_SOLVER = "opm.coreference.config"
+    KEYWORD_EXTRACTION = "opm.keywords.config"
+    UTTERANCE_SEGMENTATION = "opm.segmentation.config"
+    TOKENIZATION = "opm.tokenization.config"
+    POSTAG = "opm.postag.config"
+    STREAM_EXTRACTOR = "opm.ocp.extractor.config"
     AUDIO_PLAYER = "opm.media.audio.config"
     VIDEO_PLAYER = "opm.media.video.config"
     WEB_PLAYER = "opm.media.web.config"
@@ -144,27 +173,55 @@ def find_plugins(plug_type: PluginTypes = None) -> dict:
 
 find_plugins._errored = []
 
+# compat with older python versions
+try:
+    from importlib_metadata import entry_points
 
-def _iter_entrypoints(plug_type: Optional[str]):
+
+    def _iter_plugins(plug_type):
+        for entry_point in entry_points(group=plug_type):
+            yield entry_point
+except ImportError:
+    def _iter_plugins(plug_type):
+        for entry_point in pkg_resources.iter_entry_points(plug_type):
+            yield entry_point
+
+
+def _iter_entrypoints(plug_type: Union[str, PluginTypes]):
     """
     Return an iterator containing all entrypoints of the requested type
     @param plug_type: entrypoint name to load
     @return: iterator of all entrypoints
     """
-    try:
-        from importlib_metadata import entry_points
-        for entry_point in entry_points(group=plug_type):
-            yield entry_point
-    except ImportError:
-        for entry_point in pkg_resources.iter_entry_points(plug_type):
-            yield entry_point
+    OLD = {v: k for k, v in DEPRECATED_ENTRYPOINTS.items()}
+    identifier = plug_type.value if isinstance(plug_type, PluginTypes) else plug_type
+    old_identifier = OLD.get(plug_type)
+
+    if identifier in DEPRECATED_ENTRYPOINTS:
+        LOG.warning(
+            f"requested old style identifier, please update your code to request '{old_identifier}' instead of '{identifier}'")
+        identifier, old_identifier = DEPRECATED_ENTRYPOINTS[identifier], identifier
+
+    for entry_point in _iter_plugins(identifier):
+        yield entry_point
+
+    if old_identifier:
+        for e in _iter_plugins(old_identifier):
+            if e.name not in _iter_entrypoints._warnings:
+                _iter_entrypoints._warnings.append(e.name)
+                LOG.warning(
+                    f"old style entrypoint detected for plugin '{e.name}' - '{old_identifier}' should be renamed to '{identifier}'")
+            yield e
+
+
+_iter_entrypoints._warnings = []
 
 
 def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
     """Load a specific plugin from a specific plugin type.
 
     Arguments:
-        plug_type: (str) plugin type name. Ex. "mycroft.plugin.tts".
+        plug_type: (str) plugin type name. Ex. "opm.tts".
         plug_name: (str) specific plugin name (else consider all plugin types)
 
     Returns:
