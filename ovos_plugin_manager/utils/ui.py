@@ -42,19 +42,19 @@ class PluginUIHelper:
     def config2option(cls, cfg: dict, plugin_type: PluginTypes,
                       lang: str = None) -> dict:
         """
-                      Converts a plugin configuration dictionary into a UI-compatible option dictionary for display and selection.
-                      
-                      Parameters:
-                          cfg (dict): The plugin configuration dictionary.
-                          plugin_type (PluginTypes): The type of plugin (STT or TTS).
-                          lang (str, optional): The requested language code (ISO 639-1 or BCP-47).
-                      
-                      Returns:
-                          dict: A dictionary representing the plugin option in a format suitable for UI consumption.
-                      
-                      Raises:
-                          NotImplementedError: If the plugin type is not STT or TTS.
-                      """
+        Converts a plugin configuration dictionary into a UI-compatible option dictionary for display and selection.
+          
+        Parameters:
+            cfg (dict): The plugin configuration dictionary.
+            plugin_type (PluginTypes): The type of plugin (STT or TTS).
+            lang (str, optional): The requested language code (ISO 639-1 or BCP-47).
+          
+        Returns:
+            dict: A dictionary representing the plugin option in a format suitable for UI consumption.
+          
+        Raises:
+            NotImplementedError: If the plugin type is not STT or TTS.
+        """
         plugin_type = DEPRECATED_ENTRYPOINTS.get(plugin_type, plugin_type)
         cfg = cls._migrate_old_cfg(cfg)
         engine = cfg["module"]
@@ -149,22 +149,22 @@ class PluginUIHelper:
                            max_opts: int = 50, skip_setup: bool = True,
                            include_dialects: bool = True) -> list:
         """
-                           Retrieve a list of plugin configuration options formatted for UI selection for a given language and plugin type.
-                           
-                           Each returned dictionary represents a selectable plugin configuration, with support for filtering by blacklist, prioritizing preferred plugins, limiting the number of options, skipping plugins that require extra setup, and including dialect variants.
-                           
-                           Parameters:
-                               lang (str): The requested language code (ISO 639-1 or BCP-47).
-                               plugin_type (PluginTypes): The type of plugins to retrieve options for.
-                               blacklist (Optional[list]): List of plugin engine names to exclude from the results.
-                               preferred (Optional[list]): List of plugin engine names to prioritize at the start of the returned list.
-                               max_opts (int): Maximum number of options to return.
-                               skip_setup (bool): If True, exclude plugins that require non-optional extra setup.
-                               include_dialects (bool): If True, include dialect variants matching the language code.
-                           
-                           Returns:
-                               list: A list of dictionaries, each representing a UI-compatible plugin configuration option.
-                           """
+        Retrieve a list of plugin configuration options formatted for UI selection for a given language and plugin type.
+           
+        Each returned dictionary represents a selectable plugin configuration, with support for filtering by blacklist, prioritizing preferred plugins, limiting the number of options, skipping plugins that require extra setup, and including dialect variants.
+           
+        Parameters:
+            lang (str): The requested language code (ISO 639-1 or BCP-47).
+            plugin_type (PluginTypes): The type of plugins to retrieve options for.
+            blacklist (Optional[list]): List of plugin engine names to exclude from the results.
+            preferred (Optional[list]): List of plugin engine names to prioritize at the start of the returned list.
+            max_opts (int): Maximum number of options to return.
+            skip_setup (bool): If True, exclude plugins that require non-optional extra setup.
+            include_dialects (bool): If True, include dialect variants matching the language code.
+           
+        Returns:
+            list: A list of dictionaries, each representing a UI-compatible plugin configuration option.
+        """
         plugin_type = DEPRECATED_ENTRYPOINTS.get(plugin_type, plugin_type)
         lang = standardize_lang_tag(lang)
         # NOTE: mycroft-gui will crash if theres more than 20 options according to @aiix
