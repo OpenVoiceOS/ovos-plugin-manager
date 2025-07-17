@@ -116,32 +116,32 @@ class EmbeddingsDB:
                        return_metadata: bool = False) -> Union[Optional[EmbeddingsArray],
                                                                Tuple[Optional[EmbeddingsArray], Optional[Dict[str, Any]]]]:
         """
-                       Retrieve an embedding by key from a specified collection, optionally including associated metadata.
-                       
-                       Parameters:
-                           key (str): The unique identifier for the embedding.
-                           collection_name (Optional[str]): The collection to search within. If not provided, uses the default collection.
-                           return_metadata (bool): If True, returns a tuple of (embedding, metadata); otherwise, returns only the embedding.
-                       
-                       Returns:
-                           If `return_metadata` is False, returns the embedding array or None if not found.
-                           If `return_metadata` is True, returns a tuple of (embedding array, metadata dictionary), or (None, None) if not found.
-                       """
+        Retrieve an embedding by key from a specified collection, optionally including associated metadata.
+       
+        Parameters:
+            key (str): The unique identifier for the embedding.
+            collection_name (Optional[str]): The collection to search within. If not provided, uses the default collection.
+            return_metadata (bool): If True, returns a tuple of (embedding, metadata); otherwise, returns only the embedding.
+           
+        Returns:
+            If `return_metadata` is False, returns the embedding array or None if not found.
+            If `return_metadata` is True, returns a tuple of (embedding array, metadata dictionary), or (None, None) if not found.
+        """
         raise NotImplementedError
 
     def get_embeddings_batch(self, keys: List[str], collection_name: Optional[str] = None,
                              return_metadata: bool = False) -> List[RetrievedEmbeddingResult]:
         """
-                             Retrieve multiple embeddings by key from a specified collection, optionally including metadata.
-                             
-                             Parameters:
-                                 keys (List[str]): List of embedding keys to retrieve.
-                                 collection_name (Optional[str]): Name of the collection to query.
-                                 return_metadata (bool): If True, includes metadata with each embedding.
-                             
-                             Returns:
-                                 List[RetrievedEmbeddingResult]: List of (key, embedding) or (key, embedding, metadata) tuples for found embeddings.
-                             """
+        Retrieve multiple embeddings by key from a specified collection, optionally including metadata.
+         
+        Parameters:
+            keys (List[str]): List of embedding keys to retrieve.
+            collection_name (Optional[str]): Name of the collection to query.
+            return_metadata (bool): If True, includes metadata with each embedding.
+         
+        Returns:
+            List[RetrievedEmbeddingResult]: List of (key, embedding) or (key, embedding, metadata) tuples for found embeddings.
+        """
         results = []
         for key in keys:
             # Call the single get_embeddings method with return_metadata
@@ -181,17 +181,17 @@ class EmbeddingsDB:
     def query(self, embeddings: EmbeddingsArray, top_k: int = 5,
               return_metadata: bool = False, collection_name: Optional[str] = None) -> List[EmbeddingsTuple]:
         """
-              Finds and returns the top_k embeddings in the specified collection that are closest to the provided embedding vector.
-              
-              Parameters:
-                  embeddings: The embedding vector to use as the query.
-                  top_k: Number of closest results to return.
-                  return_metadata: If True, includes metadata for each result.
-                  collection_name: Name of the collection to search within.
-              
-              Returns:
-                  A list of tuples, each containing the key, distance, and optionally metadata for the closest embeddings.
-              """
+        Finds and returns the top_k embeddings in the specified collection that are closest to the provided embedding vector.
+          
+        Parameters:
+            embeddings: The embedding vector to use as the query.
+            top_k: Number of closest results to return.
+            return_metadata: If True, includes metadata for each result.
+            collection_name: Name of the collection to search within.
+          
+        Returns:
+            A list of tuples, each containing the key, distance, and optionally metadata for the closest embeddings.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -217,23 +217,23 @@ class EmbeddingsDB:
                  # required for mahalanobis distance with user-defined covariance
                  ) -> float:
         """
-                 Compute the distance or divergence between two embedding vectors using a specified metric.
-                 
-                 Supports a wide range of distance and similarity metrics, including cosine, Euclidean, Manhattan, Chebyshev, Minkowski (and weighted variants), Hamming, Jaccard, Canberra, Bray-Curtis, Mahalanobis, Pearson and Spearman correlation, Wasserstein, KL and Jensen-Shannon divergence, Bhattacharyya, Hellinger, Ruzicka, Kulczynski, Sørensen, Chi-squared, log-cosh, Tanimoto, Rao's Quadratic Entropy, Gower, Tversky, alpha and Renyi divergence, Kendall Tau, and total variation. Handles normalization and edge cases for each metric. Raises a ValueError if the metric is unsupported or required parameters are missing.
-                 
-                 Parameters:
-                     embeddings_a: The first embedding vector.
-                     embeddings_b: The second embedding vector.
-                     metric: The distance or similarity metric to use (default: "cosine").
-                     alpha: Parameter for alpha_divergence, tversky, and renyi_divergence metrics.
-                     beta: Parameter for tversky metric.
-                     p: Parameter for minkowski and weighted_minkowski metrics.
-                     euclidean_weights: Weights for weighted_euclidean and weighted_minkowski metrics.
-                     covariance_matrix: Covariance matrix for mahalanobis distance.
-                 
-                 Returns:
-                     The computed distance or divergence as a float.
-                 """
+        Compute the distance or divergence between two embedding vectors using a specified metric.
+         
+        Supports a wide range of distance and similarity metrics, including cosine, Euclidean, Manhattan, Chebyshev, Minkowski (and weighted variants), Hamming, Jaccard, Canberra, Bray-Curtis, Mahalanobis, Pearson and Spearman correlation, Wasserstein, KL and Jensen-Shannon divergence, Bhattacharyya, Hellinger, Ruzicka, Kulczynski, Sørensen, Chi-squared, log-cosh, Tanimoto, Rao's Quadratic Entropy, Gower, Tversky, alpha and Renyi divergence, Kendall Tau, and total variation. Handles normalization and edge cases for each metric. Raises a ValueError if the metric is unsupported or required parameters are missing.
+         
+        Parameters:
+            embeddings_a: The first embedding vector.
+            embeddings_b: The second embedding vector.
+            metric: The distance or similarity metric to use (default: "cosine").
+            alpha: Parameter for alpha_divergence, tversky, and renyi_divergence metrics.
+            beta: Parameter for tversky metric.
+            p: Parameter for minkowski and weighted_minkowski metrics.
+            euclidean_weights: Weights for weighted_euclidean and weighted_minkowski metrics.
+            covariance_matrix: Covariance matrix for mahalanobis distance.
+         
+        Returns:
+            The computed distance or divergence as a float.
+        """
         # Ensure embeddings are numpy arrays for consistent calculations
         embeddings_a = np.asarray(embeddings_a)
         embeddings_b = np.asarray(embeddings_b)
