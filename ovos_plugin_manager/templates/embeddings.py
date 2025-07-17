@@ -85,27 +85,27 @@ class EmbeddingsDB:
                        metadata: Optional[Dict[str, Any]] = None,
                        collection_name: Optional[str] = None) -> EmbeddingsArray:
         """
-                       Stores an embedding vector under a unique key in the specified collection, with optional metadata.
-                       
-                       Parameters:
-                           key (str): Unique identifier for the embedding.
-                           embedding (EmbeddingsArray): The embedding vector to store.
-                           metadata (Optional[Dict[str, Any]]): Optional metadata to associate with the embedding.
-                           collection_name (Optional[str]): Name of the collection to store the embedding in; uses a default collection if not specified.
-                       
-                       Returns:
-                           EmbeddingsArray: The stored embedding vector.
-                       """
+        Stores an embedding vector under a unique key in the specified collection, with optional metadata.
+       
+        Parameters:
+            key (str): Unique identifier for the embedding.
+            embedding (EmbeddingsArray): The embedding vector to store.
+            metadata (Optional[Dict[str, Any]]): Optional metadata to associate with the embedding.
+            collection_name (Optional[str]): Name of the collection to store the embedding in; uses a default collection if not specified.
+       
+        Returns:
+             EmbeddingsArray: The stored embedding vector.
+        """
         raise NotImplementedError
 
     def add_embeddings_batch(self, keys: List[str], embeddings: List[EmbeddingsArray],
                              metadata: Optional[List[Dict[str, Any]]] = None,
                              collection_name: Optional[str] = None) -> None:
         """
-                             Add or update multiple embeddings in a collection in a single batch operation.
-                             
-                             This default implementation processes each embedding individually; subclasses may override for more efficient bulk handling.
-                             """
+        Add or update multiple embeddings in a collection in a single batch operation.
+        
+        This default implementation processes each embedding individually; subclasses may override for more efficient bulk handling.
+        """
         if metadata is None:
             metadata = [None] * len(keys)
         for i, key in enumerate(keys):
