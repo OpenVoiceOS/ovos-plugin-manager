@@ -7,9 +7,19 @@ from ovos_utils.log import LOG
 from ovos_plugin_manager import PluginTypes
 from ovos_plugin_manager.stt import get_stt_lang_configs
 from ovos_plugin_manager.tts import get_tts_lang_configs
+from ovos_plugin_manager.utils import DEPRECATED_ENTRYPOINTS
 
 
 def hash_dict(d):
+    """
+    Compute a hash string for a dictionary by serializing it to a sorted JSON string.
+    
+    Parameters:
+        d (dict): The dictionary to hash.
+    
+    Returns:
+        str: A string representation of the hash value for the input dictionary.
+    """
     return str(hash(json.dumps(d, indent=2, sort_keys=True,
                                ensure_ascii=True)))
 
@@ -32,13 +42,20 @@ class PluginUIHelper:
     def config2option(cls, cfg: dict, plugin_type: PluginTypes,
                       lang: str = None) -> dict:
         """
-        Get the equivalent UI display model from a plugin config.
-        This is the inverse of option2config.
-        @param cfg: Configuration from plugin entrypoint
-        @param plugin_type: Plugin type (stt/tts)
-        @param lang: ISO 639-1 or BCP-47 language requested
-        @return: GUI-compatible plugin spec
+        Converts a plugin configuration dictionary into a UI-compatible option dictionary for display and selection.
+          
+        Parameters:
+            cfg (dict): The plugin configuration dictionary.
+            plugin_type (PluginTypes): The type of plugin (STT or TTS).
+            lang (str, optional): The requested language code (ISO 639-1 or BCP-47).
+          
+        Returns:
+            dict: A dictionary representing the plugin option in a format suitable for UI consumption.
+          
+        Raises:
+            NotImplementedError: If the plugin type is not STT or TTS.
         """
+        plugin_type = DEPRECATED_ENTRYPOINTS.get(plugin_type, plugin_type)
         cfg = cls._migrate_old_cfg(cfg)
         engine = cfg["module"]
         lang = standardize_lang_tag(lang or cfg.get("lang"), macro=True)
@@ -80,13 +97,21 @@ class PluginUIHelper:
     @classmethod
     def option2config(cls, opt: dict, plugin_type: PluginTypes = None) -> dict:
         """
-        Get the equivalent plugin config from a UI display model.
-        This is the inverse of config2option.
-        @param opt: Configuration from GUI
-        @param plugin_type: Plugin type (stt/tts)
-        @return: plugin configuration for requested opt (lang, meta, module)
+        Converts a UI option dictionary back into its original plugin configuration.
+        
+        Parameters:
+            opt (dict): The UI option representing a plugin configuration.
+            plugin_type (PluginTypes, optional): The type of plugin (STT or TTS). If not provided, it is inferred from the option.
+        
+        Returns:
+            dict: The original plugin configuration corresponding to the provided UI option.
+        
+        Raises:
+            ValueError: If the plugin type cannot be determined.
+            NotImplementedError: If the plugin type is not STT or TTS.
         """
         plugin_type = plugin_type or opt.get("plugin_type")
+        plugin_type = DEPRECATED_ENTRYPOINTS.get(plugin_type, plugin_type)
         if not plugin_type:
             raise ValueError("Unknown plugin type")
         if plugin_type == PluginTypes.STT:
@@ -124,18 +149,23 @@ class PluginUIHelper:
                            max_opts: int = 50, skip_setup: bool = True,
                            include_dialects: bool = True) -> list:
         """
-        Get a list of dict metadata for downstream UIs.
-        Each option corresponds to a valid selectable plugin configuration;
-        each plugin may report several options.
-        @param lang: Requested language (ISO 639-1 or BCP-47)
-        @param plugin_type: Type of plugins to return
-        @param blacklist: plugin names to ignore
-        @param preferred: preferred plugin names to prepend to returned list
-        @param max_opts: maximum length of the returned list
-        @param skip_setup: If True, exclude any plugins that require setup
-        @param include_dialects: If True, include any ISO 639-1 matched codes
-        @return: list of valid GUI-compatible config dicts
+        Retrieve a list of plugin configuration options formatted for UI selection for a given language and plugin type.
+           
+        Each returned dictionary represents a selectable plugin configuration, with support for filtering by blacklist, prioritizing preferred plugins, limiting the number of options, skipping plugins that require extra setup, and including dialect variants.
+           
+        Parameters:
+            lang (str): The requested language code (ISO 639-1 or BCP-47).
+            plugin_type (PluginTypes): The type of plugins to retrieve options for.
+            blacklist (Optional[list]): List of plugin engine names to exclude from the results.
+            preferred (Optional[list]): List of plugin engine names to prioritize at the start of the returned list.
+            max_opts (int): Maximum number of options to return.
+            skip_setup (bool): If True, exclude plugins that require non-optional extra setup.
+            include_dialects (bool): If True, include dialect variants matching the language code.
+           
+        Returns:
+            list: A list of dictionaries, each representing a UI-compatible plugin configuration option.
         """
+        plugin_type = DEPRECATED_ENTRYPOINTS.get(plugin_type, plugin_type)
         lang = standardize_lang_tag(lang)
         # NOTE: mycroft-gui will crash if theres more than 20 options according to @aiix
         # TODO - validate that this is true and 20 is a real limit
@@ -183,12 +213,18 @@ class PluginUIHelper:
     @classmethod
     def get_plugin_options(cls, lang: str, plugin_type: PluginTypes) -> list:
         """
-        Get a list of dict metadata for downstream UIs.
-        Each option corresponds to a valid plugin and its capabilities
-        @param lang: Requested language (ISO 639-1 or BCP-47)
-        @param plugin_type: Type of plugins to return
-        @return: list of plugin specs with capabilities and config options
+        Return a list of plugin metadata dictionaries summarizing available plugins and their capabilities for a given language and plugin type.
+        
+        Each dictionary includes the plugin engine name, plugin name, supported modes (offline/online), available configuration options, and for TTS plugins, supported voice genders.
+        
+        Parameters:
+            lang (str): The requested language code (ISO 639-1 or BCP-47).
+            plugin_type (PluginTypes): The type of plugins to retrieve.
+        
+        Returns:
+            list: A list of dictionaries, each describing a plugin's capabilities and available configuration options.
         """
+        plugin_type = DEPRECATED_ENTRYPOINTS.get(plugin_type, plugin_type)
         lang = standardize_lang_tag(lang)
         plugs = {}
         for entry in cls.get_config_options(lang, plugin_type):
