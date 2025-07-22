@@ -1,8 +1,20 @@
 # Changelog
 
+## [2.0.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.0a1) (2025-07-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...2.0.0a1)
+
+**Breaking changes:**
+
+- feat!: add collections and batch operations support to embeddings plu… [\#333](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/333) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.0.4a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a2) (2025-07-22)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a2)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a3...1.0.4a2)
+
+## [1.0.4a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a3) (2025-07-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a3)
 
 **Merged pull requests:**
 
