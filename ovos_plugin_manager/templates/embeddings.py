@@ -13,7 +13,7 @@ except ImportError:
 EmbeddingsTuple = Union[Tuple[str, float], Tuple[str, float, Dict]]
 
 # RetrievedEmbeddingResult is for getting embeddings (key, embedding, optional metadata)
-RetrievedEmbeddingResult = Union[Tuple[str, EmbeddingsArray], Tuple[str, EmbeddingsArray, Dict[str, Any]]]
+RetrievedEmbeddingResult = Union[Tuple[str, Optional[EmbeddingsArray]], Tuple[str, Optional[EmbeddingsArray], Dict[str, Any]]]
 
 
 class EmbeddingsDB:
@@ -146,15 +146,16 @@ class EmbeddingsDB:
         for key in keys:
             # Call the single get_embeddings method with return_metadata
             retrieved_data = self.get_embeddings(key, collection_name=collection_name, return_metadata=return_metadata)
-            if retrieved_data is not None:
-                if return_metadata:
-                    embedding, metadata = retrieved_data
-                    if embedding is not None: # Ensure embedding is not None before appending
-                        results.append((key, embedding, metadata))
-                else:
-                    embedding = retrieved_data
-                    if embedding is not None: # Ensure embedding is not None before appending
-                        results.append((key, embedding))
+            if retrieved_data is None:
+                embedding, metadata = None, {}
+            elif return_metadata:
+                embedding, metadata = retrieved_data
+            else:
+                embedding = retrieved_data
+            if return_metadata:
+                results.append((key, embedding, metadata))
+            else:
+                results.append((key, embedding))
         return results
 
     @abc.abstractmethod
