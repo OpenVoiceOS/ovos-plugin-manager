@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.0a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.0a2) (2025-07-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.0.0a1...2.0.0a2)
+
+**Merged pull requests:**
+
+- Update requests requirement from ~=2.26 to ~=2.32 in /requirements [\#330](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/330) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [2.0.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.0a1) (2025-07-22)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...2.0.0a1)
@@ -24,10 +32,6 @@
 ## [1.0.4a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a1) (2025-06-18)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.3...1.0.4a1)
-
-**Closed issues:**
-
-- An error occurred \(InvalidSsmlException\) when calling the SynthesizeSpeech operation: Invalid SSML request [\#221](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/221)
 
 
 
