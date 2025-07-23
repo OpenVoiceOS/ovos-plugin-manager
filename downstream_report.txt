@@ -1,4 +1,4 @@
-ovos-plugin-manager==1.0.4a1
+ovos-plugin-manager==1.0.4a2
 ├── ovos-solver-yes-no-plugin==0.2.9a3 [requires: ovos-plugin-manager]
 │   └── ovos-workshop==7.0.9a1 [requires: ovos-solver-yes-no-plugin>=0.0.1,<1.0.0]
 │       ├── ovos-skill-wikipedia==0.8.13 [requires: ovos-workshop>=3.4.0,<8.0.0]
