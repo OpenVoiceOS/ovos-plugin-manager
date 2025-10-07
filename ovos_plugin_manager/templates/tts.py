@@ -559,6 +559,10 @@ class TTS:
             # get visemes/mouth movements
             viseme = self._get_visemes(phonemes, sentence, ctxt)
 
+            # update message info with the utterance chunk
+            # this allows ovos-audio to know which text segment is currently playing
+            message.data["utterance"] = sentence
+
             # queue audio for playback
             TTS.queue.put(
                 (str(audio_file), viseme, l, ctxt.tts_id, message)
