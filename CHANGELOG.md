@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.1a1) (2025-10-07)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.0.0a2...2.0.1a1)
+
+**Fixed bugs:**
+
+- Latest git tag is invalid [\#235](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/235)
+
+**Closed issues:**
+
+- \[BUG\] TTS template checks for backwards-incompatible property [\#304](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/304)
+- make available\_languages a classproperty [\#269](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/269)
+
+**Merged pull requests:**
+
+- fix: let ovos-audio know the actual text associated with each audio c… [\#338](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/338) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.0.0a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.0a2) (2025-07-22)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.0.0a1...2.0.0a2)
@@ -10,19 +27,19 @@
 
 ## [2.0.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.0a1) (2025-07-22)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...2.0.0a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a3...2.0.0a1)
 
 **Breaking changes:**
 
 - feat!: add collections and batch operations support to embeddings plu… [\#333](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/333) ([JarbasAl](https://github.com/JarbasAl))
 
-## [1.0.4a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a2) (2025-07-22)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a3...1.0.4a2)
-
 ## [1.0.4a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a3) (2025-07-22)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a3)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...1.0.4a3)
+
+## [1.0.4a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a2) (2025-07-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a2)
 
 **Merged pull requests:**
 
