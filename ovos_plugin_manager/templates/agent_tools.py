@@ -7,9 +7,10 @@ from ovos_utils.fakebus import FakeBus
 from pydantic import BaseModel, Field
 
 
+
 # Base Pydantic Model for Tool Input/Arguments
 class ToolArguments(BaseModel):
-    """Base class for Pydantic models defining tool arguments."""
+    """Base class for Pydantic models defining tool input/arguments."""
     pass
 
 
@@ -17,6 +18,9 @@ class ToolArguments(BaseModel):
 class ToolOutput(BaseModel):
     """Base class for Pydantic models defining tool output structure."""
     pass
+
+# --- Type Aliases for Clarity ---
+ToolCallFunc = Callable[[ToolArguments], Dict[str, Any]]
 
 
 @dataclass
@@ -31,8 +35,9 @@ class AgentTool:
     description: str = field(metadata={'help': 'A detailed, natural language description of the tool\'s purpose.'})
     argument_schema: Type[ToolArguments] = field(metadata={'help': 'Pydantic model defining the expected input/arguments.'})
     output_schema: Type[ToolOutput] = field(metadata={'help': 'Pydantic model defining the expected output structure.'})
-    tool_call: Callable[..., Dict[str, Any]] = field(metadata={'help': 'The function to execute the tool logic. It accepts keyword arguments validated against argument_schema and must return a Dict[str, Any] conforming to output_schema.'})
-
+    tool_call: ToolCallFunc = field(
+        metadata={'help': 'The function to execute the tool logic. It accepts one positional argument (an instantiated ToolArguments model) and must return a Dict[str, Any] conforming to output_schema.'}
+    )
 
 class ToolBox(ABC):
     """
@@ -119,39 +124,100 @@ class ToolBox(ABC):
 
         try:
             # Use the execution wrapper method
-            result: Dict[str, Any] = self.call_tool(name, tool_kwargs)
-            self.bus.emit(message.response({"result": result, "toolbox_id": self.toolbox_id}))
+            result: ToolOutput = self.call_tool(name, tool_kwargs)
+            self.bus.emit(message.response({"result": result.model_dump(), "toolbox_id": self.toolbox_id}))
         except Exception as e:
             # Catch all execution exceptions (including ValueErrors from call_tool)
             error: str = f"{type(e).__name__}: {str(e)}"
             self.bus.emit(message.response({"error": error, "toolbox_id": self.toolbox_id}))
 
-    def call_tool(self, name: str, tool_kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    @staticmethod
+    def validate_input(tool: AgentTool, tool_kwargs: Dict[str, Any]) -> ToolArguments:
         """
-        Direct execution interface for an Agent (solver) to call a tool.
+        Validates raw keyword arguments against the tool's input schema.
 
-        This path is used by the `ovos-solver-tool-orchestrator-plugin` for direct,
-        in-process execution without messagebus overhead.
+        Args:
+            tool: The :class:`AgentTool` definition.
+            tool_kwargs: The raw dictionary of arguments.
+
+        Returns:
+            An instantiated :class:`ToolArguments` Pydantic model.
+
+        Raises:
+            ValueError: If input validation fails (e.g., missing fields, wrong types).
+        """
+        try:
+            ArgsModel: Type[ToolArguments] = tool.argument_schema
+            # Instantiating the Pydantic model implicitly validates the input
+            return ArgsModel(**tool_kwargs)
+        except Exception as e:
+            raise ValueError(f"Invalid input for '{tool.name}': {tool_kwargs}") from e
+
+    @staticmethod
+    def validate_output(tool: AgentTool, raw_result: Dict[str, Any]) -> ToolOutput:
+        """
+        Validates the raw dictionary output from the tool execution against the output schema.
+
+        Args:
+            tool: The :class:`AgentTool` definition.
+            raw_result: The raw dictionary returned by the tool's execution function.
+
+        Returns:
+            An instantiated :class:`ToolOutput` Pydantic model.
+
+        Raises:
+            ValueError: If output validation fails.
+        """
+        try:
+            OutputModel: Type[ToolOutput] = tool.output_schema
+            # Validate the raw result against the output schema.
+            # The .model_validate() method returns a validated Pydantic object
+            return OutputModel.model_validate(raw_result)
+        except Exception as e:
+            raise ValueError(f"Invalid output from '{tool.name}': {raw_result}") from e
+
+
+    def call_tool(self, name: str, tool_kwargs: Dict[str, Any]) -> ToolOutput:
+        """
+        Direct execution interface for an Agent (solver) to call a tool,
+        with mandatory input and output validation.
+
+        This method orchestrates the full lifecycle: retrieval, input validation,
+        execution, and output validation.
 
         Args:
             name: The unique name of the tool to execute.
-            tool_kwargs: Keyword arguments for the tool, expected to be validated by the caller.
+            tool_kwargs: Raw keyword arguments from the orchestrator.
 
         Returns:
-            The raw dictionary output from the tool's `tool_call` function.
+            The validated :class:`ToolOutput` Pydantic object.
 
         Raises:
-            ValueError: If the requested tool name is unknown for this ToolBox.
-            RuntimeError: If the execution of the tool's `tool_call` function fails.
+            ValueError: If the tool name is unknown or if input validation fails.
+            RuntimeError: If tool execution or output validation fails.
         """
         tool: Optional[AgentTool] = self.get_tool(name)
         if tool:
             try:
-                # Execution assumes kwargs are already validated/sanitized by the orchestrator
-                return tool.tool_call(**tool_kwargs)
+                # 1. Input Validation and Instantiation
+                validated_args: ToolArguments = self.validate_input(tool, tool_kwargs)
+            except ValueError as e:
+                # Re-raise with more context
+                raise ValueError(f"Tool input validation failed for '{name}' in ToolBox '{self.toolbox_id}'") from e
+
+            try:
+                # 2. Tool Execution
+                raw_result: Dict[str, Any] = tool.tool_call(validated_args)
             except Exception as e:
-                # Wrap tool execution errors for better context
+                # Catch execution errors
                 raise RuntimeError(f"Tool execution failed for '{name}' in ToolBox '{self.toolbox_id}'") from e
+
+            try:
+                # 3. Output Validation
+                return self.validate_output(tool, raw_result)
+            except ValueError as e:
+                # Catch Pydantic output ValidationErrors
+                raise RuntimeError(f"Tool output validation failed for '{name}' in ToolBox '{self.toolbox_id}'") from e
         else:
             raise ValueError(f"Unknown tool '{name}' for ToolBox '{self.toolbox_id}'.")
 
@@ -187,6 +253,7 @@ class ToolBox(ABC):
             {
                 "name": tool.name,
                 "description": tool.description,
+                # Use Pydantic's .model_json_schema() for JSON schema export
                 "argument_schema": tool.argument_schema.model_json_schema(),
                 "output_schema": tool.output_schema.model_json_schema()
             }
