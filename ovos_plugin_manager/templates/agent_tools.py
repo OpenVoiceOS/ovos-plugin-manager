@@ -7,7 +7,6 @@ from ovos_utils.fakebus import FakeBus
 from pydantic import BaseModel, Field
 
 
-
 # Base Pydantic Model for Tool Input/Arguments
 class ToolArguments(BaseModel):
     """Base class for Pydantic models defining tool input/arguments."""
@@ -19,8 +18,10 @@ class ToolOutput(BaseModel):
     """Base class for Pydantic models defining tool output structure."""
     pass
 
+
 # --- Type Aliases for Clarity ---
-ToolCallFunc = Callable[[ToolArguments], Dict[str, Any]]
+ToolCallReturn = Union[Dict[str, Any], ToolOutput]
+ToolCallFunc = Callable[[ToolArguments], ToolCallReturn]
 
 
 @dataclass
@@ -36,8 +37,9 @@ class AgentTool:
     argument_schema: Type[ToolArguments] = field(metadata={'help': 'Pydantic model defining the expected input/arguments.'})
     output_schema: Type[ToolOutput] = field(metadata={'help': 'Pydantic model defining the expected output structure.'})
     tool_call: ToolCallFunc = field(
-        metadata={'help': 'The function to execute the tool logic. It accepts one positional argument (an instantiated ToolArguments model) and must return a Dict[str, Any] conforming to output_schema.'}
+        metadata={'help': 'The function to execute the tool logic. It accepts one positional argument (an instantiated ToolArguments model) and must return a Dict[str, Any] or an instantiated ToolOutput model.'}
     )
+
 
 class ToolBox(ABC):
     """
@@ -62,7 +64,7 @@ class ToolBox(ABC):
         # Internal cache for discovered tools, mapped by name
         self.tools: Dict[str, AgentTool] = {}
         try:
-            self.discover_tools() # try to find tools immediately
+            self.discover_tools()  # try to find tools immediately
         except Exception as e:
             pass  # will be lazy loaded or throw error on first usage
 
@@ -176,7 +178,6 @@ class ToolBox(ABC):
         except Exception as e:
             raise ValueError(f"Invalid output from '{tool.name}': {raw_result}") from e
 
-
     def call_tool(self, name: str, tool_kwargs: Dict[str, Any]) -> ToolOutput:
         """
         Direct execution interface for an Agent (solver) to call a tool,
@@ -197,29 +198,46 @@ class ToolBox(ABC):
             RuntimeError: If tool execution or output validation fails.
         """
         tool: Optional[AgentTool] = self.get_tool(name)
-        if tool:
-            try:
-                # 1. Input Validation and Instantiation
-                validated_args: ToolArguments = self.validate_input(tool, tool_kwargs)
-            except ValueError as e:
-                # Re-raise with more context
-                raise ValueError(f"Tool input validation failed for '{name}' in ToolBox '{self.toolbox_id}'") from e
+        if not tool:
+            raise ValueError(f"Unknown tool '{name}' for ToolBox '{self.toolbox_id}'.")
 
-            try:
-                # 2. Tool Execution
-                raw_result: Dict[str, Any] = tool.tool_call(validated_args)
-            except Exception as e:
-                # Catch execution errors
-                raise RuntimeError(f"Tool execution failed for '{name}' in ToolBox '{self.toolbox_id}'") from e
+        try:
+            # 1. Input Validation and Instantiation
+            validated_args: ToolArguments = self.validate_input(tool, tool_kwargs)
+        except ValueError as e:
+            # Re-raise with more context
+            raise ValueError(f"Tool input validation failed for '{name}' in ToolBox '{self.toolbox_id}'") from e
 
+        try:
+            # 2. Tool Execution
+            raw_or_validated_result: ToolCallReturn = tool.tool_call(validated_args)
+        except Exception as e:
+            # Re-raise with more context
+            raise RuntimeError(f"Tool execution failed for '{name}' in ToolBox '{self.toolbox_id}'") from e
+
+        # 3. Output Validation/Casting
+        if isinstance(raw_or_validated_result, ToolOutput):
+            # Case A: Tool returned an already validated Pydantic model.
+            # We perform a quick type check to ensure it matches the declared schema.
+            if not isinstance(raw_or_validated_result, tool.output_schema):
+                raise RuntimeError(
+                    f"Tool '{name}' returned model of type {type(raw_or_validated_result).__name__}, "
+                    f"but expected {tool.output_schema.__name__}."
+                )
+            return raw_or_validated_result
+        elif isinstance(raw_or_validated_result, dict):
+            # Case B: Tool returned a raw dictionary (needs validation).
             try:
-                # 3. Output Validation
-                return self.validate_output(tool, raw_result)
+                return self.validate_output(tool, raw_or_validated_result)
             except ValueError as e:
                 # Catch Pydantic output ValidationErrors
                 raise RuntimeError(f"Tool output validation failed for '{name}' in ToolBox '{self.toolbox_id}'") from e
         else:
-            raise ValueError(f"Unknown tool '{name}' for ToolBox '{self.toolbox_id}'.")
+            # Case C: Tool returned an unexpected type.
+            raise RuntimeError(
+                f"Tool '{name}' returned an unexpected type: {type(raw_or_validated_result).__name__}. "
+                "Must return Dict[str, Any] or ToolOutput."
+            )
 
     def get_tool(self, name: str) -> Optional[AgentTool]:
         """
