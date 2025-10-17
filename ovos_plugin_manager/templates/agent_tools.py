@@ -178,7 +178,7 @@ class ToolBox(ABC):
         except Exception as e:
             raise ValueError(f"Invalid output from '{tool.name}': {raw_result}") from e
 
-    def call_tool(self, name: str, tool_kwargs: Dict[str, Any]) -> ToolOutput:
+    def call_tool(self, name: str, tool_kwargs: Union[ToolArguments, Dict[str, Any]]) -> ToolOutput:
         """
         Direct execution interface for an Agent (solver) to call a tool,
         with mandatory input and output validation.
@@ -201,12 +201,29 @@ class ToolBox(ABC):
         if not tool:
             raise ValueError(f"Unknown tool '{name}' for ToolBox '{self.toolbox_id}'.")
 
-        try:
-            # 1. Input Validation and Instantiation
-            validated_args: ToolArguments = self.validate_input(tool, tool_kwargs)
-        except ValueError as e:
-            # Re-raise with more context
-            raise ValueError(f"Tool input validation failed for '{name}' in ToolBox '{self.toolbox_id}'") from e
+        # 1. Input Validation and Instantiation
+        if isinstance(tool_kwargs, ToolArguments):
+            # Case A: Input is an already validated Pydantic model.
+            # We perform a quick type check to ensure it matches the declared schema.
+            if not isinstance(tool_kwargs, tool.argument_schema):
+                raise ValueError(
+                    f"Tool '{name}' called with model of type {type(tool_kwargs).__name__}, "
+                    f"but expected {tool.output_schema.__name__}."
+                )
+            validated_args: ToolArguments = tool_kwargs
+        elif isinstance(tool_kwargs, dict):
+            # Case B: Input is a raw dictionary (needs validation).
+            try:
+                validated_args: ToolArguments = self.validate_input(tool, tool_kwargs)
+            except ValueError as e:
+                # Re-raise with more context
+                raise ValueError(f"Tool input validation failed for '{name}' in ToolBox '{self.toolbox_id}'") from e
+        else:
+            # Case C: Input is an unexpected type.
+            raise RuntimeError(
+                f"Tool '{name}' called with unexpected type arguments: {type(tool_kwargs).__name__}. "
+                "Must be Dict[str, Any] or ToolArguments."
+            )
 
         try:
             # 2. Tool Execution
