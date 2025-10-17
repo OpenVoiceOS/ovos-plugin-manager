@@ -206,11 +206,10 @@ class ToolBox(ABC):
             # Case A: Input is an already validated Pydantic model.
             # We perform a quick type check to ensure it matches the declared schema.
             if not isinstance(tool_kwargs, tool.argument_schema):
-                if not isinstance(tool_kwargs, tool.argument_schema):
-                    raise ValueError(
-                        f"Tool '{name}' called with model of type {type(tool_kwargs).__name__}, "
-                        f"but expected {tool.argument_schema.__name__}."
-                    )
+                raise ValueError(
+                    f"Tool '{name}' called with model of type {type(tool_kwargs).__name__}, "
+                    f"but expected {tool.argument_schema.__name__}."
+                )
             validated_args: ToolArguments = tool_kwargs
         elif isinstance(tool_kwargs, dict):
             # Case B: Input is a raw dictionary (needs validation).
