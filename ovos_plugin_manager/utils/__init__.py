@@ -92,6 +92,7 @@ class PluginTypes(str, Enum):
     VIDEO_PLAYER = "opm.media.video"
     WEB_PLAYER = "opm.media.web"
     PERSONA = "opm.plugin.persona"  # personas are a dict, they have no config because they ARE a config
+    PERSONA_TOOL = "opm.persona.tool"
 
 
 class PluginConfigTypes(str, Enum):
