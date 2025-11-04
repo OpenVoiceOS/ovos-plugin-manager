@@ -119,4 +119,4 @@ class HotWordVerifier:
     @abc.abstractmethod
     def verify(self, chunk: bytes) -> bool:
         """chunk is the audio from a wake word detection"""
-        return NotImplemented
+        raise NotImplementedError()
