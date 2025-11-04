@@ -1,10 +1,10 @@
 ovos-utils>=0.2.1,<1.0.0
 ovos_bus_client>=0.0.8,<2.0.0
-ovos-config>=0.0.12,<2.0.0
-combo_lock~=0.2
-requests~=2.26
+ovos-config>=0.0.12,<3.0.0
+combo_lock~=0.3
+requests~=2.32
 quebra_frases
-langcodes~=3.3.0
+langcodes~=3.5.0
 
 # see https://github.com/pypa/setuptools/issues/1471
 importlib_metadata
