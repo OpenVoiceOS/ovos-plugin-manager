@@ -1,10 +1,9 @@
 import abc
 from typing import Optional, Dict, Any
 
+from ovos_config import Configuration
 from ovos_utils import classproperty
 from ovos_utils.process_utils import RuntimeRequirements
-
-from ovos_config import Configuration
 
 
 def msec_to_sec(msecs):
@@ -86,7 +85,7 @@ class HotWordEngine:
         pass
 
     @abc.abstractmethod
-    def update(self, chunk):
+    def update(self, chunk: bytes):
         """Updates the hotword engine with new audio data.
 
         The engine should process the data and update internal trigger state.
@@ -108,3 +107,16 @@ class HotWordEngine:
         Compatibility wrapper for `self.stop`
         """
         self.stop()
+
+
+class HotWordVerifier:
+    """hotword verifier plugins double check predictions from wakeword detections.
+    Their main job is to filter false activations
+    """
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        self.config = config or {}
+
+    @abc.abstractmethod
+    def verify(self, chunk: bytes) -> bool:
+        """chunk is the audio from a wake word detection"""
+        return NotImplemented
