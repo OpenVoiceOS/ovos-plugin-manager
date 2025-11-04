@@ -68,6 +68,7 @@ class PluginTypes(str, Enum):
     STT = 'opm.stt'
     TTS = 'opm.tts'
     WAKEWORD = 'opm.wake_word'
+    WAKEWORD_VERIFIER = 'opm.wake_word.verifier'
     TRANSLATE = "opm.lang.translate"
     LANG_DETECT = "opm.lang.detect"
     UTTERANCE_TRANSFORMER = "opm.transformer.text"
@@ -114,6 +115,7 @@ class PluginConfigTypes(str, Enum):
     STT = 'opm.stt.config'
     TTS = 'opm.tts.config'
     WAKEWORD = 'opm.wake_word.config'
+    WAKEWORD_VERIFIER = 'opm.wake_word.verifier.config'
     TRANSLATE = "opm.lang.translate.config"
     LANG_DETECT = "opm.lang.detect.config"
     UTTERANCE_TRANSFORMER = "opm.transformer.text.config"
