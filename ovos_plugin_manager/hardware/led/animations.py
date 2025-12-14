@@ -11,10 +11,6 @@ from ovos_color_parser import sRGBAColor, Color
 
 BLACK = sRGBAColor.from_hex_str("#000000")  # Needed because ovos_color_parser does not parse a "pure" black
 
-# HACK: ovos_color_parser needs to return a rgb color 
-def as_rgb_tuple(color: Color):
-    return (color.r, color.g, color.b)
-
 class LedAnimation:
     def __init__(self, leds: AbstractLed, **kwargs):
         self.leds = leds
