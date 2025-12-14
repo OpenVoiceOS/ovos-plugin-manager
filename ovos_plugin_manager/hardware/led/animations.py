@@ -5,8 +5,15 @@ from ovos_utils.log import LOG
 from time import time
 from typing import Optional
 
-from ovos_plugin_manager.hardware.led import AbstractLed, Color
+from ovos_plugin_manager.hardware.led import AbstractLed
 
+from ovos_color_parser import sRGBAColor, Color
+
+BLACK = sRGBAColor.from_hex_str("#000000")  # Needed because ovos_color_parser does not parse a "pure" black
+
+# HACK: ovos_color_parser needs to return a rgb color 
+def as_rgb_tuple(color: Color):
+    return (color.r, color.g, color.b)
 
 class LedAnimation:
     def __init__(self, leds: AbstractLed, **kwargs):
@@ -56,7 +63,7 @@ class BreatheLedAnimation(LedAnimation):
 
             brightness += step
             self.leds.fill(tuple(brightness * part for part in
-                                 self.color.as_rgb_tuple()))
+                                 self.color.as_rgb))
             self._delay.wait(self.step_delay)
             if one_shot and brightness >= 1:
                 ending = True
@@ -64,7 +71,7 @@ class BreatheLedAnimation(LedAnimation):
                 self.stopping.set()
             elif end_time and time() > end_time:
                 self.stopping.set()
-        self.leds.fill(Color.BLACK.as_rgb_tuple())
+        self.leds.fill(BLACK.as_rgb)
 
     def stop(self):
         self.stopping.set()
@@ -72,7 +79,7 @@ class BreatheLedAnimation(LedAnimation):
 
 class ChaseLedAnimation(LedAnimation):
     def __init__(self, leds: AbstractLed, foreground_color: Color,
-                 background_color: Color = Color.BLACK):
+                 background_color: Color = BLACK):
         """
         Chase effect where all LEDs are lit individually in order until timing
         out or being stopped. LEDs are turned off after animation.
@@ -91,17 +98,17 @@ class ChaseLedAnimation(LedAnimation):
         self.stopping.clear()
         end_time = time() + timeout if timeout else None
 
-        self.leds.fill(self.background_color.as_rgb_tuple())
+        self.leds.fill(self.background_color.as_rgb)
         while not self.stopping.is_set():
             for led in range(0, self.leds.num_leds):
-                self.leds.set_led(led, self.foreground_color.as_rgb_tuple())
+                self.leds.set_led(led, self.foreground_color.as_rgb)
                 self._delay.wait(self.step_delay)
-                self.leds.set_led(led, self.background_color.as_rgb_tuple())
+                self.leds.set_led(led, self.background_color.as_rgb)
             if one_shot:
                 self.stopping.set()
             elif end_time and time() > end_time:
                 self.stopping.set()
-        self.leds.fill(Color.BLACK.as_rgb_tuple())
+        self.leds.fill(BLACK.as_rgb)
 
     def stop(self):
         self.stopping.set()
@@ -129,7 +136,7 @@ class FillLedAnimation(LedAnimation):
         if self.reverse:
             leds.reverse()
         for led in leds:
-            self.leds.set_led(led, self.fill_color.as_rgb_tuple())
+            self.leds.set_led(led, self.fill_color.as_rgb)
             self._delay.wait(self.step_delay)
 
     def stop(self):
@@ -158,7 +165,7 @@ class RefillLedAnimation(LedAnimation):
 
         while not self.stopping.is_set():
             self.fill_animation.start()
-            self.fill_animation.fill_color = Color.BLACK
+            self.fill_animation.fill_color = BLACK
             self.fill_animation.start()
             self.fill_animation.fill_color = self.fill_color
             if one_shot:
@@ -193,7 +200,7 @@ class BounceLedAnimation(LedAnimation):
         while not self.stopping.is_set():
             self.fill_animation.start()
             self.fill_animation.reverse = not self.fill_animation.reverse
-            self.fill_animation.fill_color = Color.BLACK
+            self.fill_animation.fill_color = BLACK
             self.fill_animation.start()
             self.fill_animation.reverse = not self.fill_animation.reverse
             self.fill_animation.fill_color = self.fill_color
@@ -227,13 +234,13 @@ class BlinkLedAnimation(LedAnimation):
         self.stopping.clear()
         end_time = time() + timeout if timeout else None
 
-        self.leds.fill(Color.BLACK.as_rgb_tuple())
+        self.leds.fill(BLACK.as_rgb)
         self._delay.wait(0.5)
         while not self.stopping.is_set():
             for i in range(self.num_blinks):
-                self.leds.fill(self.color.as_rgb_tuple())
+                self.leds.fill(self.color.as_rgb)
                 self._delay.wait(0.25)
-                self.leds.fill(Color.BLACK.as_rgb_tuple())
+                self.leds.fill(BLACK.as_rgb)
                 self._delay.wait(0.5)
             if one_shot:
                 self.stopping.set()
@@ -262,17 +269,17 @@ class AlternatingLedAnimation(LedAnimation):
 
     def start(self, timeout: Optional[int] = None, one_shot: bool = False):
         evens = True
-        self.leds.fill(Color.BLACK.as_rgb_tuple())
+        self.leds.fill(BLACK.as_rgb)
         self.stopping.clear()
         end_time = time() + timeout if timeout else None
         while not self.stopping.is_set():
             for led in range(self.leds.num_leds):
                 if evens and led % 2 == 0:
-                    self.leds.set_led(led, self.color.as_rgb_tuple(), False)
+                    self.leds.set_led(led, self.color.as_rgb, False)
                 elif not evens and led % 2 == 1:
-                    self.leds.set_led(led, self.color.as_rgb_tuple(), False)
+                    self.leds.set_led(led, self.color.as_rgb, False)
                 else:
-                    self.leds.set_led(led, Color.BLACK.as_rgb_tuple(), False)
+                    self.leds.set_led(led, BLACK.as_rgb, False)
             self.leds.show()
             self._delay.wait(self.delay)
             evens = not evens
@@ -280,7 +287,7 @@ class AlternatingLedAnimation(LedAnimation):
                 self.stopping.set()
             elif end_time and time() > end_time:
                 self.stopping.set()
-        self.leds.fill(Color.BLACK.as_rgb_tuple())
+        self.leds.fill(BLACK.as_rgb)
 
     def stop(self):
         self.stopping.set()
