@@ -5,6 +5,7 @@ combo_lock~=0.3
 requests~=2.32
 quebra_frases
 langcodes~=3.5.0
+pydantic~=2.0
 
 # see https://github.com/pypa/setuptools/issues/1471
 importlib_metadata
