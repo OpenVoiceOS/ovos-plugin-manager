@@ -31,7 +31,7 @@ jobs:
           python -m venv venv
           source venv/bin/activate
           pip install build wheel
-          pip install -r constraints-alpha.txt
+          pip install -r constraints-alpha.txt --no-deps
           pip install pipdeptree
 
       - name: Find downstream dependencies
