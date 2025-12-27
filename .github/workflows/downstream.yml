@@ -3,9 +3,7 @@ name: Track Downstream Dependencies
 on:
   push:
     branches: [dev]
-  schedule:
-    - cron: "0 0 * * *"  # Runs daily at midnight UTC
-  workflow_dispatch:  # Allows manual triggering
+  workflow_dispatch:
 
 env:
   TARGET_PACKAGE: "ovos-plugin-manager"  # Set the package to track here
@@ -24,7 +22,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.14'
+          python-version: '3.11'
 
       - name: Install Dependencies
         run: |
