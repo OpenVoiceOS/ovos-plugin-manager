@@ -1,62 +1,37 @@
 # Changelog
 
-## [2.1.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.0a1) (2025-11-04)
+## [2.1.1a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a5) (2026-01-08)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.0.1a1...2.1.0a1)
-
-**Merged pull requests:**
-
-- feat: ww verifier [\#341](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/341) ([JarbasAl](https://github.com/JarbasAl))
-
-## [2.0.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.1a1) (2025-10-07)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.0.0a2...2.0.1a1)
-
-**Fixed bugs:**
-
-- Latest git tag is invalid [\#235](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/235)
-
-**Closed issues:**
-
-- \[BUG\] TTS template checks for backwards-incompatible property [\#304](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/304)
-- make available\_languages a classproperty [\#269](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/269)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1a4...2.1.1a5)
 
 **Merged pull requests:**
 
-- fix: let ovos-audio know the actual text associated with each audio c… [\#338](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/338) ([JarbasAl](https://github.com/JarbasAl))
+- chore\(deps\): update actions/setup-python action to v6 [\#353](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/353) ([renovate[bot]](https://github.com/apps/renovate))
+- chore\(deps\): update actions/checkout action to v6 [\#352](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/352) ([renovate[bot]](https://github.com/apps/renovate))
 
-## [2.0.0a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.0a2) (2025-07-22)
+## [2.1.1a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a4) (2026-01-08)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.0.0a1...2.0.0a2)
-
-**Merged pull requests:**
-
-- Update requests requirement from ~=2.26 to ~=2.32 in /requirements [\#330](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/330) ([dependabot[bot]](https://github.com/apps/dependabot))
-
-## [2.0.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.0a1) (2025-07-22)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...2.0.0a1)
-
-**Breaking changes:**
-
-- feat!: add collections and batch operations support to embeddings plu… [\#333](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/333) ([JarbasAl](https://github.com/JarbasAl))
-
-## [1.0.4a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a2) (2025-07-22)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a3...1.0.4a2)
-
-## [1.0.4a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a3) (2025-07-22)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a3)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1a2...2.1.1a4)
 
 **Merged pull requests:**
 
-- Update langcodes requirement from ~=3.3.0 to ~=3.5.0 in /requirements [\#332](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/332) ([dependabot[bot]](https://github.com/apps/dependabot))
-- Update combo-lock requirement from ~=0.2 to ~=0.3 in /requirements [\#331](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/331) ([dependabot[bot]](https://github.com/apps/dependabot))
+- refactor: port AudioData from speechrecognition library [\#357](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/357) ([JarbasAl](https://github.com/JarbasAl))
 
-## [1.0.4a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a1) (2025-06-18)
+## [2.1.1a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a2) (2025-12-19)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.3...1.0.4a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1a1...2.1.1a2)
+
+**Merged pull requests:**
+
+- chore\(deps\): update dependency python to 3.14 [\#347](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/347) ([renovate[bot]](https://github.com/apps/renovate))
+
+## [2.1.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a1) (2025-12-18)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.0...2.1.1a1)
+
+**Merged pull requests:**
+
+- chore: Configure Renovate [\#346](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/346) ([renovate[bot]](https://github.com/apps/renovate))
 
 
 

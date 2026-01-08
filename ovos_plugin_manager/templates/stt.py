@@ -10,7 +10,7 @@ from ovos_utils import classproperty
 from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.log import LOG
 from ovos_utils.process_utils import RuntimeRequirements
-
+from ovos_plugin_manager.utils.audio import AudioData
 from ovos_config import Configuration
 
 
@@ -77,16 +77,42 @@ class STT(metaclass=ABCMeta):
     @lang.setter
     def lang(self, val):
         # backwards compat
+        """
+        Set the instance language by normalizing and storing the provided language tag.
+        
+        Parameters:
+            val (str): Language tag or code to set; it will be normalized to a standardized tag format before storage.
+        """
         self._lang = standardize_lang_tag(val)
 
     @abstractmethod
-    def execute(self, audio, language: Optional[str] = None) -> str:
+    def execute(self, audio: AudioData, language: Optional[str] = None) -> str:
         # TODO - eventually deprecate this and make transcribe the @abstractmethod
+        """
+        Transcribe the provided audio and return the best-matching text.
+        
+        Parameters:
+            audio (AudioData): Audio to be transcribed.
+            language (Optional[str]): Optional BCP-47 language tag to use for transcription; if omitted, the implementation should use its configured or detected language.
+        
+        Returns:
+            str: The primary transcription for the given audio.
+        """
         pass
 
-    def transcribe(self, audio, lang: Optional[str] = None) -> List[Tuple[str, float]]:
-        """transcribe audio data to a list of
-        possible transcriptions and respective confidences"""
+    def transcribe(self, audio: AudioData, lang: Optional[str] = None) -> List[Tuple[str, float]]:
+        """
+        Transcribe audio into one or more text hypotheses with associated confidence scores.
+        
+        If `lang` is "auto", attempts language detection against supported languages and falls back to the instance's configured language on detection failure.
+        
+        Parameters:
+            audio (AudioData): Audio to transcribe.
+            lang (Optional[str]): Language code to use for transcription or "auto" to detect language.
+        
+        Returns:
+            List[Tuple[str, float]]: A list of (transcription, confidence) pairs; confidence is a float in [0.0, 1.0].
+        """
         if lang is not None and lang == "auto":
             try:
                 lang, prob = self.detect_language(audio, self.available_languages)
@@ -149,6 +175,14 @@ class StreamingSTT(STT, metaclass=ABCMeta):
         self.transcript_ready = Event()
 
     def stream_start(self, language=None):
+        """
+        Start a new streaming recognition session and launch its worker thread.
+        
+        Stops any existing stream, creates a new input queue and streaming thread, assigns a normalized language tag (defaults to the current STT language), clears the transcript-ready event, and starts the thread.
+        
+        Parameters:
+            language (str | None): Optional language tag to use for the stream; it will be normalized. If omitted, the instance's current language is used.
+        """
         self.stream_stop()
         self.queue = Queue()
         self.stream = self.create_streaming_thread()
@@ -156,10 +190,24 @@ class StreamingSTT(STT, metaclass=ABCMeta):
         self.transcript_ready.clear()
         self.stream.start()
 
-    def stream_data(self, data):
+    def stream_data(self, data: bytes):
+        """
+        Enqueue a chunk of raw audio for processing by the active streaming thread.
+        
+        Parameters:
+            data (bytes): Raw audio bytes to append to the stream queue in FIFO order.
+        """
         self.queue.put(data)
 
     def stream_stop(self):
+        """
+        Stop the active streaming session and return its final transcription.
+        
+        If a stream is active, signal end-of-stream to the worker, wait for it to finalize and join the thread, clear internal stream state, and mark the transcript as ready.
+        
+        Returns:
+        	str or None: Final transcription text if a stream was active, `None` otherwise.
+        """
         if self.stream is not None:
             self.queue.put(None)
             text = self.stream.finalize()
