@@ -10,7 +10,7 @@ from ovos_utils import classproperty
 from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.log import LOG
 from ovos_utils.process_utils import RuntimeRequirements
-
+from ovos_plugin_manager.utils.audio import AudioData
 from ovos_config import Configuration
 
 
@@ -80,11 +80,11 @@ class STT(metaclass=ABCMeta):
         self._lang = standardize_lang_tag(val)
 
     @abstractmethod
-    def execute(self, audio, language: Optional[str] = None) -> str:
+    def execute(self, audio: AudioData, language: Optional[str] = None) -> str:
         # TODO - eventually deprecate this and make transcribe the @abstractmethod
         pass
 
-    def transcribe(self, audio, lang: Optional[str] = None) -> List[Tuple[str, float]]:
+    def transcribe(self, audio: AudioData, lang: Optional[str] = None) -> List[Tuple[str, float]]:
         """transcribe audio data to a list of
         possible transcriptions and respective confidences"""
         if lang is not None and lang == "auto":
@@ -156,7 +156,7 @@ class StreamingSTT(STT, metaclass=ABCMeta):
         self.transcript_ready.clear()
         self.stream.start()
 
-    def stream_data(self, data):
+    def stream_data(self, data: bytes):
         self.queue.put(data)
 
     def stream_stop(self):
