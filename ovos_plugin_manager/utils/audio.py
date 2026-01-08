@@ -34,6 +34,17 @@ class AudioData:
     """
 
     def __init__(self, frame_data, sample_rate: int, sample_width: int):
+        """
+        Initialize an AudioData instance holding mono PCM audio frames.
+        
+        Parameters:
+            frame_data (bytes-like): Raw PCM frame bytes for a single channel.
+            sample_rate (int): Sample rate in Hertz; must be greater than zero.
+            sample_width (int): Sample width in bytes (1 to 4); stored as an integer.
+        
+        Raises:
+            AssertionError: If sample_rate is not greater than zero or sample_width is not an integer between 1 and 4.
+        """
         assert sample_rate > 0, "Sample rate must be a positive integer"
         assert (
                 sample_width % 1 == 0 and 1 <= sample_width <= 4
@@ -44,12 +55,32 @@ class AudioData:
 
     @classmethod
     def from_file(cls, file_path: str) -> 'AudioData':
-        """Creates a new ``AudioData`` instance from an audio file."""
+        """
+        Create an AudioData instance from the audio file at the given path.
+        
+        Returns:
+            audio_data (AudioData): AudioData containing the file's mono PCM frame data, sample rate, and sample width.
+        """
         with AudioFile(file_path) as source:
             return source.read()
 
     @classmethod
     def from_array(cls, data: Array, sample_rate: int, sample_width: int) -> 'AudioData':
+        """
+        Create an AudioData instance from a 1-D NumPy array by converting the array into PCM frame bytes.
+        
+        Parameters:
+            data (Array): 1-D NumPy array containing mono audio samples. If dtype is floating, values are expected in the range -1.0 to 1.0 and will be scaled to the target integer range. If dtype is integer, values will be cast to the target integer type for the specified sample width.
+            sample_rate (int): Sample rate in Hz for the resulting AudioData.
+            sample_width (int): Sample width in bytes per sample (1, 2, 3, or 4). When 1, output uses unsigned 8-bit PCM. When 3, samples are packed as 24-bit little-endian (3 bytes per sample).
+        
+        Returns:
+            AudioData: New AudioData containing the PCM frame bytes produced from the input array, with the given sample_rate and sample_width.
+        
+        Raises:
+            ValueError: If `data` is not a 1-D array (mono).
+            Exception: Re-raises the stored NumPy import error if NumPy is not available.
+        """
         if np is None:
             raise _np_exc
 
@@ -104,9 +135,14 @@ class AudioData:
 
     def get_segment(self, start_ms=None, end_ms=None) -> 'AudioData':
         """
-        Returns a new ``AudioData`` instance, trimmed to a given time interval. In other words, an ``AudioData`` instance with the same audio data except starting at ``start_ms`` milliseconds in and ending ``end_ms`` milliseconds in.
-
-        If not specified, ``start_ms`` defaults to the beginning of the audio, and ``end_ms`` defaults to the end.
+        Return an AudioData instance trimmed to the specified millisecond interval.
+        
+        Parameters:
+            start_ms (float | int | None): Start time in milliseconds (inclusive). If None, start at the beginning.
+            end_ms (float | int | None): End time in milliseconds (exclusive). If None, end at the end of the audio.
+        
+        Returns:
+            AudioData: A new AudioData containing the audio frames from [start_ms, end_ms).
         """
         assert (
                 start_ms is None or start_ms >= 0
@@ -134,13 +170,14 @@ class AudioData:
 
     def get_raw_data(self, convert_rate=None, convert_width=None) -> bytes:
         """
-        Returns a byte string representing the raw frame data for the audio represented by the ``AudioData`` instance.
-
-        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
-
-        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
-
-        Writing these bytes directly to a file results in a valid `RAW/PCM audio file <https://en.wikipedia.org/wiki/Raw_audio_format>`__.
+        Get raw PCM frame bytes for this audio, optionally resampled or converted to a different sample width.
+        
+        Parameters:
+            convert_rate (int|None): If provided, resample audio to this sample rate in Hz.
+            convert_width (int|None): If provided, convert samples to this width in bytes (1–4). A value of 1 produces unsigned 8-bit samples.
+        
+        Returns:
+            bytes: Raw PCM frame data reflecting any requested rate or width conversions.
         """
         assert (
                 convert_rate is None or convert_rate > 0
@@ -206,13 +243,14 @@ class AudioData:
 
     def get_wav_data(self, convert_rate=None, convert_width=None) -> bytes:
         """
-        Returns a byte string representing the contents of a WAV file containing the audio represented by the ``AudioData`` instance.
-
-        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
-
-        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
-
-        Writing these bytes directly to a file results in a valid `WAV file <https://en.wikipedia.org/wiki/WAV>`__.
+        Produce WAV-format file bytes containing this AudioData.
+        
+        Parameters:
+            convert_rate (int or None): If given, resample audio to this sample rate in Hz.
+            convert_width (int or None): If given, convert sample width to this number of bytes (1–4).
+        
+        Returns:
+            bytes: WAV file bytes (mono) containing the audio, with any requested sample-rate or sample-width conversion applied.
         """
         raw_data = self.get_raw_data(convert_rate, convert_width)
         sample_rate = (
@@ -237,13 +275,14 @@ class AudioData:
 
     def get_aiff_data(self, convert_rate=None, convert_width=None) -> bytes:
         """
-        Returns a byte string representing the contents of an AIFF-C file containing the audio represented by the ``AudioData`` instance.
-
-        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
-
-        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
-
-        Writing these bytes directly to a file results in a valid `AIFF-C file <https://en.wikipedia.org/wiki/Audio_Interchange_File_Format>`__.
+        Produce AIFF-C file bytes for the audio data.
+        
+        Parameters:
+            convert_rate (int, optional): Target sample rate in Hz. If omitted, the instance's sample rate is used.
+            convert_width (int, optional): Target sample width in bytes (1–4). If omitted, the instance's sample width is used.
+        
+        Returns:
+            bytes: AIFF-C file contents containing the audio with the requested sample rate and sample width.
         """
         raw_data = self.get_raw_data(convert_rate, convert_width)
         sample_rate = (
@@ -279,15 +318,12 @@ class AudioData:
 
     def get_flac_data(self, convert_rate=None, convert_width=None) -> bytes:
         """
-        Returns a byte string representing the contents of a FLAC file containing the audio represented by the ``AudioData`` instance.
-
-        Note that 32-bit FLAC is not supported. If the audio data is 32-bit and ``convert_width`` is not specified, then the resulting FLAC will be a 24-bit FLAC.
-
-        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
-
-        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
-
-        Writing these bytes directly to a file results in a valid `FLAC file <https://en.wikipedia.org/wiki/FLAC>`__.
+        Return FLAC-encoded bytes for this AudioData.
+        
+        If `convert_rate` is provided and differs from the instance sample rate, the audio is resampled to `convert_rate` Hz. If `convert_width` is provided, the audio samples are converted to that many bytes per sample; `convert_width` must be 1, 2, or 3 when given. If the source is wider than 3 bytes and `convert_width` is not specified, the output is converted to 3-byte (24-bit) samples because 32-bit FLAC is not supported.
+        
+        Returns:
+            flac_bytes (bytes): A byte string containing a valid FLAC file representing the (optionally converted) audio.
         """
         assert convert_width is None or (
                 convert_width % 1 == 0 and 1 <= convert_width <= 3
@@ -330,12 +366,36 @@ class AudioData:
         return flac_data
 
     def get_np_int16(self, convert_rate=None, convert_width=None) -> Array:
+        """
+        Produce a NumPy int16 array containing the audio samples.
+        
+        Parameters:
+            convert_rate (int, optional): Target sample rate in Hz to convert to before extraction.
+            convert_width (int, optional): Target sample width in bytes (1–4) to convert to before extraction.
+        
+        Returns:
+            numpy.ndarray: 1-D NumPy array of dtype `int16` with the audio samples (mono).
+        
+        Raises:
+            Exception: Re-raises the original NumPy ImportError if NumPy is not available.
+        """
         if np is None:
             raise _np_exc
         audio_data = self.get_raw_data(convert_rate, convert_width)
         return np.frombuffer(audio_data, dtype=np.int16)
 
     def get_np_float32(self, normalize=True, convert_rate=None, convert_width=None) -> Array:
+        """
+        Return the audio as a NumPy float32 array.
+        
+        Parameters:
+            normalize (bool): If True, scale samples to the range -1.0 to +1.0 by dividing by 2**15.
+            convert_rate (int | None): Optional target sample rate to convert the audio to before conversion.
+            convert_width (int | None): Optional target sample width in bytes (1–4) to convert the audio to before conversion.
+        
+        Returns:
+            Array: A NumPy array of dtype `float32` containing the audio samples; values are in [-1.0, 1.0] when `normalize` is True.
+        """
         audio_as_np_int16 = self.get_np_int16(convert_rate, convert_width)
         audio_as_np_float32 = audio_as_np_int16.astype(np.float32)
         if normalize:
@@ -361,6 +421,15 @@ class AudioFile:
     """
 
     def __init__(self, filename_or_fileobject):
+        """
+        Initialize an AudioFile wrapper for reading WAV/AIFF/FLAC audio sources.
+        
+        Parameters:
+            filename_or_fileobject (str or file-like): Path to an audio file or a readable file-like object.
+        
+        Raises:
+            AssertionError: If `filename_or_fileobject` is not a string path nor an object with a `read()` method.
+        """
         assert isinstance(filename_or_fileobject, (type(""), type(u""))) or hasattr(filename_or_fileobject,
                                                                                     "read"), "Given audio file must be a filename string or a file-like object"
         self.filename_or_fileobject = filename_or_fileobject
@@ -374,6 +443,14 @@ class AudioFile:
         self.FRAME_COUNT = None
 
     def __enter__(self):
+        """
+        Open the audio source and prepare it for reading, detecting format and configuring stream properties.
+        
+        Tries to interpret the provided filename or file-like object as WAV, AIFF/AIFF-C, or FLAC (decoded to AIFF). On success, configures the instance for streaming by setting SAMPLE_RATE, SAMPLE_WIDTH (may be adjusted to 4 when 24-bit samples must be handled as 32-bit internally), CHUNK, FRAME_COUNT, DURATION, little_endian flag, and stream (an AudioFileStream instance). Validates that the audio has 1 or 2 channels. If the source cannot be parsed as WAV, AIFF, or native FLAC, raises ValueError.
+        
+        @returns
+            self: the prepared AudioFile instance with an open audio_reader and ready-to-use stream
+        """
         assert self.stream is None, "This audio source is already inside a context manager"
         try:
             # attempt to read the file as WAV
@@ -437,6 +514,11 @@ class AudioFile:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Close and clean up the AudioFile context, releasing any resources opened by this instance.
+        
+        If the original source was a filename (not a file-like object), closes the underlying audio reader. Resets the internal stream and duration state.
+        """
         if not hasattr(self.filename_or_fileobject,
                        "read"):  # only close the file if it was opened by this class in the first place (if the file was originally given as a path)
             self.audio_reader.close()
@@ -445,9 +527,14 @@ class AudioFile:
 
     def read(self, duration=None, offset=None) -> AudioData:
         """
-        Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) starting at ``offset`` (or at the beginning if not specified) into an ``AudioData`` instance, which it returns.
-
-        If ``duration`` is not specified, then it will record until there is no more audio input.
+        Read up to `duration` seconds from the opened audio stream, beginning at `offset` seconds, and return an AudioData containing the captured PCM frames.
+        
+        Parameters:
+            duration (float | None): Maximum number of seconds to read. If None, read until end of stream.
+            offset (float | None): Number of seconds to skip from the start before recording. If None, begin immediately.
+        
+        Returns:
+            AudioData: An AudioData instance holding the recorded frame bytes at the stream's sample rate and sample width.
         """
         assert self.stream is not None, "Audio source must be entered before recording, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
 
@@ -477,11 +564,34 @@ class AudioFile:
 
     class AudioFileStream:
         def __init__(self, audio_reader, little_endian, samples_24_bit_pretending_to_be_32_bit):
+            """
+            Initialize the AudioFileStream with an underlying audio reader and format flags.
+            
+            Parameters:
+                audio_reader: A file-like audio reader (e.g., a wave.Wave_read or aifc.Aifc_read) that provides a readframes-like interface.
+                little_endian (bool): True when the source audio frames are little-endian; False when frames are big-endian and must be byte-swapped before processing.
+                samples_24_bit_pretending_to_be_32_bit (bool): True when the source uses 24-bit samples represented/stored as 32-bit frames (a compatibility mode); the stream will convert these to actual 24-bit data on read.
+            """
             self.audio_reader = audio_reader  # an audio file object (e.g., a `wave.Wave_read` instance)
             self.little_endian = little_endian  # whether the audio data is little-endian (when working with big-endian things, we'll have to convert it to little-endian before we process it)
             self.samples_24_bit_pretending_to_be_32_bit = samples_24_bit_pretending_to_be_32_bit  # this is true if the audio is 24-bit audio, but 24-bit audio isn't supported, so we have to pretend that this is 32-bit audio and convert it on the fly
 
         def read(self, size=-1):
+            """
+            Read up to `size` frames from the underlying audio reader and return mono, little-endian PCM bytes.
+            
+            This method:
+            - Reads `size` frames (or all frames if `size` is -1). If the reader returns a non-bytes value, an empty bytes object is returned.
+            - Converts big-endian input to little-endian on the fly.
+            - If `samples_24_bit_pretending_to_be_32_bit` is set, expands 24-bit samples into 32-bit little-endian samples.
+            - Converts multi-channel input to mono by mixing channels equally.
+            
+            Parameters:
+                size (int): Number of frames to read from the underlying reader; -1 means "read all available frames".
+            
+            Returns:
+                bytes: PCM audio data containing mono, little-endian samples (may be 32-bit if 24-bit-to-32-bit expansion occurred).
+            """
             buffer = self.audio_reader.readframes(self.audio_reader.getnframes() if size == -1 else size)
             if not isinstance(buffer, bytes): buffer = b""  # workaround for https://bugs.python.org/issue24608
 
@@ -505,7 +615,15 @@ class AudioFile:
 
 
 def get_flac_converter():
-    """Returns the absolute path of a FLAC converter executable, or raises an OSError if none can be found."""
+    """
+    Locate the system FLAC encoder and return its absolute filesystem path.
+    
+    Returns:
+        flac_path (str): Absolute path to the `flac` executable.
+    
+    Raises:
+        OSError: If no `flac` converter can be found on PATH.
+    """
     flac_converter = shutil_which("flac")  # check for installed version first
     if flac_converter is None:  # flac utility is not installed
         raise OSError(
@@ -515,7 +633,15 @@ def get_flac_converter():
 
 
 def shutil_which(pgm):
-    """Python 2 compatibility: backport of ``shutil.which()`` from Python 3"""
+    """
+    Locate an executable by name from the system PATH (backport of shutil.which).
+    
+    Parameters:
+        pgm (str): Executable name to search for in PATH.
+    
+    Returns:
+        str or None: Absolute path to the first matching executable if found, `None` otherwise.
+    """
     path = os.getenv("PATH")
     for p in path.split(os.path.pathsep):
         p = os.path.join(p, pgm)
