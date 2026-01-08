@@ -9,7 +9,7 @@ import io
 import os
 import subprocess
 import wave
-
+import shutil
 try:
     import numpy as np
 
@@ -624,29 +624,12 @@ def get_flac_converter():
     Raises:
         OSError: If no `flac` converter can be found on PATH.
     """
-    flac_converter = shutil_which("flac")  # check for installed version first
+    flac_converter = shutil.which("flac")  # check for installed version first
     if flac_converter is None:  # flac utility is not installed
         raise OSError(
             "FLAC conversion utility not available - consider installing the FLAC command line application by running `apt-get install flac` or your operating system's equivalent"
         )
     return flac_converter
-
-
-def shutil_which(pgm):
-    """
-    Locate an executable by name from the system PATH (backport of shutil.which).
-    
-    Parameters:
-        pgm (str): Executable name to search for in PATH.
-    
-    Returns:
-        str or None: Absolute path to the first matching executable if found, `None` otherwise.
-    """
-    path = os.getenv("PATH")
-    for p in path.split(os.path.pathsep):
-        p = os.path.join(p, pgm)
-        if os.path.exists(p) and os.access(p, os.X_OK):
-            return p
 
 
 # patch for type checks in plugins to pass
