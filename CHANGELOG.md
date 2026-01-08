@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.1a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a4) (2026-01-08)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1a2...2.1.1a4)
+
+**Merged pull requests:**
+
+- refactor: port AudioData from speechrecognition library [\#357](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/357) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.1.1a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a2) (2025-12-19)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1a1...2.1.1a2)
