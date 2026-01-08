@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.1a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a5) (2026-01-08)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1a4...2.1.1a5)
+
+**Merged pull requests:**
+
+- chore\(deps\): update actions/setup-python action to v6 [\#353](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/353) ([renovate[bot]](https://github.com/apps/renovate))
+- chore\(deps\): update actions/checkout action to v6 [\#352](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/352) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [2.1.1a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a4) (2026-01-08)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1a2...2.1.1a4)
