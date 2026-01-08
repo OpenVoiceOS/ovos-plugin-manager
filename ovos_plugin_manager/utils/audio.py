@@ -371,13 +371,12 @@ class AudioData:
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
 
-    def get_np_int16(self, convert_rate=None, convert_width=None) -> Array:
+    def get_np_int16(self, convert_rate=None) -> Array:
         """
         Produce a NumPy int16 array containing the audio samples.
         
         Parameters:
             convert_rate (int, optional): Target sample rate in Hz to convert to before extraction.
-            convert_width (int, optional): Target sample width in bytes (1–4) to convert to before extraction.
         
         Returns:
             numpy.ndarray: 1-D NumPy array of dtype `int16` with the audio samples (mono).
@@ -387,22 +386,21 @@ class AudioData:
         """
         if np is None:
             raise _np_exc
-        audio_data = self.get_raw_data(convert_rate, convert_width)
+        audio_data = self.get_raw_data(convert_rate, convert_width=2)
         return np.frombuffer(audio_data, dtype=np.int16)
 
-    def get_np_float32(self, normalize=True, convert_rate=None, convert_width=None) -> Array:
+    def get_np_float32(self, normalize=True, convert_rate=None) -> Array:
         """
         Return the audio as a NumPy float32 array.
         
         Parameters:
             normalize (bool): If True, scale samples to the range -1.0 to +1.0 by dividing by 2**15.
             convert_rate (int | None): Optional target sample rate to convert the audio to before conversion.
-            convert_width (int | None): Optional target sample width in bytes (1–4) to convert the audio to before conversion.
         
         Returns:
             Array: A NumPy array of dtype `float32` containing the audio samples; values are in [-1.0, 1.0] when `normalize` is True.
         """
-        audio_as_np_int16 = self.get_np_int16(convert_rate, convert_width)
+        audio_as_np_int16 = self.get_np_int16(convert_rate)
         audio_as_np_float32 = audio_as_np_int16.astype(np.float32)
         if normalize:
             # Normalise float32 array so that values are between -1.0 and +1.0
@@ -642,5 +640,5 @@ def get_flac_converter():
 try:
     import speech_recognition
     speech_recognition.AudioData = AudioData
-except:
+except ImportError:
     pass
