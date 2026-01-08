@@ -92,15 +92,23 @@ class AudioData:
             # Expected float range: -1.0 to +1.0
             max_val = float(2 ** (8 * sample_width - 1) - 1)
             scaled = np.clip(data, -1.0, 1.0) * max_val
-            int_data = scaled.astype({
+            if sample_width == 1:
+                # For 8-bit: scale to signed int8 range, then convert to unsigned
+                int_data = scaled.astype(np.int8)
+            else:
+                int_data = scaled.astype({
                                          1: np.uint8,  # will convert signed→unsigned below
                                          2: np.int16,
                                          3: np.int32,  # temporary; trimmed below
                                          4: np.int32
                                      }[sample_width])
         else:
-            # Integer input: must be scaled into correct range
-            int_data = data.astype({
+            # Integer input: cast to signed type first
+            if sample_width == 1:
+                int_data = data.astype(np.int8)
+            else:
+                # Integer input: must be scaled into correct range
+                int_data = data.astype({
                                        1: np.uint8,
                                        2: np.int16,
                                        3: np.int32,
@@ -109,10 +117,8 @@ class AudioData:
 
         # Special handling for sample_width == 1 (unsigned)
         if sample_width == 1:
-            # Input is treated as signed; convert to unsigned PCM
-            if np.issubdtype(int_data.dtype, np.signedinteger):
-                int_data = (int_data.astype(np.int16) + 128).astype(np.uint8)
-
+            # Convert signed int8 to unsigned uint8 PCM
+            int_data = (int_data.astype(np.int16) + 128).astype(np.uint8)
             frame_data = int_data.tobytes()
             return cls(frame_data, sample_rate, sample_width)
 
