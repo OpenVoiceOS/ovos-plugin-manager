@@ -139,6 +139,7 @@ class MultimodalAdapter(ABC):
     def convert(self, message: MultimodalAgentMessage) -> AgentMessage:
         raise NotImplementedError()
 
+
 ########
 # Agent engines replace the previous "solver plugins"
 # each task now has a well-defined api contract
@@ -252,34 +253,93 @@ class ChatEngine(AbstractAgentEngine):
         Returns:
             The plain-text content of the assistant's response.
         """
-        message = AgentMessage(role="user", content=utterance)
+        message = AgentMessage(role=MessageRole.USER, content=utterance)
         return self.continue_chat(messages=[message],
                                   session_id=session_id,
                                   lang=lang,
                                   units=units).content
 
-    def stream_response(self, messages: List[AgentMessage],
-                        session_id: str = "default",
-                        lang: Optional[str] = None,
-                        units: Optional[str] = None) -> Iterable[str]:
-        """
-        Generate a response and stream it back as individual sentences.
 
-        Defaults to simple sentence segmentation, true streaming needs to be implemented by individual plugins
+class MultimodalChatEngine(ChatEngine):
+    """
+    An engine designed for multi-turn conversations using message list formats.
+
+     messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Knock knock."},
+        {"role": "assistant", "content": "Who's there?"},
+        {"role": "user", "content": "Orange."},
+     ]
+    """
+
+    @abc.abstractmethod
+    def continue_chat(self, messages: List[MultimodalAgentMessage],
+                      session_id: str = "default",
+                      lang: Optional[str] = None,
+                      units: Optional[str] = None) -> MultimodalAgentMessage:
+        """
+        Generate a response message based on the provided chat history.
 
         Args:
-            messages (List[AgentMessage]): The chat history.
-            session_id (str): Session identifier.
+            messages (List[AgentMessage]): Full list of messages in the conversation.
+            session_id (str): Identifier for the session.
+            lang (str, optional): BCP-47 language code.
+            units (str, optional): Preferred unit system (e.g., "metric", "imperial").
+
+        Returns:
+            AgentMessage: The generated response message from the assistant.
+        """
+        raise NotImplementedError()
+
+    def stream_chat(self, messages: List[MultimodalAgentMessage],
+                    session_id: str = "default",
+                    lang: Optional[str] = None,
+                    units: Optional[str] = None) -> Iterable[MultimodalAgentMessage]:
+        """
+        Stream back response messages as they are generated.
+
+        Note:
+            Default implementation yields the full response from continue_chat.
+            Subclasses should override this for real-time token streaming.
+
+        Args:
+            messages (List[AgentMessage]): Full list of messages.
+            session_id (str): Identifier for the session.
             lang (str, optional): Language code.
             units (str, optional): Unit system.
 
         Returns:
-            Iterable[str]: Individual sentences of the generated response.
+            Iterable[AgentMessage]: A stream of response messages.
         """
-        ans: str = self.get_response(messages[-1].content,
-                                     session_id, lang, units)
-        for utt in sentence_split(ans):
-            yield utt
+        yield self.continue_chat(messages, session_id, lang, units)
+
+    def get_response(self, utterance: str,
+                     image_content: List[str] = None,  # b64 encoded
+                     audio_content: List[str] = None,  # b64 encoded
+                     file_content: List[str] = None,  # b64 encoded
+                     session_id: str = "default",
+                     lang: Optional[str] = None,
+                     units: Optional[str] = None) -> str:
+        """
+        High-level wrapper for single-turn text-in/text-out interactions.
+
+        Args:
+            utterance: The user's input string.
+            session_id: The session identifier.
+            lang: BCP-47 language code.
+            units: Preferred measurement system.
+
+        Returns:
+            The plain-text content of the assistant's response.
+        """
+        message = MultimodalAgentMessage(role=MessageRole.USER, content=utterance,
+                                         image_content=image_content,
+                                         audio_content=audio_content,
+                                         file_content=file_content)
+        return self.continue_chat(messages=[message],
+                                  session_id=session_id,
+                                  lang=lang,
+                                  units=units).content
 
 
 class SummarizerEngine(AbstractAgentEngine):
