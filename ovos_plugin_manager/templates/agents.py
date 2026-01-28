@@ -1,7 +1,16 @@
 import abc
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import List
+
+
+class MessageRole(str, Enum):
+    """Standardized roles for Agent interactions."""
+    SYSTEM = "system"  # Personality and global constraints
+    DEVELOPER = "developer"  # High-priority instructions (OpenAI specific)
+    USER = "user"  # Human/End-user input
+    ASSISTANT = "assistant"  # AI response
 
 
 @dataclass
@@ -13,7 +22,7 @@ class AgentMessage:
         role (str): The role of the message sender, e.g., "user", "system", "assistant".
         content (str): The textual content of the message.
     """
-    role: str
+    role: MessageRole
     content: str
 
 
@@ -99,3 +108,29 @@ class AgentContextManager(ABC):
         raise NotImplementedError()
 
 
+# NOTE: modeled as a separate class to make multimodal support explicit in plugins
+@dataclass
+class MultimodalAgentMessage(AgentMessage):
+    """
+    Represents a single message in the agent's conversation.
+
+    Attributes:
+        role (str): The role of the message sender, e.g., "user", "system", "assistant".
+        content (str): The textual content of the message.
+    """
+    role: MessageRole
+    content: str
+    image_content: List[str] = field(default_factory=list)  # b64 encoded
+    audio_content: List[str] = field(default_factory=list)  # b64 encoded
+    file_content: List[str] = field(default_factory=list)  # b64 encoded
+
+
+class MultimodalAdapter(ABC):
+    """describe multimodal content in text format.
+        eg. describe an image input as text
+
+    Can be used by individual personas or AgentContextManager plugins"""
+
+    @abc.abstractmethod
+    def convert(self, message: MultimodalAgentMessage) -> AgentMessage:
+        raise NotImplementedError()
