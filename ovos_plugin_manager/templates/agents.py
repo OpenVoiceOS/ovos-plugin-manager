@@ -397,7 +397,7 @@ class ExtractiveQAEngine(AbstractAgentEngine):
     """
 
     @abc.abstractmethod
-    def get_best_passage(self, question: str, evidence: str,
+    def get_best_passage(self, evidence: str, question: str,
                          lang: Optional[str] = None) -> str:
         """
         Extracts the most relevant passage from the evidence.
@@ -453,6 +453,23 @@ class ReRankerEngine(AbstractAgentEngine):
             Union[str, int]: The top-ranked option or its index.
         """
         return self.rerank(query, options, lang=lang, return_index=return_index)[0][1]
+
+
+class YesNoEngine(AbstractAgentEngine):
+    """
+    Engine for evaluating answers to yes/no questions.
+
+    Determines if a user input means "yes", "no" or undefined
+    """
+
+    @abc.abstractmethod
+    def yes_or_no(self, question: str, response: str, lang: Optional[str] = None) -> Optional[bool]:
+        """
+        True: user answered yes
+        False: user answered no
+        None: invalid/neutral answer
+        """
+        raise NotImplementedError
 
 
 class NaturalLanguageInferenceEngine(AbstractAgentEngine):

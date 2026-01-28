@@ -567,7 +567,7 @@ class EvidenceSolver(AbstractSolver):
 
     def __init__(self, *args, **kwargs):
         log_deprecation("EvidenceSolver has been deprecated and will be removed in the next major release. "
-                        "Please migrate your code to use EvidenceEngine",
+                        "Please migrate your code to use ExtractiveQAEngine",
                         f"{VERSION_MAJOR + 1}.0.0")
         super().__init__(*args, **kwargs)
 
@@ -661,7 +661,7 @@ class EntailmentSolver(AbstractSolver):
 
     def __init__(self, *args, **kwargs):
         log_deprecation("EntailmentSolver has been deprecated and will be removed in the next major release. "
-                        "Please migrate your code to use EntailmentEngine",
+                        "Please migrate your code to use NaturalLanguageInferenceEngine",
                         f"{VERSION_MAJOR + 1}.0.0")
         super().__init__(*args, **kwargs)
 
