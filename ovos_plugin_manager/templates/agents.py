@@ -2,7 +2,11 @@ import abc
 from abc import ABC
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List
+from typing import Optional, List, Iterable, Tuple, Union, Dict
+
+from ovos_utils import flatten_list
+from ovos_utils.log import LOG
+from quebra_frases import sentence_tokenize
 
 
 class MessageRole(str, Enum):
@@ -134,3 +138,339 @@ class MultimodalAdapter(ABC):
     @abc.abstractmethod
     def convert(self, message: MultimodalAgentMessage) -> AgentMessage:
         raise NotImplementedError()
+
+########
+# Agent engines replace the previous "solver plugins"
+# each task now has a well-defined api contract
+# automatic translation is no longer implemented
+########
+class AbstractAgentEngine(ABC):
+    """
+    Base class for agent engines that process input to produce specific outputs.
+    """
+
+    def __init__(self, config: dict):
+        """
+        Initializes the engine.
+
+        Args:
+            config (dict): Configuration mapping for the specific engine.
+        """
+        self.config = config or {}
+
+
+class RetrievalEngine(AbstractAgentEngine):
+    """
+    Interface for querying external or internal knowledge bases.
+
+    Supports integrations with remote APIs (Wikipedia, Wolfram Alpha)
+    or local databases.
+    """
+
+    @abc.abstractmethod
+    def query(self, query: str, lang: Optional[str] = None, k: int = 3) -> Iterable[Tuple[str, float]]:
+        """
+        Searches the knowledge base for relevant documents or data.
+
+        Args:
+            query: The search string.
+            lang: BCP-47 language code.
+            k: The maximum number of results to return.
+
+        Yields:
+            Tuples of (content, score) for the top k matches.
+        """
+        raise NotImplementedError
+
+
+class ChatEngine(AbstractAgentEngine):
+    """
+    An engine designed for multi-turn conversations using message list formats.
+
+     messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Knock knock."},
+        {"role": "assistant", "content": "Who's there?"},
+        {"role": "user", "content": "Orange."},
+     ]
+    """
+
+    @abc.abstractmethod
+    def continue_chat(self, messages: List[AgentMessage],
+                      session_id: str = "default",
+                      lang: Optional[str] = None,
+                      units: Optional[str] = None) -> AgentMessage:
+        """
+        Generate a response message based on the provided chat history.
+
+        Args:
+            messages (List[AgentMessage]): Full list of messages in the conversation.
+            session_id (str): Identifier for the session.
+            lang (str, optional): BCP-47 language code.
+            units (str, optional): Preferred unit system (e.g., "metric", "imperial").
+
+        Returns:
+            AgentMessage: The generated response message from the assistant.
+        """
+        raise NotImplementedError()
+
+    def stream_chat(self, messages: List[AgentMessage],
+                    session_id: str = "default",
+                    lang: Optional[str] = None,
+                    units: Optional[str] = None) -> Iterable[AgentMessage]:
+        """
+        Stream back response messages as they are generated.
+
+        Note:
+            Default implementation yields the full response from continue_chat.
+            Subclasses should override this for real-time token streaming.
+
+        Args:
+            messages (List[AgentMessage]): Full list of messages.
+            session_id (str): Identifier for the session.
+            lang (str, optional): Language code.
+            units (str, optional): Unit system.
+
+        Returns:
+            Iterable[AgentMessage]: A stream of response messages.
+        """
+        yield self.continue_chat(messages, session_id, lang, units)
+
+    def get_response(self, utterance: str,
+                     session_id: str = "default",
+                     lang: Optional[str] = None,
+                     units: Optional[str] = None) -> str:
+        """
+        High-level wrapper for single-turn text-in/text-out interactions.
+
+        Args:
+            utterance: The user's input string.
+            session_id: The session identifier.
+            lang: BCP-47 language code.
+            units: Preferred measurement system.
+
+        Returns:
+            The plain-text content of the assistant's response.
+        """
+        message = AgentMessage(role="user", content=utterance)
+        return self.continue_chat(messages=[message],
+                                  session_id=session_id,
+                                  lang=lang,
+                                  units=units).content
+
+    def stream_response(self, messages: List[AgentMessage],
+                        session_id: str = "default",
+                        lang: Optional[str] = None,
+                        units: Optional[str] = None) -> Iterable[str]:
+        """
+        Generate a response and stream it back as individual sentences.
+
+        Defaults to simple sentence segmentation, true streaming needs to be implemented by individual plugins
+
+        Args:
+            messages (List[AgentMessage]): The chat history.
+            session_id (str): Session identifier.
+            lang (str, optional): Language code.
+            units (str, optional): Unit system.
+
+        Returns:
+            Iterable[str]: Individual sentences of the generated response.
+        """
+        ans: str = self.get_response(messages[-1].content,
+                                     session_id, lang, units)
+        for utt in sentence_split(ans):
+            yield utt
+
+
+class SummarizerEngine(AbstractAgentEngine):
+    """Engine designed for condensing long documents into concise summaries."""
+
+    @abc.abstractmethod
+    def summarize(self, document: str, lang: Optional[str] = None) -> str:
+        """
+        Create a summary of the provided text.
+
+        Args:
+            document (str): The full text to be summarized.
+            lang (str, optional): The language of the document.
+
+        Returns:
+            str: The summarized text.
+        """
+        raise NotImplementedError
+
+
+class ChatSummarizerEngine(AbstractAgentEngine):
+    """Engine specialized in summarizing structured chat histories."""
+
+    @abc.abstractmethod
+    def summarize(self, messages: List[AgentMessage], lang: Optional[str] = None) -> str:
+        """
+        Converts a list of AgentMessages into a narrative or bulleted summary.
+
+        Args:
+            messages (List[AgentMessage]): Full list of messages in the conversation.
+            lang (str, optional): The language of the document.
+
+        Returns:
+            str: The summarized text.
+        """
+        raise NotImplementedError
+
+
+class EvidenceEngine(AbstractAgentEngine):
+    """
+    Engine for extractive Question Answering (QA).
+
+    Identifies the specific segment of a text (the "evidence") that
+    answers a given question.
+    """
+
+    @abc.abstractmethod
+    def get_best_passage(self, question: str, evidence: str,
+                         lang: Optional[str] = None) -> str:
+        """
+        Extracts the most relevant passage from the evidence.
+
+        Args:
+            question (str): The query to answer.
+            evidence (str): The source text to search.
+            lang (str, optional): The language of the texts.
+
+        Returns:
+            str: The extracted passage answering the question.
+        """
+        raise NotImplementedError
+
+
+class ReRankerEngine(AbstractAgentEngine):
+    """
+    Engine for evaluating and sorting a list of candidates against a query.
+    """
+
+    @abc.abstractmethod
+    def rerank(self, query: str, options: List[str],
+               lang: Optional[str] = None,
+               return_index: bool = False) -> List[Tuple[float, Union[str, int]]]:
+        """
+        Score and rank a list of options against a query.
+
+        Args:
+            query (str): The search or selection query.
+            options (List[str]): Potential candidates to rank.
+            lang (str, optional): Language code.
+            return_index (bool): If True, returns the option index instead of text in the tuple.
+
+        Returns:
+            List[Tuple[float, Union[str, int]]]: A sorted list of (score, option/index) pairs.
+        """
+        raise NotImplementedError
+
+    def select_answer(self, query: str,
+                      options: List[str],
+                      lang: Optional[str] = None,
+                      return_index: bool = False) -> Union[str, int]:
+        """
+        Select the single best answer from a list of options.
+
+        Args:
+            query (str): The query to match.
+            options (List[str]): List of possible answers.
+            lang (str, optional): Language code.
+            return_index (bool): Whether to return the index of the option or the text.
+
+        Returns:
+            Union[str, int]: The top-ranked option or its index.
+        """
+        return self.rerank(query, options, lang=lang, return_index=return_index)[0][1]
+
+
+class EntailmentEngine(AbstractAgentEngine):
+    """
+    Engine for Natural Language Inference (NLI).
+
+    Determines if a 'hypothesis' is logically supported by a 'premise'.
+    """
+
+    @abc.abstractmethod
+    def predict_entailment(self, premise: str, hypothesis: str,
+                           lang: Optional[str] = None) -> bool:
+        """
+        Determine if the premise logically entails the hypothesis.
+
+        Args:
+            premise (str): The base statement or context.
+            hypothesis (str): The statement to be verified against the premise.
+            lang (str, optional): Language code.
+
+        Returns:
+            bool: True if the premise entails the hypothesis, False otherwise.
+        """
+        raise NotImplementedError
+
+
+class DocumentIndexerEngine(RetrievalEngine):
+    """
+    A RetrievalEngine that supports document ingestion and local indexing.
+    """
+
+    @abc.abstractmethod
+    def ingest_corpus(self, corpus: List[str]):
+        """
+        Adds a collection of documents to the local index.
+
+        Args:
+            corpus: A list of text documents to be indexed.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def query(self, query: str, lang: Optional[str] = None, k: int = 3) -> Iterable[Tuple[str, float]]:
+        """Searches the ingested corpus for matching documents."""
+        raise NotImplementedError
+
+
+class QAIndexerEngine(RetrievalEngine):
+    """
+    A RetrievalEngine specialized in indexing Question-Answer pairs.
+    """
+
+    @abc.abstractmethod
+    def ingest_corpus(self, corpus: Dict[str, str]):
+        """
+        Adds question-answer pairs to the index.
+
+        Args:
+            corpus: A dictionary where keys are questions and values are answers.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def query(self, query: str, lang: Optional[str] = None, k: int = 3) -> Iterable[Tuple[str, float]]:
+        """
+        Matches a user query against indexed questions and returns the best answers.
+
+        Returns:
+            An iterable of (answer, score) tuples.
+        """
+        raise NotImplementedError
+
+
+def sentence_split(text: str, max_sentences: int = 25) -> List[str]:
+    """
+    Split text into sentences.
+
+    :param text: Input text.
+    :param max_sentences: Maximum number of sentences to return.
+    :return: List of sentences.
+    """
+    if not text:
+        LOG.warning("empty text received in sentence_split")
+        return []
+    try:
+        # sentence_tokenize occasionally has issues with \n for some reason
+        return flatten_list([sentence_tokenize(t)
+                             for t in text.split("\n")])[:max_sentences]
+    except Exception as e:
+        LOG.exception(f"Error in sentence_split: {e}")
+        return [text]
