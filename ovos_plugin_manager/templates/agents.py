@@ -2,7 +2,7 @@ import abc
 from abc import ABC
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List
+from typing import Optional, List, Dict, Any
 
 
 class MessageRole(str, Enum):
@@ -38,7 +38,7 @@ class AgentContextManager(ABC):
         config (dict): Plugin-specific configuration options.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
 
     @property
@@ -46,7 +46,7 @@ class AgentContextManager(ABC):
         """
         Returns the default system prompt defined in the configuration.
 
-        Individual plugins can modify this prompt in self.augment_context.
+        Individual plugins may modify this prompt in self.build_conversation_context.
 
         Returns:
             str: The base system prompt.
@@ -84,7 +84,7 @@ class AgentContextManager(ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def augment_context(self, utterance: str, session_id: str) -> List[AgentMessage]:
+    def build_conversation_context(self, utterance: str, session_id: str) -> List[AgentMessage]:
         """
         Generate a list of messages that augment the context for the next agent response.
 
