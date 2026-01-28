@@ -115,7 +115,7 @@ class MultimodalAgentMessage(AgentMessage):
     Represents a single message in the agent's conversation.
 
     Attributes:
-        role (str): The role of the message sender, e.g., "user", "system", "assistant".
+        role (MessageRole): The role of the message sender, e.g., MessageRole.USER.
         content (str): The textual content of the message.
     """
     role: MessageRole
