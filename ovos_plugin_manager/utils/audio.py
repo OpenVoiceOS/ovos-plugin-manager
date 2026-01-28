@@ -42,6 +42,16 @@ class AudioData(srAudioData):
             return source.read()
 
     def save(self, file_path: str, convert_rate=None, convert_width=None):
+        """
+        Write the audio data to a WAV file at the given path.
+
+        Optionally convert the sample rate or sample width before writing.
+
+        Parameters:
+            file_path (str): Filesystem path to write the WAV file to.
+            convert_rate (int | None): Target sample rate in Hz to convert to, or `None` to keep the current rate.
+            convert_width (int | None): Target sample width in bytes (e.g., 1, 2, 3, 4), or `None` to keep the current width.
+        """
         with open(file_path, "wb") as f:
             f.write(self.get_wav_data(convert_rate, convert_width))
 
