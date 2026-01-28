@@ -7,7 +7,6 @@ from enum import Enum
 from typing import Optional, List, Iterable, Tuple, Union, Dict, Any
 
 from ovos_bus_client.session import SessionManager, Session
-from ovos_utils import flatten_list
 from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.log import LOG
 
@@ -325,9 +324,9 @@ class MultimodalChatEngine(ChatEngine):
         yield self.continue_chat(messages, session_id, lang, units)
 
     def get_response(self, utterance: str,
-                     image_content: List[str] = None,  # b64 encoded
-                     audio_content: List[str] = None,  # b64 encoded
-                     file_content: List[str] = None,  # b64 encoded
+                     image_content: Optional[List[str]] = None,  # b64 encoded
+                     audio_content: Optional[List[str]] = None,  # b64 encoded
+                     file_content: Optional[List[str]] = None,  # b64 encoded
                      session_id: str = "default",
                      lang: Optional[str] = None,
                      units: Optional[str] = None) -> str:
@@ -513,7 +512,7 @@ class DocumentIndexerEngine(RetrievalEngine):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def query(self, query: str, lang: Optional[str] = None, k: int = 3) -> Iterable[Tuple[str, float]]:
+    def query(self, query: str, lang: Optional[str] = None, k: int = 3) -> List[Tuple[str, float]]:
         """Searches the ingested corpus for matching documents."""
         raise NotImplementedError
 
@@ -534,7 +533,7 @@ class QAIndexerEngine(RetrievalEngine):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def query(self, query: str, lang: Optional[str] = None, k: int = 3) -> Iterable[Tuple[str, float]]:
+    def query(self, query: str, lang: Optional[str] = None, k: int = 3) -> List[Tuple[str, float]]:
         """
         Matches a user query against indexed questions and returns the best answers.
 
