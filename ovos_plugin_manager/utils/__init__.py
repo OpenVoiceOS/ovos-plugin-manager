@@ -182,13 +182,13 @@ try:
 
     def _iter_plugins(plug_type):
         """
-        Yields all entry points for the specified plugin group.
+        Yield entry point objects registered under the given plugin group name.
         
         Parameters:
-            plug_type: The entry point group name to search for.
+            plug_type (str): Entry point group identifier to search.
         
         Yields:
-            Entry points belonging to the specified group.
+            Entry point objects discovered for the specified group.
         """
         for entry_point in entry_points(group=plug_type):
             yield entry_point
@@ -198,13 +198,13 @@ except ImportError:
 
     def _iter_plugins(plug_type):
         """
-        Yield all entry points for the specified plugin group using pkg_resources.
+        Yield entry points registered for the given plugin group.
         
         Parameters:
-            plug_type (str): The entry point group name to search for.
+            plug_type (str): Entry point group name to search.
         
-        Yields:
-            EntryPoint: Each discovered entry point in the specified group.
+        Returns:
+            EntryPoint generator: Yields each discovered entry point for the specified group.
         """
         for entry_point in pkg_resources.iter_entry_points(plug_type):
             yield entry_point

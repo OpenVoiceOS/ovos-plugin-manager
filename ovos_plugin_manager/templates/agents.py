@@ -30,17 +30,21 @@ class AgentContextManager(ABC):
     """
 
     def __init__(self, config: dict):
+        """
+        Initialize the context manager with a plugin configuration.
+        
+        Parameters:
+            config (dict): Plugin configuration dictionary; if None, an empty dict is used.
+        """
         self.config = config or {}
 
     @property
     def system_prompt(self) -> str:
         """
-        Returns the default system prompt defined in the configuration.
-
-        Individual plugins can modify this prompt in self.augment_context.
-
+        Return the base system prompt from the manager's configuration.
+        
         Returns:
-            str: The base system prompt.
+            str: The base system prompt from `config["system_prompt"]` if present, otherwise an empty string.
         """
         # typically defined by individual personas
         return self.config.get("system_prompt", "")
@@ -64,13 +68,14 @@ class AgentContextManager(ABC):
     @abc.abstractmethod
     def update_history(self, new_messages: List[AgentMessage], session_id: str):
         """
-        Update the session's message history with new messages.
-
-        Typically called after each interaction to keep the conversation context up to date.
-
-        Args:
-            new_messages (List[AgentMessage]): New messages to append to history.
-            session_id (str): Identifier for the conversation session.
+        Append new messages to the stored history for the specified session.
+        
+        Parameters:
+            new_messages (List[AgentMessage]): Messages to add to the session history.
+            session_id (str): Identifier of the conversation session whose history will be updated.
+        
+        Raises:
+            NotImplementedError: Implementations must override this method to persist or merge messages into history.
         """
         raise NotImplementedError()
 
@@ -97,5 +102,4 @@ class AgentContextManager(ABC):
             List[AgentMessage]: Messages representing the augmented context for the agent.
         """
         raise NotImplementedError()
-
 
