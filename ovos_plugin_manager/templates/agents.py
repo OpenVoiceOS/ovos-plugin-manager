@@ -1,6 +1,6 @@
 import abc
-import time
 import difflib
+import time
 from abc import ABC
 from dataclasses import dataclass, field
 from enum import Enum
@@ -552,10 +552,9 @@ class CoreferenceEngine(AbstractAgentEngine):
         return self.config.get("context_ttl", 120)
 
     # =========================================================================
-    # Public API - Consumers (OVOS Skills) call these
+    # Public API - Consumers call these
     # =========================================================================
-
-    def resolve(self, text: str, lang: Optional[str] = None) -> str:
+    def resolve(self, text: str, lang: Optional[str] = None, use_memory: bool = False) -> str:
         """
         Main entry point. Resolves coreferences using both historical context
         and the active NLP solver.
@@ -573,7 +572,10 @@ class CoreferenceEngine(AbstractAgentEngine):
 
         # 2. Apply 'Vault' (Memory) Context
         # This handles cases where we manually registered "her" = "mom"
-        text_with_context = self._apply_memory(text, lang)
+        if use_memory:
+            text_with_context = self._apply_memory(text, lang)
+        else:
+            text_with_context = text
 
         # 3. Apply 'Intelligence' (Plugin NLP)
         # Only run expensive NLP if pronouns/ambiguity exist
@@ -584,7 +586,8 @@ class CoreferenceEngine(AbstractAgentEngine):
 
         # 4. Update Memory
         # If the NLP changed "it" to "the dog", we learn that for next time.
-        self._learn_context(text_with_context, final_solved, lang)
+        if use_memory:
+            self._learn_context(text_with_context, final_solved, lang)
 
         return final_solved
 
@@ -629,8 +632,11 @@ class CoreferenceEngine(AbstractAgentEngine):
     @abc.abstractmethod
     def contains_corefs(self, text: str, lang: str) -> bool:
         """
-        Return True if the text contains words that need resolving
-        (pronouns, references). Used to optimize performance.
+        Return True if the text contains words that need resolving (pronouns, references).
+
+        Used to optimize performance by avoiding calls to self.solve_corefs.
+
+        eg. A basic implementation can match the input against a wordlist of lang specific pronouns.
         """
         raise NotImplementedError()
 
@@ -679,7 +685,7 @@ class CoreferenceEngine(AbstractAgentEngine):
 
     def _learn_context(self, original: str, solved: str, lang: str):
         """Diff original vs solved to extract new replacements and save them."""
-        replacements = self.extract_replacements(original, solved)
+        replacements = self._extract_replacements(original, solved)
 
         for pronoun, entities in replacements.items():
             # Register all identified replacements
@@ -687,7 +693,7 @@ class CoreferenceEngine(AbstractAgentEngine):
                 self.set_context(pronoun, entity, lang)
 
     @staticmethod
-    def extract_replacements(original: str, solved: str) -> Dict[str, List[str]]:
+    def _extract_replacements(original: str, solved: str) -> Dict[str, List[str]]:
         """
         Compares the original text with the solved text to identify exactly
         which words were replaced using difflib.
@@ -715,7 +721,6 @@ class CoreferenceEngine(AbstractAgentEngine):
                     replacements[old_phrase].append(new_phrase)
 
         return replacements
-
 
 
 def sentence_split(text: str, max_sentences: int = 25) -> List[str]:
