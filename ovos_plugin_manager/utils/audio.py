@@ -34,7 +34,10 @@ class AudioData(srAudioData):
     def from_file(cls, file_path: str) -> 'AudioData':
         """
         Create an AudioData instance from the audio file at the given path.
-        
+
+        Parameters:
+            file_path (str): Filesystem path to a WAV/AIFF/FLAC audio file.
+
         Returns:
             audio_data (AudioData): AudioData containing the file's mono PCM frame data, sample rate, and sample width.
         """
