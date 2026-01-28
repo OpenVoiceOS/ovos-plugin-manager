@@ -1,37 +1,12 @@
 # Changelog
 
-## [2.1.1a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a5) (2026-01-08)
+## [2.2.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.0a1) (2026-01-28)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1a4...2.1.1a5)
-
-**Merged pull requests:**
-
-- chore\(deps\): update actions/setup-python action to v6 [\#353](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/353) ([renovate[bot]](https://github.com/apps/renovate))
-- chore\(deps\): update actions/checkout action to v6 [\#352](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/352) ([renovate[bot]](https://github.com/apps/renovate))
-
-## [2.1.1a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a4) (2026-01-08)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1a2...2.1.1a4)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1...2.2.0a1)
 
 **Merged pull requests:**
 
-- refactor: port AudioData from speechrecognition library [\#357](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/357) ([JarbasAl](https://github.com/JarbasAl))
-
-## [2.1.1a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a2) (2025-12-19)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1a1...2.1.1a2)
-
-**Merged pull requests:**
-
-- chore\(deps\): update dependency python to 3.14 [\#347](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/347) ([renovate[bot]](https://github.com/apps/renovate))
-
-## [2.1.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a1) (2025-12-18)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.0...2.1.1a1)
-
-**Merged pull requests:**
-
-- chore: Configure Renovate [\#346](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/346) ([renovate[bot]](https://github.com/apps/renovate))
+- feat: introduce base class for "memory" plugins [\#363](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/363) ([JarbasAl](https://github.com/JarbasAl))
 
 
 

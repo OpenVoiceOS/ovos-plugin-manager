@@ -13,7 +13,6 @@
 """Common functions for loading plugins."""
 from collections import deque
 
-import pkg_resources
 import time
 import warnings
 from enum import Enum
@@ -77,6 +76,8 @@ class PluginTypes(str, Enum):
     DIALOG_TRANSFORMER = "opm.transformer.dialog"
     TTS_TRANSFORMER = "opm.transformer.tts"
     INTENT_TRANSFORMER = "opm.transformer.intent"
+    AGENT_MEMORY = "opm.agents.memory"
+    AGENT_MULTIMODAL_ADAPTER = "opm.agents.multimodal_adapter"
     QUESTION_SOLVER = "opm.solver.question"
     CHAT_SOLVER = "opm.solver.chat"
     TLDR_SOLVER = "opm.solver.summarization"
@@ -124,6 +125,8 @@ class PluginConfigTypes(str, Enum):
     DIALOG_TRANSFORMER = "opm.transformer.dialog.config"
     TTS_TRANSFORMER = "opm.transformer.tts.config"
     INTENT_TRANSFORMER = "opm.transformer.intent.config"
+    AGENT_MEMORY = "opm.agents.memory.config"
+    AGENT_MULTIMODAL_ADAPTER = "opm.agents.multimodal_adapter.config"
     QUESTION_SOLVER = "opm.solver.config"
     CHAT_SOLVER = "opm.solver.chat.config"
     TLDR_SOLVER = "opm.solver.summarization.config"
@@ -179,7 +182,6 @@ find_plugins._errored = []
 try:
     from importlib_metadata import entry_points
 
-
     def _iter_plugins(plug_type):
         """
         Yields all entry points for the specified plugin group.
@@ -193,6 +195,9 @@ try:
         for entry_point in entry_points(group=plug_type):
             yield entry_point
 except ImportError:
+
+    import pkg_resources  # deprecated in newer python versions
+
     def _iter_plugins(plug_type):
         """
         Yield all entry points for the specified plugin group using pkg_resources.
