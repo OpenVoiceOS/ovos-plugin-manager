@@ -14,6 +14,18 @@ log_deprecation("CoreferenceSolverEngine has been deprecated and will be removed
 
 class CoreferenceSolverEngine:
     def __init__(self, config=None):
+        """
+        Initialize the coreference solver engine instance and its internal state.
+        
+        Parameters:
+            config (dict, optional): Configuration options for the solver (e.g., language settings). Defaults to an empty dict.
+        
+        Attributes:
+            config (dict): Stored configuration for this instance.
+            _prev_sentence (str): Last sentence passed to the solver.
+            _prev_solved (str): Last solved/returned sentence from the solver.
+            contexts (dict): Per-language mapping of words to lists of replacement contexts.
+        """
         self.config = config or {}
         self._prev_sentence = ""
         self._prev_solved = ""

@@ -19,9 +19,21 @@ log_deprecation("solver plugins have been deprecated and will be removed in the 
 
 
 def auto_translate(translate_keys: List[str], translate_str_args=True):
-    """ Decorator to ensure all kwargs in 'translate_keys' are translated to self.default_lang.
-    data returned by the decorated function will be translated back to original language
-     NOTE: not meant to be used outside solver plugins"""
+    """
+    Create a decorator that translates specified input fields to the solver's default language before calling the wrapped method and translates the method's output back to the original language.
+    
+    The produced decorator:
+    - If solver.enable_tx is False, calls the wrapped function unchanged.
+    - When kwargs contains a `lang` value, skips translation if `lang` is None, equals solver.default_lang, or is in solver.supported_langs.
+    - Otherwise translates string positional arguments (when enabled) and the keyword arguments listed in `translate_keys` from `lang` to solver.default_lang before invoking the wrapped function, then translates the returned value from solver.default_lang back to `lang`.
+    
+    Parameters:
+        translate_keys (List[str]): Names of keyword arguments to translate before calling the wrapped method.
+        translate_str_args (bool): If True, translate string positional arguments as well.
+    
+    Returns:
+        Callable: A decorator that can be applied to instance methods of AbstractSolver-compatible classes.
+    """
 
     def func_decorator(func):
 
@@ -128,17 +140,21 @@ class QuestionSolver(AbstractSolver):
                  internal_lang: Optional[str] = None,
                  *args, **kwargs):
         """
-        Initialize the QuestionSolver.
-
-        Args:
-            config (Optional[Dict]): Optional configuration dictionary.
-            translator (Optional[LanguageTranslator]): Optional language translator.
-            detector (Optional[LanguageDetector]): Optional language detector.
-            priority (int): Priority of the solver.
-            enable_tx (bool): Flag to enable translation.
-            enable_cache (bool): Flag to enable caching.
-            internal_lang (Optional[str]): Internal language code. Defaults to None.
-        """
+                 Initialize the QuestionSolver and configure translation and caching.
+                 
+                 Emits a deprecation warning advising migration to ChatEngine / RetrievalEngine.
+                 
+                 Parameters:
+                     config (Optional[Dict]): Optional configuration dictionary.
+                     translator (Optional[LanguageTranslator]): Optional language translator.
+                     detector (Optional[LanguageDetector]): Optional language detector.
+                     priority (int): Solver priority for selection ordering.
+                     enable_tx (bool): If True, enable automatic translation of inputs/outputs.
+                     enable_cache (bool): If True, initialize persistent caches for raw data and spoken dialogs.
+                     internal_lang (Optional[str]): Internal/default language code used by the solver.
+                     *args: Additional positional arguments forwarded to the base initializer.
+                     **kwargs: Additional keyword arguments forwarded to the base initializer.
+                 """
         log_deprecation("QuestionSolver has been deprecated and will be removed in the next major release. "
                         "Please migrate your code to use ChatEngine / RetrievalEngine",
                         f"{VERSION_MAJOR + 1}.0.0")
@@ -447,7 +463,12 @@ class CorpusSolver(QuestionSolver):
                  enable_tx: bool = False,
                  enable_cache: bool = False,
                  *args, **kwargs):
-        log_deprecation("CorpusSolver has been deprecated and will be removed in the next major release. "
+        """
+                 Initialize the CorpusSolver and emit a deprecation warning directing migration to DocumentIndexerEngine/QAIndexerEngine.
+                 
+                 This constructor forwards all provided configuration, translation/detection helpers, priority, and caching/translation flags to the base QuestionSolver initializer, emits a deprecation notice about removal in the next major release, and logs the solver's presumed default language.
+                 """
+                 log_deprecation("CorpusSolver has been deprecated and will be removed in the next major release. "
                         "Please migrate your code to use DocumentIndexerEngine/QAIndexerEngine",
                         f"{VERSION_MAJOR + 1}.0.0")
         super().__init__(config, translator, detector,
@@ -466,7 +487,17 @@ class CorpusSolver(QuestionSolver):
     @auto_detect_lang(text_keys=["query"])
     @auto_translate(translate_keys=["query"])
     def retrieve_from_corpus(self, query: str, k: int = 3, lang: Optional[str] = None) -> List[Tuple[float, str]]:
-        """return top_k matches from indexed corpus"""
+        """
+        Retrieve the top matching documents from the indexed corpus for a query.
+        
+        Parameters:
+            query (str): The search query.
+            k (int): Maximum number of results to return.
+            lang (Optional[str]): Language hint used for the query, if applicable.
+        
+        Returns:
+            List[Tuple[float, str]]: A list of (score, document) tuples sorted by the underlying index ranking.
+        """
         res = []
         for doc, score in self.query(query, lang, k=k):
             # this log can be very spammy, only enable for debug during dev
@@ -522,6 +553,11 @@ class TldrSolver(AbstractSolver):
     """
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize the TldrSolver and emit a deprecation warning guiding migration to SummarizerEngine.
+        
+        Emits a deprecation notice stating that TldrSolver will be removed in the next major release and advises migration to SummarizerEngine, then forwards all positional and keyword arguments to the superclass initializer.
+        """
         log_deprecation("TldrSolver has been deprecated and will be removed in the next major release. "
                         "Please migrate your code to use SummarizerEngine",
                         f"{VERSION_MAJOR + 1}.0.0")
@@ -531,12 +567,15 @@ class TldrSolver(AbstractSolver):
     def get_tldr(self, document: str,
                  lang: Optional[str] = None) -> str:
         """
-        Summarize the provided document.
-
-        :param document: The text of the document to summarize, assured to be in the default language.
-        :param lang: Optional language code.
-        :return: A summary of the provided document.
-        """
+                 Generate a concise summary of a document.
+                 
+                 Parameters:
+                     document (str): Text to summarize; guaranteed to be in the solver's default language.
+                     lang (str, optional): Language code of the input document when known.
+                 
+                 Returns:
+                     summary (str): A short, human-readable summary of the document.
+                 """
         raise NotImplementedError
 
     # user facing methods
@@ -566,6 +605,11 @@ class EvidenceSolver(AbstractSolver):
     """
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize the EvidenceSolver and emit a deprecation notice.
+        
+        Logs a deprecation warning advising migration to ExtractiveQAEngine, then forwards all arguments to the superclass initializer.
+        """
         log_deprecation("EvidenceSolver has been deprecated and will be removed in the next major release. "
                         "Please migrate your code to use ExtractiveQAEngine",
                         f"{VERSION_MAJOR + 1}.0.0")
@@ -613,6 +657,15 @@ class MultipleChoiceSolver(AbstractSolver):
     """
 
     def __init__(self, *args, **kwargs):
+        """
+        Emit a deprecation notice for MultipleChoiceSolver and initialize the base class.
+        
+        This constructor logs that MultipleChoiceSolver is deprecated and will be removed in the next major release, advises migration to ReRankerEngine, and then forwards all positional and keyword arguments to the superclass initializer.
+        
+        Parameters:
+            *args: Positional arguments passed through to the superclass initializer.
+            **kwargs: Keyword arguments passed through to the superclass initializer.
+        """
         log_deprecation("MultipleChoiceSolver has been deprecated and will be removed in the next major release. "
                         "Please migrate your code to use ReRankerEngine",
                         f"{VERSION_MAJOR + 1}.0.0")
@@ -623,14 +676,19 @@ class MultipleChoiceSolver(AbstractSolver):
                lang: Optional[str] = None,
                return_index: bool = False) -> List[Tuple[float, Union[str, int]]]:
         """
-        Rank the provided options based on the query.
-
-        :param query: The query text, assured to be in the default language.
-        :param options: A list of answer options, each assured to be in the default language.
-        :param lang: Optional language code.
-        :param return_index: If True, return the index of the best option; otherwise, return the best option text.
-        :return: A list of tuples where each tuple contains a score and the corresponding option text, sorted by score.
-        """
+               Rank answer options by relevance to a query.
+               
+               Implementations should score each option and return them ordered by score (highest first).
+               
+               Parameters:
+                   query (str): Query text (assumed to be in the solver's default language).
+                   options (List[str]): Candidate answer options (assumed to be in the solver's default language).
+                   lang (Optional[str]): Language code for the input, if applicable.
+                   return_index (bool): If True, option values in the result are their original indices; otherwise they are option texts.
+               
+               Returns:
+                   List[Tuple[float, Union[str, int]]]: A list of (score, option) tuples sorted by score descending. Each `option` is the option text unless `return_index` is True, in which case it is the option's index.
+               """
         raise NotImplementedError
 
     @auto_detect_lang(text_keys=["query", "options"])
@@ -660,6 +718,11 @@ class EntailmentSolver(AbstractSolver):
     handling automatic translation back and forth as needed"""
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize the EntailmentSolver instance and emit a deprecation notice.
+        
+        Logs a deprecation warning advising migration to NaturalLanguageInferenceEngine and then forwards all positional and keyword arguments to the superclass initializer.
+        """
         log_deprecation("EntailmentSolver has been deprecated and will be removed in the next major release. "
                         "Please migrate your code to use NaturalLanguageInferenceEngine",
                         f"{VERSION_MAJOR + 1}.0.0")
@@ -669,13 +732,16 @@ class EntailmentSolver(AbstractSolver):
     def check_entailment(self, premise: str, hypothesis: str,
                          lang: Optional[str] = None) -> bool:
         """
-        Check if the premise entails the hypothesis.
-
-        :param premise: The premise text, assured to be in the default language.
-        :param hypothesis: The hypothesis text, assured to be in the default language.
-        :param lang: Optional language code.
-        :return: True if the premise entails the hypothesis; False otherwise.
-        """
+                         Determine whether a premise entails a hypothesis.
+                         
+                         Parameters:
+                             premise (str): The premise text.
+                             hypothesis (str): The hypothesis text.
+                             lang (Optional[str]): Language code for interpreting the texts; if omitted, the solver's default language is used.
+                         
+                         Returns:
+                             bool: `True` if the premise entails the hypothesis, `False` otherwise.
+                         """
         raise NotImplementedError
 
     # user facing methods

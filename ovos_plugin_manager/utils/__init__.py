@@ -171,13 +171,14 @@ class PluginConfigTypes(str, Enum):
 
 def find_plugins(plug_type: PluginTypes = None) -> dict:
     """
-    Finds all plugins matching specific entrypoint type.
-
+    Discover and load plugins for the given entrypoint type(s).
+    
     Arguments:
-        plug_type (str): plugin entrypoint string to retrieve
-
+        plug_type (PluginTypes | str | Iterable[PluginTypes] | None): One or more plugin entrypoint identifiers to search.
+            If None, all defined PluginTypes are searched. Strings are treated as entrypoint group names.
+    
     Returns:
-        dict mapping plugin names to plugin entrypoints
+        dict: Mapping from plugin entrypoint name (str) to the loaded plugin object.
     """
     entrypoints = {}
     if not plug_type:
@@ -209,13 +210,13 @@ try:
 
     def _iter_plugins(plug_type):
         """
-        Yields all entry points for the specified plugin group.
+        Yield entry points registered under the given plugin group.
         
         Parameters:
-            plug_type: The entry point group name to search for.
+            plug_type (str): Entry point group name to iterate.
         
         Yields:
-            Entry points belonging to the specified group.
+            entry_point: Each entry point object registered for the specified group.
         """
         for entry_point in entry_points(group=plug_type):
             yield entry_point
@@ -225,7 +226,7 @@ except ImportError:
 
     def _iter_plugins(plug_type):
         """
-        Yield all entry points for the specified plugin group using pkg_resources.
+        Yield entry points registered under the given entry point group.
         
         Parameters:
             plug_type (str): The entry point group name to search for.

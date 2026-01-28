@@ -47,17 +47,21 @@ class AgentContextManager(ABC):
     """
 
     def __init__(self, config: dict):
+        """
+        Initialize the instance and store the provided configuration.
+        
+        Parameters:
+            config (dict): Plugin or engine configuration; falsy values are treated as an empty dict.
+        """
         self.config = config or {}
 
     @property
     def system_prompt(self) -> str:
         """
-        Returns the default system prompt defined in the configuration.
-
-        Individual plugins can modify this prompt in self.augment_context.
-
+        Provide the configured base system prompt for this context manager.
+        
         Returns:
-            str: The base system prompt.
+            The base system prompt from configuration, or an empty string if none is set.
         """
         # typically defined by individual personas
         return self.config.get("system_prompt", "")
@@ -81,37 +85,27 @@ class AgentContextManager(ABC):
     @abc.abstractmethod
     def update_history(self, new_messages: List[AgentMessage], session_id: str):
         """
-        Update the session's message history with new messages.
-
-        Typically called after each interaction to keep the conversation context up to date.
-
-        Args:
-            new_messages (List[AgentMessage]): New messages to append to history.
-            session_id (str): Identifier for the conversation session.
+        Update the stored message history for a session with the provided messages.
+        
+        Parameters:
+            new_messages (List[AgentMessage]): Messages to incorporate into the session's history.
+            session_id (str): Identifier of the conversation session whose history will be updated.
         """
         raise NotImplementedError()
 
     @abc.abstractmethod
     def augment_context(self, utterance: str, session_id: str) -> List[AgentMessage]:
         """
-        Generate a list of messages that augment the context for the next agent response.
-
-        Plugins can use this method to:
-            - Append to the system prompt.
-            - Summarize conversation history.
-            - Retrieve information from long-term memory.
-            - Implement retrieval-augmented generation (RAG) or tool definitions.
-
-        The returned message list should follow these rules:
-            - The first message MAY be a system message containing self.system_prompt.
-            - The final message MUST be a user message containing the current utterance.
-
-        Args:
-            utterance (str): The latest user input.
+        Produce messages that augment conversational context for the next agent response.
+        
+        The returned list may include a leading system message (for example containing self.system_prompt) and must end with a user message containing the provided utterance. Implementations may include summarized history, retrieved memory, retrieval-augmented content, tool definitions, or other context useful to the agent.
+        
+        Parameters:
+            utterance (str): The latest user input to include as the final user message.
             session_id (str): Identifier for the conversation session.
-
+        
         Returns:
-            List[AgentMessage]: Messages representing the augmented context for the agent.
+            List[AgentMessage]: Ordered messages forming the augmented context; the last message must be a user message containing `utterance`.
         """
         raise NotImplementedError()
 
@@ -141,6 +135,15 @@ class MultimodalAdapter(ABC):
 
     @abc.abstractmethod
     def convert(self, message: MultimodalAgentMessage) -> AgentMessage:
+        """
+        Produce a text-only AgentMessage that describes the provided multimodal message.
+        
+        Parameters:
+            message (MultimodalAgentMessage): Multimodal message containing textual, image, audio, or file content to be described.
+        
+        Returns:
+            AgentMessage: An AgentMessage whose content is a textual description suitable for downstream (non-multimodal) engines.
+        """
         raise NotImplementedError()
 
 
@@ -156,16 +159,21 @@ class AbstractAgentEngine(ABC):
 
     def __init__(self, config: dict):
         """
-        Initializes the engine.
-
-        Args:
-            config (dict): Configuration mapping for the specific engine.
+        Initialize the engine and store its configuration on the instance.
+        
+        Parameters:
+            config (dict): Configuration mapping for the engine. If falsy, an empty dict is used.
         """
         self.config = config or {}
 
     @property
     def lang(self) -> str:
-        """Get default language from config or SessionManager."""
+        """
+        Determine the engine's language tag by using the configured language if present, otherwise falling back to the current session language, and return it in a standardized form.
+        
+        Returns:
+            str: Standardized language tag (e.g., BCP-47 style).
+        """
         lang = self.config.get("lang") or SessionManager.get().lang
         return standardize_lang_tag(lang)
 
@@ -181,15 +189,15 @@ class RetrievalEngine(AbstractAgentEngine):
     @abc.abstractmethod
     def query(self, query: str, lang: Optional[str] = None, k: int = 3) -> Iterable[Tuple[str, float]]:
         """
-        Searches the knowledge base for relevant documents or data.
-
-        Args:
-            query: The search string.
-            lang: BCP-47 language code.
-            k: The maximum number of results to return.
-
+        Search the knowledge base and yield the top matching contents with scores.
+        
+        Parameters:
+            query (str): Query string to match against the knowledge base.
+            lang (Optional[str]): BCP-47 language tag to influence matching (optional).
+            k (int): Maximum number of results to yield.
+        
         Yields:
-            Tuples of (content, score) for the top k matches.
+            Tuple[str, float]: Pairs of (content, score) for each match, ordered from best to worst.
         """
         raise NotImplementedError
 
@@ -252,17 +260,17 @@ class ChatEngine(AbstractAgentEngine):
                      lang: Optional[str] = None,
                      units: Optional[str] = None) -> str:
         """
-        High-level wrapper for single-turn text-in/text-out interactions.
-
-        Args:
-            utterance: The user's input string.
-            session_id: The session identifier.
-            lang: BCP-47 language code.
-            units: Preferred measurement system.
-
-        Returns:
-            The plain-text content of the assistant's response.
-        """
+                     Generate a single-turn assistant response for a user's utterance.
+                     
+                     Parameters:
+                         utterance (str): The user's input.
+                         session_id (str): Session identifier.
+                         lang (Optional[str]): BCP-47 language code.
+                         units (Optional[str]): Preferred measurement system.
+                     
+                     Returns:
+                         Assistant response text (str).
+                     """
         message = AgentMessage(role=MessageRole.USER, content=utterance)
         return self.continue_chat(messages=[message],
                                   session_id=session_id,
@@ -288,17 +296,17 @@ class MultimodalChatEngine(ChatEngine):
                       lang: Optional[str] = None,
                       units: Optional[str] = None) -> MultimodalAgentMessage:
         """
-        Generate a response message based on the provided chat history.
-
-        Args:
-            messages (List[AgentMessage]): Full list of messages in the conversation.
-            session_id (str): Identifier for the session.
-            lang (str, optional): BCP-47 language code.
-            units (str, optional): Preferred unit system (e.g., "metric", "imperial").
-
-        Returns:
-            AgentMessage: The generated response message from the assistant.
-        """
+                      Generate a multimodal assistant response from a sequence of multimodal chat messages.
+                      
+                      Parameters:
+                          messages (List[MultimodalAgentMessage]): Conversation history including multimodal content; the final message is typically the user's latest input.
+                          session_id (str): Session identifier used to scope conversation state.
+                          lang (str, optional): BCP-47 language tag to influence response generation.
+                          units (str, optional): Preferred measurement system, e.g., "metric" or "imperial".
+                      
+                      Returns:
+                          MultimodalAgentMessage: The assistant's response, potentially including text and any multimodal content (images, audio, files).
+                      """
         raise NotImplementedError()
 
     def stream_chat(self, messages: List[MultimodalAgentMessage],
@@ -306,21 +314,19 @@ class MultimodalChatEngine(ChatEngine):
                     lang: Optional[str] = None,
                     units: Optional[str] = None) -> Iterable[MultimodalAgentMessage]:
         """
-        Stream back response messages as they are generated.
-
-        Note:
-            Default implementation yields the full response from continue_chat.
-            Subclasses should override this for real-time token streaming.
-
-        Args:
-            messages (List[AgentMessage]): Full list of messages.
-            session_id (str): Identifier for the session.
-            lang (str, optional): Language code.
-            units (str, optional): Unit system.
-
-        Returns:
-            Iterable[AgentMessage]: A stream of response messages.
-        """
+                    Stream response messages as they are produced for a multimodal chat interaction.
+                    
+                    Default implementation yields the single complete response returned by `continue_chat`; subclasses should override to provide real-time incremental streaming.
+                    
+                    Parameters:
+                        messages (List[MultimodalAgentMessage]): Conversation messages including the latest user input.
+                        session_id (str): Session identifier.
+                        lang (str | None): Language tag for the response.
+                        units (str | None): Unit system to use in the response.
+                    
+                    Returns:
+                        Iterable[MultimodalAgentMessage]: An iterable that yields response messages in generation order.
+                    """
         yield self.continue_chat(messages, session_id, lang, units)
 
     def get_response(self, utterance: str,
@@ -331,17 +337,20 @@ class MultimodalChatEngine(ChatEngine):
                      lang: Optional[str] = None,
                      units: Optional[str] = None) -> str:
         """
-        High-level wrapper for single-turn text-in/text-out interactions.
-
-        Args:
-            utterance: The user's input string.
-            session_id: The session identifier.
-            lang: BCP-47 language code.
-            units: Preferred measurement system.
-
-        Returns:
-            The plain-text content of the assistant's response.
-        """
+                     High-level single-turn interface that sends a multimodal user utterance and returns the assistant's text reply.
+                     
+                     Parameters:
+                         utterance (str): The user's input string.
+                         image_content (List[str], optional): List of base64-encoded images to include with the utterance.
+                         audio_content (List[str], optional): List of base64-encoded audio clips to include with the utterance.
+                         file_content (List[str], optional): List of base64-encoded files to include with the utterance.
+                         session_id (str, optional): Session identifier; defaults to "default".
+                         lang (Optional[str], optional): BCP-47 language tag to use for the request.
+                         units (Optional[str], optional): Preferred measurement system (e.g., "metric" or "imperial").
+                     
+                     Returns:
+                         str: The plain-text content of the assistant's response.
+                     """
         message = MultimodalAgentMessage(role=MessageRole.USER, content=utterance,
                                          image_content=image_content,
                                          audio_content=audio_content,
@@ -358,14 +367,14 @@ class SummarizerEngine(AbstractAgentEngine):
     @abc.abstractmethod
     def summarize(self, document: str, lang: Optional[str] = None) -> str:
         """
-        Create a summary of the provided text.
-
-        Args:
-            document (str): The full text to be summarized.
-            lang (str, optional): The language of the document.
-
+        Produce a concise summary of the given document.
+        
+        Parameters:
+            document (str): Text to summarize.
+            lang (Optional[str]): Optional language tag to guide summarization.
+        
         Returns:
-            str: The summarized text.
+            summarized_text (str): A concise summary of the input document.
         """
         raise NotImplementedError
 
@@ -400,16 +409,16 @@ class ExtractiveQAEngine(AbstractAgentEngine):
     def get_best_passage(self, evidence: str, question: str,
                          lang: Optional[str] = None) -> str:
         """
-        Extracts the most relevant passage from the evidence.
-
-        Args:
-            question (str): The query to answer.
-            evidence (str): The source text to search.
-            lang (str, optional): The language of the texts.
-
-        Returns:
-            str: The extracted passage answering the question.
-        """
+                         Finds the passage in `evidence` that is most relevant to the given question.
+                         
+                         Parameters:
+                             evidence (str): Source text to search for an answer.
+                             question (str): Question to locate an answer for within the evidence.
+                             lang (str, optional): Language tag used for matching/tokenization (if applicable).
+                         
+                         Returns:
+                             str: The passage from `evidence` judged most relevant to `question`.
+                         """
         raise NotImplementedError
 
 
@@ -441,17 +450,17 @@ class ReRankerEngine(AbstractAgentEngine):
                       lang: Optional[str] = None,
                       return_index: bool = False) -> Union[str, int]:
         """
-        Select the single best answer from a list of options.
-
-        Args:
-            query (str): The query to match.
-            options (List[str]): List of possible answers.
-            lang (str, optional): Language code.
-            return_index (bool): Whether to return the index of the option or the text.
-
-        Returns:
-            Union[str, int]: The top-ranked option or its index.
-        """
+                      Select the single best answer from a list of options.
+                      
+                      Parameters:
+                          query (str): The query to match against options.
+                          options (List[str]): Candidate answers to evaluate.
+                          lang (str, optional): Language code for ranking, if applicable.
+                          return_index (bool): If True, return the index of the selected option; otherwise return the option text.
+                      
+                      Returns:
+                          Union[str, int]: The top-ranked option string, or its index when `return_index` is True.
+                      """
         return self.rerank(query, options, lang=lang, return_index=return_index)[0][1]
 
 
@@ -465,9 +474,15 @@ class YesNoEngine(AbstractAgentEngine):
     @abc.abstractmethod
     def yes_or_no(self, question: str, response: str, lang: Optional[str] = None) -> Optional[bool]:
         """
-        True: user answered yes
-        False: user answered no
-        None: invalid/neutral answer
+        Determine whether a response answers a yes/no question.
+        
+        Parameters:
+            question (str): The yes/no question being asked; used for context when interpreting the response.
+            response (str): The user's reply to interpret.
+            lang (Optional[str]): Language tag to use when interpreting affirmative/negative expressions (defaults to engine/session language).
+        
+        Returns:
+            True if the response is affirmative, False if the response is negative, None if the response is neutral or cannot be reliably interpreted.
         """
         raise NotImplementedError
 
@@ -483,16 +498,14 @@ class NaturalLanguageInferenceEngine(AbstractAgentEngine):
     def predict_entailment(self, premise: str, hypothesis: str,
                            lang: Optional[str] = None) -> bool:
         """
-        Determine if the premise logically entails the hypothesis.
-
-        Args:
-            premise (str): The base statement or context.
-            hypothesis (str): The statement to be verified against the premise.
-            lang (str, optional): Language code.
-
-        Returns:
-            bool: True if the premise entails the hypothesis, False otherwise.
-        """
+                           Decide whether a premise entails a hypothesis.
+                           
+                           Parameters:
+                               lang (Optional[str]): Optional language tag to guide interpretation.
+                           
+                           Returns:
+                               `true` if the premise entails the hypothesis, `false` otherwise.
+                           """
         raise NotImplementedError
 
 
@@ -513,7 +526,17 @@ class DocumentIndexerEngine(RetrievalEngine):
 
     @abc.abstractmethod
     def query(self, query: str, lang: Optional[str] = None, k: int = 3) -> Iterable[Tuple[str, float]]:
-        """Searches the ingested corpus for matching documents."""
+        """
+        Retrieve top matching documents from the ingested corpus for a text query.
+        
+        Parameters:
+            query (str): Text query to match against the indexed documents.
+            lang (Optional[str]): Language tag to use for the query matching (if supported by the index).
+            k (int): Maximum number of results to return.
+        
+        Returns:
+            Iterable[Tuple[str, float]]: An iterable of `(document, score)` pairs where `document` is matching content and `score` is a relevance score (higher means more relevant).
+        """
         raise NotImplementedError
 
 
@@ -535,10 +558,15 @@ class QAIndexerEngine(RetrievalEngine):
     @abc.abstractmethod
     def query(self, query: str, lang: Optional[str] = None, k: int = 3) -> Iterable[Tuple[str, float]]:
         """
-        Matches a user query against indexed questions and returns the best answers.
-
+        Find the best-matching answers for a query against the indexed question-answer pairs.
+        
+        Parameters:
+            query (str): The user's query to match.
+            lang (Optional[str]): Language tag to select a language-specific index (if supported).
+            k (int): Maximum number of results to return.
+        
         Returns:
-            An iterable of (answer, score) tuples.
+            Iterable[Tuple[str, float]]: An iterable of (answer, score) pairs ordered by relevance (highest first).
         """
         raise NotImplementedError
 
@@ -553,11 +581,15 @@ class CoreferenceEngine(AbstractAgentEngine):
 
     def __init__(self, config: dict):
         """
-        Args:
-            config: Configuration dict.
-                    keys:
-                        'lang': default language override
-                        'context_ttl': seconds to keep context (default: 120)
+        Initialize the coreference engine with configuration and empty context memory.
+        
+        Maintains per-language context data mapping pronouns to a list of (entity, timestamp) tuples:
+        { language_tag: { pronoun: [(entity, unix_timestamp), ...] } }.
+        
+        Parameters:
+            config (dict): Engine configuration. Recognized keys:
+                - 'lang': optional default language tag override.
+                - 'context_ttl': time-to-live in seconds for stored context entries (default 120).
         """
         super().__init__(config)
         # Structure: { lang: { pronoun: [(entity, timestamp)] } }
@@ -565,7 +597,12 @@ class CoreferenceEngine(AbstractAgentEngine):
 
     @property
     def context_ttl(self) -> int:
-        """Time in seconds before a context entry is considered 'stale'."""
+        """
+        Return the time-to-live for stored context entries in seconds.
+        
+        Returns:
+            int: Number of seconds before a context entry is considered stale (default 120).
+        """
         return self.config.get("context_ttl", 120)
 
     # =========================================================================
@@ -573,14 +610,18 @@ class CoreferenceEngine(AbstractAgentEngine):
     # =========================================================================
     def resolve(self, text: str, lang: Optional[str] = None, use_memory: bool = False) -> str:
         """
-        Main entry point. Resolves coreferences using both historical context
-        and the active NLP solver.
-
-        Flow:
-        1. Prune stale context (older than TTL).
-        2. Apply known context (e.g., 'her' -> 'mom') to the text.
-        3. Pass the result to the NLP solver plugin.
-        4. Compare Input vs Output to learn NEW context for next time.
+        Resolve coreferences in the given text using stored conversational memory and the configured coreference solver.
+        
+        Parameters:
+            text (str): Input text potentially containing coreferences.
+            lang (Optional[str]): Language tag to use for resolution; when None, the engine's default language is used.
+            use_memory (bool): If True, apply and update persistent pronoun→entity mappings based on historical context.
+        
+        Returns:
+            str: Text with coreferences resolved.
+        
+        Description:
+            The method prunes expired memory entries for the chosen language, optionally applies existing memory mappings to the input, invokes the coreference solver when ambiguous references are detected, and—if memory is enabled—learns new mappings from differences between the pre-solved and solved text.
         """
         lang = standardize_lang_tag(lang or self.lang)
 
@@ -610,10 +651,14 @@ class CoreferenceEngine(AbstractAgentEngine):
 
     def set_context(self, pronoun: str, entity: str, lang: Optional[str] = None):
         """
-        Manually inject context.
-        Useful for Skills to force a reference.
-
-        Example: sset_context("her", "mom") -> "Tell her hi" becomes "Tell mom hi"
+        Manually add a pronoun-to-entity memory mapping for a specific language.
+        
+        Inserts the given (entity, timestamp) pair as the most recent mapping for `pronoun` in the resolved language. If `lang` is omitted, the engine's current language is used; `pronoun` is normalized to lowercase before storing.
+        
+        Parameters:
+            pronoun (str): The pronoun token to map (e.g., "her", "they").
+            entity (str): The entity text to associate with the pronoun (e.g., "mom", "the team").
+            lang (Optional[str]): BCP-47 language tag to scope the mapping; when None uses the engine's language.
         """
         lang = standardize_lang_tag(lang or self.lang)
         if lang not in self.context_data:
@@ -627,7 +672,11 @@ class CoreferenceEngine(AbstractAgentEngine):
         self.context_data[lang][pronoun].insert(0, (entity, time.time()))
 
     def reset_context(self, lang: Optional[str] = None):
-        """Clear context history. Call this at end of sessions."""
+        """
+        Clear stored coreference context data.
+        
+        If `lang` is provided, clears context only for that language (language tag is normalized). If `lang` is omitted, clears context for all languages.
+        """
         if lang:
             self.context_data[standardize_lang_tag(lang)] = {}
         else:
@@ -640,20 +689,26 @@ class CoreferenceEngine(AbstractAgentEngine):
     @abc.abstractmethod
     def solve_corefs(self, text: str, lang: str) -> str:
         """
-        Implement the actual coreference resolution logic here.
-        Example input: "I saw the dog. It was running."
-        Example output: "I saw the dog. The dog was running."
+        Resolve coreferent expressions in the given text for the specified language.
+        
+        Parameters:
+            text (str): Input text that may contain pronouns or other referring expressions.
+            lang (str): Language tag to guide resolution (e.g., "en-US").
+        
+        Returns:
+            str: Text with coreferences replaced by their resolved referents (e.g., "I saw the dog. The dog was running.").
         """
         raise NotImplementedError()
 
     @abc.abstractmethod
     def contains_corefs(self, text: str, lang: str) -> bool:
         """
-        Return True if the text contains words that need resolving (pronouns, references).
-
-        Used to optimize performance by avoiding calls to self.solve_corefs.
-
-        eg. A basic implementation can match the input against a wordlist of lang specific pronouns.
+        Detect whether the text contains resolvable coreferences for the specified language.
+        
+        Implementations should return True when the input contains pronouns or referring expressions that would require coreference resolution, and False otherwise.
+        
+        Returns:
+            bool: `True` if the text contains resolvable coreferences for the language, `False` otherwise.
         """
         raise NotImplementedError()
 
@@ -662,7 +717,15 @@ class CoreferenceEngine(AbstractAgentEngine):
     # =========================================================================
 
     def _prune_context(self, lang: str):
-        """Remove context entries older than self.context_ttl."""
+        """
+        Prune stale memory entries for a language from the context store.
+        
+        Removes any (entity, timestamp) pairs older than self.context_ttl from self.context_data[lang].
+        If a pronoun key has no remaining entries after pruning, that key is deleted.
+        
+        Parameters:
+            lang (str): Language tag identifying which language's context to prune.
+        """
         if lang not in self.context_data:
             return
 
@@ -683,7 +746,18 @@ class CoreferenceEngine(AbstractAgentEngine):
             del self.context_data[lang][k]
 
     def _apply_memory(self, text: str, lang: str) -> str:
-        """Replace words in text based on current memory."""
+        """
+        Apply stored memory replacements to words in `text` for the given language.
+        
+        Replaces tokens that match stored pronoun/phrase keys with their most recent associated entity for `lang`. If no replacements are applicable or no memory exists for `lang`, returns the original `text`.
+        
+        Parameters:
+            text (str): Input text whose tokens may be replaced.
+            lang (str): Standardized language tag to select the memory store.
+        
+        Returns:
+            str: Text with applicable memory-based substitutions applied.
+        """
         if lang not in self.context_data:
             return text
 
@@ -701,7 +775,14 @@ class CoreferenceEngine(AbstractAgentEngine):
         return " ".join(words) if dirty else text
 
     def _learn_context(self, original: str, solved: str, lang: str):
-        """Diff original vs solved to extract new replacements and save them."""
+        """
+        Extract replacements between the original and solved texts and store them as pronoun→entity mappings for the given language.
+        
+        Parameters:
+            original (str): The text before coreference resolution.
+            solved (str): The text after coreference resolution.
+            lang (str): Language tag used when storing context mappings.
+        """
         replacements = self._extract_replacements(original, solved)
 
         for pronoun, entities in replacements.items():
@@ -712,8 +793,16 @@ class CoreferenceEngine(AbstractAgentEngine):
     @staticmethod
     def _extract_replacements(original: str, solved: str) -> Dict[str, List[str]]:
         """
-        Compares the original text with the solved text to identify exactly
-        which words were replaced using difflib.
+        Identify token-level phrase substitutions between two texts.
+        
+        Compares `original` and `solved` at the word/token level (tokens are lowercased and split on whitespace) and returns a mapping from each phrase in `original` that was replaced to a list of corresponding replacement phrases observed in `solved`. Replacement phrases are returned as space-joined, lowercased token sequences; duplicate replacements are omitted while preserving their discovery order.
+        
+        Parameters:
+            original (str): The original text.
+            solved (str): The text after substitutions.
+        
+        Returns:
+            Dict[str, List[str]]: A dictionary where keys are lowercase phrases from `original` that were replaced, and values are lists of their distinct replacement phrases from `solved`.
         """
 
         # 1. Tokenize inputs
@@ -742,11 +831,15 @@ class CoreferenceEngine(AbstractAgentEngine):
 
 def sentence_split(text: str, max_sentences: int = 25) -> List[str]:
     """
-    Split text into sentences.
-
-    :param text: Input text.
-    :param max_sentences: Maximum number of sentences to return.
-    :return: List of sentences.
+    Split the input text into at most `max_sentences` sentence strings.
+    
+    Parameters:
+        text (str): Text to split into sentences.
+        max_sentences (int): Maximum number of sentences to return (default 25).
+    
+    Returns:
+        List[str]: Sentences extracted from the input. Returns an empty list for empty input;
+        if sentence splitting fails, returns a single-element list containing the original `text`.
     """
     if not text:
         LOG.warning("empty text received in sentence_split")
