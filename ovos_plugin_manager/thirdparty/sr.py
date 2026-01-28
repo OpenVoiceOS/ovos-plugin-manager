@@ -70,7 +70,7 @@ class srAudioData:
             end_byte = int(
                 (end_ms * self.sample_rate * self.sample_width) // 1000
             )
-        return AudioData(
+        return srAudioData(
             self.frame_data[start_byte:end_byte],
             self.sample_rate,
             self.sample_width,
