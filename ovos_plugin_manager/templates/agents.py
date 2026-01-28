@@ -1,12 +1,16 @@
 import abc
+import time
+import difflib
 from abc import ABC
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, List, Iterable, Tuple, Union, Dict
 
+from ovos_bus_client.session import SessionManager, Session
 from ovos_utils import flatten_list
+from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.log import LOG
-from quebra_frases import sentence_tokenize
+from quebra_frases import sentence_tokenize, word_tokenize
 
 
 class MessageRole(str, Enum):
@@ -158,6 +162,12 @@ class AbstractAgentEngine(ABC):
             config (dict): Configuration mapping for the specific engine.
         """
         self.config = config or {}
+
+    @property
+    def lang(self) -> str:
+        """Get default language from config or SessionManager."""
+        lang = self.config.get("lang") or SessionManager.get().lang
+        return standardize_lang_tag(lang)
 
 
 class RetrievalEngine(AbstractAgentEngine):
@@ -378,7 +388,7 @@ class ChatSummarizerEngine(AbstractAgentEngine):
         raise NotImplementedError
 
 
-class EvidenceEngine(AbstractAgentEngine):
+class ExtractiveQAEngine(AbstractAgentEngine):
     """
     Engine for extractive Question Answering (QA).
 
@@ -445,7 +455,7 @@ class ReRankerEngine(AbstractAgentEngine):
         return self.rerank(query, options, lang=lang, return_index=return_index)[0][1]
 
 
-class EntailmentEngine(AbstractAgentEngine):
+class NaturalLanguageInferenceEngine(AbstractAgentEngine):
     """
     Engine for Natural Language Inference (NLI).
 
@@ -514,6 +524,198 @@ class QAIndexerEngine(RetrievalEngine):
             An iterable of (answer, score) tuples.
         """
         raise NotImplementedError
+
+
+class CoreferenceEngine(AbstractAgentEngine):
+    """
+    Base class for Coreference Resolution engines in OVOS.
+
+    This class manages the "State" (Context History), while the inheriting
+    plugin class provides the "Intelligence" (NLP Logic).
+    """
+
+    def __init__(self, config: dict):
+        """
+        Args:
+            config: Configuration dict.
+                    keys:
+                        'lang': default language override
+                        'context_ttl': seconds to keep context (default: 120)
+        """
+        super().__init__(config)
+        # Structure: { lang: { pronoun: [(entity, timestamp)] } }
+        self.context_data: Dict[str, Dict[str, List[Tuple[str, float]]]] = {}
+
+    @property
+    def context_ttl(self) -> int:
+        """Time in seconds before a context entry is considered 'stale'."""
+        return self.config.get("context_ttl", 120)
+
+    # =========================================================================
+    # Public API - Consumers (OVOS Skills) call these
+    # =========================================================================
+
+    def resolve(self, text: str, lang: Optional[str] = None) -> str:
+        """
+        Main entry point. Resolves coreferences using both historical context
+        and the active NLP solver.
+
+        Flow:
+        1. Prune stale context (older than TTL).
+        2. Apply known context (e.g., 'her' -> 'mom') to the text.
+        3. Pass the result to the NLP solver plugin.
+        4. Compare Input vs Output to learn NEW context for next time.
+        """
+        lang = standardize_lang_tag(lang or self.lang)
+
+        # 1. Cleanup old memories
+        self._prune_context(lang)
+
+        # 2. Apply 'Vault' (Memory) Context
+        # This handles cases where we manually registered "her" = "mom"
+        text_with_context = self._apply_memory(text, lang)
+
+        # 3. Apply 'Intelligence' (Plugin NLP)
+        # Only run expensive NLP if pronouns/ambiguity exist
+        if self.contains_corefs(text_with_context, lang):
+            final_solved = self.solve_corefs(text_with_context, lang)
+        else:
+            final_solved = text_with_context
+
+        # 4. Update Memory
+        # If the NLP changed "it" to "the dog", we learn that for next time.
+        self._learn_context(text_with_context, final_solved, lang)
+
+        return final_solved
+
+    def set_context(self, pronoun: str, entity: str, lang: Optional[str] = None):
+        """
+        Manually inject context.
+        Useful for Skills to force a reference.
+
+        Example: sset_context("her", "mom") -> "Tell her hi" becomes "Tell mom hi"
+        """
+        lang = standardize_lang_tag(lang or self.lang)
+        if lang not in self.context_data:
+            self.context_data[lang] = {}
+
+        pronoun = pronoun.lower()
+        if pronoun not in self.context_data[lang]:
+            self.context_data[lang][pronoun] = []
+
+        # Insert at the top as the most recent
+        self.context_data[lang][pronoun].insert(0, (entity, time.time()))
+
+    def reset_context(self, lang: Optional[str] = None):
+        """Clear context history. Call this at end of sessions."""
+        if lang:
+            self.context_data[standardize_lang_tag(lang)] = {}
+        else:
+            self.context_data = {}
+
+    # =========================================================================
+    # Abstract Interface - Plugin Developers Implement These
+    # =========================================================================
+
+    @abc.abstractmethod
+    def solve_corefs(self, text: str, lang: str) -> str:
+        """
+        Implement the actual coreference resolution logic here.
+        Example input: "I saw the dog. It was running."
+        Example output: "I saw the dog. The dog was running."
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def contains_corefs(self, text: str, lang: str) -> bool:
+        """
+        Return True if the text contains words that need resolving
+        (pronouns, references). Used to optimize performance.
+        """
+        raise NotImplementedError()
+
+    # =========================================================================
+    # Internal Helpers
+    # =========================================================================
+
+    def _prune_context(self, lang: str):
+        """Remove context entries older than self.context_ttl."""
+        if lang not in self.context_data:
+            return
+
+        now = time.time()
+        ttl = self.context_ttl
+
+        keys_to_remove = []
+        for word, history in self.context_data[lang].items():
+            # Filter keep only fresh entries
+            valid_entries = [entry for entry in history if (now - entry[1]) < ttl]
+
+            if not valid_entries:
+                keys_to_remove.append(word)
+            else:
+                self.context_data[lang][word] = valid_entries
+
+        for k in keys_to_remove:
+            del self.context_data[lang][k]
+
+    def _apply_memory(self, text: str, lang: str) -> str:
+        """Replace words in text based on current memory."""
+        if lang not in self.context_data:
+            return text
+
+        words = word_tokenize(text)
+        dirty = False
+
+        for i, word in enumerate(words):
+            w_lower = word.lower()
+            if w_lower in self.context_data[lang]:
+                # Get the most recent entity (index 0)
+                replacement_entity = self.context_data[lang][w_lower][0][0]
+                words[i] = replacement_entity
+                dirty = True
+
+        return " ".join(words) if dirty else text
+
+    def _learn_context(self, original: str, solved: str, lang: str):
+        """Diff original vs solved to extract new replacements and save them."""
+        replacements = self.extract_replacements(original, solved)
+
+        for pronoun, entities in replacements.items():
+            # Register all identified replacements
+            for entity in entities:
+                self.set_context(pronoun, entity, lang)
+
+    @staticmethod
+    def extract_replacements(original: str, solved: str) -> Dict[str, List[str]]:
+        """
+        Compares the original text with the solved text to identify exactly
+        which words were replaced using difflib.
+        """
+
+        # 1. Tokenize inputs
+        seq_original = original.lower().split()
+        seq_solved = solved.lower().split()
+
+        # 2. Diff the sequences
+        matcher = difflib.SequenceMatcher(None, seq_original, seq_solved)
+
+        replacements: Dict[str, List[str]] = {}
+
+        # 3. Extract replacements
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            if tag == 'replace':
+                old_phrase = " ".join(seq_original[i1:i2])
+                new_phrase = " ".join(seq_solved[j1:j2])
+
+                if old_phrase not in replacements:
+                    replacements[old_phrase] = []
+
+                if new_phrase not in replacements[old_phrase]:
+                    replacements[old_phrase].append(new_phrase)
+
+        return replacements
+
 
 
 def sentence_split(text: str, max_sentences: int = 25) -> List[str]:

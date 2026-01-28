@@ -4,7 +4,13 @@ from ovos_utils.lang import standardize_lang_tag
 from ovos_utils.process_utils import RuntimeRequirements
 from quebra_frases import word_tokenize
 import abc
+from ovos_utils.log import LOG, log_deprecation, deprecated
+from ovos_plugin_manager.version import VERSION_MAJOR
 
+log_deprecation("CoreferenceSolverEngine has been deprecated and will be removed in the next major release.\n"
+                "Please migrate your code to use CoreferenceEngine.\n"
+                "The new classes live in ovos_plugin_manager.template.agents",
+                f"{VERSION_MAJOR + 1}.0.0")
 
 class CoreferenceSolverEngine:
     def __init__(self, config=None):
