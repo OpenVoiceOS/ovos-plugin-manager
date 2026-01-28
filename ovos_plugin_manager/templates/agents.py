@@ -127,9 +127,9 @@ class MultimodalAgentMessage(AgentMessage):
     """
     role: MessageRole
     content: str
-    image_content: List[str] = field(default_factory=list)  # b64 encoded
-    audio_content: List[str] = field(default_factory=list)  # b64 encoded
-    file_content: List[str] = field(default_factory=list)  # b64 encoded
+    image_content: Optional[List[str]] = field(default_factory=list)  # b64 encoded
+    audio_content: Optional[List[str]] = field(default_factory=list)  # b64 encoded
+    file_content: Optional[List[str]] = field(default_factory=list)  # b64 encoded
 
 
 class MultimodalAdapter(ABC):
