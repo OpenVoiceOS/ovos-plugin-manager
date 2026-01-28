@@ -177,7 +177,7 @@ class RetrievalEngine(AbstractAgentEngine):
     or local databases.
     """
 
-    @abc.abstractmethod
+    `@abc.abstractmethod`
     def query(self, query: str, lang: Optional[str] = None, k: int = 3) -> List[Tuple[str, float]]:
         """
         Searches the knowledge base for relevant documents or data.
@@ -187,8 +187,8 @@ class RetrievalEngine(AbstractAgentEngine):
             lang: BCP-47 language code.
             k: The maximum number of results to return.
 
-        Yields:
-            Tuples of (content, score) for the top k matches.
+        Returns:
+            List of tuples (content, score) for the top k matches.
         """
         raise NotImplementedError
 
@@ -614,7 +614,7 @@ class CoreferenceEngine(AbstractAgentEngine):
         Manually inject context.
         Useful for Skills to force a reference.
 
-        Example: sset_context("her", "mom") -> "Tell her hi" becomes "Tell mom hi"
+        Example: set_context("her", "mom") -> "Tell her hi" becomes "Tell mom hi"
         """
         lang = standardize_lang_tag(lang or self.lang)
         if lang not in self.context_data:
