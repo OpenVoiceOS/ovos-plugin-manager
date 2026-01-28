@@ -35,32 +35,45 @@ class AudioData(srAudioData):
         """
         Create an AudioData instance from the audio file at the given path.
         
+        Parameters:
+            file_path (str): Filesystem path to a WAV/AIFF/FLAC audio file.
+        
         Returns:
-            audio_data (AudioData): AudioData containing the file's mono PCM frame data, sample rate, and sample width.
+            AudioData: Object containing the file's mono PCM frame bytes, sample rate, and sample width.
         """
         with AudioFile(file_path) as source:
             return source.read()
 
     def save(self, file_path: str, convert_rate=None, convert_width=None):
+        """
+        Write the audio data to a WAV file at the given path.
+        
+        Optionally convert the sample rate or sample width before writing.
+        
+        Parameters:
+            file_path (str): Filesystem path to write the WAV file to.
+            convert_rate (int | None): Target sample rate in Hz to convert to, or `None` to keep the current rate.
+            convert_width (int | None): Target sample width in bytes (e.g., 1, 2, 3, 4), or `None` to keep the current width.
+        """
         with open(file_path, "wb") as f:
             f.write(self.get_wav_data(convert_rate, convert_width))
 
     @classmethod
     def from_array(cls, data: Array, sample_rate: int, sample_width: int) -> 'AudioData':
         """
-        Create an AudioData instance from a 1-D NumPy array by converting the array into PCM frame bytes.
+        Create an AudioData instance from a 1-D NumPy array by converting samples to PCM frame bytes.
         
         Parameters:
-            data (Array): 1-D NumPy array containing mono audio samples. If dtype is floating, values are expected in the range -1.0 to 1.0 and will be scaled to the target integer range. If dtype is integer, values will be cast to the target integer type for the specified sample width.
+            data (Array): 1-D NumPy array of mono audio samples. Floating dtypes are expected in the range -1.0 to 1.0 and will be scaled to the integer range for the requested sample width. Integer dtypes will be cast to the appropriate integer range for the requested sample width.
             sample_rate (int): Sample rate in Hz for the resulting AudioData.
-            sample_width (int): Sample width in bytes per sample (1, 2, 3, or 4). When 1, output uses unsigned 8-bit PCM. When 3, samples are packed as 24-bit little-endian (3 bytes per sample).
+            sample_width (int): Sample width in bytes per sample (1, 2, 3, or 4). A value of 1 produces unsigned 8-bit PCM; 3 produces 24-bit little-endian PCM.
         
         Returns:
-            AudioData: New AudioData containing the PCM frame bytes produced from the input array, with the given sample_rate and sample_width.
+            AudioData: AudioData containing PCM frame bytes produced from the input array with the given sample_rate and sample_width.
         
         Raises:
             ValueError: If `data` is not a 1-D array (mono).
-            Exception: Re-raises the stored NumPy import error if NumPy is not available.
+            ImportError: Re-raises the stored NumPy import error if NumPy is not available.
         """
         if np is None:
             raise _np_exc
@@ -122,16 +135,16 @@ class AudioData(srAudioData):
 
     def get_np_int16(self, convert_rate=None) -> Array:
         """
-        Produce a NumPy int16 array containing the audio samples.
+        Get the audio samples as a 1-D NumPy array of dtype `int16`.
         
         Parameters:
             convert_rate (int, optional): Target sample rate in Hz to convert to before extraction.
         
         Returns:
-            numpy.ndarray: 1-D NumPy array of dtype `int16` with the audio samples (mono).
+            numpy.ndarray: 1-D array of dtype `int16` containing mono PCM samples.
         
         Raises:
-            Exception: Re-raises the original NumPy ImportError if NumPy is not available.
+            ImportError: Re-raises the stored NumPy import error if NumPy is not available.
         """
         if np is None:
             raise _np_exc
@@ -140,14 +153,14 @@ class AudioData(srAudioData):
 
     def get_np_float32(self, normalize=True, convert_rate=None) -> Array:
         """
-        Return the audio as a NumPy float32 array.
+        Get audio samples as a NumPy float32 array.
         
         Parameters:
-            normalize (bool): If True, scale samples to the range -1.0 to +1.0 by dividing by 2**15.
+            normalize (bool): If True, scale samples into the range -1.0 to 1.0 by dividing by 32768.
             convert_rate (int | None): Optional target sample rate to convert the audio to before conversion.
         
         Returns:
-            Array: A NumPy array of dtype `float32` containing the audio samples; values are in [-1.0, 1.0] when `normalize` is True.
+            Array: NumPy `float32` array of audio samples; values are in [-1.0, 1.0] when `normalize` is True.
         """
         audio_as_np_int16 = self.get_np_int16(convert_rate)
         audio_as_np_float32 = audio_as_np_int16.astype(np.float32)
@@ -159,14 +172,14 @@ class AudioData(srAudioData):
 
     def get_segment(self, start_ms=None, end_ms=None) -> 'AudioData':
         """
-        Return an AudioData instance trimmed to the specified millisecond interval.
-
+        Return an AudioData containing the audio between start_ms (inclusive) and end_ms (exclusive).
+        
         Parameters:
             start_ms (float | int | None): Start time in milliseconds (inclusive). If None, start at the beginning.
             end_ms (float | int | None): End time in milliseconds (exclusive). If None, end at the end of the audio.
-
+        
         Returns:
-            AudioData: A new AudioData containing the audio frames from [start_ms, end_ms).
+            AudioData: Audio frames covering the interval [start_ms, end_ms).
         """
         data: srAudioData = super().get_segment(start_ms, end_ms)
         # convert to patched AudioData class
@@ -194,14 +207,14 @@ class AudioFile(srAudioFile):
 
     def read(self, duration=None, offset=None) -> AudioData:
         """
-        Read up to `duration` seconds from the opened audio stream, beginning at `offset` seconds, and return an AudioData containing the captured PCM frames.
+        Capture PCM frames from the opened audio stream between the given offset and duration.
         
         Parameters:
             duration (float | None): Maximum number of seconds to read. If None, read until end of stream.
-            offset (float | None): Number of seconds to skip from the start before recording. If None, begin immediately.
+            offset (float | None): Number of seconds to skip from the start before capturing. If None, begin immediately.
         
         Returns:
-            AudioData: An AudioData instance holding the recorded frame bytes at the stream's sample rate and sample width.
+            AudioData: An AudioData instance containing the captured PCM frame bytes at the stream's sample rate and sample width.
         """
         assert self.stream is not None, "Audio source must be entered before recording, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
 
