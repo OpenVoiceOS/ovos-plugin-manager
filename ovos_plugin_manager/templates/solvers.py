@@ -12,7 +12,7 @@ from ovos_plugin_manager.templates.language import LanguageTranslator, LanguageD
 from ovos_plugin_manager.thirdparty.solvers import AbstractSolver
 from ovos_plugin_manager.version import VERSION_MAJOR
 
-log_deprecation("solver plugins have been deprecated and will be removed in the next major release.\n"
+log_deprecation("ovos_plugin_manager.templates.solvers has been deprecated and will be removed in the next major release.\n"
                 "Please migrate your code to use AbstractAgentEngine.\n"
                 "The new classes live in ovos_plugin_manager.templates.agents",
                 f"{VERSION_MAJOR + 1}.0.0")

@@ -2,6 +2,14 @@ from ovos_plugin_manager.templates.solvers import QuestionSolver, TldrSolver, \
     EntailmentSolver, MultipleChoiceSolver, EvidenceSolver, ChatMessageSolver
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
+from ovos_utils.log import log_deprecation
+from ovos_plugin_manager.version import VERSION_MAJOR
+
+log_deprecation("solver plugins have been deprecated and will be removed in the next major release.\n"
+                "Please migrate your code to use AbstractAgentEngine.\n"
+                "The new classes live in ovos_plugin_manager.templates.agents",
+                f"{VERSION_MAJOR + 1}.0.0")
+
 
 def find_chat_solver_plugins() -> dict:
     """

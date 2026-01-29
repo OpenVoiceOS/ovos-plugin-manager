@@ -7,13 +7,20 @@ import abc
 from ovos_utils.log import LOG, log_deprecation, deprecated
 from ovos_plugin_manager.version import VERSION_MAJOR
 
-log_deprecation("CoreferenceSolverEngine has been deprecated and will be removed in the next major release.\n"
+
+log_deprecation("ovos_plugin_manager.templates.coreference has been deprecated and will be removed in the next major release.\n"
                 "Please migrate your code to use CoreferenceEngine.\n"
                 "The new classes live in ovos_plugin_manager.templates.agents",
                 f"{VERSION_MAJOR + 1}.0.0")
 
+
 class CoreferenceSolverEngine:
     def __init__(self, config=None):
+        log_deprecation("CoreferenceSolverEngine has been deprecated and will be removed in the next major release.\n"
+                        "Please migrate your code to use CoreferenceEngine.\n"
+                        "The new classes live in ovos_plugin_manager.templates.agents",
+                        f"{VERSION_MAJOR + 1}.0.0")
+
         self.config = config or {}
         self._prev_sentence = ""
         self._prev_solved = ""

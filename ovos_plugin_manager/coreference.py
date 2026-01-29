@@ -6,6 +6,14 @@ from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.coreference import CoreferenceSolverEngine, \
     replace_coreferences
+from ovos_utils.log import log_deprecation
+from ovos_plugin_manager.version import VERSION_MAJOR
+
+
+log_deprecation("coreference plugins have been deprecated and will be removed in the next major release.\n"
+                "Please migrate your code to use AbstractAgentEngine.\n"
+                "The new classes live in ovos_plugin_manager.templates.agents",
+                f"{VERSION_MAJOR + 1}.0.0")
 
 
 def find_coref_plugins() -> dict:
