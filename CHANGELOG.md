@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.2.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.2a1) (2026-01-29)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.1a5...2.2.2a1)
+
+**Merged pull requests:**
+
+- fix: deprecated import [\#372](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/372) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.2.1a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.1a5) (2026-01-29)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.1a4...2.2.1a5)
