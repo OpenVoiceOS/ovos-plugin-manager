@@ -176,7 +176,7 @@ class RetrievalEngine(AbstractAgentEngine):
     or local databases.
     """
 
-    `@abc.abstractmethod`
+    @abc.abstractmethod
     def query(self, query: str, lang: Optional[str] = None, k: int = 3) -> List[Tuple[str, float]]:
         """
         Searches the knowledge base for relevant documents or data.
@@ -403,8 +403,8 @@ class ExtractiveQAEngine(AbstractAgentEngine):
         Extracts the most relevant passage from the evidence.
 
         Args:
-            question (str): The query to answer.
             evidence (str): The source text to search.
+            question (str): The query to answer.
             lang (str, optional): The language of the texts.
 
         Returns:
