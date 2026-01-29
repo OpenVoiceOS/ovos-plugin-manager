@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- chore\(deps\): update pilosus/action-pip-license-checker action to v3 [\#355](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/355) ([renovate[bot]](https://github.com/apps/renovate))
 - chore\(deps\): update pypa/gh-action-pip-audit action to v1.1.0 - autoclosed [\#351](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/351) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [2.2.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.1a1) (2026-01-29)
