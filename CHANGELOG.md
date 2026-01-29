@@ -1,12 +1,12 @@
 # Changelog
 
-## [2.2.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.0a1) (2026-01-28)
+## [2.2.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.1a1) (2026-01-29)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1...2.2.0a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.0...2.2.1a1)
 
 **Merged pull requests:**
 
-- feat: introduce base class for "memory" plugins [\#363](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/363) ([JarbasAl](https://github.com/JarbasAl))
+- chore: move 3rd party code to own file  [\#361](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/361) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
