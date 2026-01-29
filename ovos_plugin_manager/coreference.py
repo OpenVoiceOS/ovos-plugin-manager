@@ -1,7 +1,6 @@
 from typing import Optional
 
-from ovos_plugin_manager.utils import normalize_lang, PluginTypes, \
-    PluginConfigTypes
+from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.coreference import CoreferenceSolverEngine, \
