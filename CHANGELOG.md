@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.2.1a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.1a3) (2026-01-29)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.1a1...2.2.1a3)
+
+**Merged pull requests:**
+
+- chore\(deps\): update pypa/gh-action-pip-audit action to v1.1.0 - autoclosed [\#351](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/351) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [2.2.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.1a1) (2026-01-29)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.0...2.2.1a1)
