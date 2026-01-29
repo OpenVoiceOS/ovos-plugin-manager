@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.2.1a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.1a5) (2026-01-29)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.1a4...2.2.1a5)
+
+**Merged pull requests:**
+
+- Deprecate solver plugins [\#365](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/365) ([JarbasAl](https://github.com/JarbasAl))
+
+## [2.2.1a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.1a4) (2026-01-29)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.1a3...2.2.1a4)
+
 ## [2.2.1a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.1a3) (2026-01-29)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.1a1...2.2.1a3)
