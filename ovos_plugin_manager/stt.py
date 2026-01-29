@@ -1,5 +1,4 @@
-from ovos_plugin_manager.utils import normalize_lang, \
-    PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_plugin_manager.utils.config import get_valid_plugin_configs, \
     sort_plugin_configs, get_plugin_config

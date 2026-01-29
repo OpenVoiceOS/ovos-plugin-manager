@@ -1,3 +1,4 @@
+# TODO - delete this file in next major release when ovos_plugin_manager.templates.solvers gets deprecated
 # NEON AI (TM) SOFTWARE, Software Development Kit & Application Framework
 # All trademark and other rights reserved by their respective owners
 # Copyright 2008-2022 Neongecko.com Inc.
