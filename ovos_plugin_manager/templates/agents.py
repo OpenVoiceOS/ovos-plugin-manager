@@ -264,7 +264,7 @@ class ChatEngine(AbstractAgentEngine):
 
         Note:
             Default implementation yields the full response from continue_chat.
-            Subclasses should override this for real-time token streaming.
+            Subclasses should override this for real-time sentence streaming.
 
         Args:
             messages (List[AgentMessage]): Full list of messages.
@@ -273,7 +273,7 @@ class ChatEngine(AbstractAgentEngine):
             units (str, optional): Unit system.
 
         Returns:
-            Iterable[str]: A stream of tokens/partial text.
+            Iterable[str]: A stream of complete sentences.
         """
         yield from self.continue_chat(messages, session_id, lang, units).content.split("\n")
 
