@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.2.3a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.3a1) (2026-01-30)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.2a1...2.2.3a1)
+
+**Merged pull requests:**
+
+- fix: explicitly model streaming tokens vs sentences [\#374](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/374) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.2.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.2a1) (2026-01-29)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.1a5...2.2.2a1)
