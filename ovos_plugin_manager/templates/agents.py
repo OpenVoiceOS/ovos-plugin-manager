@@ -225,12 +225,16 @@ class ChatEngine(AbstractAgentEngine):
         """
         raise NotImplementedError()
 
-    def stream_chat(self, messages: List[AgentMessage],
+    def stream_tokens(self, messages: List[AgentMessage],
                     session_id: str = "default",
                     lang: Optional[str] = None,
-                    units: Optional[str] = None) -> Iterable[AgentMessage]:
+                    units: Optional[str] = None) -> Iterable[str]:
         """
-        Stream back response messages as they are generated.
+        Stream back response tokens as they are generated.
+
+        Returns partial sentences and is not suitable for direct TTS.
+
+        Once merged the output corresponds to the content of a AgentMessage with MessageRole.ASSISTANT
 
         Note:
             Default implementation yields the full response from continue_chat.
@@ -243,9 +247,35 @@ class ChatEngine(AbstractAgentEngine):
             units (str, optional): Unit system.
 
         Returns:
-            Iterable[AgentMessage]: A stream of response messages.
+            Iterable[str]: A stream of tokens/partial text.
         """
-        yield self.continue_chat(messages, session_id, lang, units)
+        yield from self.continue_chat(messages, session_id, lang, units).content.split()
+
+    def stream_sentences(self, messages: List[AgentMessage],
+                    session_id: str = "default",
+                    lang: Optional[str] = None,
+                    units: Optional[str] = None) -> Iterable[str]:
+        """
+        Stream back response sentences as they are generated.
+
+        Returns full sentences only, suitable for direct TTS.
+
+        Once merged the output corresponds to the content of a AgentMessage with MessageRole.ASSISTANT
+
+        Note:
+            Default implementation yields the full response from continue_chat.
+            Subclasses should override this for real-time token streaming.
+
+        Args:
+            messages (List[AgentMessage]): Full list of messages.
+            session_id (str): Identifier for the session.
+            lang (str, optional): Language code.
+            units (str, optional): Unit system.
+
+        Returns:
+            Iterable[str]: A stream of tokens/partial text.
+        """
+        yield from self.continue_chat(messages, session_id, lang, units).content.split("\n")
 
     def get_response(self, utterance: str,
                      session_id: str = "default",

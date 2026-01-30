@@ -107,7 +107,7 @@ class AbstractSolver:
                                  for t in text.split("\n")])[:max_sentences]
         except Exception as e:
             LOG.exception(f"Error in sentence_split: {e}")
-            return [text]
+            return text.split("\n")
 
     @lru_cache(maxsize=128)
     def detect_language(self, text: str) -> str:
