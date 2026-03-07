@@ -57,6 +57,22 @@ class MySolver(QuestionSolver):
 
 
 class TestQuestionSolverBaseMethods(unittest.TestCase):
+    def setUp(self):
+        mock_detector = Mock()
+        mock_detector.detect.return_value = "en"
+        self._det_patcher = patch(
+            "ovos_plugin_manager.thirdparty.solvers.OVOSLangDetectionFactory.create",
+            return_value=mock_detector)
+        self._tx_patcher = patch(
+            "ovos_plugin_manager.thirdparty.solvers.OVOSLangTranslationFactory.create",
+            return_value=Mock())
+        self._det_patcher.start()
+        self._tx_patcher.start()
+
+    def tearDown(self):
+        self._det_patcher.stop()
+        self._tx_patcher.stop()
+
     def test_internal_cfg(self):
         solver = MySolver()
         self.assertEqual(solver.default_lang, "en")
@@ -404,9 +420,21 @@ class TestReadingComprehensionSolver(unittest.TestCase):
 
 class TestAutoTranslate(unittest.TestCase):
     def setUp(self):
+        self._tx_patcher = patch(
+            "ovos_plugin_manager.thirdparty.solvers.OVOSLangTranslationFactory.create",
+            return_value=Mock())
+        self._det_patcher = patch(
+            "ovos_plugin_manager.thirdparty.solvers.OVOSLangDetectionFactory.create",
+            return_value=Mock())
+        self._tx_patcher.start()
+        self._det_patcher.start()
         self.solver = AbstractSolver(enable_tx=True, default_lang='en')
         self.solver.translate = MagicMock(side_effect=lambda text, source_lang=None, target_lang=None: text[
                                                                                                        ::-1] if source_lang and target_lang else text)
+
+    def tearDown(self):
+        self._tx_patcher.stop()
+        self._det_patcher.stop()
 
     def test_auto_translate_decorator(self):
         @auto_translate(translate_keys=['text'])

@@ -155,15 +155,16 @@ class OpenVoiceOSPlugin:
             elif "audio" in self.name.lower():
                 self._plugtype = PluginTypes.AUDIO
 
-        # parse description
-        if not self._plugtype and self.description:
-            if "tts" in self.description.lower():
+        # parse description (use raw data to avoid circular dependency via clazz)
+        _raw_desc = self._data.get("description") or ""
+        if not self._plugtype and _raw_desc:
+            if "tts" in _raw_desc.lower():
                 self._plugtype = PluginTypes.TTS
-            elif "stt" in self.description.lower():
+            elif "stt" in _raw_desc.lower():
                 self._plugtype = PluginTypes.STT
-            elif "word" in self.description.lower():
+            elif "word" in _raw_desc.lower():
                 self._plugtype = PluginTypes.WAKEWORD
-            elif "audio" in self.description.lower():
+            elif "audio" in _raw_desc.lower():
                 self._plugtype = PluginTypes.AUDIO
 
         # parse package name
@@ -177,15 +178,16 @@ class OpenVoiceOSPlugin:
             elif "audio" in self.package_name.lower():
                 self._plugtype = PluginTypes.AUDIO
 
-        # parse module name
-        if not self._plugtype and self.module_name:
-            if "tts" in self.module_name.lower():
+        # parse module name (use raw data to avoid circular dependency via clazz)
+        _raw_module = self._data.get("module_name") or ""
+        if not self._plugtype and _raw_module:
+            if "tts" in _raw_module.lower():
                 self._plugtype = PluginTypes.TTS
-            elif "stt" in self.module_name.lower():
+            elif "stt" in _raw_module.lower():
                 self._plugtype = PluginTypes.STT
-            elif "word" in self.module_name.lower():
+            elif "word" in _raw_module.lower():
                 self._plugtype = PluginTypes.WAKEWORD
-            elif "audio" in self.module_name.lower():
+            elif "audio" in _raw_module.lower():
                 self._plugtype = PluginTypes.AUDIO
 
         if not self._data.get("plugin_type"):

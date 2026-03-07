@@ -210,8 +210,8 @@ class StreamingSTT(STT, metaclass=ABCMeta):
         """
         if self.stream is not None:
             self.queue.put(None)
-            text = self.stream.finalize()
             self.stream.join()
+            text = self.stream.finalize()
             self.stream = None
             self.queue = None
             self.transcript_ready.set()

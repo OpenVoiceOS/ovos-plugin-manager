@@ -522,8 +522,9 @@ class TestUtils(unittest.TestCase):
         for plug_type in PluginTypes:
             self.assertIsInstance(plug_type, PluginTypes)
             self.assertIsInstance(plug_type, str)
-            # Handle plugins without associated config entrypoint
-            if plug_type not in (PluginTypes.PERSONA,):
+            # Handle plugins without associated config entrypoint or legacy inconsistent naming
+            if plug_type not in (PluginTypes.PERSONA, PluginTypes.GUI_ADAPTER,
+                                  PluginTypes.QUESTION_SOLVER):
                 self.assertIsInstance(PluginConfigTypes(f"{plug_type.value}.config"),
                                       PluginConfigTypes)
         for cfg_type in PluginConfigTypes:
@@ -562,17 +563,52 @@ class TestUtils(unittest.TestCase):
 
         # TODO: Test loading by plugin type
 
-    def test_load_plugin(self):
+    @patch("ovos_plugin_manager.utils.find_plugins")
+    def test_load_plugin(self, mock_find):
         from ovos_plugin_manager.utils import load_plugin
-        # TODO
+        fake_cls = object()
+        mock_find.return_value = {"my-plugin": fake_cls}
 
-    def test_normalize_lang(self):
-        from ovos_plugin_manager.utils import normalize_lang
-        # TODO
+        # Known plugin name returns the class
+        result = load_plugin("my-plugin", None)
+        self.assertIs(result, fake_cls)
+
+        # Unknown plugin name returns None
+        result = load_plugin("no-such-plugin", None)
+        self.assertIsNone(result)
 
     def test_read_write_stream(self):
         from ovos_plugin_manager.utils import ReadWriteStream
-        # TODO
+
+        # Basic write then read
+        rws = ReadWriteStream()
+        rws.write(b"hello")
+        self.assertEqual(len(rws), 5)
+        data = rws.read(5)
+        self.assertEqual(data, b"hello")
+        self.assertEqual(len(rws), 0)
+
+        # read(n) returns exactly n bytes
+        rws.write(b"abcdef")
+        self.assertEqual(rws.read(3), b"abc")
+        self.assertEqual(rws.read(3), b"def")
+
+        # read all when n == -1
+        rws.write(b"xyz")
+        self.assertEqual(rws.read(-1), b"xyz")
+
+        # max_size trims oldest bytes
+        rws2 = ReadWriteStream(max_size=4)
+        rws2.write(b"12345678")
+        self.assertEqual(len(rws2), 4)
+
+        # clear empties the buffer
+        rws.write(b"data")
+        rws.clear()
+        self.assertEqual(len(rws), 0)
+
+        # flush is a no-op
+        rws.flush()
 
 
 class TestConfigUtils(unittest.TestCase):
@@ -682,21 +718,92 @@ class TestConfigUtils(unittest.TestCase):
                           'priority': 80}
                          )
 
-    def test_load_plugin_configs(self):
+    @patch("ovos_plugin_manager.utils.config.load_plugin")
+    def test_load_plugin_configs(self, mock_load):
         from ovos_plugin_manager.utils.config import load_plugin_configs
-        # TODO
+        from ovos_plugin_manager.utils import PluginConfigTypes
 
-    def test_load_configs_for_plugin_type(self):
+        fake_cfg = {"en-US": [{"lang": "en-US", "priority": 60}],
+                    "de-DE": [{"lang": "de-DE", "priority": 50}]}
+        mock_load.return_value = fake_cfg
+
+        result = load_plugin_configs("my-stt", PluginConfigTypes.STT)
+        mock_load.assert_called_once_with("my-stt.config", PluginConfigTypes.STT)
+        self.assertEqual(result, fake_cfg)
+
+        # normalize_language_keys normalises the keys
+        mock_load.reset_mock()
+        mock_load.return_value = {"en_US": [{"lang": "en-US"}]}
+        result = load_plugin_configs("my-stt", PluginConfigTypes.STT,
+                                     normalize_language_keys=True)
+        self.assertIn("en-US", result)
+
+    @patch("ovos_plugin_manager.utils.config.load_plugin_configs")
+    @patch("ovos_plugin_manager.utils.config.find_plugins")
+    def test_load_configs_for_plugin_type(self, mock_find, mock_load_cfgs):
         from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
-        # TODO
+        from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
-    def test_get_plugin_supported_languages(self):
+        mock_find.return_value = {"plug-a": object(), "plug-b": object()}
+        mock_load_cfgs.side_effect = lambda name, ptype: {"en-US": []} if name == "plug-a" else {}
+
+        result = load_configs_for_plugin_type(PluginTypes.STT)
+        mock_find.assert_called_once_with(PluginTypes.STT)
+        self.assertIn("plug-a", result)
+        self.assertIn("plug-b", result)
+
+    @patch("ovos_plugin_manager.utils.config.load_plugin_configs")
+    @patch("ovos_plugin_manager.utils.config.find_plugins")
+    def test_get_plugin_supported_languages(self, mock_find, mock_load_cfgs):
         from ovos_plugin_manager.utils.config import get_plugin_supported_languages
-        # TODO
+        from ovos_plugin_manager.utils import PluginTypes
 
-    def test_get_plugin_language_configs(self):
+        mock_find.return_value = {"plug-a": object(), "plug-b": object()}
+        mock_load_cfgs.side_effect = lambda name, ptype: {
+            "en-US": [{"lang": "en-US"}],
+            "de-DE": [{"lang": "de-DE"}],
+        } if name == "plug-a" else {"en-US": [{"lang": "en-US"}]}
+
+        result = get_plugin_supported_languages(PluginTypes.STT)
+        self.assertIsInstance(result, dict)
+        self.assertIn("en-US", result)
+        self.assertIn("de-DE", result)
+        self.assertIn("plug-a", result["en-US"])
+        self.assertIn("plug-b", result["en-US"])
+        self.assertIn("plug-a", result["de-DE"])
+        self.assertNotIn("plug-b", result["de-DE"])
+
+    @patch("ovos_plugin_manager.utils.config.load_plugin_configs")
+    @patch("ovos_plugin_manager.utils.config.find_plugins")
+    def test_get_plugin_language_configs(self, mock_find, mock_load_cfgs):
         from ovos_plugin_manager.utils.config import get_plugin_language_configs
-        # TODO
+        from ovos_plugin_manager.utils import PluginTypes
+
+        en_cfg = [{"lang": "en-US", "priority": 75}]
+        de_cfg = [{"lang": "de-DE", "priority": 60}]
+        mock_find.return_value = {"plug-en": object(), "plug-de": object(),
+                                  "plug-both": object()}
+        mock_load_cfgs.side_effect = lambda name, ptype: {
+            "plug-en":   {"en-US": en_cfg},
+            "plug-de":   {"de-DE": de_cfg},
+            "plug-both": {"en-US": en_cfg, "de-DE": de_cfg},
+        }[name]
+
+        # Only plugins supporting en-US are returned
+        result = get_plugin_language_configs(PluginTypes.STT, "en-US")
+        self.assertIn("plug-en", result)
+        self.assertIn("plug-both", result)
+        self.assertNotIn("plug-de", result)
+
+        # Plugins without any matching lang produce empty list → excluded
+        result_de = get_plugin_language_configs(PluginTypes.STT, "de-DE")
+        self.assertIn("plug-de", result_de)
+        self.assertIn("plug-both", result_de)
+        self.assertNotIn("plug-en", result_de)
+
+        # Non-existent lang returns empty dict
+        result_empty = get_plugin_language_configs(PluginTypes.STT, "xx-XX")
+        self.assertEqual(result_empty, {})
 
 
 class TestTTSCacheUtils(unittest.TestCase):

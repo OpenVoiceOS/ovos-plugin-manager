@@ -177,15 +177,53 @@ class TestTTS(unittest.TestCase):
 
     def test_get_voice_id(self):
         from ovos_plugin_manager.tts import get_voice_id
-        # TODO
+        config = {"voice": "amy", "model": "medium"}
+        voice_id = get_voice_id("ovos-tts-plugin-piper", "en-US", config)
+        self.assertIsInstance(voice_id, str)
+        # same args produce same id
+        self.assertEqual(voice_id,
+                         get_voice_id("ovos-tts-plugin-piper", "en-US", config))
+        # different config produces different id
+        self.assertNotEqual(voice_id,
+                            get_voice_id("ovos-tts-plugin-piper", "en-US",
+                                         {"voice": "other"}))
+        # id contains plugin name and lang
+        self.assertIn("ovos-tts-plugin-piper", voice_id)
+        self.assertIn("en-US", voice_id)
 
-    def test_scan_voices(self):
+    @patch("ovos_plugin_manager.tts.get_tts_supported_langs")
+    @patch("ovos_plugin_manager.tts.get_tts_lang_configs")
+    @patch("ovos_plugin_manager.tts.os.makedirs")
+    @patch("builtins.open", new_callable=unittest.mock.mock_open)
+    @patch("ovos_plugin_manager.tts.xdg_data_home", return_value="/fake/xdg")
+    def test_scan_voices(self, xdg, mock_open, makedirs, lang_configs,
+                         supported_langs):
         from ovos_plugin_manager.tts import scan_voices
-        # TODO
+        supported_langs.return_value = {"en-US": ["myplugin"]}
+        lang_configs.return_value = {
+            "myplugin": [{"voice": "amy", "priority": 60}]
+        }
+        result = scan_voices()
+        self.assertIsInstance(result, dict)
+        makedirs.assert_called()
+        mock_open.assert_called()
 
-    def test_get_voices(self):
+    @patch("ovos_plugin_manager.tts.get_tts_supported_langs")
+    @patch("ovos_plugin_manager.tts.os.listdir")
+    @patch("builtins.open", new_callable=unittest.mock.mock_open,
+           read_data='{"voice": "amy"}')
+    @patch("ovos_plugin_manager.tts.xdg_data_home", return_value="/fake/xdg")
+    def test_get_voices(self, xdg, mock_open, listdir, supported_langs):
+        import json
         from ovos_plugin_manager.tts import get_voices
-        # TODO
+        supported_langs.return_value = {"en-US": ["myplugin"]}
+        listdir.return_value = ["voice123.json"]
+        mock_open.return_value.__enter__.return_value.read.return_value = \
+            '{"voice": "amy"}'
+        # patch json.load to return dict
+        with patch("json.load", return_value={"voice": "amy"}):
+            result = get_voices(scan=False)
+        self.assertIsInstance(result, dict)
 
 
 class TestTTSFactory(unittest.TestCase):

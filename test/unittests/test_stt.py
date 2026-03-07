@@ -1,22 +1,161 @@
 import unittest
 from copy import copy
+from queue import Queue
+from threading import Event
+from typing import Optional, Set, List, Tuple
+from unittest.mock import patch, Mock, MagicMock
 
-from unittest.mock import patch, Mock
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils.audio import AudioData
+
+
+# ---------------------------------------------------------------------------
+# Minimal concrete implementations for testing abstract base classes
+# ---------------------------------------------------------------------------
+
+class _DummySTT:
+    """Concrete STT for testing (no metaclass hassles)."""
+    from ovos_plugin_manager.templates.stt import STT as _Base
+
+    class _Impl(_Base):
+        @property
+        def available_languages(self) -> Set[str]:
+            return {"en-US", "de-DE"}
+
+        def execute(self, audio, language=None) -> str:
+            return "hello"
+
+
+_ConcreteSTT = _DummySTT._Impl
+
+
+class _ConcreteStreamThread:
+    from ovos_plugin_manager.templates.stt import StreamThread as _Base
+
+    class _Impl(_Base):
+        def handle_audio_stream(self, audio, language):
+            for chunk in audio:
+                pass
+            self.text = "streamed result"
+
+
+_ConcreteStreamThread = _ConcreteStreamThread._Impl
+
+
+class _ConcreteStreamingSTT:
+    from ovos_plugin_manager.templates.stt import StreamingSTT as _Base
+
+    class _Impl(_Base):
+        @property
+        def available_languages(self) -> Set[str]:
+            return {"en-US"}
+
+        def execute(self, audio=None, language=None):
+            return self.stream_stop()
+
+        def create_streaming_thread(self):
+            return _ConcreteStreamThread(self.queue, self.lang)
+
+
+_ConcreteStreamingSTT = _ConcreteStreamingSTT._Impl
 
 
 class TestSTTTemplate(unittest.TestCase):
-    def test_stt(self):
-        from ovos_plugin_manager.templates.stt import STT
-        # TODO
 
-    def test_stream_thread(self):
-        from ovos_plugin_manager.templates.stt import StreamThread
-        # TODO
+    def test_stt_lang_from_config(self):
+        stt = _ConcreteSTT(config={"lang": "de-DE"})
+        self.assertEqual(stt.lang, "de-DE")
 
-    def test_streaming_stt(self):
-        from ovos_plugin_manager.templates.stt import StreamingSTT
-        # TODO
+    def test_stt_lang_setter(self):
+        stt = _ConcreteSTT(config={"lang": "en-US"})
+        stt.lang = "pt-BR"
+        self.assertEqual(stt.lang, "pt-BR")
+
+    def test_stt_available_languages(self):
+        stt = _ConcreteSTT()
+        self.assertIn("en-US", stt.available_languages)
+        self.assertIn("de-DE", stt.available_languages)
+
+    def test_stt_transcribe_returns_list(self):
+        stt = _ConcreteSTT(config={"lang": "en-US"})
+        audio = MagicMock(spec=AudioData)
+        result = stt.transcribe(audio, lang="en-US")
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 1)
+        text, conf = result[0]
+        self.assertIsInstance(text, str)
+        self.assertIsInstance(conf, float)
+        self.assertEqual(conf, 1.0)
+
+    def test_stt_transcribe_auto_lang_no_detector(self):
+        stt = _ConcreteSTT(config={"lang": "en-US"})
+        audio = MagicMock(spec=AudioData)
+        # auto lang without a detector bound: should fall back to execute()
+        result = stt.transcribe(audio, lang="auto")
+        self.assertIsInstance(result, list)
+        self.assertEqual(result[0][0], "hello")
+
+    def test_stt_bind_detector(self):
+        stt = _ConcreteSTT(config={"lang": "en-US"})
+        detector = MagicMock()
+        detector.detect.return_value = ("en-US", 0.99)
+        stt.bind(detector)
+        self.assertIs(stt._detector, detector)
+
+    def test_stt_detect_language_without_detector(self):
+        stt = _ConcreteSTT(config={"lang": "en-US"})
+        audio = MagicMock(spec=AudioData)
+        with self.assertRaises(NotImplementedError):
+            stt.detect_language(audio)
+
+    def test_stt_detect_language_with_detector(self):
+        stt = _ConcreteSTT(config={"lang": "en-US"})
+        detector = MagicMock()
+        detector.detect.return_value = ("de-DE", 0.95)
+        stt.bind(detector)
+        audio = MagicMock(spec=AudioData)
+        lang, prob = stt.detect_language(audio)
+        self.assertEqual(lang, "de-DE")
+        self.assertAlmostEqual(prob, 0.95)
+
+    def test_stt_can_stream_default_false(self):
+        stt = _ConcreteSTT()
+        self.assertFalse(stt.can_stream)
+
+    def test_stream_thread_run_and_finalize(self):
+        q = Queue()
+        thread = _ConcreteStreamThread(q, "en-US")
+        self.assertEqual(thread.language, "en-US")
+
+        # feed data and signal end
+        q.put(b"chunk1")
+        q.put(b"chunk2")
+        q.put(None)
+        thread.run()
+        self.assertEqual(thread.finalize(), "streamed result")
+
+    def test_streaming_stt_can_stream_true(self):
+        stt = _ConcreteStreamingSTT(config={"lang": "en-US"})
+        self.assertTrue(stt.can_stream)
+
+    def test_streaming_stt_stream_lifecycle(self):
+        stt = _ConcreteStreamingSTT(config={"lang": "en-US"})
+        stt.stream_start("en-US")
+        self.assertIsNotNone(stt.stream)
+        self.assertIsNotNone(stt.queue)
+
+        stt.stream_data(b"audio_chunk")
+        result = stt.stream_stop()
+        self.assertEqual(result, "streamed result")
+        self.assertIsNone(stt.stream)
+        self.assertIsNone(stt.queue)
+        self.assertTrue(stt.transcript_ready.is_set())
+
+    def test_streaming_stt_stop_without_stream(self):
+        stt = _ConcreteStreamingSTT(config={"lang": "en-US"})
+        # stream_stop on an uninitialised stream should return None
+        result = stt.stream_stop()
+        self.assertIsNone(result)
     
 
 class TestSTT(unittest.TestCase):
