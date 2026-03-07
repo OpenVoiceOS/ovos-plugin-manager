@@ -32,6 +32,15 @@ class _ConcreteVAD:
 
     class _Impl(_Base):
         def is_silence(self, chunk) -> bool:
+            """
+            Determines whether an audio chunk represents silence by checking for only zero bytes.
+            
+            Parameters:
+                chunk (bytes): PCM audio data for the frame to evaluate.
+            
+            Returns:
+                bool: True if every byte in `chunk` is 0x00, False otherwise.
+            """
             return chunk == b'\x00' * len(chunk)
 
 
@@ -41,6 +50,11 @@ _ConcreteVAD = _ConcreteVAD._Impl
 class TestVADTemplate(unittest.TestCase):
 
     def test_default_config(self):
+        """
+        Verify the concrete VAD uses the expected default configuration.
+        
+        Asserts that padding_duration_ms is 300, frame_duration_ms is 30, and thresh is 0.8.
+        """
         vad = _ConcreteVAD()
         self.assertEqual(vad.padding_duration_ms, 300)
         self.assertEqual(vad.frame_duration_ms, 30)

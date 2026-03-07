@@ -18,16 +18,19 @@ PIP_LOCK = NamedLock("ovos_pip.lock")
 def search_pip(query: str, strict: bool = True,
                page: int = 1, max_results: int = 10) -> Iterator[Tuple[str, str]]:
     """
-    Search PyPI for packages matching ``query``.
-
-    Scrapes ``pypi.org/search`` and paginates automatically.
-
-    @param query: Search term
-    @param strict: If True (default), only yield packages whose name contains ``query``
-    @param page: Starting page number (used internally for recursion)
-    @param max_results: Maximum total results to yield
-    @return: Iterator of (package_name, description) tuples
-    """
+               Yield package name and short description pairs from PyPI search results for the given query.
+               
+               Searches pypi.org/search, parses result pages, and yields up to `max_results` tuples of `(package_name, description)`; will automatically follow additional result pages when available.
+               
+               Parameters:
+                   query (str): Search term to query on PyPI.
+                   strict (bool): If True, only include packages whose name contains `query`.
+                   page (int): Starting page number; intended for internal recursive pagination.
+                   max_results (int): Maximum total results to yield.
+               
+               Returns:
+                   Iterator[Tuple[str, str]]: Tuples of `(package_name, description)` from the search results.
+               """
     raw_text = requests.get(f'https://pypi.org/search/?q={query}&page='
                             f'{page}').text
     raw_names = raw_text.split('<span class="package-snippet__name">')[1:-2]
@@ -71,19 +74,21 @@ def search_pip(query: str, strict: bool = True,
 def pip_install(packages: List[str], constraints: Optional[str] = None,
                 print_logs: bool = False) -> bool:
     """
-    Install Python packages using the current interpreter's pip.
-
-    Packages are installed one at a time in order. If the interpreter binary
-    directory is not writable, ``sudo -n pip install`` is attempted. A named
-    lock (``ovos_pip.lock``) prevents concurrent installs from racing.
-
-    @param packages: List of pip install specifiers (e.g. ``["ovos-tts-plugin-piper>=0.1"]``)
-    @param constraints: Path to a pip constraints file. Falls back to
-        ``/etc/mycroft/constraints.txt`` if that file exists.
-    @param print_logs: If True, pip stdout/stderr are forwarded to the terminal.
-    @return: True if all packages installed successfully
-    @raises PipException: if any package fails to install
-    """
+                Install multiple pip package specifiers into the current Python interpreter in the provided order.
+                
+                Uses an optional pip constraints file (falls back to a default constraints path if present), runs installs one package at a time, and serializes operations with a named lock to avoid concurrent installs. If the interpreter's bin directory is not writable, the installation command may be prefixed with a non-interactive sudo. Each package is installed sequentially; logs can be forwarded to the terminal.
+                
+                Parameters:
+                    packages (List[str]): Pip install specifiers (e.g. ["ovos-tts-plugin-piper>=0.1"]).
+                    constraints (Optional[str]): Path to a pip constraints file; if provided and missing, the function returns False. If a default constraints file exists, it will be used instead.
+                    print_logs (bool): If True, forward pip stdout/stderr to the terminal; otherwise capture outputs.
+                
+                Returns:
+                    True if all packages were installed successfully; False if no packages were provided or the specified constraints file was not found.
+                
+                Raises:
+                    PipException: When any package installation exits with a non-zero status; contains the exit code, captured stdout, and stderr.
+                """
     if not len(packages):
         return False
     # Use constraints to limit the installed versions

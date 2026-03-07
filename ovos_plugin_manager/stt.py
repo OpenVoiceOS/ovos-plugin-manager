@@ -10,8 +10,10 @@ from ovos_plugin_manager.templates.stt import STT, StreamingSTT, StreamThread
 
 def find_stt_plugins() -> Dict[str, Type[STT]]:
     """
-    Find all installed STT plugins.
-    @return: dict of entry point name to uninstantiated plugin class
+    Discover installed STT plugins available via the plugin manager.
+    
+    Returns:
+        A dictionary mapping plugin entrypoint names to the uninstantiated STT plugin class (`Type[STT]`).
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.STT)
@@ -19,9 +21,13 @@ def find_stt_plugins() -> Dict[str, Type[STT]]:
 
 def load_stt_plugin(module_name: str) -> Type[STT]:
     """
-    Get an uninstantiated class for the requested module_name.
-    @param module_name: Plugin entrypoint name to load
-    @return: Uninstantiated STT class
+    Return the uninstantiated STT plugin class for the given plugin entrypoint name.
+    
+    Parameters:
+        module_name (str): Plugin entrypoint name to load.
+    
+    Returns:
+        Type[STT]: The STT plugin class corresponding to module_name.
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.STT)

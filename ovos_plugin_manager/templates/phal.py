@@ -103,31 +103,13 @@ class PHALPlugin(Thread):
 
     @classproperty
     def runtime_requirements(cls):
-        """ skill developers should override this if they do not require connectivity
-         some examples:
-         IOT plugin that controls devices via LAN could return:
-            scans_on_init = True
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=scans_on_init,
-                                 requires_internet=False,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=False)
-         online search plugin with a local cache:
-            has_cache = False
-            RuntimeRequirements(internet_before_load=not has_cache,
-                                 network_before_load=not has_cache,
-                                 requires_internet=True,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
-         a fully offline plugin:
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=False,
-                                 requires_internet=False,
-                                 requires_network=False,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
+        """
+        Provide the plugin's runtime connectivity requirements; subclasses should override to declare different needs.
+        
+        This default indicates the plugin does not require internet or network before load or at runtime and that both no-internet and no-network fallbacks are allowed. Subclasses can return a RuntimeRequirements instance with different flags to express their specific connectivity and fallback requirements.
+        
+        Returns:
+            RuntimeRequirements: Instance describing internet/network requirements and fallback behaviour.
         """
         return RuntimeRequirements(internet_before_load=False,
                                    network_before_load=False,
@@ -137,10 +119,12 @@ class PHALPlugin(Thread):
                                    no_network_fallback=True)
 
     def emit(self, msg_type: str, msg_data: Optional[dict] = None) -> None:
-        """Emit a bus message scoped to this plugin: ``ovos.PHAL.<name>.<msg_type>``.
-
-        @param msg_type: Message type suffix (e.g. ``"ready"``)
-        @param msg_data: Optional message data payload
+        """
+        Emit a bus message scoped to this plugin under the topic 'ovos.PHAL.<name>.<msg_type>'.
+        
+        Parameters:
+            msg_type (str): Message type suffix (e.g., "ready").
+            msg_data (Optional[dict]): Optional payload to include in the message.
         """
         skill_id = f"ovos.PHAL.{self.name}"
         LOG.info(f"{skill_id}.{msg_type}")

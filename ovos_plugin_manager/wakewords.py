@@ -12,8 +12,9 @@ from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 def find_wake_word_plugins() -> Dict[str, Type[HotWordEngine]]:
     """
-    Find all installed wake word plugins.
-    @return: dict of entry point name to uninstantiated plugin class
+    Discover installed wake word plugin classes.
+    
+    @returns: dict mapping entry point names to the uninstantiated wake word plugin class
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.WAKEWORD)
@@ -21,9 +22,13 @@ def find_wake_word_plugins() -> Dict[str, Type[HotWordEngine]]:
 
 def load_wake_word_plugin(module_name: str) -> Type[HotWordEngine]:
     """
-    Get an uninstantiated class for the requested module_name
-    @param module_name: Plugin entrypoint name to load
-    @return: Uninstantiated class
+    Load an uninstantiated wake word plugin class by its entrypoint name.
+    
+    Parameters:
+        module_name (str): Plugin entrypoint name for the wake word plugin to load.
+    
+    Returns:
+        Type[HotWordEngine]: The uninstantiated wake word plugin class.
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.WAKEWORD)
@@ -31,8 +36,10 @@ def load_wake_word_plugin(module_name: str) -> Type[HotWordEngine]:
 
 def find_wake_word_verifier_plugins() -> Dict[str, Type[HotWordVerifier]]:
     """
-    Find all installed wake word verifier plugins.
-    @return: dict of entry point name to uninstantiated plugin class
+    Discover installed wake word verifier plugins.
+    
+    Returns:
+        Mapping from plugin entry point name to the uninstantiated `HotWordVerifier` class.
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.WAKEWORD_VERIFIER)
@@ -92,9 +99,13 @@ def get_ww_supported_langs() -> dict:
 
 def get_hotwords_config(config: dict = None) -> dict:
     """
-    Get relevant configuration for factory methods
-    @param config: global Configuration OR plugin class-specific configuration
-    @return: plugin class-specific configuration
+    Retrieve the "hotwords" section from the provided configuration.
+    
+    Parameters:
+        config (dict): Global configuration or plugin-specific configuration to read from. If omitted, defaults from the plugin manager are used.
+    
+    Returns:
+        dict: The hotwords configuration mapping (an empty dict if no hotwords configuration is present).
     """
     from ovos_plugin_manager.utils.config import get_plugin_config
     return get_plugin_config(config, "hotwords")
@@ -102,11 +113,15 @@ def get_hotwords_config(config: dict = None) -> dict:
 
 def get_ww_id(plugin_name: str, ww_name: str, ww_config: dict) -> str:
     """
-    Return a stable unique identifier for a specific wake word configuration.
-    @param plugin_name: Wake word plugin entry point name
-    @param ww_name: Wake word phrase name (e.g. "hey mycroft")
-    @param ww_config: Wake word-specific config dict
-    @return: string identifier composed of plugin name, ww name, and an MD5 hash of the config
+    Compute a stable unique identifier for a wake word configuration.
+    
+    Parameters:
+        plugin_name (str): Wake word plugin entry point name.
+        ww_name (str): Wake word phrase name (for example, "hey mycroft").
+        ww_config (dict): Wake word configuration whose canonical JSON representation is used to differentiate configurations.
+    
+    Returns:
+        str: Identifier string in the form "<plugin_name>_<ww_name>_<md5_hash>" where the hash is derived from the canonical JSON of `ww_config`.
     """
     ww_hash = md5(json.dumps(ww_config, sort_keys=True).encode("utf-8")).hexdigest()
     return f"{plugin_name}_{ww_name}_{ww_hash}"
@@ -114,11 +129,13 @@ def get_ww_id(plugin_name: str, ww_name: str, ww_config: dict) -> str:
 
 def scan_wws() -> dict:
     """
-    Enumerate all installed wake word plugins and cache their configurations.
-
-    NOTE: This feature is not yet implemented.
-    @return: dict of ww_id to wake word config dict
-    @raises NotImplementedError: always — wake word metadata reporting is WIP
+    Enumerate installed wake word plugins and cache their configurations.
+    
+    Returns:
+        dict: Mapping from wake word id (str) to its configuration dict.
+    
+    Raises:
+        NotImplementedError: Always — wake word metadata reporting is work in progress.
     """
     ww_ids = {}
     raise NotImplementedError("plugin wake word metadata reporting is WIP")
@@ -127,9 +144,13 @@ def scan_wws() -> dict:
 
 def get_wws(scan: bool = False) -> dict:
     """
-    Return all available wake word configs from disk.
-    @param scan: If True, re-scan all installed plugins before reading from disk
-    @return: dict of ww_id to wake word config dict
+    Retrieve all available wake word configurations from disk, rescanning installed plugins when requested.
+    
+    Parameters:
+        scan (bool): If True, re-scan installed wake word plugins before reading configs from disk.
+    
+    Returns:
+        dict: Mapping from wake word identifier (string) to the wake word configuration dictionary.
     """
     if scan:
         scan_wws()

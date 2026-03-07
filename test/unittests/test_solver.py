@@ -58,6 +58,11 @@ class MySolver(QuestionSolver):
 
 class TestQuestionSolverBaseMethods(unittest.TestCase):
     def setUp(self):
+        """
+        Prepare the test environment by patching language detection and translation factories with mocks.
+        
+        This creates and starts patchers for OVOSLangDetectionFactory.create and OVOSLangTranslationFactory.create. The detection mock's detect method is configured to return "en", and both factories return mock objects; patchers are stored on the instance as `self._det_patcher` and `self._tx_patcher`.
+        """
         mock_detector = Mock()
         mock_detector.detect.return_value = "en"
         self._det_patcher = patch(
@@ -70,6 +75,11 @@ class TestQuestionSolverBaseMethods(unittest.TestCase):
         self._tx_patcher.start()
 
     def tearDown(self):
+        """
+        Stop the language detection and translation factory patchers started in setUp.
+        
+        This restores the original factories by stopping both the detector and translator patchers.
+        """
         self._det_patcher.stop()
         self._tx_patcher.stop()
 
@@ -420,6 +430,11 @@ class TestReadingComprehensionSolver(unittest.TestCase):
 
 class TestAutoTranslate(unittest.TestCase):
     def setUp(self):
+        """
+        Prepare test fixtures by patching language translation and detection factories and instantiating a solver with a controlled translate mock.
+        
+        Patches OVOSLangTranslationFactory.create and OVOSLangDetectionFactory.create to return mocks, starts those patches, creates an AbstractSolver with translation enabled and default language 'en', and replaces its `translate` method with a MagicMock that returns the reversed string when both `source_lang` and `target_lang` are provided and returns the original text otherwise.
+        """
         self._tx_patcher = patch(
             "ovos_plugin_manager.thirdparty.solvers.OVOSLangTranslationFactory.create",
             return_value=Mock())
@@ -433,12 +448,25 @@ class TestAutoTranslate(unittest.TestCase):
                                                                                                        ::-1] if source_lang and target_lang else text)
 
     def tearDown(self):
+        """
+        Stop and remove the translation and language-detection patchers created in setUp to restore original factories after each test.
+        """
         self._tx_patcher.stop()
         self._det_patcher.stop()
 
     def test_auto_translate_decorator(self):
         @auto_translate(translate_keys=['text'])
         def test_func(solver, text, lang=None):
+            """
+            Return the input text reversed.
+            
+            Parameters:
+                text (str): The string to reverse.
+                lang (str, optional): Optional language hint; ignored by this implementation.
+            
+            Returns:
+                str: Reversed `text`.
+            """
             return text[::-1]
 
         result = test_func(self.solver, 'hello', lang='es')

@@ -13,6 +13,15 @@ class _ConcreteIntentTransformer:
 
     class _Impl(_Base):
         def transform(self, intent):
+            """
+            Return the provided intent unchanged.
+            
+            Parameters:
+                intent: The intent object to pass through (for example, an IntentHandlerMatch).
+            
+            Returns:
+                The same `intent` object that was passed in.
+            """
             return intent
 
 
@@ -24,6 +33,16 @@ class _ConcreteAudioLangDetector:
 
     class _Impl(_Base):
         def detect(self, audio_data, valid_langs=None):
+            """
+            Detect the spoken language in the provided audio.
+            
+            Parameters:
+                audio_data: Audio payload to analyze (raw bytes, bytearray, or audio buffer).
+                valid_langs (Optional[Iterable[str]]): Optional sequence of language tags to restrict detection.
+            
+            Returns:
+                tuple: A pair `(language_code, probability)` where `language_code` is the detected BCP-47 tag (e.g., "en-US") and `probability` is a float between 0 and 1 indicating confidence.
+            """
             return "en-US", 0.99
 
 

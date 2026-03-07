@@ -20,9 +20,25 @@ class _DummySTT:
     class _Impl(_Base):
         @property
         def available_languages(self) -> Set[str]:
+            """
+            Provide the set of language tags supported by this STT implementation.
+            
+            Returns:
+                set[str]: A set of BCP-47 language tags supported by the engine (e.g., {"en-US", "de-DE"}).
+            """
             return {"en-US", "de-DE"}
 
         def execute(self, audio, language=None) -> str:
+            """
+            Return a transcribed text string from the provided audio input.
+            
+            Parameters:
+                audio: Audio data to transcribe.
+                language (str, optional): Language code to use for transcription (e.g., "en-US"). If omitted, a default language is used.
+            
+            Returns:
+                str: The transcribed text.
+            """
             return "hello"
 
 
@@ -34,6 +50,16 @@ class _ConcreteStreamThread:
 
     class _Impl(_Base):
         def handle_audio_stream(self, audio, language):
+            """
+            Consume audio chunks from an iterable and finalize the streaming transcript.
+            
+            Parameters:
+                audio (iterable): An iterable or iterator of audio chunks (e.g., bytes) produced by the stream.
+                language (str): BCP-47 language tag for the audio stream.
+            
+            Side effects:
+                Sets `self.text` to the finalized transcript string "streamed result".
+            """
             for chunk in audio:
                 pass
             self.text = "streamed result"
@@ -48,12 +74,30 @@ class _ConcreteStreamingSTT:
     class _Impl(_Base):
         @property
         def available_languages(self) -> Set[str]:
+            """
+            Return the set of language tags supported by this STT implementation.
+            
+            Returns:
+                set[str]: Supported language codes (IETF BCP 47), e.g. "en-US".
+            """
             return {"en-US"}
 
         def execute(self, audio=None, language=None):
+            """
+            Stop the active streaming session and return its final transcript.
+            
+            Returns:
+                str or None: The transcript produced by the streaming session, or `None` if no stream was active.
+            """
             return self.stream_stop()
 
         def create_streaming_thread(self):
+            """
+            Create and return a new streaming thread bound to this instance's queue and language.
+            
+            Returns:
+                _ConcreteStreamThread: A new streaming thread initialized with the instance's queue and language.
+            """
             return _ConcreteStreamThread(self.queue, self.lang)
 
 

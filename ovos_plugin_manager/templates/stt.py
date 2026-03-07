@@ -201,12 +201,12 @@ class StreamingSTT(STT, metaclass=ABCMeta):
 
     def stream_stop(self):
         """
-        Stop the active streaming session and return its final transcription.
+        Stop the active streaming session and return the final transcription.
         
-        If a stream is active, signal end-of-stream to the worker, wait for it to finalize and join the thread, clear internal stream state, and mark the transcript as ready.
+        If a stream is active, signal end-of-stream to the worker, wait for it to finish, clear internal stream state, and mark the transcript as ready.
         
         Returns:
-        	str or None: Final transcription text if a stream was active, `None` otherwise.
+            str or None: Final transcription text if a stream was active, `None` otherwise.
         """
         if self.stream is not None:
             self.queue.put(None)
@@ -220,29 +220,34 @@ class StreamingSTT(STT, metaclass=ABCMeta):
 
     def execute(self, audio: Optional[AudioData] = None,
                 language: Optional[str] = None) -> Optional[str]:
-        """Stop the active stream and return its final transcription.
-
-        ``audio`` is accepted for API compatibility but ignored — the result
-        comes from the streaming thread via :meth:`stream_stop`.
-
-        @param audio: Unused; accepted for base-class API compatibility
-        @param language: Unused; language was set at stream start
-        @return: Final transcription string, or None if no stream was active
         """
+                Stop the active streaming session and return its final transcription.
+                
+                Parameters:
+                    audio (Optional[AudioData]): Ignored; present for API compatibility.
+                    language (Optional[str]): Ignored; language is set when the stream was started.
+                
+                Returns:
+                    Optional[str]: Final transcription text, or `None` if no stream was active.
+                """
         return self.stream_stop()
 
     def transcribe(self, audio: Optional[AudioData] = None,
                    lang: Optional[str] = None) -> List[Tuple[str, float]]:
-        """Transcribe audio data to a list of possible transcriptions and
-        respective confidences.
-
-        Wraps :meth:`execute` (which calls :meth:`stream_stop`) and returns a
-        single-element list with confidence 1.0.
-
-        @param audio: Unused; accepted for base-class API compatibility
-        @param lang: Unused; language was set at stream start
-        @return: List of (transcription, confidence) pairs
         """
+                   Produce the final transcription from the active streaming session.
+                   
+                   This method wraps execute (which stops the stream and returns its final transcription)
+                   and returns a single-element list with confidence 1.0.
+                   
+                   Parameters:
+                       audio (Optional[AudioData]): Unused; accepted for API compatibility.
+                       lang (Optional[str]): Unused; language is determined when the stream was started.
+                   
+                   Returns:
+                       List[Tuple[Optional[str], float]]: A list containing one tuple with the transcription
+                       (or `None` if no transcription is available) and confidence `1.0`.
+                   """
         return [(self.execute(audio, lang), 1.0)]
 
     @abstractmethod

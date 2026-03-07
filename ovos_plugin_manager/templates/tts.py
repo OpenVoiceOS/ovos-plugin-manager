@@ -249,17 +249,16 @@ class TTS:
         return "", None
 
     def preprocess_sentence(self, sentence: str) -> List[str]:
-        """Default preprocessing is a sentence_tokenizer,
-        ie. splits the utterance into sub-sentences using quebra_frases
-
-        This method can be overridden to create chunks suitable to the
-        TTS engine in question.
-
-        Arguments:
-            sentence (str): sentence to preprocess
-
+        """
+        Split an utterance into sub-sentences suitable for synthesis.
+        
+        If sentence tokenization is enabled in the instance config, returns the sentence split into parts; otherwise returns a single-element list containing the original sentence. Subclasses may override to provide engine-specific chunking.
+        
+        Parameters:
+            sentence (str): Utterance to preprocess.
+        
         Returns:
-            list: list of sentence parts
+            List[str]: List of sentence parts for synthesis.
         """
         if self.config.get("sentence_tokenize"):  # TODO default to True on next major release
             try:
@@ -269,10 +268,16 @@ class TTS:
         return [sentence]
 
     def modify_tag(self, tag):
-        """Override to modify each supported ssml tag.
-
-        Arguments:
-            tag (str): SSML tag to check and possibly transform.
+        """
+        Modify an SSML tag before synthesis.
+        
+        Called for each supported SSML tag to allow plugins to transform or normalize the tag string.
+        
+        Parameters:
+            tag (str): The SSML tag text to inspect or modify.
+        
+        Returns:
+            str: The transformed SSML tag (or the original tag if no change is made).
         """
         return tag
 

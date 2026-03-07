@@ -7,6 +7,15 @@ from ovos_plugin_manager.utils import PluginTypes
 class TestOpenVoiceOSPlugin(unittest.TestCase):
 
     def _make_plugin(self, data=None):
+        """
+        Create an OpenVoiceOSPlugin test instance using the provided raw plugin data.
+        
+        Parameters:
+            data (dict | None): Raw plugin metadata to initialize the plugin with; if None, an empty dict is used.
+        
+        Returns:
+            OpenVoiceOSPlugin: A new plugin instance initialized from `data` (or an empty dict).
+        """
         from ovos_plugin_manager.plugin_entry import OpenVoiceOSPlugin
         return OpenVoiceOSPlugin(data or {})
 
@@ -52,6 +61,11 @@ class TestOpenVoiceOSPlugin(unittest.TestCase):
         self.assertEqual(p.human_name, "My Great Plugin")
 
     def test_human_name_from_package_name(self):
+        """
+        Ensure human_name is derived from package_name when the plugin class is not installed.
+        
+        Patches the plugin's `clazz` to None to simulate an uninstalled plugin and asserts that `human_name` is produced (not None), falling back to `package_name` or `name`.
+        """
         p = self._make_plugin({"package_name": "ovos-tts-plugin-piper"})
         # clazz is None (not installed), falls back to package_name
         with patch.object(type(p), "clazz", new_callable=lambda: property(lambda _: None)):
@@ -144,6 +158,11 @@ class TestOpenVoiceOSPlugin(unittest.TestCase):
         self.assertTrue(result)
 
     def test_install_returns_false_without_source(self):
+        """
+        Verifies that install() fails when the plugin has no install source and cannot be loaded.
+        
+        Asserts that install() returns False for a plugin with only a name and no package or URL when the plugin loader reports the plugin is not available.
+        """
         p = self._make_plugin({"name": "some-plugin"})
         with patch("ovos_plugin_manager.plugin_entry.load_plugin", return_value=None):
             result = p.install()

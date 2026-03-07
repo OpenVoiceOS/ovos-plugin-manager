@@ -174,7 +174,12 @@ class AudioTransformer:
         return config
 
     def bind(self, bus=None):
-        """ attach messagebus """
+        """
+        Attach a message bus to this transformer, defaulting to the global Mycroft bus when omitted.
+        
+        Parameters:
+            bus (optional): Message bus client to attach. If not provided, the global Mycroft bus returned by `get_mycroft_bus()` is used.
+        """
         self.bus = bus or get_mycroft_bus()
 
     def feed_audio_chunk(self, chunk: bytes) -> None:
@@ -183,17 +188,35 @@ class AudioTransformer:
         self.noise_feed.write(chunk)
 
     def feed_hotword_chunk(self, chunk: bytes) -> None:
-        """Feed a hotword audio chunk; appends the (possibly modified) chunk to :attr:`hotword_feed`."""
+        """
+        Append a hotword audio chunk to the transformer's hotword buffer after processing.
+        
+        The chunk is passed to `on_hotword` for optional transformation and then written to
+        the `hotword_feed` buffer for later use.
+        """
         chunk = self.on_hotword(chunk)
         self.hotword_feed.write(chunk)
 
     def feed_speech_chunk(self, chunk: bytes) -> None:
-        """Feed a speech chunk recorded after hotword detection; appends to :attr:`speech_feed`."""
+        """
+        Feed a speech audio chunk recorded after hotword detection into the speech buffer.
+        
+        Parameters:
+            chunk (bytes): Raw audio bytes captured after hotword detection; will be processed by `on_speech` and appended to the transformer's `speech_feed` buffer.
+        """
         chunk = self.on_speech(chunk)
         self.speech_feed.write(chunk)
 
     def feed_speech_utterance(self, chunk: bytes) -> bytes:
-        """Process the complete speech utterance and return the (possibly modified) audio."""
+        """
+        Process a complete speech utterance and return the (possibly modified) audio.
+        
+        Parameters:
+        	chunk (bytes): Raw audio bytes of the complete speech utterance.
+        
+        Returns:
+        	audio (bytes): The processed audio bytes (modified or original).
+        """
         return self.on_speech_end(chunk)
 
     def reset(self) -> None:

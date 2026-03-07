@@ -20,9 +20,18 @@ class OpenVoiceOSPlugin:
 
     def __init__(self, data: dict):
         """
-        @param data: Metadata dict. Recognised keys: ``name``, ``package_name``,
-            ``module_name``, ``human_name``, ``description``, ``plugin_type``,
-            ``url``, ``class``.
+        Create an OpenVoiceOSPlugin metadata wrapper from a raw metadata dictionary.
+        
+        Parameters:
+            data (dict): Metadata dictionary for the plugin. Recognized keys:
+                - name: entry point name
+                - package_name: PyPI/pip package name
+                - module_name: Python module where the plugin class is defined
+                - human_name: display-friendly name
+                - description: textual description or docstring
+                - plugin_type: one of the plugin type identifiers (e.g., "tts", "stt", "wakeword", "audio")
+                - url: source or homepage URL
+                - class: plugin class name
         """
         self._data = data
         self._clazz = None
@@ -31,11 +40,15 @@ class OpenVoiceOSPlugin:
     @staticmethod
     def from_name(name: str) -> "OpenVoiceOSPlugin":
         """
-        Build an :class:`OpenVoiceOSPlugin` by looking up ``name`` in all installed
-        plugin registries (STT, TTS, Wake Word, Audio).
-
-        @param name: Plugin entry point name to look up
-        @return: :class:`OpenVoiceOSPlugin` instance (may not be installed)
+        Create an OpenVoiceOSPlugin from an entry-point name by collecting discovered metadata.
+        
+        Searches installed plugin registries (STT, TTS, Wake Word, Audio) for the given entry-point name to infer plugin type, and attempts to load the plugin class to populate class name and description in the metadata.
+        
+        Parameters:
+            name (str): Entry-point name of the plugin to look up.
+        
+        Returns:
+            OpenVoiceOSPlugin: Instance populated with discovered metadata; the plugin may not be installed (its class may be None).
         """
         data = {"name": name}
         if name in find_stt_plugins():
@@ -55,7 +68,23 @@ class OpenVoiceOSPlugin:
 
     @property
     def json(self) -> dict:
-        """Return a serialisable metadata dict for this plugin."""
+        """
+        Serialize the plugin's metadata into a JSON-serializable dictionary.
+        
+        Returns:
+            dict: Metadata dictionary with keys:
+                - name: entry point name of the plugin or None
+                - package_name: PyPI/package identifier or None
+                - module_name: Python module containing the plugin class or None
+                - human_name: human-friendly display name or None
+                - description: textual description or docstring or None
+                - plugin_type: PluginTypes value or None
+                - url: source or project URL or None
+                - is_installed: `True` if the plugin class can be imported, `False` otherwise
+                - class: the uninstantiated plugin class object or None
+        
+            The returned dict is merged with any additional fields present in the plugin's internal data.
+        """
         data = {
             "name": self.name,
             "package_name": self.package_name,
@@ -71,17 +100,34 @@ class OpenVoiceOSPlugin:
 
     @property
     def name(self) -> Optional[str]:
-        """Plugin entry point name (e.g. ``"ovos-stt-plugin-whisper"``)."""
+        """
+        Plugin entry point name.
+        
+        Returns:
+            name (Optional[str]): Entry point identifier (e.g. "ovos-stt-plugin-whisper") or None if not present.
+        """
         return self._data.get("name")
 
     @property
     def package_name(self) -> Optional[str]:
-        """PyPI / pip package name (e.g. ``"ovos-stt-plugin-whisper"``)."""
+        """
+        PyPI/pip package name used to install the plugin (e.g. "ovos-stt-plugin-whisper").
+        
+        Returns:
+            package_name (Optional[str]): The package name, or None if not specified.
+        """
         return self._data.get("package_name")
 
     @property
     def module_name(self) -> Optional[str]:
-        """Python module where the plugin class is defined (e.g. ``"ovos_stt_plugin_whisper"``)."""
+        """
+        Get the Python module where the plugin class is defined.
+        
+        If the plugin is installed and the module name is not already recorded, the value will be cached into the plugin's internal metadata.
+        
+        Returns:
+            module_name (str): The module name (e.g. "ovos_stt_plugin_whisper"), or `None` if unknown.
+        """
         if self.is_installed:
             if not self._data.get("module_name"):
                 self._data["module_name"] = self._clazz.__module__
@@ -90,7 +136,14 @@ class OpenVoiceOSPlugin:
 
     @property
     def human_name(self) -> Optional[str]:
-        """Human-readable display name derived from the class name, package name, or entry point name."""
+        """
+        Produce a human-readable display name for the plugin by deriving it from available metadata.
+        
+        The name is populated (if missing) in this order: the plugin class name (split from CamelCase), the package name, then the entry-point name (split from CamelCase). Hyphens and underscores are replaced with spaces and the result is title-cased; occurrences of "Tts" and "Stt" are normalized to "TTS" and "STT".
+        
+        Returns:
+            human_name (Optional[str]): The derived display name, or `None` if no source is available.
+        """
         if not self._data.get("human_name") and self.clazz:
             self._data["human_name"] = camel_case_split(self.clazz.__name__)
         if not self._data.get("human_name") and self.package_name:
@@ -106,18 +159,25 @@ class OpenVoiceOSPlugin:
 
     @property
     def description(self) -> Optional[str]:
-        """Plugin description sourced from metadata or the class docstring."""
+        """
+        Get the plugin's textual description, preferring metadata and falling back to the plugin class docstring.
+        
+        Returns:
+            description (str): The plugin description if available, otherwise `None`.
+        """
         if not self._data.get("description") and self.clazz:
             self._data["description"] = self.clazz.__doc__
         return self._data.get("description")
 
     @property
     def plugin_type(self) -> Optional[PluginTypes]:
-        """Inferred :class:`~ovos_plugin_manager.utils.PluginTypes` value.
-
-        Detection order: explicit metadata → installed entry points → name
-        heuristics → description heuristics → package name → module name.
-        Returns ``None`` if the type cannot be determined.
+        """
+        Infer the plugin's type as a PluginTypes value.
+        
+        Determination follows this order: explicit metadata, installed entry points, entry name heuristics, description text, package name, then module name.
+        
+        Returns:
+            PluginTypes or None: The inferred plugin type, or `None` if it cannot be determined.
         """
         # check json data
         if not self._plugtype and self._data.get("plugin_type"):
@@ -201,33 +261,46 @@ class OpenVoiceOSPlugin:
 
     @property
     def is_installed(self) -> bool:
-        """``True`` if the plugin class can be imported (i.e. the package is installed)."""
+        """
+        Check whether the plugin package is installed and its class is importable.
+        
+        Returns:
+            `true` if the plugin class can be imported, `false` otherwise.
+        """
         return self.clazz is not None
 
     @property
     def clazz(self) -> Optional[Type]:
-        """The uninstantiated plugin class, or ``None`` if not installed."""
+        """
+        Return the uninstantiated plugin class for this plugin.
+        
+        Returns:
+            plugin_class (Optional[Type]): The plugin class object if available, or `None` when the plugin cannot be imported or is not installed.
+        """
         if not self._clazz and self.name:
             self._clazz = self.load()
         return self._clazz
 
     def load(self) -> Optional[Type]:
         """
-        Attempt to import the plugin class via its entry point name.
-        @return: Uninstantiated plugin class, or ``None`` if not found
+        Import and return the plugin class specified by this plugin's entry point name.
+        
+        Returns:
+            The plugin class (uninstantiated), or `None` if the plugin cannot be found.
         """
         return load_plugin(self.name, plug_type=self.plugin_type)
 
     def install(self) -> bool:
         """
-        Install the plugin package using pip.
-
-        Uses :attr:`package_name` if available; falls back to
-        ``git+<url>`` for GitHub URLs. Returns ``False`` if neither is set.
-
-        @return: ``True`` on successful installation, ``False`` if no install
-            source is available
-        @raises PipException: if pip exits with a non-zero code
+        Install the plugin's Python package via pip.
+        
+        Uses the plugin's package_name when present; if absent and the plugin url points to GitHub, installs from "git+<url>". Returns False when neither an installable package_name nor a GitHub URL is available.
+        
+        Returns:
+            True if installation succeeded, False if no install source is available.
+        
+        Raises:
+            PipException: If pip exits with a non-zero status during installation.
         """
         if self.package_name:
             return pip_install(self.package_name)

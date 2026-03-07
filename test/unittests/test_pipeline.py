@@ -13,6 +13,17 @@ class _ConcretePipeline:
 
     class _Impl(_Base):
         def match(self, utterances, lang, message):
+            """
+            Match utterances for a greeting and return a hello intent match.
+            
+            Parameters:
+                utterances (list[str]): List of utterance strings to inspect.
+                lang (str): Language code of the utterances (unused by this implementation).
+                message (Message): Incoming message object (unused by this implementation).
+            
+            Returns:
+                IntentHandlerMatch or None: An `IntentHandlerMatch` with `match_type` set to `"hello_intent"` and `utterance` set to `"hello"` if any string "hello" appears in `utterances`, `None` otherwise.
+            """
             if "hello" in utterances:
                 from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
                 return IntentHandlerMatch(match_type="hello_intent",
@@ -28,18 +39,51 @@ class _ConcreteConfidenceMatcher:
 
     class _Impl(_Base):
         def match_high(self, utterances, lang, message):
+            """
+            Produce a high-confidence IntentHandlerMatch when the provided utterances exactly equal ["exact match"].
+            
+            Parameters:
+                utterances (list[str]): List of utterance strings to evaluate.
+                lang (str): Language code of the utterances.
+                message (Message): The incoming message object (may be ignored by this matcher).
+            
+            Returns:
+                IntentHandlerMatch or None: An IntentHandlerMatch with `match_type` "high" and `utterance` set to the first utterance when `utterances == ["exact match"]`, `None` otherwise.
+            """
             if utterances == ["exact match"]:
                 from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
                 return IntentHandlerMatch(match_type="high", utterance=utterances[0])
             return None
 
         def match_medium(self, utterances, lang, message):
+            """
+            Attempt a medium-confidence intent match for the provided utterances.
+            
+            Parameters:
+                utterances (list[str]): Candidate utterances to evaluate.
+                lang (str): Language code for the utterances.
+                message (Message): Original message object associated with the utterances.
+            
+            Returns:
+                IntentHandlerMatch: An IntentHandlerMatch with `match_type` set to "medium" and `utterance` set to the first utterance when `utterances == ["fuzzy match"]`, `None` otherwise.
+            """
             if utterances == ["fuzzy match"]:
                 from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
                 return IntentHandlerMatch(match_type="medium", utterance=utterances[0])
             return None
 
         def match_low(self, utterances, lang, message):
+            """
+            Attempt a low-priority intent match when the utterances list exactly equals ["last resort"].
+            
+            Parameters:
+                utterances (list[str]): Tokenized user utterances to match against.
+                lang (str): Language code of the utterances.
+                message (Message): The original message object.
+            
+            Returns:
+                IntentHandlerMatch: An `IntentHandlerMatch` with `match_type` set to "low" and `utterance` set to the first element when `utterances == ["last resort"]`, `None` otherwise.
+            """
             if utterances == ["last resort"]:
                 from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
                 return IntentHandlerMatch(match_type="low", utterance=utterances[0])
@@ -128,6 +172,12 @@ class TestPipelinePlugin(unittest.TestCase):
 class TestConfidenceMatcherPipeline(unittest.TestCase):
 
     def _make_msg(self):
+        """
+        Create a MagicMock configured to mimic a Message instance.
+        
+        Returns:
+            MagicMock: A MagicMock object with its spec set to `Message` from ovos_bus_client.message.
+        """
         from ovos_bus_client.message import Message
         return MagicMock(spec=Message)
 

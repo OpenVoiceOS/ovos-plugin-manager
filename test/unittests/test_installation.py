@@ -7,6 +7,17 @@ from ovos_plugin_manager.exceptions import PipException
 class TestPipInstall(unittest.TestCase):
 
     def _make_proc(self, returncode=0, stdout=b"", stderr=b""):
+        """
+        Create a MagicMock that simulates a subprocess-like object with configurable exit code and I/O.
+        
+        Parameters:
+            returncode (int): Value returned by proc.wait().
+            stdout (bytes): Bytes returned by proc.stdout.read().
+            stderr (bytes): Bytes returned by proc.stderr.read().
+        
+        Returns:
+            MagicMock: Mock process with wait(), stdout.read(), and stderr.read() preset to the provided values.
+        """
         proc = MagicMock()
         proc.wait.return_value = returncode
         proc.stdout.read.return_value = stdout

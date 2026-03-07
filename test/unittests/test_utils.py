@@ -518,6 +518,14 @@ _MOCK_VALID_STT_PLUGINS_CONFIG = {
 
 class TestUtils(unittest.TestCase):
     def test_plugin_types(self):
+        """
+        Verify PluginTypes and PluginConfigTypes enums are valid and consistently mapped.
+        
+        Checks that each PluginTypes member is an instance of PluginTypes and str, and that
+        most plugin types have a corresponding PluginConfigTypes entry named "<plugin>.config".
+        Also verifies each PluginConfigTypes member is an instance of PluginConfigTypes, str,
+        and that its value ends with ".config".
+        """
         from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
         for plug_type in PluginTypes:
             self.assertIsInstance(plug_type, PluginTypes)
@@ -708,6 +716,11 @@ class TestConfigUtils(unittest.TestCase):
         self.assertEqual(len(invalid_lang), 0)
 
     def test_sort_plugin_configs(self):
+        """
+        Verify that sort_plugin_configs orders language configurations by priority for each plugin.
+        
+        Asserts that the highest-priority language entry for the 'google_cloud_streaming' plugin matches the expected English (United States) configuration.
+        """
         from ovos_plugin_manager.utils.config import sort_plugin_configs
         sorted_configs = sort_plugin_configs(_MOCK_VALID_STT_PLUGINS_CONFIG)
 
