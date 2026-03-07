@@ -1,3 +1,5 @@
+from typing import Dict, Optional, Type
+
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_plugin_manager.utils.config import get_valid_plugin_configs, \
@@ -6,20 +8,20 @@ from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.stt import STT, StreamingSTT, StreamThread
 
 
-def find_stt_plugins() -> dict:
+def find_stt_plugins() -> Dict[str, Type[STT]]:
     """
-    Find all installed plugins
-    @return: dict plugin names to entrypoints
+    Find all installed STT plugins.
+    @return: dict of entry point name to uninstantiated plugin class
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.STT)
 
 
-def load_stt_plugin(module_name: str) -> type(STT):
+def load_stt_plugin(module_name: str) -> Type[STT]:
     """
-    Get an uninstantiated class for the requested module_name
+    Get an uninstantiated class for the requested module_name.
     @param module_name: Plugin entrypoint name to load
-    @return: Uninstantiated class
+    @return: Uninstantiated STT class
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.STT)

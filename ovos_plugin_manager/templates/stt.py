@@ -218,14 +218,31 @@ class StreamingSTT(STT, metaclass=ABCMeta):
             return text
         return None
 
-    def execute(self, audio: Optional = None,
-                language: Optional[str] = None):
+    def execute(self, audio: Optional[AudioData] = None,
+                language: Optional[str] = None) -> Optional[str]:
+        """Stop the active stream and return its final transcription.
+
+        ``audio`` is accepted for API compatibility but ignored — the result
+        comes from the streaming thread via :meth:`stream_stop`.
+
+        @param audio: Unused; accepted for base-class API compatibility
+        @param language: Unused; language was set at stream start
+        @return: Final transcription string, or None if no stream was active
+        """
         return self.stream_stop()
 
-    def transcribe(self, audio: Optional = None,
+    def transcribe(self, audio: Optional[AudioData] = None,
                    lang: Optional[str] = None) -> List[Tuple[str, float]]:
-        """transcribe audio data to a list of
-        possible transcriptions and respective confidences"""
+        """Transcribe audio data to a list of possible transcriptions and
+        respective confidences.
+
+        Wraps :meth:`execute` (which calls :meth:`stream_stop`) and returns a
+        single-element list with confidence 1.0.
+
+        @param audio: Unused; accepted for base-class API compatibility
+        @param lang: Unused; language was set at stream start
+        @return: List of (transcription, confidence) pairs
+        """
         return [(self.execute(audio, lang), 1.0)]
 
     @abstractmethod

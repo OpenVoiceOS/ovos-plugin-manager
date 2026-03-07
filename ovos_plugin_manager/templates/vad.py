@@ -1,6 +1,6 @@
 import abc
 import collections
-from typing import Iterable
+from typing import Iterable, Optional
 
 from ovos_utils import classproperty
 from ovos_utils.process_utils import RuntimeRequirements
@@ -18,7 +18,15 @@ class AudioFrame:
 
 
 class VADEngine:
-    def __init__(self, config=None, sample_rate=None):
+    """Voice Activity Detection base class.
+
+    Subclasses must implement :meth:`is_silence`. The provided
+    :meth:`extract_speech` uses a sliding ring-buffer algorithm to trim
+    leading/trailing silence from an audio buffer.
+    """
+
+    def __init__(self, config: Optional[dict] = None,
+                 sample_rate: Optional[int] = None):
         self.config_core = Configuration()
         self.config = config or {}
         self.sample_rate = sample_rate or \

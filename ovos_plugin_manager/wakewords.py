@@ -1,7 +1,7 @@
 import json
 import os
 from hashlib import md5
-from typing import Optional, Type
+from typing import Dict, Optional, Type
 
 from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_data_home
@@ -10,10 +10,10 @@ from ovos_plugin_manager.templates.hotwords import HotWordEngine, HotWordVerifie
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
-def find_wake_word_plugins() -> dict:
+def find_wake_word_plugins() -> Dict[str, Type[HotWordEngine]]:
     """
-    Find all installed plugins
-    @return: dict plugin names to entrypoints
+    Find all installed wake word plugins.
+    @return: dict of entry point name to uninstantiated plugin class
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.WAKEWORD)
@@ -29,10 +29,10 @@ def load_wake_word_plugin(module_name: str) -> Type[HotWordEngine]:
     return load_plugin(module_name, PluginTypes.WAKEWORD)
 
 
-def find_wake_word_verifier_plugins() -> dict:
+def find_wake_word_verifier_plugins() -> Dict[str, Type[HotWordVerifier]]:
     """
-    Find all installed plugins
-    @return: dict plugin names to entrypoints
+    Find all installed wake word verifier plugins.
+    @return: dict of entry point name to uninstantiated plugin class
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.WAKEWORD_VERIFIER)
@@ -100,18 +100,37 @@ def get_hotwords_config(config: dict = None) -> dict:
     return get_plugin_config(config, "hotwords")
 
 
-def get_ww_id(plugin_name, ww_name, ww_config):
+def get_ww_id(plugin_name: str, ww_name: str, ww_config: dict) -> str:
+    """
+    Return a stable unique identifier for a specific wake word configuration.
+    @param plugin_name: Wake word plugin entry point name
+    @param ww_name: Wake word phrase name (e.g. "hey mycroft")
+    @param ww_config: Wake word-specific config dict
+    @return: string identifier composed of plugin name, ww name, and an MD5 hash of the config
+    """
     ww_hash = md5(json.dumps(ww_config, sort_keys=True).encode("utf-8")).hexdigest()
     return f"{plugin_name}_{ww_name}_{ww_hash}"
 
 
-def scan_wws():
+def scan_wws() -> dict:
+    """
+    Enumerate all installed wake word plugins and cache their configurations.
+
+    NOTE: This feature is not yet implemented.
+    @return: dict of ww_id to wake word config dict
+    @raises NotImplementedError: always — wake word metadata reporting is WIP
+    """
     ww_ids = {}
     raise NotImplementedError("plugin wake word metadata reporting is WIP")
     return ww_ids
 
 
-def get_wws(scan=False):
+def get_wws(scan: bool = False) -> dict:
+    """
+    Return all available wake word configs from disk.
+    @param scan: If True, re-scan all installed plugins before reading from disk
+    @return: dict of ww_id to wake word config dict
+    """
     if scan:
         scan_wws()
     ww_ids = {}

@@ -2,6 +2,7 @@ import os
 import sys
 from os.path import exists, dirname
 from subprocess import PIPE, Popen
+from typing import Iterator, List, Optional, Tuple
 
 import requests
 from combo_lock import NamedLock
@@ -14,7 +15,19 @@ DEFAULT_CONSTRAINTS = '/etc/mycroft/constraints.txt'
 PIP_LOCK = NamedLock("ovos_pip.lock")
 
 
-def search_pip(query, strict=True, page=1, max_results=10):
+def search_pip(query: str, strict: bool = True,
+               page: int = 1, max_results: int = 10) -> Iterator[Tuple[str, str]]:
+    """
+    Search PyPI for packages matching ``query``.
+
+    Scrapes ``pypi.org/search`` and paginates automatically.
+
+    @param query: Search term
+    @param strict: If True (default), only yield packages whose name contains ``query``
+    @param page: Starting page number (used internally for recursion)
+    @param max_results: Maximum total results to yield
+    @return: Iterator of (package_name, description) tuples
+    """
     raw_text = requests.get(f'https://pypi.org/search/?q={query}&page='
                             f'{page}').text
     raw_names = raw_text.split('<span class="package-snippet__name">')[1:-2]
@@ -55,7 +68,22 @@ def search_pip(query, strict=True, page=1, max_results=10):
                 return
 
 
-def pip_install(packages, constraints=None, print_logs=False):
+def pip_install(packages: List[str], constraints: Optional[str] = None,
+                print_logs: bool = False) -> bool:
+    """
+    Install Python packages using the current interpreter's pip.
+
+    Packages are installed one at a time in order. If the interpreter binary
+    directory is not writable, ``sudo -n pip install`` is attempted. A named
+    lock (``ovos_pip.lock``) prevents concurrent installs from racing.
+
+    @param packages: List of pip install specifiers (e.g. ``["ovos-tts-plugin-piper>=0.1"]``)
+    @param constraints: Path to a pip constraints file. Falls back to
+        ``/etc/mycroft/constraints.txt`` if that file exists.
+    @param print_logs: If True, pip stdout/stderr are forwarded to the terminal.
+    @return: True if all packages installed successfully
+    @raises PipException: if any package fails to install
+    """
     if not len(packages):
         return False
     # Use constraints to limit the installed versions

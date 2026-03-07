@@ -55,6 +55,7 @@ class PluginTypes(str, Enum):
     VOICE_EMBEDDINGS = "opm.embeddings.voice"
     TEXT_EMBEDDINGS = "opm.embeddings.text"
     GUI = "opm.gui"
+    GUI_ADAPTER = "opm.gui_adapter"
     PHAL = "opm.phal"
     ADMIN = "opm.phal.admin"
     SKILL = "opm.skill"

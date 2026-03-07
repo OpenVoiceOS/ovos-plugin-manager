@@ -172,22 +172,21 @@ def get_plugin_language_configs(plug_type: PluginTypes, lang: str,
     """
     lang = standardize_lang_tag(lang)
     plugin_configs = dict()
-    valid_configs = dict()
     for plug in find_plugins(plug_type):
         plugin_configs[plug] = list()
-        valid_configs = \
+        plug_configs = \
             load_plugin_configs(plug,
                                 PluginConfigTypes(f"{plug_type.value}.config"))
-        valid_configs = {standardize_lang_tag(lang): conf
-                         for lang, conf in valid_configs.items()}
+        plug_configs = {standardize_lang_tag(k): conf
+                        for k, conf in plug_configs.items()}
         if include_dialects:
-            lang = standardize_lang_tag(lang, macro=True)
-            for language in valid_configs:
-                if language.startswith(lang):
-                    plugin_configs[plug] += valid_configs[language]
-        elif lang in valid_configs:
-            plugin_configs[plug] += valid_configs[lang]
-        elif f"{lang}-{lang}" in valid_configs:
-            plugin_configs += valid_configs[f"{lang}-{lang}"]
+            macro = standardize_lang_tag(lang, macro=True)
+            for language in plug_configs:
+                if language.startswith(macro):
+                    plugin_configs[plug] += plug_configs[language]
+        elif lang in plug_configs:
+            plugin_configs[plug] += plug_configs[lang]
+        elif f"{lang}-{lang}" in plug_configs:
+            plugin_configs[plug] += plug_configs[f"{lang}-{lang}"]
     return {plug: configs for plug, configs in
-            valid_configs.items() if configs} or dict()
+            plugin_configs.items() if configs} or dict()

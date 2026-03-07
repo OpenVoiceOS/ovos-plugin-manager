@@ -1,4 +1,5 @@
 from threading import Thread
+from typing import Optional
 
 from ovos_bus_client.message import Message
 from ovos_config import Configuration
@@ -135,7 +136,12 @@ class PHALPlugin(Thread):
                                    no_internet_fallback=True,
                                    no_network_fallback=True)
 
-    def emit(self, msg_type, msg_data=None):
+    def emit(self, msg_type: str, msg_data: Optional[dict] = None) -> None:
+        """Emit a bus message scoped to this plugin: ``ovos.PHAL.<name>.<msg_type>``.
+
+        @param msg_type: Message type suffix (e.g. ``"ready"``)
+        @param msg_data: Optional message data payload
+        """
         skill_id = f"ovos.PHAL.{self.name}"
         LOG.info(f"{skill_id}.{msg_type}")
         self.bus.emit(Message(f"{skill_id}.{msg_type}", msg_data, {"skill_id": skill_id}))

@@ -1,5 +1,7 @@
 import json
 import os
+from typing import Dict, Optional, Type
+
 from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, TextToSpeechCache, ConcatTTS
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 from ovos_utils.log import LOG
@@ -7,20 +9,20 @@ from ovos_utils.xdg_utils import xdg_data_home
 from hashlib import md5
 
 
-def find_tts_plugins() -> dict:
+def find_tts_plugins() -> Dict[str, Type[TTS]]:
     """
-    Find all installed plugins
-    @return: dict plugin names to entrypoints
+    Find all installed TTS plugins.
+    @return: dict of entry point name to uninstantiated plugin class
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.TTS)
 
 
-def load_tts_plugin(module_name: str) -> type(TTS):
+def load_tts_plugin(module_name: str) -> Type[TTS]:
     """
-    Get an uninstantiated class for the requested module_name
+    Get an uninstantiated class for the requested module_name.
     @param module_name: Plugin entrypoint name to load
-    @return: Uninstantiated class
+    @return: Uninstantiated TTS class
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.TTS)
@@ -49,9 +51,9 @@ def get_tts_module_configs(module_name: str) -> dict:
     return configs
 
 
-def get_tts_lang_configs(lang, include_dialects=False):
+def get_tts_lang_configs(lang: str, include_dialects: bool = False) -> dict:
     """
-    Get a dict of plugins names to sorted list of valid configurations
+    Get a dict of plugin names to sorted list of valid configurations.
     @param lang: language to get configurations for (i.e. en, en-US)
     @param include_dialects: If true, include configs for other locales
         (i.e. include en-GB configs for lang=en-US)
@@ -61,9 +63,9 @@ def get_tts_lang_configs(lang, include_dialects=False):
     return get_plugin_language_configs(PluginTypes.TTS, lang, include_dialects)
 
 
-def get_tts_supported_langs():
+def get_tts_supported_langs() -> dict:
     """
-    Get a dict of languages to valid configuration options
+    Get a dict of languages to valid configuration options.
     @return: dict lang to list of plugins that support that lang
     """
     from ovos_plugin_manager.utils.config import get_plugin_supported_languages
@@ -81,13 +83,28 @@ def get_tts_config(config: dict = None, module: str = None) -> dict:
     return get_plugin_config(config, 'tts', module)
 
 
-def get_voice_id(plugin_name, lang, tts_config):
+def get_voice_id(plugin_name: str, lang: str, tts_config: dict) -> str:
+    """
+    Return a stable unique identifier for a specific TTS voice configuration.
+    @param plugin_name: TTS plugin entry point name
+    @param lang: BCP-47 language code
+    @param tts_config: Voice-specific config dict
+    @return: string identifier composed of plugin name, lang, and an MD5 hash of the config
+    """
     tts_hash = md5(json.dumps(tts_config,
                               sort_keys=True).encode("utf-8")).hexdigest()
     return f"{plugin_name}_{lang}_{tts_hash}"
 
 
-def scan_voices():
+def scan_voices() -> dict:
+    """
+    Enumerate all installed TTS plugins and write each voice config to disk.
+
+    For every supported language and voice variant, a JSON file is written to
+    ``~/.local/share/OPM/voice_configs/<lang>/<voice_id>.json``.
+
+    @return: dict of voice_id to voice config dict
+    """
     voice_ids = {}
     for lang in get_tts_supported_langs():
         VOICES_FOLDER = f"{xdg_data_home()}/OPM/voice_configs/{lang}"
@@ -109,7 +126,16 @@ def scan_voices():
     return voice_ids
 
 
-def get_voices(scan=False):
+def get_voices(scan: bool = False) -> dict:
+    """
+    Return all available TTS voice configs, optionally re-scanning first.
+
+    Voice configs are read from ``~/.local/share/OPM/voice_configs/<lang>/``.
+    Call ``scan_voices()`` first (or pass ``scan=True``) to populate the cache.
+
+    @param scan: If True, re-scan all installed plugins before reading from disk
+    @return: dict of voice_id to voice config dict
+    """
     if scan:
         scan_voices()
     voice_ids = {}

@@ -177,23 +177,27 @@ class AudioTransformer:
         """ attach messagebus """
         self.bus = bus or get_mycroft_bus()
 
-    def feed_audio_chunk(self, chunk):
+    def feed_audio_chunk(self, chunk: bytes) -> None:
+        """Feed a non-speech audio chunk; appends the (possibly modified) chunk to :attr:`noise_feed`."""
         chunk = self.on_audio(chunk)
         self.noise_feed.write(chunk)
 
-    def feed_hotword_chunk(self, chunk):
+    def feed_hotword_chunk(self, chunk: bytes) -> None:
+        """Feed a hotword audio chunk; appends the (possibly modified) chunk to :attr:`hotword_feed`."""
         chunk = self.on_hotword(chunk)
         self.hotword_feed.write(chunk)
 
-    def feed_speech_chunk(self, chunk):
+    def feed_speech_chunk(self, chunk: bytes) -> None:
+        """Feed a speech chunk recorded after hotword detection; appends to :attr:`speech_feed`."""
         chunk = self.on_speech(chunk)
         self.speech_feed.write(chunk)
 
-    def feed_speech_utterance(self, chunk):
+    def feed_speech_utterance(self, chunk: bytes) -> bytes:
+        """Process the complete speech utterance and return the (possibly modified) audio."""
         return self.on_speech_end(chunk)
 
-    def reset(self):
-        # end of prediction, reset buffers
+    def reset(self) -> None:
+        """Clear all audio buffers. Called at the end of each prediction cycle."""
         self.speech_feed.clear()
         self.hotword_feed.clear()
         self.noise_feed.clear()

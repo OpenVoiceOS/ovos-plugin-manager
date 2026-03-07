@@ -262,7 +262,10 @@ class TTS:
             list: list of sentence parts
         """
         if self.config.get("sentence_tokenize"):  # TODO default to True on next major release
-            return quebra_frases.sentence_tokenize(sentence)
+            try:
+                return quebra_frases.sentence_tokenize(sentence)
+            except:
+                return sentence.split("\n")
         return [sentence]
 
     def modify_tag(self, tag):

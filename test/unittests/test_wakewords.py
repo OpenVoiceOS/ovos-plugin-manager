@@ -1,3 +1,4 @@
+import json
 import unittest
 from unittest.mock import patch, Mock
 
@@ -84,15 +85,34 @@ class TestWakewords(unittest.TestCase):
 
     def test_get_ww_id(self):
         from ovos_plugin_manager.wakewords import get_ww_id
-        # TODO
+        config = {"model": "hey_mycroft.tflite"}
+        ww_id = get_ww_id("ovos-ww-plugin-precise", "hey mycroft", config)
+        self.assertIsInstance(ww_id, str)
+        # same args produce same id
+        self.assertEqual(ww_id,
+                         get_ww_id("ovos-ww-plugin-precise", "hey mycroft",
+                                   config))
+        # different config produces different id
+        self.assertNotEqual(ww_id,
+                            get_ww_id("ovos-ww-plugin-precise", "hey mycroft",
+                                      {"model": "other.tflite"}))
 
-    def test_scan_wws(self):
+    def test_scan_wws_not_implemented(self):
         from ovos_plugin_manager.wakewords import scan_wws
-        # TODO
+        with self.assertRaises(NotImplementedError):
+            scan_wws()
 
-    def test_get_wws(self):
+    @patch("ovos_plugin_manager.wakewords.get_ww_supported_langs")
+    @patch("ovos_plugin_manager.wakewords.os.listdir")
+    @patch("builtins.open", new_callable=unittest.mock.mock_open)
+    @patch("ovos_plugin_manager.wakewords.xdg_data_home", return_value="/fake/xdg")
+    def test_get_wws(self, xdg, mock_open, listdir, supported_langs):
         from ovos_plugin_manager.wakewords import get_wws
-        # TODO
+        supported_langs.return_value = {"en-US": ["myplugin"]}
+        listdir.return_value = ["ww123.json"]
+        with patch("json.load", return_value={"model": "test.tflite"}):
+            result = get_wws(scan=False)
+        self.assertIsInstance(result, dict)
 
 
 class TestWakeWordFactory(unittest.TestCase):
