@@ -28,26 +28,18 @@ class VADEngine:
     def __init__(self, config: Optional[dict] = None,
                  sample_rate: Optional[int] = None):
         """
-                 Initialize the VAD engine configuration and timing parameters.
-                 
-                 Parameters:
-                     config (Optional[dict]): Optional configuration overrides for VAD behavior.
-                         Expected keys:
-                             - "padding_duration_ms": milliseconds of padding to keep around detected speech (default 300)
-                             - "frame_duration_ms": duration of each frame in milliseconds (default 30)
-                             - "thresh": fraction of frames in the padding window required to trigger voiced/unvoiced transitions (default 0.8)
-                     sample_rate (Optional[int]): Audio sample rate in Hz. If omitted, reads from core configuration "listener.sample_rate" or defaults to 16000.
-                 
-                 Attributes set:
-                     config_core: global Configuration instance used to read defaults.
-                     config: effective configuration dictionary (merged with provided overrides).
-                     sample_rate: resolved sample rate in Hz.
-                     padding_duration_ms: padding window size in milliseconds.
-                     frame_duration_ms: frame duration in milliseconds.
-                     thresh: threshold fraction for voiced/unvoiced detection.
-                     num_padding_frames: number of frames that fit into the padding window (integer).
-                 """
-                 self.config_core = Configuration()
+        Initialize the VAD engine configuration and timing parameters.
+
+        Parameters:
+            config (Optional[dict]): Optional configuration overrides for VAD behavior.
+                Expected keys:
+                    - "padding_duration_ms": padding around detected speech in ms (default 300)
+                    - "frame_duration_ms": duration of each frame in ms (default 30)
+                    - "thresh": fraction of padding frames to trigger voiced/unvoiced (default 0.8)
+            sample_rate (Optional[int]): Audio sample rate in Hz. If omitted, reads from
+                core configuration "listener.sample_rate" or defaults to 16000.
+        """
+        self.config_core = Configuration()
         self.config = config or {}
         self.sample_rate = sample_rate or \
                            self.config_core.get("listener", {}).get("sample_rate", 16000)

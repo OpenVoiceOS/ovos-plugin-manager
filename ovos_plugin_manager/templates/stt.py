@@ -221,33 +221,29 @@ class StreamingSTT(STT, metaclass=ABCMeta):
     def execute(self, audio: Optional[AudioData] = None,
                 language: Optional[str] = None) -> Optional[str]:
         """
-                Stop the active streaming session and return its final transcription.
-                
-                Parameters:
-                    audio (Optional[AudioData]): Ignored; present for API compatibility.
-                    language (Optional[str]): Ignored; language is set when the stream was started.
-                
-                Returns:
-                    Optional[str]: Final transcription text, or `None` if no stream was active.
-                """
+        Stop the active streaming session and return its final transcription.
+
+        Parameters:
+            audio (Optional[AudioData]): Ignored; present for API compatibility.
+            language (Optional[str]): Ignored; language is set when the stream was started.
+
+        Returns:
+            Optional[str]: Final transcription text, or ``None`` if no stream was active.
+        """
         return self.stream_stop()
 
     def transcribe(self, audio: Optional[AudioData] = None,
                    lang: Optional[str] = None) -> List[Tuple[str, float]]:
         """
-                   Produce the final transcription from the active streaming session.
-                   
-                   This method wraps execute (which stops the stream and returns its final transcription)
-                   and returns a single-element list with confidence 1.0.
-                   
-                   Parameters:
-                       audio (Optional[AudioData]): Unused; accepted for API compatibility.
-                       lang (Optional[str]): Unused; language is determined when the stream was started.
-                   
-                   Returns:
-                       List[Tuple[Optional[str], float]]: A list containing one tuple with the transcription
-                       (or `None` if no transcription is available) and confidence `1.0`.
-                   """
+        Produce the final transcription from the active streaming session.
+
+        Parameters:
+            audio (Optional[AudioData]): Unused; accepted for API compatibility.
+            lang (Optional[str]): Unused; language is determined when the stream was started.
+
+        Returns:
+            List[Tuple[Optional[str], float]]: Single-element list of ``(transcription, 1.0)``.
+        """
         return [(self.execute(audio, lang), 1.0)]
 
     @abstractmethod

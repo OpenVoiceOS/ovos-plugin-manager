@@ -164,16 +164,13 @@ def get_plugin_supported_languages(plug_type: PluginTypes) -> dict:
 def get_plugin_language_configs(plug_type: PluginTypes, lang: str,
                                 include_dialects: bool = False) -> dict:
     """
-                                Map plugins of the given type to the list of their valid configuration dictionaries for the specified language.
-                                
-                                If include_dialects is True, configurations for related dialects/macros whose language tag starts with the macro form of `lang` are also included.
-                                
-                                Parameters:
-                                    include_dialects (bool): If True, include configurations for dialects and macro variants of `lang`.
-                                
-                                Returns:
-                                    dict: Mapping from plugin name to a list of configuration dicts that match `lang`.
-                                """
+    Map plugins of the given type to matching configuration dicts for the specified language.
+
+    @param plug_type: plugin type to search
+    @param lang: BCP-47 language tag to match
+    @param include_dialects: if True, also include dialect/macro variants of ``lang``
+    @return: dict mapping plugin name to list of matching configuration dicts
+    """
     lang = standardize_lang_tag(lang)
     plugin_configs = dict()
     for plug in find_plugins(plug_type):
