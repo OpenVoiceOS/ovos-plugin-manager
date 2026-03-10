@@ -1,0 +1,14 @@
+name: Coverage Report
+on:
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+
+jobs:
+  coverage:
+    uses: OpenVoiceOS/gh-automations/.github/workflows/coverage.yml@dev
+    secrets: inherit
+    with:
+      system_deps: 'swig libssl-dev'
+      test_path: 'test/unittests'
+      coverage_source: 'ovos_plugin_manager'
