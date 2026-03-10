@@ -443,7 +443,7 @@ class TestAutoTranslate(unittest.TestCase):
             return_value=Mock())
         self._tx_patcher.start()
         self._det_patcher.start()
-        self.solver = AbstractSolver(enable_tx=True, default_lang='en')
+        self.solver = AbstractSolver(enable_tx=True, internal_lang='en')
         self.solver.translate = MagicMock(side_effect=lambda text, source_lang=None, target_lang=None: text[
                                                                                                        ::-1] if source_lang and target_lang else text)
 
