@@ -303,7 +303,7 @@ class OpenVoiceOSPlugin:
             PipException: If pip exits with a non-zero status during installation.
         """
         if self.package_name:
-            return pip_install(self.package_name)
+            return pip_install([self.package_name])
         if self.url and "github" in self.url:
-            return pip_install("git+" + self.url)
+            return pip_install(["git+" + self.url])
         return False

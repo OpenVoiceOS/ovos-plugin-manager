@@ -471,6 +471,11 @@ class TestAutoTranslate(unittest.TestCase):
 
         result = test_func(self.solver, 'hello', lang='es')
         self.assertEqual(result, 'olleh')  # 'hello' reversed due to mock translation
+        self.solver.translate.assert_has_calls([
+            unittest.mock.call('hello', source_lang='es', target_lang='en'),
+            unittest.mock.call('hello', source_lang='en', target_lang='es'),
+        ])
+        self.assertEqual(self.solver.translate.call_count, 2)
 
     def test_auto_translate_no_translation(self):
         @auto_translate(translate_keys=['text'])

@@ -1,8 +1,27 @@
 from typing import List, Optional
 
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
-from ovos_plugin_manager.templates.gui import GUIExtension
+from ovos_plugin_manager.templates.gui import GUIExtension, AbstractGUIPlugin
 from ovos_utils.log import LOG
+
+
+def find_gui_adapter_plugins() -> dict:
+    """
+    Find all installed GUI adapter plugins
+    @return: dict plugin names to entrypoints
+    """
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(PluginTypes.GUI_ADAPTER)
+
+
+def load_gui_adapter_plugin(module_name: str) -> type(AbstractGUIPlugin):
+    """
+    Get an uninstantiated class for the requested GUI adapter module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(module_name, PluginTypes.GUI_ADAPTER)
 
 
 def find_gui_plugins() -> dict:

@@ -177,14 +177,14 @@ def get_plugin_language_configs(plug_type: PluginTypes, lang: str,
         plugin_configs[plug] = list()
         plug_configs = \
             load_plugin_configs(plug,
-                                PluginConfigTypes(f"{plug_type.value}.config"))
+                                PluginConfigTypes(f"{plug_type.value}.config")) or {}
         plug_configs = {standardize_lang_tag(k): conf
                         for k, conf in plug_configs.items()}
         if include_dialects:
             macro = standardize_lang_tag(lang, macro=True)
-            for language in plug_configs:
-                if language.startswith(macro):
-                    plugin_configs[plug] += plug_configs[language]
+            for language, configs in plug_configs.items():
+                if tag_distance(macro, language) < 10:
+                    plugin_configs[plug] += configs
         elif lang in plug_configs:
             plugin_configs[plug] += plug_configs[lang]
         elif f"{lang}-{lang}" in plug_configs:

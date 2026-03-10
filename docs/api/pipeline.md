@@ -56,7 +56,7 @@ from ovos_plugin_manager.templates.pipeline import ConfidenceMatcherPipeline
 ```
 
 Extends `PipelinePlugin`. For plugins that score utterances with confidence values
-without directly triggering handlers. Used by stages like converse, common-QA, etc.
+without directly triggering handlers. Used by stages like adapt, padatious, etc.
 
 ---
 

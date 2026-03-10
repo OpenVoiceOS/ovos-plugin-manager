@@ -227,7 +227,7 @@ class TestConfidenceMatcherPipeline(unittest.TestCase):
 
 class TestPipelineUtils(unittest.TestCase):
 
-    @patch("ovos_plugin_manager.utils.find_plugins")
+    @patch("ovos_plugin_manager.pipeline.find_plugins")
     def test_find_pipeline_plugins(self, mock_find):
         from ovos_plugin_manager.pipeline import find_pipeline_plugins
         find_pipeline_plugins()

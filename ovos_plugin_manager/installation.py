@@ -2,7 +2,7 @@ import os
 import sys
 from os.path import exists, dirname
 from subprocess import PIPE, Popen
-from typing import Iterator, List, Optional, Tuple
+from typing import Iterator, List, Optional, Tuple, Union
 
 import requests
 from combo_lock import NamedLock
@@ -44,15 +44,16 @@ def search_pip(query: str, strict: bool = True,
     for desc in raw_desc:
         descs.append(desc.split('</p>')[0])
 
-    n_results = 0
     if strict:
         pkgs = [(names[i], descs[i]) for i in range(len(names)) if
                 query in names[i]]
     else:
         pkgs = [(names[i], descs[i]) for i in range(len(names))]
-    for p in pkgs[:max_results]:
+    yielded = min(len(pkgs), max_results)
+    for p in pkgs[:yielded]:
         yield p
-    if len(pkgs) > max_results or not len(pkgs):
+    remaining = max_results - yielded
+    if remaining <= 0 or not pkgs:
         return
 
     raw_pages = raw_text.split(f'<a href="/search/?q={query}&amp;page=')[1:-1]
@@ -65,14 +66,11 @@ def search_pip(query: str, strict: bool = True,
     next_page = bool(len([p for p in raw_pages if p > page]))
 
     if next_page:
-        for pkg in search_pip(query, strict, page + 1):
-            n_results += 1
+        for pkg in search_pip(query, strict, page + 1, remaining):
             yield pkg
-            if n_results >= max_results:
-                return
 
 
-def pip_install(packages: List[str], constraints: Optional[str] = None,
+def pip_install(packages: Union[str, List[str]], constraints: Optional[str] = None,
                 print_logs: bool = False) -> bool:
     """
     Install pip package specifiers sequentially into the current Python interpreter.
@@ -82,7 +80,7 @@ def pip_install(packages: List[str], constraints: Optional[str] = None,
     bin directory is not writable.
 
     Parameters:
-        packages (List[str]): Pip install specifiers (e.g. ``["ovos-tts-plugin-piper>=0.1"]``).
+        packages (Union[str, List[str]]): Pip install specifier(s) (e.g. ``["ovos-tts-plugin-piper>=0.1"]`` or ``"ovos-tts-plugin-piper>=0.1"``).
         constraints (Optional[str]): Path to a constraints file; if given and missing, returns
             False. If omitted and ``DEFAULT_CONSTRAINTS`` exists, it is used automatically.
         print_logs (bool): If True, forward pip stdout/stderr to the terminal.
@@ -94,6 +92,8 @@ def pip_install(packages: List[str], constraints: Optional[str] = None,
     Raises:
         PipException: If any package installation exits with a non-zero status.
     """
+    if isinstance(packages, str):
+        packages = [packages]
     if not len(packages):
         return False
     # Use constraints to limit the installed versions
@@ -126,9 +126,10 @@ def pip_install(packages: List[str], constraints: Optional[str] = None,
                 proc = Popen(pip_command, stdout=PIPE, stderr=PIPE)
             pip_code = proc.wait()
             if pip_code != 0:
-                stderr = proc.stderr.read().decode()
+                stdout = proc.stdout.read().decode() if proc.stdout else ""
+                stderr = proc.stderr.read().decode() if proc.stderr else ""
                 raise PipException(
-                    pip_code, proc.stdout.read().decode(), stderr
+                    pip_code, stdout, stderr
                 )
 
     return True

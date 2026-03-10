@@ -10,7 +10,7 @@ class TestSkills(unittest.TestCase):
     TEST_CONFIG = {"test": True}
     CONFIG_SECTION = ""
 
-    @patch("ovos_plugin_manager.utils.find_plugins")
+    @patch("ovos_plugin_manager.skills.find_plugins")
     def test_find_plugins(self, find_plugins):
         from ovos_plugin_manager.skills import find_skill_plugins
         find_skill_plugins()

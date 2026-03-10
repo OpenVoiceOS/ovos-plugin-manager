@@ -118,6 +118,7 @@ class PluginConfigTypes(str, Enum):
     VOICE_EMBEDDINGS = "opm.embeddings.voice.config"
     TEXT_EMBEDDINGS = "opm.embeddings.text.config"
     GUI = "opm.gui.config"
+    GUI_ADAPTER = "opm.gui_adapter.config"
     PHAL = "opm.phal.config"
     ADMIN = "opm.phal.admin.config"
     SKILL = "opm.skill.config"

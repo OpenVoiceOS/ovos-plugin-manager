@@ -64,7 +64,7 @@ Data class representing a single frame of audio.
 |---|---|---|
 | `bytes` | `bytes` | Raw PCM audio data. |
 | `timestamp` | `float` | Start time of the frame in seconds. |
-| `duration` | `int` | Duration of the frame in seconds. |
+| `duration` | `float` | Duration of the frame in seconds. |
 
 ---
 

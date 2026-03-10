@@ -233,7 +233,7 @@ class StreamingSTT(STT, metaclass=ABCMeta):
         return self.stream_stop()
 
     def transcribe(self, audio: Optional[AudioData] = None,
-                   lang: Optional[str] = None) -> List[Tuple[str, float]]:
+                   lang: Optional[str] = None) -> List[Tuple[Optional[str], float]]:
         """
         Produce the final transcription from the active streaming session.
 

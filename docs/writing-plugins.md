@@ -19,7 +19,7 @@ class MySTTPlugin(STT):
     """My custom speech-to-text engine."""
 
     @property
-    def available_languages(cls) -> Set[str]:
+    def available_languages(self) -> Set[str]:
         return {"en-US", "en-GB", "de-DE"}
 
     def execute(self, audio: AudioData, language: Optional[str] = None) -> str:
@@ -43,7 +43,7 @@ class MyTTSPlugin(TTS):
         super().__init__(config, audio_ext="wav")
 
     @property
-    def available_languages(cls) -> Set[str]:
+    def available_languages(self) -> Set[str]:
         return {"en-US"}
 
     def get_tts(self, sentence: str, wav_file: str, lang=None, voice=None):

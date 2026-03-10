@@ -139,7 +139,6 @@ def scan_wws() -> dict:
     """
     ww_ids = {}
     raise NotImplementedError("plugin wake word metadata reporting is WIP")
-    return ww_ids
 
 
 def get_wws(scan: bool = False) -> dict:
@@ -153,7 +152,10 @@ def get_wws(scan: bool = False) -> dict:
         dict: Mapping from wake word identifier (string) to the wake word configuration dictionary.
     """
     if scan:
-        scan_wws()
+        try:
+            scan_wws()
+        except NotImplementedError:
+            LOG.warning("scan_wws() is not yet implemented; skipping plugin scan")
     ww_ids = {}
     for lang in get_ww_supported_langs():
         WW_FOLDER = f"{xdg_data_home()}/OPM/ww_configs/{lang}"

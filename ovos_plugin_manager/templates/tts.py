@@ -263,7 +263,7 @@ class TTS:
         if self.config.get("sentence_tokenize"):  # TODO default to True on next major release
             try:
                 return quebra_frases.sentence_tokenize(sentence)
-            except:
+            except Exception:
                 return sentence.split("\n")
         return [sentence]
 

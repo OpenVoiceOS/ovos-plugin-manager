@@ -145,7 +145,7 @@ class TestOpenVoiceOSPlugin(unittest.TestCase):
         with patch("ovos_plugin_manager.plugin_entry.pip_install",
                    return_value=True) as mock_pip:
             result = p.install()
-        mock_pip.assert_called_once_with("ovos-stt-plugin-whisper")
+        mock_pip.assert_called_once_with(["ovos-stt-plugin-whisper"])
         self.assertTrue(result)
 
     def test_install_via_github_url(self):
@@ -154,7 +154,7 @@ class TestOpenVoiceOSPlugin(unittest.TestCase):
         with patch("ovos_plugin_manager.plugin_entry.pip_install",
                    return_value=True) as mock_pip:
             result = p.install()
-        mock_pip.assert_called_once_with("git+" + url)
+        mock_pip.assert_called_once_with(["git+" + url])
         self.assertTrue(result)
 
     def test_install_returns_false_without_source(self):

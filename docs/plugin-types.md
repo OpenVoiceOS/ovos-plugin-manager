@@ -92,6 +92,7 @@ canonical equivalents) but should not be used in new plugins.
 | `ovos.plugin.skill` | `opm.skill` |
 | `ovos.plugin.gui` | `opm.gui` |
 | `ovos.plugin.g2p` | `opm.g2p` |
+| `ovos.plugin.audio2ipa` | `opm.audio2ipa` |
 | `neon.plugin.lang.translate` | `opm.lang.translate` |
 | `neon.plugin.lang.detect` | `opm.lang.detect` |
 | `neon.plugin.text` | `opm.transformer.text` |

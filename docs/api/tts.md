@@ -69,7 +69,8 @@ Return the TTS class specified by `config['module']`. Defaults to
 
 Instantiate and return a validated TTS engine. Calls `validator.validate()` before
 returning. Raises `ValueError` if `module` is not set, or `RuntimeError` if the plugin
-cannot be loaded.
+name is unknown. Import failures and validator failures are re-raised as their original
+exception types.
 
 ---
 

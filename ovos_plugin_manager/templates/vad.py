@@ -21,8 +21,9 @@ class VADEngine:
     """Voice Activity Detection base class.
 
     Subclasses must implement :meth:`is_silence`. The provided
-    :meth:`extract_speech` uses a sliding ring-buffer algorithm to trim
-    leading/trailing silence from an audio buffer.
+    :meth:`extract_speech` uses a sliding ring-buffer algorithm to attempt to
+    trim leading/trailing silence from an audio buffer; it may return ``None``
+    if the audio ends before the unvoiced threshold is reached.
     """
 
     def __init__(self, config: Optional[dict] = None,

@@ -118,7 +118,7 @@ class AbstractGUIPlugin:
     # Template handlers — override in subclasses; all default to no-ops
     # ------------------------------------------------------------------
 
-    def handle_show_idle(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_idle(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle the "SYSTEM_idle" template for a skill's namespace.
         
@@ -130,7 +130,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_loading(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_loading(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a request to display the GUI "loading" template for the given skill.
         
@@ -140,7 +140,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_status(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_status(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a "status" template event for the given skill.
         
@@ -150,7 +150,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_error(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_error(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle an incoming "SYSTEM_error" template event for a skill (no-op by default).
         
@@ -160,7 +160,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_text(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_text(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a text-based GUI template for the given skill.
         
@@ -172,7 +172,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_image(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_image(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a request to display an image template.
         
@@ -184,7 +184,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_animated_image(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_animated_image(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle an animated image template event for a skill.
         
@@ -197,7 +197,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_list(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_list(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle presentation of a list template emitted by a skill.
         
@@ -209,7 +209,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_grid(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_grid(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a "grid" GUI template for a given skill.
         
@@ -219,7 +219,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_table(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_table(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a "SYSTEM_table" template event for a skill.
         
@@ -231,7 +231,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_html(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_html(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle an HTML template display request originating from a skill.
         
@@ -243,7 +243,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_url(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_url(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a request to display a URL template for a skill.
         
@@ -256,7 +256,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_audio_player(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_audio_player(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle display or update events for the "SYSTEM_audio_player" template.
         
@@ -268,7 +268,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_video_player(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_video_player(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a request to display a video player template.
         
@@ -280,7 +280,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_clock(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_clock(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a request to display a clock template.
         
@@ -292,7 +292,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_timer(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_timer(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a "timer" template event emitted by a skill.
         
@@ -302,7 +302,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_weather(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_weather(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a weather template update for the given skill namespace.
         
@@ -312,7 +312,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_map(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_map(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a request to display a map template for a skill.
         
@@ -324,7 +324,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_confirm(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_confirm(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a "confirm" template event emitted by a skill.
         
@@ -334,7 +334,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_select(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_select(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a "select" template event, intended to present a choice list to the user.
         
@@ -344,13 +344,67 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def handle_show_face(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def handle_show_face(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle a "face" template event for a GUI adapter.
-        
+
         Parameters:
             skill_id (str): Namespace or skill identifier that emitted the template.
             data (Dict[str, Any]): Payload of the template containing display details (e.g., face id, expressions, timing).
+        """
+        pass
+
+    def handle_show_ocp_now_playing(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
+        """
+        Handle an OCP "now playing" template event.
+
+        Carries the full playback state for the currently active media item.
+
+        Parameters:
+            skill_id (str): Identifier of the OCP service namespace.
+            data (Dict[str, Any]): Payload keys:
+                - title (str): Track/episode title.
+                - artist (str, optional): Artist or show name.
+                - image (str, optional): Artwork URI (URL or data: URI).
+                - bg_image (str, optional): Background artwork URI.
+                - uri (str, optional): Media URI being played.
+                - media_type (str): "audio", "video", or "web".
+                - position (float): Current playback position in seconds.
+                - duration (float): Total duration in seconds.
+                - playing (bool): True if currently playing.
+                - can_prev (bool): Whether a previous track is available.
+                - can_next (bool): Whether a next track is available.
+                - loop_status (str): "None", "Track", or "Playlist".
+                - shuffle (bool): Shuffle state.
+                - javascript (str, optional): JS to inject (web media_type only).
+        """
+        pass
+
+    def handle_show_ocp_search(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
+        """
+        Handle an OCP "search results" template event.
+
+        Parameters:
+            skill_id (str): Identifier of the OCP service namespace.
+            data (Dict[str, Any]): Payload keys:
+                - results (list, optional): List of media result dicts
+                  (keys: title, artist, image, uri, media_type, skill_id).
+                - search_term (str, optional): The query string that produced the results.
+                - skill_cards (list, optional): List of skill-card dicts
+                  (keys: skill_id, name, icon).
+        """
+        pass
+
+    def handle_show_ocp_playlist(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
+        """
+        Handle an OCP "playlist" template event.
+
+        Parameters:
+            skill_id (str): Identifier of the OCP service namespace.
+            data (Dict[str, Any]): Payload keys:
+                - tracks (list, optional): Ordered list of track dicts
+                  (keys: title, artist, image, uri, media_type).
+                - current_index (int): Index of the currently playing track.
         """
         pass
 
@@ -358,7 +412,7 @@ class AbstractGUIPlugin:
     # Lifecycle hooks
     # ------------------------------------------------------------------
 
-    def on_namespace_activated(self, skill_id: str) -> None:
+    def on_namespace_activated(self, skill_id: str, site_id: str = "default") -> None:
         """
         Hook invoked when a skill's namespace becomes the active (top) namespace.
         
@@ -370,7 +424,7 @@ class AbstractGUIPlugin:
         """
         pass
 
-    def on_namespace_deactivated(self, skill_id: str) -> None:
+    def on_namespace_deactivated(self, skill_id: str, site_id: str = "default") -> None:
         """Called when a skill's namespace is cleared or removed."""
         pass
 
@@ -384,7 +438,7 @@ class AbstractGUIPlugin:
     # Status event hook
     # ------------------------------------------------------------------
 
-    def on_status_event(self, event_name: str, data: Dict[str, Any]) -> None:
+    def on_status_event(self, event_name: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Handle well-known system status events forwarded by ovos-gui.
         
@@ -400,7 +454,7 @@ class AbstractGUIPlugin:
     # Session data hook
     # ------------------------------------------------------------------
 
-    def on_session_update(self, skill_id: str, data: Dict[str, Any]) -> None:
+    def on_session_update(self, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Hook invoked when a skill updates its GUI session data.
         
@@ -436,17 +490,22 @@ class AbstractGUIPlugin:
         "SYSTEM_confirm":        "handle_show_confirm",
         "SYSTEM_select":         "handle_show_select",
         "SYSTEM_face":           "handle_show_face",
+        # OCP media service
+        "SYSTEM_ocp_now_playing": "handle_show_ocp_now_playing",
+        "SYSTEM_ocp_search":      "handle_show_ocp_search",
+        "SYSTEM_ocp_playlist":    "handle_show_ocp_playlist",
     }
 
-    def dispatch_template(self, template: str, skill_id: str, data: Dict[str, Any]) -> None:
+    def dispatch_template(self, template: str, skill_id: str, data: Dict[str, Any], site_id: str = "default") -> None:
         """
         Route a template event to the corresponding handler method.
-        
+
         Parameters:
             template (str): Template identifier (e.g. "SYSTEM_weather") that selects the handler.
             skill_id (str): ID of the skill requesting the display; passed to the handler.
             data (Dict[str, Any]): Session data for the namespace at the time of dispatch; passed to the handler.
-        
+            site_id (str): Physical site/screen identifier for the target display; defaults to "default".
+
         Notes:
             If no handler is registered for `template`, the call is ignored. Exceptions raised by a handler are caught and logged.
         """
@@ -455,7 +514,7 @@ class AbstractGUIPlugin:
             handler = getattr(self, handler_name, None)
             if handler:
                 try:
-                    handler(skill_id, data)
+                    handler(skill_id, data, site_id)
                 except Exception:
                     LOG.exception(
                         f"{self.__class__.__name__}.{handler_name} raised an exception"
