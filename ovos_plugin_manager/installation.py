@@ -9,19 +9,23 @@ from combo_lock import NamedLock
 from ovos_utils.log import LOG, log_deprecation, deprecated
 
 from ovos_plugin_manager.exceptions import PipException
+from ovos_plugin_manager.version import VERSION_MAJOR
+
+# Calculate next major version for deprecation
+_deprecation_version = f"{VERSION_MAJOR + 1}.0"
 
 # Deprecation notice for this module
-log_deprecation("ovos_plugin_manager.installation module is deprecated and will be removed in v3.0",
+log_deprecation(f"ovos_plugin_manager.installation module is deprecated and will be removed in v{_deprecation_version}",
                 func_name="installation module",
                 func_module="ovos_plugin_manager.installation",
-                deprecation_version="3.0")
+                deprecation_version=_deprecation_version)
 
 # default constraints to use if none are given
 DEFAULT_CONSTRAINTS = '/etc/mycroft/constraints.txt'
 PIP_LOCK = NamedLock("ovos_pip.lock")
 
 
-@deprecated("search_pip is deprecated, use a modern package manager instead", "3.0")
+@deprecated(f"search_pip is deprecated, use a modern package manager instead", _deprecation_version)
 def search_pip(query: str, strict: bool = True,
                page: int = 1, max_results: int = 10) -> Iterator[Tuple[str, str]]:
     """
@@ -80,7 +84,7 @@ def search_pip(query: str, strict: bool = True,
                 break
 
 
-@deprecated("pip_install is deprecated, use a modern package manager instead", "3.0")
+@deprecated("pip_install is deprecated, use a modern package manager instead", _deprecation_version)
 def pip_install(packages: Union[str, List[str]], constraints: Optional[str] = None,
                 print_logs: bool = False) -> bool:
     """
