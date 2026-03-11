@@ -364,7 +364,7 @@ class TTS:
         elif self.ssml_tags and "speak" in self.ssml_tags:
             # Normalize speak tags only if already present in the utterance;
             # do not inject speak tags into utterances that have none.
-            if "<speak>" in utterance:
+            if "<speak>" in utterance or "</speak>" in utterance:
                 utterance = self.format_speak_tags(utterance)
 
         # if ssml is not supported by TTS engine remove all tags

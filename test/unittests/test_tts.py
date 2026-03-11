@@ -65,6 +65,18 @@ class TestTTSTemplate(unittest.TestCase):
 
         self.assertEqual(TTS.remove_ssml(sentence), sentence_no_ssml)
 
+    def test_ssml_dangling_closing_tag(self):
+        """Test that validate_ssml handles dangling closing tags."""
+        tts = TTS()
+        tts.ssml_tags = ['speak', 'prosody']
+
+        # Test case: dangling closing tag without opening tag
+        utterance_with_closing_tag = "hello</speak>"
+        result = tts.validate_ssml(utterance_with_closing_tag)
+        # Should normalize the tags
+        self.assertIn("<speak>", result)
+        self.assertIn("</speak>", result)
+
     def test_format_speak_tags_with_speech(self):
         valid_output = "<speak>Speak This.</speak>"
         no_tags = TTS.format_speak_tags("Speak This.")
