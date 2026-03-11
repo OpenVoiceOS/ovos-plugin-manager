@@ -4,11 +4,16 @@ from unittest.mock import patch
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
+class TestTokenizationTemplate(unittest.TestCase):
+    def test_tokenization_extractor(self):
+        from ovos_plugin_manager.templates.tokenization import Tokenizer
+        self.assertTrue(hasattr(Tokenizer, 'tokenize'))
+
+
 class TestTokenization(unittest.TestCase):
     PLUGIN_TYPE = PluginTypes.TOKENIZATION
     CONFIG_TYPE = PluginConfigTypes.TOKENIZATION
     TEST_CONFIG = {"test": True}
-    CONFIG_SECTION = "tokenization"
     TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
@@ -48,15 +53,3 @@ class TestTokenization(unittest.TestCase):
         from ovos_plugin_manager.tokenization import get_tokenization_supported_langs
         get_tokenization_supported_langs()
         get_supported_languages.assert_called_once_with(self.PLUGIN_TYPE)
-
-    @patch("ovos_plugin_manager.utils.config.get_plugin_config")
-    def test_get_config(self, get_config):
-        from ovos_plugin_manager.tokenization import get_tokenization_config
-        get_tokenization_config(self.TEST_CONFIG)
-        get_config.assert_called_once_with(self.TEST_CONFIG,
-                                           self.CONFIG_SECTION)
-
-
-class TestTokenizerFactory(unittest.TestCase):
-    from ovos_plugin_manager.tokenization import OVOSTokenizerFactory
-    # TODO

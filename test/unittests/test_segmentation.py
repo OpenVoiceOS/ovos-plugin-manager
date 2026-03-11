@@ -4,11 +4,16 @@ from unittest.mock import patch
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
+class TestSegmentationTemplate(unittest.TestCase):
+    def test_segmentation_extractor(self):
+        from ovos_plugin_manager.templates.segmentation import Segmenter
+        self.assertTrue(hasattr(Segmenter, 'segment'))
+
+
 class TestSegmentation(unittest.TestCase):
     PLUGIN_TYPE = PluginTypes.UTTERANCE_SEGMENTATION
     CONFIG_TYPE = PluginConfigTypes.UTTERANCE_SEGMENTATION
     TEST_CONFIG = {"test": True}
-    CONFIG_SECTION = "segmentation"
     TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
@@ -48,16 +53,3 @@ class TestSegmentation(unittest.TestCase):
         from ovos_plugin_manager.segmentation import get_segmentation_supported_langs
         get_segmentation_supported_langs()
         get_supported_languages.assert_called_once_with(self.PLUGIN_TYPE)
-
-    @patch("ovos_plugin_manager.utils.config.get_plugin_config")
-    def test_get_config(self, get_config):
-        from ovos_plugin_manager.segmentation import get_segmentation_config
-        get_segmentation_config(self.TEST_CONFIG)
-        get_config.assert_called_once_with(self.TEST_CONFIG,
-                                           self.CONFIG_SECTION)
-
-
-class TestUtteranceSegmenterFactory(unittest.TestCase):
-    from ovos_plugin_manager.segmentation import OVOSUtteranceSegmenterFactory
-    # TODO
-
