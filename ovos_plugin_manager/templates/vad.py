@@ -101,7 +101,7 @@ class VADEngine:
             timestamp += duration
             offset += n
 
-    def extract_speech(self, audio: bytes) -> bytes:
+    def extract_speech(self, audio: bytes) -> Optional[bytes]:
         """returns the audio data with speech only, removing all noise before and after speech"""
         # We use a deque for our sliding window/ring buffer.
         ring_buffer = collections.deque(maxlen=self.num_padding_frames)

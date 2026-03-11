@@ -82,10 +82,10 @@ def get_valid_plugin_configs(configs: dict, lang: str,
                         LOG.exception(e)
     elif lang in configs:
         # Exact language/dialog match
-        valid_configs.append(configs[lang])
+        valid_configs.extend(configs[lang])
     elif f"{lang}-{lang}" in configs:
         # match (some) default locales
-        valid_configs.append(configs[f"{lang}-{lang}"])
+        valid_configs.extend(configs[f"{lang}-{lang}"])
     LOG.debug(f'Found {len(valid_configs)} valid configurations for {lang}')
     return valid_configs
 
@@ -102,7 +102,7 @@ def sort_plugin_configs(configs: dict) -> dict:
         try:
             configs[plug_name] = sorted(plug_configs,
                                         key=lambda c: c.get("priority", 60))
-        except:
+        except Exception:
             LOG.exception(f"Invalid plugin data: {plug_name}")
             bad_plugs.append(plug_name)
 

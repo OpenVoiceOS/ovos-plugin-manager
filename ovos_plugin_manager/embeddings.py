@@ -1,126 +1,132 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+"""Discovery utilities for embeddings plugins (text, voice, image, face, general)."""
+from typing import Dict, Optional, Type
+
 from ovos_plugin_manager.templates.embeddings import EmbeddingsDB, ImageEmbedder, TextEmbedder, VoiceEmbedder, FaceEmbedder
 from ovos_plugin_manager.utils import PluginTypes
 
 
-def find_embeddings_db_plugins() -> dict:
-    """
-    Discover all installed general embeddings database plugins.
-    
+def find_embeddings_db_plugins() -> Dict[str, Type[EmbeddingsDB]]:
+    """Find all installed general embeddings database plugins.
+
     Returns:
-        dict: A mapping of plugin names to their entrypoints for general embeddings database plugins.
+        dict mapping plugin entry-point names to plugin classes.
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.EMBEDDINGS)
 
 
-def load_embeddings_db_plugin(module_name: str) -> type(EmbeddingsDB):
-    """
-    Load and return the uninstantiated class of a general embeddings database plugin by its module name.
-    
-    Parameters:
-        module_name (str): The entrypoint name of the embeddings database plugin to load.
-    
+def load_embeddings_db_plugin(module_name: str) -> Optional[Type[EmbeddingsDB]]:
+    """Get an uninstantiated class for the requested embeddings DB plugin.
+
+    Args:
+        module_name: Plugin entry-point name to load.
+
     Returns:
-        type(EmbeddingsDB): The plugin class corresponding to the specified module name.
+        Uninstantiated plugin class, or ``None`` if not found.
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.EMBEDDINGS)
 
 
-def find_voice_embeddings_plugins() -> dict:
-    """
-    Discover all installed voice embeddings plugins.
-    
+def find_voice_embeddings_plugins() -> Dict[str, Type[VoiceEmbedder]]:
+    """Find all installed voice embeddings plugins.
+
     Returns:
-        dict: A mapping of plugin names to their entrypoints for available voice embeddings plugins.
+        dict mapping plugin entry-point names to plugin classes.
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.VOICE_EMBEDDINGS)
 
 
-def load_voice_embeddings_plugin(module_name: str) -> type(VoiceEmbedder):
-    """
-    Load and return the uninstantiated class of a voice embeddings plugin by its module name.
-    
-    Parameters:
-        module_name (str): The entrypoint name of the voice embeddings plugin to load.
-    
+def load_voice_embeddings_plugin(module_name: str) -> Optional[Type[VoiceEmbedder]]:
+    """Get an uninstantiated class for the requested voice embeddings plugin.
+
+    Args:
+        module_name: Plugin entry-point name to load.
+
     Returns:
-        type(VoiceEmbedder): The uninstantiated class of the specified voice embeddings plugin.
+        Uninstantiated plugin class, or ``None`` if not found.
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.VOICE_EMBEDDINGS)
 
 
-def find_image_embeddings_plugins() -> dict:
-    """
-    Discover all installed image embeddings plugins.
-    
+def find_image_embeddings_plugins() -> Dict[str, Type[ImageEmbedder]]:
+    """Find all installed image embeddings plugins.
+
     Returns:
-        dict: A mapping of plugin names to their entrypoints for image embeddings plugins.
+        dict mapping plugin entry-point names to plugin classes.
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.IMAGE_EMBEDDINGS)
 
 
-def load_image_embeddings_plugin(module_name: str) -> type(ImageEmbedder):
-    """
-    Load and return the uninstantiated class of an image embeddings plugin specified by its module name.
-    
-    Parameters:
-        module_name (str): The entrypoint name of the image embeddings plugin to load.
-    
+def load_image_embeddings_plugin(module_name: str) -> Optional[Type[ImageEmbedder]]:
+    """Get an uninstantiated class for the requested image embeddings plugin.
+
+    Args:
+        module_name: Plugin entry-point name to load.
+
     Returns:
-        type(ImageEmbedder): The uninstantiated class of the requested image embeddings plugin.
+        Uninstantiated plugin class, or ``None`` if not found.
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.IMAGE_EMBEDDINGS)
 
-def find_face_embeddings_plugins() -> dict:
-    """
-    Find all installed face embeddings plugins.
-    
+
+def find_face_embeddings_plugins() -> Dict[str, Type[FaceEmbedder]]:
+    """Find all installed face embeddings plugins.
+
     Returns:
-        dict: A mapping of plugin names to their entrypoints for face embeddings plugins.
+        dict mapping plugin entry-point names to plugin classes.
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.FACE_EMBEDDINGS)
 
 
-def load_face_embeddings_plugin(module_name: str) -> type(FaceEmbedder):
-    """
-    Load and return the uninstantiated class of a face embeddings plugin by its module name.
-    
-    Parameters:
-        module_name (str): The entrypoint name of the face embeddings plugin to load.
-    
+def load_face_embeddings_plugin(module_name: str) -> Optional[Type[FaceEmbedder]]:
+    """Get an uninstantiated class for the requested face embeddings plugin.
+
+    Args:
+        module_name: Plugin entry-point name to load.
+
     Returns:
-        type(FaceEmbedder): The uninstantiated class of the specified face embeddings plugin.
+        Uninstantiated plugin class, or ``None`` if not found.
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.FACE_EMBEDDINGS)
 
 
-def find_text_embeddings_plugins() -> dict:
-    """
-    Discover all installed text embeddings plugins.
-    
+def find_text_embeddings_plugins() -> Dict[str, Type[TextEmbedder]]:
+    """Find all installed text embeddings plugins.
+
     Returns:
-        dict: A mapping of plugin names to their entrypoints for text embeddings plugins.
+        dict mapping plugin entry-point names to plugin classes.
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.TEXT_EMBEDDINGS)
 
 
-def load_text_embeddings_plugin(module_name: str) -> type(TextEmbedder):
-    """
-    Load and return the uninstantiated class of a text embeddings plugin specified by its module name.
-    
-    Parameters:
-        module_name (str): The entrypoint name of the text embeddings plugin to load.
-    
+def load_text_embeddings_plugin(module_name: str) -> Optional[Type[TextEmbedder]]:
+    """Get an uninstantiated class for the requested text embeddings plugin.
+
+    Args:
+        module_name: Plugin entry-point name to load.
+
     Returns:
-        type(TextEmbedder): The uninstantiated class of the specified text embeddings plugin.
+        Uninstantiated plugin class, or ``None`` if not found.
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.TEXT_EMBEDDINGS)

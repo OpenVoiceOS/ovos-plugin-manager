@@ -61,7 +61,7 @@ def search_pip(query: str, strict: bool = True,
         try:
             p = p.split('button-group__button">')[-1].split('</a>')[0]
             raw_pages[idx] = int(p)
-        except:
+        except Exception:
             raw_pages[idx] = 0
     next_page = bool(len([p for p in raw_pages if p > page]))
 

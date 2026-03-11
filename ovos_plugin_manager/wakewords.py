@@ -159,6 +159,8 @@ def get_wws(scan: bool = False) -> dict:
     ww_ids = {}
     for lang in get_ww_supported_langs():
         WW_FOLDER = f"{xdg_data_home()}/OPM/ww_configs/{lang}"
+        if not os.path.isdir(WW_FOLDER):
+            continue
         for voice in os.listdir(WW_FOLDER):
             with open(f"{WW_FOLDER}/{voice}") as f:
                 ww_ids[voice] = json.load(f)

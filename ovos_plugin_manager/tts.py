@@ -172,6 +172,8 @@ def get_voices(scan: bool = False) -> dict:
     voice_ids = {}
     for lang in get_tts_supported_langs():
         VOICES_FOLDER = f"{xdg_data_home()}/OPM/voice_configs/{lang}"
+        if not os.path.isdir(VOICES_FOLDER):
+            continue
         for voice in os.listdir(VOICES_FOLDER):
             with open(f"{VOICES_FOLDER}/{voice}") as f:
                 voice_ids[voice] = json.load(f)

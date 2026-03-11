@@ -30,7 +30,7 @@ class MetadataTransformer:
         """ perform any initialization actions """
         pass
 
-    def transform(self, context: dict = None) -> (list, dict):
+    def transform(self, context: dict = None) -> dict:
         """
         Optionally transform passed context
         eg. inject default values or convert metadata format
@@ -66,7 +66,7 @@ class UtteranceTransformer:
         pass
 
     def transform(self, utterances: List[str],
-                  context: dict = None) -> (list, dict):
+                  context: dict = None) -> Tuple[List[str], dict]:
         """
         Optionally transform passed utterances and/or return additional context
         :param utterances: List of str utterances to parse
