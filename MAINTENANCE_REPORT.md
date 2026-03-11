@@ -88,3 +88,30 @@ Comprehensive audit requested to surface bugs, performance issues, type annotati
 - **AI Model**: Claude Sonnet 4.6
 - **Actions Taken**: Read all 70+ Python source files in `ovos_plugin_manager/`, identified and documented bugs/correctness issues, performance bottlenecks, type annotation gaps, and code smells with exact file:line citations. Wrote comprehensive `AUDIT.md` and `SUGGESTIONS.md`.
 - **Oversight**: All findings require human verification before any remediation work begins.
+
+## [2026-03-11] — Addressing CodeRabbit PR Feedback (#376)
+
+### Changes
+- **`pyproject.toml`**: Added `[project.optional-dependencies]` with `test` extra to fix CI dependency resolution.
+- **`.github/workflows/build-tests.yml`**: Added Python 3.9 to the test matrix for consistency with `requires-python`.
+- **`.github/workflows/release_workflow.yml`**: Added a check for the `ignore-for-release` label to prevent unintended releases from docs/tests-only PRs.
+- **`ovos_plugin_manager/installation.py`**:
+    - Fixed `max_results` enforcement in `search_pip` recursive calls.
+    - Fixed `pip_install` string vs list input handling (guaranteed list internally).
+    - Fixed `pip_install` masking failures with `AttributeError` by ensuring pipes are used even when `print_logs=True`.
+- **`ovos_plugin_manager/templates/tts.py`**: Replaced bare `except` in `sentence_tokenize` with `except Exception` and added a warning log for the fallback path.
+- **`ovos_plugin_manager/templates/vad.py`**: Updated `extract_speech` docstring to accurately reflect return value when input ends while triggered.
+- **`docs/configuration.md`**: Fixed incorrect statement about dialect priority boost semantics (clarified that higher values are more preferred).
+- **`ovos_plugin_manager/plugin_entry.py`**: Updated `install()` to pass list arguments to `pip_install()` for consistency.
+
+### Rationale
+Address critical and major issues identified during CodeRabbit review of PR #376 to ensure stability, security, and documentation accuracy.
+
+### Verification
+- Manual verification of all code changes against review comments.
+- CI workflows updated and validated locally (schema-wise).
+
+### AI Transparency Report
+- **AI Model**: Gemini 2.0 Pro
+- **Actions Taken**: Triage 33 CodeRabbit comments, applied fixes for 10+ high-priority items covering CI, installation logic, templates, and documentation.
+- **Oversight**: Human review of logic changes in `pip_install` and `release_workflow.yml` recommended.

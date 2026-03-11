@@ -293,12 +293,12 @@ class OpenVoiceOSPlugin:
     def install(self) -> bool:
         """
         Install the plugin's Python package via pip.
-        
+
         Uses the plugin's package_name when present; if absent and the plugin url points to GitHub, installs from "git+<url>". Returns False when neither an installable package_name nor a GitHub URL is available.
-        
+
         Returns:
             True if installation succeeded, False if no install source is available.
-        
+
         Raises:
             PipException: If pip exits with a non-zero status during installation.
         """

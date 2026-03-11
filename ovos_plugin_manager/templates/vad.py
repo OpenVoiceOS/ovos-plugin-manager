@@ -102,7 +102,13 @@ class VADEngine:
             offset += n
 
     def extract_speech(self, audio: bytes) -> Optional[bytes]:
-        """returns the audio data with speech only, removing all noise before and after speech"""
+        """Returns the audio data with speech only, removing silence before and after.
+
+        This method uses a sliding ring buffer to detect speech. It returns the
+        voiced segments once it detects enough trailing silence. If the input
+        buffer ends while speech is still being detected (the "triggered" state),
+        it returns None.
+        """
         # We use a deque for our sliding window/ring buffer.
         ring_buffer = collections.deque(maxlen=self.num_padding_frames)
         triggered = False

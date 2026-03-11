@@ -264,6 +264,7 @@ class TTS:
             try:
                 return quebra_frases.sentence_tokenize(sentence)
             except Exception:
+                LOG.warning("quebra_frases.sentence_tokenize failed, falling back to newline split")
                 return sentence.split("\n")
         return [sentence]
 

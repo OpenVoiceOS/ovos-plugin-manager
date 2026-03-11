@@ -68,6 +68,9 @@ def search_pip(query: str, strict: bool = True,
     if next_page:
         for pkg in search_pip(query, strict, page + 1, remaining):
             yield pkg
+            remaining -= 1
+            if remaining <= 0:
+                break
 
 
 def pip_install(packages: Union[str, List[str]], constraints: Optional[str] = None,
@@ -120,10 +123,12 @@ def pip_install(packages: Union[str, List[str]], constraints: Optional[str] = No
         for dependent_python_package in packages:
             LOG.info("(pip) Installing " + dependent_python_package)
             pip_command = pip_args + [dependent_python_package]
+            proc = Popen(pip_command, stdout=PIPE, stderr=PIPE)
             if print_logs:
-                proc = Popen(pip_command)
-            else:
-                proc = Popen(pip_command, stdout=PIPE, stderr=PIPE)
+                for line in proc.stdout:
+                    print(line.decode().strip())
+                for line in proc.stderr:
+                    print(line.decode().strip(), file=sys.stderr)
             pip_code = proc.wait()
             if pip_code != 0:
                 stdout = proc.stdout.read().decode() if proc.stdout else ""

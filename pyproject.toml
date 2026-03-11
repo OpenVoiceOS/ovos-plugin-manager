@@ -28,6 +28,13 @@ dependencies = [
 Homepage = "https://github.com/OpenVoiceOS/OVOS-plugin-manager"
 Repository = "https://github.com/OpenVoiceOS/OVOS-plugin-manager"
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    "python-vlc"
+]
+
 [tool.setuptools]
 include-package-data = true
 

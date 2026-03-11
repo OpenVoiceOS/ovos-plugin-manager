@@ -145,9 +145,10 @@ When `include_dialects=True`, configs for closely related dialects are included 
 
 ## Config priority
 
-Within a config list, entries are sorted so that **lower `priority` values appear first**
-(highest priority last — factory methods iterate from the end).  The default priority is
-`60`. A dialect match boosts priority by `+15` (to 75), making it more preferred than the
-default, but still less preferred than an exact locale match if that exact match has a
-higher priority value. Since factory methods iterate configs from the end (highest
-priority last), larger priority values win.
+Within a config list, entries are sorted by their `"priority"` key. Higher values are
+considered more preferred; factory methods iterate through the list from the end.
+
+The default priority is `60`. A dialect match boosts priority by `+15` (to 75), making it
+more preferred than a generic language match with the default priority. Since factory
+methods iterate configs from the end (highest priority last), larger priority values win.
+
