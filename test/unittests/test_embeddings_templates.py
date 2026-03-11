@@ -18,7 +18,9 @@ import unittest
 from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import MagicMock
 
-import numpy as np
+import pytest
+
+np = pytest.importorskip("numpy")
 
 from ovos_plugin_manager.templates.embeddings import (
     EmbeddingsDB,
