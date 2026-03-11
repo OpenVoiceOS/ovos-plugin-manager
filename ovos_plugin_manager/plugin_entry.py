@@ -8,6 +8,13 @@ from ovos_plugin_manager.utils import load_plugin, PluginTypes
 from ovos_plugin_manager.installation import pip_install
 from ovos_utils import camel_case_split
 from ovos_utils.json_helper import merge_dict
+from ovos_utils.log import log_deprecation
+
+# Deprecation notice for this module
+log_deprecation("ovos_plugin_manager.plugin_entry module is deprecated and will be removed in v3.0",
+                func_name="plugin_entry module",
+                func_module="ovos_plugin_manager.plugin_entry",
+                deprecation_version="3.0")
 
 
 class OpenVoiceOSPlugin:

@@ -6,15 +6,22 @@ from typing import Iterator, List, Optional, Tuple, Union
 
 import requests
 from combo_lock import NamedLock
-from ovos_utils.log import LOG
+from ovos_utils.log import LOG, log_deprecation, deprecated
 
 from ovos_plugin_manager.exceptions import PipException
+
+# Deprecation notice for this module
+log_deprecation("ovos_plugin_manager.installation module is deprecated and will be removed in v3.0",
+                func_name="installation module",
+                func_module="ovos_plugin_manager.installation",
+                deprecation_version="3.0")
 
 # default constraints to use if none are given
 DEFAULT_CONSTRAINTS = '/etc/mycroft/constraints.txt'
 PIP_LOCK = NamedLock("ovos_pip.lock")
 
 
+@deprecated("search_pip is deprecated, use a modern package manager instead", "3.0")
 def search_pip(query: str, strict: bool = True,
                page: int = 1, max_results: int = 10) -> Iterator[Tuple[str, str]]:
     """
@@ -73,6 +80,7 @@ def search_pip(query: str, strict: bool = True,
                 break
 
 
+@deprecated("pip_install is deprecated, use a modern package manager instead", "3.0")
 def pip_install(packages: Union[str, List[str]], constraints: Optional[str] = None,
                 print_logs: bool = False) -> bool:
     """
