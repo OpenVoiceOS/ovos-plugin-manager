@@ -6,14 +6,14 @@ from ovos_utils import classproperty
 from ovos_utils.process_utils import RuntimeRequirements
 
 
-def msec_to_sec(msecs: float) -> float:
+def msec_to_sec(msecs):
     """Convert milliseconds to seconds.
 
     Arguments:
-        msecs: value in milliseconds
+        msecs: milliseconds
 
     Returns:
-        float: value in seconds
+        int: input converted from milliseconds to seconds
     """
     return msecs / 1000
 
