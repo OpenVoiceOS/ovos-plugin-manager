@@ -238,3 +238,59 @@ class TestPipelineUtils(unittest.TestCase):
         from ovos_plugin_manager.pipeline import load_pipeline_plugin
         load_pipeline_plugin("my-pipeline")
         mock_load.assert_called_once_with("my-pipeline", PluginTypes.PIPELINE)
+
+
+# ---------------------------------------------------------------------------
+# OVOSPipelineFactory
+# ---------------------------------------------------------------------------
+
+class TestOVOSPipelineFactory(unittest.TestCase):
+
+    @patch("ovos_plugin_manager.pipeline.find_pipeline_plugins",
+           return_value={"pipe-a": _ConcretePipeline, "pipe-b": _ConcretePipeline})
+    def test_get_installed_pipeline_ids(self, _):
+        from ovos_plugin_manager.pipeline import OVOSPipelineFactory
+        ids = OVOSPipelineFactory.get_installed_pipeline_ids()
+        self.assertIn("pipe-a", ids)
+        self.assertIn("pipe-b", ids)
+
+    @patch("ovos_plugin_manager.pipeline.find_pipeline_plugins",
+           return_value={"plain-pipe": _ConcretePipeline})
+    def test_get_installed_matcher_ids_plain_plugin(self, _):
+        from ovos_plugin_manager.pipeline import OVOSPipelineFactory
+        ids = OVOSPipelineFactory.get_installed_pipeline_matcher_ids()
+        self.assertIn("plain-pipe", ids)
+        # plain PipelinePlugin — no confidence variants expected
+        self.assertNotIn("plain-pipe-high", ids)
+
+    @patch("ovos_plugin_manager.pipeline.find_pipeline_plugins",
+           return_value={"conf-pipe": _ConcreteConfidenceMatcher})
+    def test_get_installed_matcher_ids_confidence_plugin(self, _):
+        from ovos_plugin_manager.pipeline import OVOSPipelineFactory
+        ids = OVOSPipelineFactory.get_installed_pipeline_matcher_ids()
+        self.assertIn("conf-pipe-low", ids)
+        self.assertIn("conf-pipe-medium", ids)
+        self.assertIn("conf-pipe-high", ids)
+
+    @patch("ovos_plugin_manager.pipeline.find_pipeline_plugins",
+           return_value={"my-pipe": _ConcretePipeline})
+    def test_load_plugin_returns_instance(self, _):
+        from ovos_plugin_manager.pipeline import OVOSPipelineFactory
+        instance = OVOSPipelineFactory.load_plugin("my-pipe")
+        self.assertIsInstance(instance, _ConcretePipeline)
+
+    @patch("ovos_plugin_manager.pipeline.find_pipeline_plugins", return_value={})
+    def test_load_plugin_raises_for_unknown(self, _):
+        from ovos_plugin_manager.pipeline import OVOSPipelineFactory
+        with self.assertRaises(ValueError):
+            OVOSPipelineFactory.load_plugin("nonexistent-pipe")
+
+    @patch("ovos_plugin_manager.pipeline.find_pipeline_plugins",
+           return_value={"my-pipe": _ConcretePipeline})
+    def test_load_plugin_passes_bus_and_config(self, _):
+        from ovos_plugin_manager.pipeline import OVOSPipelineFactory
+        fake_bus = MagicMock()
+        instance = OVOSPipelineFactory.load_plugin(
+            "my-pipe", bus=fake_bus, config={"key": "val"})
+        self.assertIs(instance.bus, fake_bus)
+        self.assertEqual(instance.config, {"key": "val"})
