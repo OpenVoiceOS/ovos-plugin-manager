@@ -123,12 +123,12 @@ def pip_install(packages: Union[str, List[str]], constraints: Optional[str] = No
         for dependent_python_package in packages:
             LOG.info("(pip) Installing " + dependent_python_package)
             pip_command = pip_args + [dependent_python_package]
-            proc = Popen(pip_command, stdout=PIPE, stderr=PIPE)
+            # When print_logs=True, don't pipe output - let it go directly to console
+            # When print_logs=False, pipe output to capture it silently
             if print_logs:
-                for line in proc.stdout:
-                    print(line.decode().strip())
-                for line in proc.stderr:
-                    print(line.decode().strip(), file=sys.stderr)
+                proc = Popen(pip_command)
+            else:
+                proc = Popen(pip_command, stdout=PIPE, stderr=PIPE)
             pip_code = proc.wait()
             if pip_code != 0:
                 stdout = proc.stdout.read().decode() if proc.stdout else ""
