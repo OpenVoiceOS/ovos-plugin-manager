@@ -531,7 +531,7 @@ class TestUtils(unittest.TestCase):
             self.assertIsInstance(plug_type, PluginTypes)
             self.assertIsInstance(plug_type, str)
             # Handle plugins without associated config entrypoint or legacy inconsistent naming
-            if plug_type not in (PluginTypes.PERSONA, PluginTypes.GUI_ADAPTER,
+            if plug_type not in (PluginTypes.PERSONA,
                                   PluginTypes.QUESTION_SOLVER):
                 self.assertIsInstance(PluginConfigTypes(f"{plug_type.value}.config"),
                                       PluginConfigTypes)
