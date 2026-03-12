@@ -32,7 +32,8 @@ Repository = "https://github.com/OpenVoiceOS/OVOS-plugin-manager"
 test = [
     "pytest",
     "pytest-cov",
-    "python-vlc"
+    "python-vlc",
+    "ovos-hardware-helpers>=1.0.0"
 ]
 
 [tool.setuptools]
