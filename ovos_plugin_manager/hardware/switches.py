@@ -15,7 +15,18 @@ log_deprecation("ovos_plugin_manager.hardware.switches is deprecated, use ovos_h
                 func_module="ovos_plugin_manager.hardware.switches",
                 deprecation_version=_deprecation_version)
 
-# Re-export from ovos-hardware-helpers
-from ovos_hardware_helpers.switches import AbstractSwitches
-
 __all__ = ["AbstractSwitches"]
+
+
+def __getattr__(name: str):
+    """Lazy import to make ovos-hardware-helpers an optional dependency."""
+    if name == "AbstractSwitches":
+        try:
+            from ovos_hardware_helpers.switches import AbstractSwitches
+            return AbstractSwitches
+        except ModuleNotFoundError as e:
+            raise ImportError(
+                f"ovos-hardware-helpers is not installed. "
+                f"Install it with: pip install ovos-hardware-helpers"
+            ) from e
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

@@ -15,7 +15,18 @@ log_deprecation("ovos_plugin_manager.hardware.fan is deprecated, use ovos_hardwa
                 func_module="ovos_plugin_manager.hardware.fan",
                 deprecation_version=_deprecation_version)
 
-# Re-export from ovos-hardware-helpers
-from ovos_hardware_helpers.fan import AbstractFan
-
 __all__ = ["AbstractFan"]
+
+
+def __getattr__(name: str):
+    """Lazy import to make ovos-hardware-helpers an optional dependency."""
+    if name == "AbstractFan":
+        try:
+            from ovos_hardware_helpers.fan import AbstractFan
+            return AbstractFan
+        except ModuleNotFoundError as e:
+            raise ImportError(
+                f"ovos-hardware-helpers is not installed. "
+                f"Install it with: pip install ovos-hardware-helpers"
+            ) from e
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

@@ -17,9 +17,6 @@ log_deprecation("ovos_plugin_manager.hardware.led is deprecated, use ovos_hardwa
                 func_module="ovos_plugin_manager.hardware.led",
                 deprecation_version=_deprecation_version)
 
-# Re-export AbstractLed from ovos-hardware-helpers
-from ovos_hardware_helpers.led import AbstractLed
-
 # Keep the legacy Color enum for backwards compatibility
 class Color(Enum):
     """
@@ -91,3 +88,17 @@ class Color(Enum):
 
 
 __all__ = ["AbstractLed", "Color"]
+
+
+def __getattr__(name: str):
+    """Lazy import to make ovos-hardware-helpers an optional dependency."""
+    if name == "AbstractLed":
+        try:
+            from ovos_hardware_helpers.led import AbstractLed
+            return AbstractLed
+        except ModuleNotFoundError as e:
+            raise ImportError(
+                f"ovos-hardware-helpers is not installed. "
+                f"Install it with: pip install ovos-hardware-helpers"
+            ) from e
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
