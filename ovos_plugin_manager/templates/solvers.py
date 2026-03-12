@@ -273,7 +273,7 @@ class QuestionSolver(AbstractSolver):
             # search data
             try:
                 data = _call_with_sanitized_kwargs(self.get_data, query, lang=lang, units=units)
-            except:
+            except Exception:
                 return {}
 
         # save to cache

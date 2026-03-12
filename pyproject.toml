@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ovos-plugin-manager"
+dynamic = ["version"]
+description = "OpenVoiceOS plugin manager"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{name = "jarbasAi", email = "jarbas@openvoiceos.com"}]
+requires-python = ">=3.9"
+dependencies = [
+    "ovos-utils>=0.2.1,<1.0.0",
+    "ovos_bus_client>=0.0.8,<2.0.0",
+    "ovos-config>=0.0.12,<3.0.0",
+    "combo_lock~=0.3",
+    "requests~=2.32",
+    "quebra_frases",
+    "langcodes~=3.5.0",
+    "importlib_metadata",
+    "setuptools; python_version>='3.12'",
+    "standard-aifc; python_version>='3.13'",
+    "audioop-lts; python_version>='3.13'",
+]
+
+[project.urls]
+Homepage = "https://github.com/OpenVoiceOS/OVOS-plugin-manager"
+Repository = "https://github.com/OpenVoiceOS/OVOS-plugin-manager"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    "python-vlc",
+    "ovos-hardware-helpers>=1.0.0"
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["ovos_plugin_manager*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "ovos_plugin_manager.version.__version__"}

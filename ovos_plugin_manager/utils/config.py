@@ -82,10 +82,10 @@ def get_valid_plugin_configs(configs: dict, lang: str,
                         LOG.exception(e)
     elif lang in configs:
         # Exact language/dialog match
-        valid_configs.append(configs[lang])
+        valid_configs.extend(configs[lang])
     elif f"{lang}-{lang}" in configs:
         # match (some) default locales
-        valid_configs.append(configs[f"{lang}-{lang}"])
+        valid_configs.extend(configs[f"{lang}-{lang}"])
     LOG.debug(f'Found {len(valid_configs)} valid configurations for {lang}')
     return valid_configs
 
@@ -102,7 +102,7 @@ def sort_plugin_configs(configs: dict) -> dict:
         try:
             configs[plug_name] = sorted(plug_configs,
                                         key=lambda c: c.get("priority", 60))
-        except:
+        except Exception:
             LOG.exception(f"Invalid plugin data: {plug_name}")
             bad_plugs.append(plug_name)
 
@@ -164,30 +164,30 @@ def get_plugin_supported_languages(plug_type: PluginTypes) -> dict:
 def get_plugin_language_configs(plug_type: PluginTypes, lang: str,
                                 include_dialects: bool = False) -> dict:
     """
-    Return a dict of plugin names to list of valid (dict) configurations
-    @param plug_type: plugin type to get configurations for
-    @param lang: BCP-47 language code to get configurations for
-    @param include_dialects: consider configurations in different locales
-    @return: dict {`plugin_name`: [`valid_configs`]}
+    Map plugins of the given type to matching configuration dicts for the specified language.
+
+    @param plug_type: plugin type to search
+    @param lang: BCP-47 language tag to match
+    @param include_dialects: if True, also include dialect/macro variants of ``lang``
+    @return: dict mapping plugin name to list of matching configuration dicts
     """
     lang = standardize_lang_tag(lang)
     plugin_configs = dict()
-    valid_configs = dict()
     for plug in find_plugins(plug_type):
         plugin_configs[plug] = list()
-        valid_configs = \
+        plug_configs = \
             load_plugin_configs(plug,
-                                PluginConfigTypes(f"{plug_type.value}.config"))
-        valid_configs = {standardize_lang_tag(lang): conf
-                         for lang, conf in valid_configs.items()}
+                                PluginConfigTypes(f"{plug_type.value}.config")) or {}
+        plug_configs = {standardize_lang_tag(k): conf
+                        for k, conf in plug_configs.items()}
         if include_dialects:
-            lang = standardize_lang_tag(lang, macro=True)
-            for language in valid_configs:
-                if language.startswith(lang):
-                    plugin_configs[plug] += valid_configs[language]
-        elif lang in valid_configs:
-            plugin_configs[plug] += valid_configs[lang]
-        elif f"{lang}-{lang}" in valid_configs:
-            plugin_configs += valid_configs[f"{lang}-{lang}"]
+            macro = standardize_lang_tag(lang, macro=True)
+            for language, configs in plug_configs.items():
+                if tag_distance(macro, language) < 10:
+                    plugin_configs[plug] += configs
+        elif lang in plug_configs:
+            plugin_configs[plug] += plug_configs[lang]
+        elif f"{lang}-{lang}" in plug_configs:
+            plugin_configs[plug] += plug_configs[f"{lang}-{lang}"]
     return {plug: configs for plug, configs in
-            valid_configs.items() if configs} or dict()
+            plugin_configs.items() if configs} or dict()

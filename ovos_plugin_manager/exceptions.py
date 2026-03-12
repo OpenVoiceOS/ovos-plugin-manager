@@ -1,2 +1,2 @@
 class PipException(RuntimeError):
-    """ failed to run pip """
+    """Raised when a ``pip install`` subprocess exits with a non-zero return code."""

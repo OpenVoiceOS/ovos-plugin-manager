@@ -68,7 +68,7 @@ class StreamHandler:
             try:
                 self.extractors[plugin] = clazz()
                 LOG.info(f"Loaded OCP plugin: {plugin}")
-            except:
+            except Exception:
                 LOG.error(f"Failed to load {plugin}")
                 continue
 

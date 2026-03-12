@@ -1,8 +1,23 @@
-from abc import abstractmethod
+"""
+DEPRECATED: Use ovos_hardware_helpers.led instead.
+
+This module maintains backwards compatibility with the old Color enum while
+re-exporting AbstractLed from ovos-hardware-helpers. New code should use
+ovos_hardware_helpers.led and ovos_color_parser.models.sRGBAColor.
+"""
 from enum import Enum
 from typing import Union
+from ovos_utils.log import log_deprecation
+from ovos_plugin_manager.version import VERSION_MAJOR
 
+# Log deprecation on import
+_deprecation_version = f"{VERSION_MAJOR + 1}.0"
+log_deprecation("ovos_plugin_manager.hardware.led is deprecated, use ovos_hardware_helpers.led instead",
+                func_name="led module",
+                func_module="ovos_plugin_manager.hardware.led",
+                deprecation_version=_deprecation_version)
 
+# Keep the legacy Color enum for backwards compatibility
 class Color(Enum):
     """
     Enum class for colors. For theme support, call Color.set_theme() with a
@@ -72,63 +87,18 @@ class Color(Enum):
             cls._THEME = Color.WHITE.as_rgb_tuple()
 
 
-class AbstractLed:
-    @property
-    @abstractmethod
-    def num_leds(self) -> int:
-        """
-        Return the logical number of addressable LEDs.
-        """
+__all__ = ["AbstractLed", "Color"]
 
-    @property
-    @abstractmethod
-    def capabilities(self) -> dict:
-        """
-        Return a dict of capabilities this object supports
-        """
 
-    @abstractmethod
-    def set_led(self, led_idx: int, color: tuple, immediate: bool = True):
-        """
-        Set a specific LED to a particular color.
-        :param led_idx: index of LED to modify
-        :param color: RGB color value as ints
-        :param immediate: If true, update LED immediately, else wait for `show`
-        """
-
-    # TODO: get_led?
-
-    @abstractmethod
-    def fill(self, color: tuple):
-        """
-        Set all LEDs to a particular color.
-        :param color: RGB color value as a tuple of ints
-        """
-
-    @abstractmethod
-    def show(self):
-        """
-        Update LEDs to match values set in this class.
-        """
-
-    @abstractmethod
-    def shutdown(self):
-        """
-        Perform any cleanup and turn off LEDs.
-        """
-
-    @staticmethod
-    def scale_brightness(color_val: int, bright_val: float) -> float:
-        """
-        Scale an individual color value by a specified brightness.
-        :param color_val: 0-255 R, G, or B value
-        :param bright_val: 0.0-1.0 brightness scalar value
-        :returns: Float modified color value to account for brightness
-        """
-        return min(255.0, color_val * bright_val)
-
-    def get_capabilities(self) -> dict:
-        """
-        Backwards-compatible method to return `self.capabilities`
-        """
-        return self.capabilities
+def __getattr__(name: str):
+    """Lazy import to make ovos-hardware-helpers an optional dependency."""
+    if name == "AbstractLed":
+        try:
+            from ovos_hardware_helpers.led import AbstractLed
+            return AbstractLed
+        except ModuleNotFoundError as e:
+            raise ImportError(
+                f"ovos-hardware-helpers is not installed. "
+                f"Install it with: pip install ovos-hardware-helpers"
+            ) from e
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
