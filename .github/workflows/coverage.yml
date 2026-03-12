@@ -12,3 +12,4 @@ jobs:
       system_deps: 'swig libssl-dev'
       test_path: 'test/unittests'
       coverage_source: 'ovos_plugin_manager'
+      install_extras: '.[test]'
