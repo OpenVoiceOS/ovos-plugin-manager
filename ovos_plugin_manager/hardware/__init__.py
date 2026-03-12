@@ -10,3 +10,10 @@ log_deprecation(f"ovos_plugin_manager.hardware module is deprecated, use ovos-ha
                 func_name="hardware module",
                 func_module="ovos_plugin_manager.hardware",
                 deprecation_version=_deprecation_version)
+
+# Re-export all hardware classes from their respective shim modules
+from ovos_plugin_manager.hardware.fan import AbstractFan
+from ovos_plugin_manager.hardware.switches import AbstractSwitches
+from ovos_plugin_manager.hardware.led import AbstractLed, Color
+
+__all__ = ["AbstractFan", "AbstractSwitches", "AbstractLed", "Color"]

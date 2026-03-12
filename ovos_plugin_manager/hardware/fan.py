@@ -1,31 +1,21 @@
-from abc import abstractmethod
+"""
+DEPRECATED: Use ovos_hardware_helpers.fan instead.
 
+This module re-exports AbstractFan from ovos-hardware-helpers as a
+backwards-compatibility shim. All new code should import directly from
+ovos_hardware_helpers.fan.
+"""
+from ovos_utils.log import log_deprecation
+from ovos_plugin_manager.version import VERSION_MAJOR
 
-class AbstractFan:
-    @abstractmethod
-    def set_fan_speed(self, percent: int):
-        """
-        Set the fan speed to the specified percentage value.
-        :param percent: 0-100 fan speed value
-        """
+# Log deprecation on import
+_deprecation_version = f"{VERSION_MAJOR + 1}.0"
+log_deprecation("ovos_plugin_manager.hardware.fan is deprecated, use ovos_hardware_helpers.fan instead",
+                func_name="fan module",
+                func_module="ovos_plugin_manager.hardware.fan",
+                deprecation_version=_deprecation_version)
 
-    @abstractmethod
-    def get_fan_speed(self) -> int:
-        """
-        Get the current fan speed as a 0-100 percentage value.
-        """
-        # TODO: Consider an equivalent property for this
+# Re-export from ovos-hardware-helpers
+from ovos_hardware_helpers.fan import AbstractFan
 
-    @abstractmethod
-    def get_cpu_temp(self) -> float:
-        """
-        Get the current CPU temp in celsius (-1.0 if not available)
-        """
-        # TODO: Consider an equivalent property for this
-        return -1.0
-
-    @abstractmethod
-    def shutdown(self):
-        """
-        Perform any cleanup and set the fan to a reasonable speed.
-        """
+__all__ = ["AbstractFan"]
