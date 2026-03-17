@@ -1,10 +1,22 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Type, Any, Dict, List, Callable, Optional, Union
 
 from ovos_bus_client import MessageBusClient, Message
 from ovos_utils.fakebus import FakeBus
-from pydantic import BaseModel, Field
+from ovos_utils.log import LOG
+from pydantic import BaseModel
 
 
 # Base Pydantic Model for Tool Input/Arguments
@@ -64,9 +76,9 @@ class ToolBox(ABC):
         # Internal cache for discovered tools, mapped by name
         self.tools: Dict[str, AgentTool] = {}
         try:
-            self.discover_tools()  # try to find tools immediately
+            self.tools = {tool.name: tool for tool in self.discover_tools()}
         except Exception as e:
-            pass  # will be lazy loaded or throw error on first usage
+            LOG.debug(f"ToolBox '{toolbox_id}' failed initial tool discovery, will retry on first use: {e}")
 
         # Initialize the messagebus connection if provided
         if bus:
