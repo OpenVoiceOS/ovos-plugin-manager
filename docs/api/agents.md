@@ -63,34 +63,6 @@ Generate a response given a list of `AgentMessage` objects.
 
 ---
 
-### `AgenticLoopEngine`
-
-**Entry point:** `opm.agents.loop`
-
-A `ChatEngine` subclass for plugins that implement an internal agent loop (ReAct, tool-call/observe, background workers, etc.). Callers treat it identically to `ChatEngine` — the loop is an implementation detail.
-
-Adds a standard toolbox registration interface:
-
-```python
-def load_toolboxes(self, toolboxes: List[ToolBox]) -> None
-```
-
-Called by the persona loader when the persona config declares a `toolboxes` list. Plugins may also discover and load toolboxes internally.
-
-Persona config example:
-
-```json
-{
-  "name": "MyAgent",
-  "solvers": ["ovos-react-agent"],
-  "toolboxes": ["web_search_tools", "file_tools"]
-}
-```
-
-See [Agent Tools](agent-tools.md) for the `ToolBox` plugin API.
-
----
-
 ### `RetrievalEngine`
 
 **Entry point:** `opm.agents.retrieval`
