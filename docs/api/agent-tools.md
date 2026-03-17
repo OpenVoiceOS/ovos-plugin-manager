@@ -1,6 +1,6 @@
 # Agent Tool Plugins
 
-**Entry point:** `opm.persona.tool`
+**Entry point:** `opm.agents.toolbox`
 
 Tool plugins extend personas with executable functions. A `ToolBox` groups related tools, handles bus-based discovery, and validates inputs/outputs via Pydantic.
 
@@ -76,7 +76,7 @@ This allows agent plugins in separate processes (e.g. MCP or UTCP servers) to di
 Register your `ToolBox` subclass in `pyproject.toml`:
 
 ```toml
-[project.entry-points."opm.persona.tool"]
+[project.entry-points."opm.agents.toolbox"]
 my_toolbox = "my_package:MyToolBox"
 ```
 

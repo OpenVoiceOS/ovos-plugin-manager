@@ -382,6 +382,73 @@ class MultimodalChatEngine(ChatEngine):
                                   units=units).content
 
 
+class AgenticLoopEngine(ChatEngine):
+    """
+    A ``ChatEngine`` subclass for plugins that implement an internal agent loop
+    (e.g. ReAct, tool-call/observe cycles, background worker agents).
+
+    From the perspective of a ``PersonaService`` or any caller, an
+    ``AgenticLoopEngine`` is identical to a ``ChatEngine`` — it receives a list
+    of ``AgentMessage`` objects and returns one.  All loop mechanics, tool
+    dispatch, retries, and background tasks are implementation details hidden
+    inside the plugin.
+
+    The ``toolboxes`` attribute gives OPM and persona configs a standard place
+    to inject ``ToolBox`` instances.  Plugins are free to discover and load
+    additional toolboxes internally.
+
+    Entry point group: ``opm.agents.loop``
+    """
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """
+        Initialise the engine and set up an empty toolbox registry.
+
+        Args:
+            config: Plugin-specific configuration dictionary.
+        """
+        super().__init__(config=config)
+        self.toolboxes: List[Any] = []  # List[ToolBox] — avoid circular import
+
+    def load_toolboxes(self, toolboxes: List[Any]) -> None:
+        """
+        Register a list of ``ToolBox`` instances with this engine.
+
+        Called by the persona loader when the persona config declares a
+        ``toolboxes`` list.  Plugins may also call this directly or discover
+        toolboxes on their own inside ``continue_chat``.
+
+        Args:
+            toolboxes: Instantiated ``ToolBox`` objects to make available to
+                the agent loop.
+        """
+        self.toolboxes = list(toolboxes)
+
+    @abc.abstractmethod
+    def continue_chat(self, messages: List[AgentMessage],
+                      session_id: str = "default",
+                      lang: Optional[str] = None,
+                      units: Optional[str] = None) -> AgentMessage:
+        """
+        Run the agent loop and return the final response.
+
+        The implementation is responsible for all internal steps: tool
+        selection, execution, observation, and iteration.  The caller always
+        receives a single ``AgentMessage`` with ``MessageRole.ASSISTANT``.
+
+        Args:
+            messages: Full conversation history up to and including the latest
+                user turn.
+            session_id: Conversation session identifier.
+            lang: BCP-47 language code.
+            units: Preferred measurement system (``"metric"`` / ``"imperial"``).
+
+        Returns:
+            The assistant's final response after the loop has completed.
+        """
+        raise NotImplementedError()
+
+
 class SummarizerEngine(AbstractAgentEngine):
     """Engine designed for condensing long documents into concise summaries."""
 

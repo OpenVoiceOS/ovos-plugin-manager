@@ -15,8 +15,9 @@ def find_persona_plugins() -> Dict[str, Dict[str, Any]]:
 
 def find_toolbox_plugins() -> Dict[str, Type[ToolBox]]:
     """
-    Find all installed Toolbox plugins
-    @return: dict toolbox_id to entrypoints (ToolBox)
+    Find all installed ToolBox plugins.
+
+    @return: dict of toolbox_id to ToolBox subclass
     """
     from ovos_plugin_manager.utils import find_plugins
-    return find_plugins(PluginTypes.PERSONA_TOOL)
+    return find_plugins(PluginTypes.AGENT_TOOLBOX)

@@ -59,6 +59,8 @@ class ToolBox(ABC):
 
     Each ToolBox is a discoverable plugin that groups related AgentTools. It exposes
     tools as services over the OVOS messagebus and provides a direct execution interface.
+
+    Entry point group: ``opm.agents.toolbox``
     """
 
     def __init__(self, toolbox_id: str,

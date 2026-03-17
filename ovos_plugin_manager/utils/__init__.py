@@ -98,7 +98,8 @@ class PluginTypes(str, Enum):
     VIDEO_PLAYER = "opm.media.video"
     WEB_PLAYER = "opm.media.web"
     PERSONA = "opm.plugin.persona"  # personas are a dict, they have no config because they ARE a config
-    PERSONA_TOOL = "opm.persona.tool"
+    AGENT_TOOLBOX = "opm.agents.toolbox"
+    AGENT_LOOP = "opm.agents.loop"
 
     # solver plugins are deprecated!
     QUESTION_SOLVER = "opm.solver.question"
@@ -152,6 +153,8 @@ class PluginConfigTypes(str, Enum):
     AGENT_NLI = "opm.agents.nli.config"
     AGENT_COREF = "opm.agents.coref.config"
     AGENT_YES_NO = "opm.agents.yesno.config"
+    AGENT_TOOLBOX = "opm.agents.toolbox.config"
+    AGENT_LOOP = "opm.agents.loop.config"
     KEYWORD_EXTRACTION = "opm.keywords.config"
     UTTERANCE_SEGMENTATION = "opm.segmentation.config"
     TOKENIZATION = "opm.tokenization.config"
