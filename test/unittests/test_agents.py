@@ -574,6 +574,48 @@ class TestAgentsModule(unittest.TestCase):
         load_reranker_plugin("reranker-plugin")
         mock_load.assert_called_once_with("reranker-plugin", PluginTypes.AGENT_RERANKER)
 
+    @patch("ovos_plugin_manager.utils.load_plugin")
+    def test_load_option_matcher_plugin(self, mock_load: MagicMock) -> None:
+        """load_option_matcher_plugin calls load_plugin with AGENT_OPTION_MATCHER."""
+        from ovos_plugin_manager.agents import load_option_matcher_plugin
+        mock_load.return_value = MagicMock()
+        load_option_matcher_plugin("option-matcher-plugin")
+        mock_load.assert_called_once_with("option-matcher-plugin", PluginTypes.AGENT_OPTION_MATCHER)
+
+
+class TestFindOptionMatcherPlugins(unittest.TestCase):
+    """Tests for find_option_matcher_plugins."""
+
+    @patch("ovos_plugin_manager.utils.find_plugins")
+    def test_find_option_matcher_plugins(self, mock_find: MagicMock) -> None:
+        """find_option_matcher_plugins calls find_plugins with AGENT_OPTION_MATCHER."""
+        from ovos_plugin_manager.agents import find_option_matcher_plugins
+        mock_find.return_value = {}
+        find_option_matcher_plugins()
+        mock_find.assert_called_once_with(PluginTypes.AGENT_OPTION_MATCHER)
+
+
+class TestOptionMatcherEngine(unittest.TestCase):
+    """Tests for OptionMatcherEngine base class."""
+
+    def test_match_option_is_abstract(self) -> None:
+        """OptionMatcherEngine.match_option must be implemented by subclasses."""
+        from ovos_plugin_manager.templates.agents import OptionMatcherEngine
+        with self.assertRaises(TypeError):
+            OptionMatcherEngine()  # type: ignore[abstract]
+
+    def test_concrete_subclass_works(self) -> None:
+        """A concrete OptionMatcherEngine subclass can be instantiated and called."""
+        from ovos_plugin_manager.templates.agents import OptionMatcherEngine
+
+        class FakeMatcher(OptionMatcherEngine):
+            def match_option(self, utterance, options, lang=None):
+                return options[0] if options else None
+
+        matcher = FakeMatcher()
+        self.assertEqual(matcher.match_option("anything", ["alpha", "beta"]), "alpha")
+        self.assertIsNone(matcher.match_option("anything", []))
+
 
 if __name__ == "__main__":
     unittest.main()

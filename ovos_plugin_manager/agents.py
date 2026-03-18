@@ -15,8 +15,8 @@ from typing import Dict, Type
 
 from ovos_plugin_manager.templates.agents import (
     AgentContextManager, MultimodalAdapter, RetrievalEngine, ChatEngine, MultimodalChatEngine, SummarizerEngine,
-    ChatSummarizerEngine, ExtractiveQAEngine, ReRankerEngine, YesNoEngine, NaturalLanguageInferenceEngine,
-    DocumentIndexerEngine, QAIndexerEngine, CoreferenceEngine)
+    ChatSummarizerEngine, ExtractiveQAEngine, ReRankerEngine, OptionMatcherEngine, YesNoEngine,
+    NaturalLanguageInferenceEngine, DocumentIndexerEngine, QAIndexerEngine, CoreferenceEngine)
 from ovos_plugin_manager.utils import PluginTypes
 
 
@@ -208,6 +208,25 @@ def load_yesno_plugin(module_name: str) -> Type[YesNoEngine]:
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.AGENT_YES_NO)
+
+
+def find_option_matcher_plugins() -> Dict[str, Type[OptionMatcherEngine]]:
+    """
+    Find all installed plugins
+    @return: dict plugin names to entrypoints
+    """
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(PluginTypes.AGENT_OPTION_MATCHER)
+
+
+def load_option_matcher_plugin(module_name: str) -> Type[OptionMatcherEngine]:
+    """
+    Get an uninstantiated class for the requested module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(module_name, PluginTypes.AGENT_OPTION_MATCHER)
 
 
 def find_natural_language_inference_plugins() -> Dict[str, Type[NaturalLanguageInferenceEngine]]:

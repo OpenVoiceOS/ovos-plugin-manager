@@ -485,6 +485,36 @@ class ReRankerEngine(AbstractAgentEngine):
         return self.rerank(query, options, lang=lang, return_index=return_index)[0][1]
 
 
+class OptionMatcherEngine(AbstractAgentEngine):
+    """
+    Engine for resolving a free-form user utterance to one of a predefined set
+    of options (slots).
+
+    Unlike ReRankerEngine — which ranks candidate answers against a semantic
+    query — OptionMatcherEngine maps what the user *said* to what the skill
+    *expected*.  Ordinal references ("the second one", "last"), synonyms, and
+    paraphrases are all valid inputs.
+
+    Used by OVOSSkill.ask_selection to interpret the user's spoken choice.
+    """
+
+    @abc.abstractmethod
+    def match_option(self, utterance: str, options: List[str],
+                     lang: Optional[str] = None) -> Optional[str]:
+        """
+        Resolve *utterance* to the best matching entry in *options*.
+
+        Args:
+            utterance (str): The raw user response.
+            options (List[str]): The predefined slots the skill offered.
+            lang (str, optional): BCP-47 language code.
+
+        Returns:
+            Optional[str]: The matched option string, or None if no match.
+        """
+        raise NotImplementedError
+
+
 class YesNoEngine(AbstractAgentEngine):
     """
     Engine for evaluating answers to yes/no questions.
