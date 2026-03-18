@@ -471,18 +471,48 @@ class ReRankerEngine(AbstractAgentEngine):
                       lang: Optional[str] = None,
                       return_index: bool = False) -> Union[str, int]:
         """
-        Select the single best answer from a list of options.
-
-        Args:
-            query (str): The query to match.
-            options (List[str]): List of possible answers.
-            lang (str, optional): Language code.
-            return_index (bool): Whether to return the index of the option or the text.
-
+        Choose the highest-ranked option for a query from a list of candidate options.
+          
+        Parameters:
+            query (str): The query used to score and rank the options.
+            options (List[str]): Candidate option strings to be ranked.
+            lang (str, optional): Language tag to use for ranking heuristics.
+            return_index (bool): If True, return the index of the top-ranked option instead of its text.
+          
         Returns:
-            Union[str, int]: The top-ranked option or its index.
+            The text of the top-ranked option, or the option's index if `return_index` is True.
         """
         return self.rerank(query, options, lang=lang, return_index=return_index)[0][1]
+
+
+class OptionMatcherEngine(AbstractAgentEngine):
+    """
+    Engine for resolving a free-form user utterance to one of a predefined set
+    of options (slots).
+
+    Unlike ReRankerEngine — which ranks candidate answers against a semantic
+    query — OptionMatcherEngine maps what the user *said* to what the skill
+    *expected*.  Ordinal references ("the second one", "last"), synonyms, and
+    paraphrases are all valid inputs.
+
+    Used by OVOSSkill.ask_selection to interpret the user's spoken choice.
+    """
+
+    @abc.abstractmethod
+    def match_option(self, utterance: str, options: List[str],
+                     lang: Optional[str] = None) -> Optional[str]:
+        """
+        Resolve *utterance* to the best matching entry in *options*.
+
+        Args:
+            utterance (str): The raw user response.
+            options (List[str]): The predefined slots the skill offered.
+            lang (str, optional): BCP-47 language code.
+
+        Returns:
+            Optional[str]: The matched option string, or None if no match.
+        """
+        raise NotImplementedError
 
 
 class YesNoEngine(AbstractAgentEngine):
