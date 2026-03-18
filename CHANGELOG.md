@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.4.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.4.0a1) (2026-03-18)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.3.0a1...2.4.0a1)
+
+**Merged pull requests:**
+
+- feat: add OptionMatcherEngine plugin type  [\#379](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/379) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.3.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.3.0a1) (2026-03-18)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.3a1...2.3.0a1)
