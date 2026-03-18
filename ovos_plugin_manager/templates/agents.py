@@ -471,17 +471,17 @@ class ReRankerEngine(AbstractAgentEngine):
                       lang: Optional[str] = None,
                       return_index: bool = False) -> Union[str, int]:
         """
-                      Choose the highest-ranked option for a query from a list of candidate options.
-                      
-                      Parameters:
-                          query (str): The query used to score and rank the options.
-                          options (List[str]): Candidate option strings to be ranked.
-                          lang (str, optional): Language tag to use for ranking heuristics.
-                          return_index (bool): If True, return the index of the top-ranked option instead of its text.
-                      
-                      Returns:
-                          The text of the top-ranked option, or the option's index if `return_index` is True.
-                      """
+        Choose the highest-ranked option for a query from a list of candidate options.
+          
+        Parameters:
+            query (str): The query used to score and rank the options.
+            options (List[str]): Candidate option strings to be ranked.
+            lang (str, optional): Language tag to use for ranking heuristics.
+            return_index (bool): If True, return the index of the top-ranked option instead of its text.
+          
+        Returns:
+            The text of the top-ranked option, or the option's index if `return_index` is True.
+        """
         return self.rerank(query, options, lang=lang, return_index=return_index)[0][1]
 
 
