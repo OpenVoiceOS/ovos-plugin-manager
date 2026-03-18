@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.3.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.3.0a1) (2026-03-18)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.3a1...2.3.0a1)
+
+**Merged pull requests:**
+
+- chore: Add comprehensive API documentation  and unit tests for plugin systems [\#376](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/376) ([JarbasAl](https://github.com/JarbasAl))
+- feat: tool plugins [\#340](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/340) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.2.3a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.3a1) (2026-01-30)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.2a1...2.2.3a1)
