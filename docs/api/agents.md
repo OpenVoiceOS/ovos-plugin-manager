@@ -53,7 +53,10 @@ Streaming/non-streaming conversational LLM backend.
 #### Abstract method
 
 ```python
-def chat(self, messages: List[AgentMessage], lang: Optional[str] = None) -> Optional[str]
+def continue_chat(self, messages: List[AgentMessage],
+                  session_id: str = "default",
+                  lang: Optional[str] = None,
+                  units: Optional[str] = None) -> AgentMessage
 ```
 
 Generate a response given a list of `AgentMessage` objects.

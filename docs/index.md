@@ -21,6 +21,8 @@ loading installed plugins at runtime via Python entry points.
   - [PHAL](api/phal.md) — Platform/Hardware Abstraction Layer
   - [Transformers](api/transformers.md) — Audio, Utterance, Dialog, Metadata, TTS, Intent transformers
   - [Agents & Solvers](api/agents.md) — NLP solver and agent engine plugins
+  - [Agent Tools](api/agent-tools.md) — ToolBox plugin API (`opm.agents.toolbox`)
+- [Agent Plugins](agents.md) — all available ChatEngine, ToolBox, and Persona plugins with entry point registry
   - [Pipeline](api/pipeline.md) — Intent matching pipeline plugins
   - [Language](api/language.md) — Translation and language detection plugins
 
