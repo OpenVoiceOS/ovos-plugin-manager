@@ -45,10 +45,6 @@ def failing_logic(args: AddArgs) -> AddOutput:
     raise RuntimeError("intentional failure")
 
 
-class MathToolBox(MathToolBox if False else object):
-    pass
-
-
 class MathToolBox(ToolBox):
     def __init__(self, bus=None, fail_discover: bool = False):
         self._fail_discover = fail_discover

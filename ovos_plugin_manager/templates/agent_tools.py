@@ -119,6 +119,7 @@ class ToolBox(ABC):
         Args:
             message: The incoming discovery Message object.
         """
+        self.refresh_tools()
         response_data: Dict[str, Any] = {
             "tools": self.tool_json_list,
             "toolbox_id": self.toolbox_id
@@ -141,7 +142,7 @@ class ToolBox(ABC):
         try:
             # Use the execution wrapper method
             result: ToolOutput = self.call_tool(name, tool_kwargs)
-            self.bus.emit(message.response({"result": result.model_dump(), "toolbox_id": self.toolbox_id}))
+            self.bus.emit(message.response({"result": result.model_dump(mode='json'), "toolbox_id": self.toolbox_id}))
         except Exception as e:
             # Catch all execution exceptions (including ValueErrors from call_tool)
             error: str = f"{type(e).__name__}: {str(e)}"
@@ -167,7 +168,7 @@ class ToolBox(ABC):
             # Instantiating the Pydantic model implicitly validates the input
             return ArgsModel(**tool_kwargs)
         except Exception as e:
-            raise ValueError(f"Invalid input for '{tool.name}': {tool_kwargs}") from e
+            raise ValueError(f"Invalid input for '{tool.name}'") from e
 
     @staticmethod
     def validate_output(tool: AgentTool, raw_result: Dict[str, Any]) -> ToolOutput:
@@ -190,7 +191,7 @@ class ToolBox(ABC):
             # The .model_validate() method returns a validated Pydantic object
             return OutputModel.model_validate(raw_result)
         except Exception as e:
-            raise ValueError(f"Invalid output from '{tool.name}': {raw_result}") from e
+            raise ValueError(f"Invalid output from '{tool.name}'") from e
 
     def call_tool(self, name: str, tool_kwargs: Union[ToolArguments, Dict[str, Any]]) -> ToolOutput:
         """
