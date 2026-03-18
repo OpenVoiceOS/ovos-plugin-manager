@@ -115,3 +115,28 @@ Address critical and major issues identified during CodeRabbit review of PR #376
 - **AI Model**: Gemini 2.0 Pro
 - **Actions Taken**: Triage 33 CodeRabbit comments, applied fixes for 10+ high-priority items covering CI, installation logic, templates, and documentation.
 - **Oversight**: Human review of logic changes in `pip_install` and `release_workflow.yml` recommended.
+
+## [2026-03-18] — Address CodeRabbit PR #340 Review (tool plugins)
+
+### Changes
+- **`pyproject.toml`**: Added `pydantic~=2.0` to `[project.optional-dependencies] test` list. GitHub Actions installs with extras from pyproject.toml, not requirements.txt; missing pydantic caused pytest ModuleNotFoundError.
+- **`test/unittests/test_agent_tools.py`**: Removed dead placeholder definition `class MathToolBox(MathToolBox if False else object)` (lines 48–49). Was causing Ruff F821 (Undefined name) warning; immediately shadowed by real class definition on line 52.
+- **`docs/index.md`**: Fixed entry-point name from `opm.persona.tool` to `opm.agents.toolbox` (line 24). Matches actual ToolBox class entry point in implementation.
+- **`ovos_plugin_manager/templates/agent_tools.py`**:
+  1. `handle_discover()` (line 123): Added `self.refresh_tools()` call before broadcasting. Prevents stale cache if initial `discover_tools()` fails; ensures dynamic tool discovery works for bus-only clients.
+  2. `handle_call()` (line 145): Changed `result.model_dump()` to `result.model_dump(mode='json')`. Ensures JSON serialization consistency with `model_json_schema()` in `tool_json_list`; handles datetime, UUID, enum, aliased fields correctly.
+  3. `validate_input()` (line 170): Removed `{tool_kwargs}` from error message. Security fix: prevents echoing raw arguments (which may contain secrets) onto shared messagebus.
+  4. `validate_output()` (line 193): Removed `{raw_result}` from error message. Security fix: prevents echoing raw output data (which may contain secrets) onto shared messagebus.
+
+### Rationale
+Address 6 critical CodeRabbit issues on PR #340 (tool plugins feature): cache staleness, JSON serialization divergence, security leaks, test placeholder cleanup, missing dependency, and documentation accuracy.
+
+### Verification
+- All 1011 unit tests pass (including 21 agent_tools tests).
+- Python syntax verified via `py_compile`.
+- Cache refresh behavior confirmed in test_agent_tools.py via mock assertions.
+
+### AI Transparency Report
+- **AI Model**: Claude Haiku 4.5
+- **Actions Taken**: Fetched PR feedback via gh_pr_comments.py, triaged 6 CodeRabbit issues by severity, applied targeted fixes to 4 files, ran full test suite, verified all tests pass.
+- **Oversight**: Security fixes to error messages and JSON serialization require human code review to ensure no loss of debug information needed for troubleshooting.

@@ -42,3 +42,12 @@ uv run pytest ovos-plugin-manager/test/ --cov=ovos_plugin_manager
 
 ## What Python versions are supported?
 See `QUICK_FACTS.md` — currently `>=3.9`.
+
+## What are Agent Tools and ToolBox plugins?
+Agent Tools are executable functions exposed to AI agents via the OVOS messagebus. A `ToolBox` plugin groups related tools and handles discovery/execution. Entry point: `opm.agents.toolbox` — see `docs/index.md` and `ovos_plugin_manager/templates/agent_tools.py` for full API.
+
+## How do ToolBox plugins handle dynamic tool discovery?
+`ToolBox.refresh_tools()` is called on every discovery broadcast (via `handle_discover`) and on cache misses (via `get_tool`). This ensures tools added dynamically (e.g., from MCP/UTCP plugins) are always discoverable without client retries — see `ovos_plugin_manager/templates/agent_tools.py:112`.
+
+## What serialization mode does ToolBox use for bus responses?
+`ToolBox.handle_call()` uses `model_dump(mode='json')` to serialize Pydantic models for bus transmission. This ensures consistency with the JSON schema advertised in `tool_json_list` and handles datetime, UUID, enum, and aliased fields correctly — see `ovos_plugin_manager/templates/agent_tools.py:145`.
