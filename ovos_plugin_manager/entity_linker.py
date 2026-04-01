@@ -10,11 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Discovery and configuration utilities for entity-linker plugins."""
+"""Discovery utilities for entity-linker plugins."""
 from typing import Dict, List, Optional, Type
-
-from ovos_config import Configuration
-from ovos_utils.log import LOG
 
 from ovos_plugin_manager.templates.triples import EntityLinker
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
@@ -64,76 +61,3 @@ def get_entity_linker_module_configs(module_name: str) -> dict:
     """
     from ovos_plugin_manager.utils.config import load_plugin_configs
     return load_plugin_configs(module_name, PluginConfigTypes.ENTITY_LINKER, True)
-
-
-def get_entity_linker_config(config: Optional[dict] = None) -> dict:
-    """Get relevant configuration for entity linker factory methods.
-
-    Args:
-        config: global Configuration OR plugin class-specific configuration
-
-    Returns:
-        plugin class-specific configuration
-    """
-    from ovos_plugin_manager.utils.config import get_plugin_config
-    config = config or Configuration()
-    return get_plugin_config(config, "entity_linker")
-
-
-class OVOSEntityLinkerFactory:
-    """Factory for creating EntityLinker engines from global configuration.
-
-    Reads mycroft.conf and returns the globally configured plugin.
-
-    Config section key: "entity_linker"
-    Expected config shape:
-        "entity_linker": {
-            "module": "<plugin-entry-point>",
-            "<plugin-entry-point>": { ... plugin-specific config ... }
-        }
-    """
-    MAPPINGS = {}
-
-    @staticmethod
-    def get_class(config: Optional[dict] = None) -> Type[EntityLinker]:
-        """Factory method to get an EntityLinker engine class based on configuration.
-
-        Args:
-            config: optional configuration dict
-
-        Returns:
-            Uninstantiated plugin class
-
-        Raises:
-            ValueError: if no module is configured
-        """
-        config = get_entity_linker_config(config)
-        module = config.get("module")
-        if not module:
-            raise ValueError("No entity_linker module configured")
-        if module in OVOSEntityLinkerFactory.MAPPINGS:
-            module = OVOSEntityLinkerFactory.MAPPINGS[module]
-        return load_entity_linker_plugin(module)
-
-    @staticmethod
-    def create(config: Optional[dict] = None) -> EntityLinker:
-        """Factory method to create an EntityLinker engine based on configuration.
-
-        Args:
-            config: optional configuration dict
-
-        Returns:
-            Instantiated plugin instance
-
-        Raises:
-            Exception: if plugin cannot be loaded
-        """
-        config = config or get_entity_linker_config()
-        plugin = config.get("module")
-        plugin_config = config.get(plugin) or {}
-        try:
-            clazz = OVOSEntityLinkerFactory.get_class(config)
-            return clazz(plugin_config)
-        except Exception:
-            LOG.exception(f"EntityLinker plugin {plugin} could not be loaded!")
-            raise
