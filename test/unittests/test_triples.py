@@ -50,20 +50,6 @@ class TestTriples(unittest.TestCase):
         load_triples_plugin("test_mod")
         load_plugin.assert_called_once_with("test_mod", self.PLUGIN_TYPE)
 
-    @patch("ovos_plugin_manager.utils.config.load_configs_for_plugin_type")
-    def test_get_configs(self, load_configs):
-        from ovos_plugin_manager.triples import get_triples_configs
-        get_triples_configs()
-        load_configs.assert_called_once_with(PluginTypes.TRIPLES)
-
-    @patch("ovos_plugin_manager.utils.config.load_plugin_configs")
-    def test_get_module_configs(self, load_plugin_configs):
-        from ovos_plugin_manager.triples import get_triples_module_configs
-        get_triples_module_configs("test_mod")
-        load_plugin_configs.assert_called_once_with("test_mod",
-                                                    self.CONFIG_TYPE, True)
-
-
 class TestTripleDataclasses(unittest.TestCase):
     def test_triple_as_tuple(self):
         from ovos_plugin_manager.templates.triples import Triple
@@ -289,13 +275,6 @@ class TestTriplesStoreFunctions(unittest.TestCase):
         load_triples_store_plugin("test_mod")
         load_plugin.assert_called_once_with("test_mod", PluginTypes.TRIPLES_STORE)
 
-    @patch("ovos_plugin_manager.utils.config.load_configs_for_plugin_type")
-    def test_get_triples_store_configs(self, load_configs):
-        from ovos_plugin_manager.triples import get_triples_store_configs
-        get_triples_store_configs()
-        load_configs.assert_called_once_with(PluginTypes.TRIPLES_STORE)
-
-
 class TestTriplesReasonerFunctions(unittest.TestCase):
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_triples_reasoner_plugins(self, find_plugins):
@@ -309,28 +288,15 @@ class TestTriplesReasonerFunctions(unittest.TestCase):
         load_triples_reasoner_plugin("test_mod")
         load_plugin.assert_called_once_with("test_mod", PluginTypes.TRIPLES_REASONER)
 
-    @patch("ovos_plugin_manager.utils.config.load_configs_for_plugin_type")
-    def test_get_triples_reasoner_configs(self, load_configs):
-        from ovos_plugin_manager.triples import get_triples_reasoner_configs
-        get_triples_reasoner_configs()
-        load_configs.assert_called_once_with(PluginTypes.TRIPLES_REASONER)
-
-
 class TestEntityLinkerFunctions(unittest.TestCase):
     @patch("ovos_plugin_manager.utils.find_plugins")
     def test_find_entity_linker_plugins(self, find_plugins):
-        from ovos_plugin_manager.entity_linker import find_entity_linker_plugins
+        from ovos_plugin_manager.triples import find_entity_linker_plugins
         find_entity_linker_plugins()
         find_plugins.assert_called_once_with(PluginTypes.ENTITY_LINKER)
 
     @patch("ovos_plugin_manager.utils.load_plugin")
     def test_load_entity_linker_plugin(self, load_plugin):
-        from ovos_plugin_manager.entity_linker import load_entity_linker_plugin
+        from ovos_plugin_manager.triples import load_entity_linker_plugin
         load_entity_linker_plugin("test_mod")
         load_plugin.assert_called_once_with("test_mod", PluginTypes.ENTITY_LINKER)
-
-    @patch("ovos_plugin_manager.utils.config.load_configs_for_plugin_type")
-    def test_get_entity_linker_configs(self, load_configs):
-        from ovos_plugin_manager.entity_linker import get_entity_linker_configs
-        get_entity_linker_configs()
-        load_configs.assert_called_once_with(PluginTypes.ENTITY_LINKER)
