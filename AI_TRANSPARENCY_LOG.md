@@ -1,5 +1,5 @@
 
-# Maintenance Report — `ovos-plugin-manager`
+# AI Transparency Log — `ovos-plugin-manager`
 
 ## [2026-04-01] — Extend triples system with entity linking, storage, and reasoning
 
@@ -73,7 +73,7 @@ Follows established OPM patterns (factory classes, discovery functions, plugin t
 ### Changes
 - Created `QUICK_FACTS.md` with machine-readable package metadata.
 - Created `FAQ.md` with common Q&A.
-- Created `MAINTENANCE_REPORT.md` (this file) as the change log.
+- Created `AI_TRANSPARENCY_LOG.md` (this file) as the AI change log.
 - Created `SUGGESTIONS.md` with initial improvement proposals.
 - Created `docs/index.md` as the documentation entry point (if missing).
 
@@ -86,7 +86,7 @@ Establishing the required file set mandated by `AGENTS.md` for all active worksp
 
 ### AI Transparency Report
 - **AI Model**: Claude Sonnet 4.6
-- **Actions Taken**: Generated boilerplate compliance scaffold (QUICK_FACTS, FAQ, MAINTENANCE_REPORT, SUGGESTIONS, docs/index).
+- **Actions Taken**: Generated boilerplate compliance scaffold (QUICK_FACTS, FAQ, AI_TRANSPARENCY_LOG, SUGGESTIONS, docs/index).
 - **Oversight**: Files are stubs — human review and enrichment required before treating as authoritative.
 
 ## [2026-03-11] — Critical bug fixes from AUDIT.md
