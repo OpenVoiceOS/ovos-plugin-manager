@@ -202,13 +202,13 @@ def find_yesno_plugins() -> Dict[str, Type[YesNoEngine]]:
 
 def load_yesno_plugin(module_name: str) -> Type[YesNoEngine]:
     """
-    Load the uninstantiated YesNoEngine plugin class for the given entrypoint name.
+    Load the uninstantiated Yes/No plugin class for the given entrypoint name.
     
     Parameters:
         module_name (str): Plugin entrypoint name to load.
     
     Returns:
-        Type[YesNoEngine]: The plugin class corresponding to the requested entrypoint.
+        Type[YesNoEngine]: The uninstantiated plugin class corresponding to `module_name`.
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.AGENT_YES_NO)
@@ -216,10 +216,10 @@ def load_yesno_plugin(module_name: str) -> Type[YesNoEngine]:
 
 def find_option_matcher_plugins() -> Dict[str, Type[OptionMatcherEngine]]:
     """
-    Discover available option matcher plugins.
+    Discover installed OptionMatcher agent plugins.
     
     Returns:
-        dict: Mapping from plugin entrypoint name to the uninstantiated OptionMatcherEngine class.
+        Dict[str, Type[OptionMatcherEngine]]: Mapping from plugin entrypoint name to the uninstantiated plugin class.
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.AGENT_OPTION_MATCHER)
@@ -227,13 +227,13 @@ def find_option_matcher_plugins() -> Dict[str, Type[OptionMatcherEngine]]:
 
 def load_option_matcher_plugin(module_name: str) -> Type[OptionMatcherEngine]:
     """
-    Return the uninstantiated OptionMatcherEngine class registered under the given plugin entrypoint name.
+    Load an uninstantiated OptionMatcher plugin class by its entrypoint name.
     
     Parameters:
         module_name (str): Plugin entrypoint name to load.
     
     Returns:
-        Type[OptionMatcherEngine]: The plugin class corresponding to the provided entrypoint.
+        Type[OptionMatcherEngine]: The plugin class (uninstantiated).
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.AGENT_OPTION_MATCHER)
@@ -241,10 +241,10 @@ def load_option_matcher_plugin(module_name: str) -> Type[OptionMatcherEngine]:
 
 def find_natural_language_inference_plugins() -> Dict[str, Type[NaturalLanguageInferenceEngine]]:
     """
-    Discover installed Natural Language Inference agent plugins and return a mapping from entrypoint name to the uninstantiated plugin class.
+    Locate installed natural language inference agent plugins.
     
     Returns:
-        Dict[str, Type[NaturalLanguageInferenceEngine]]: Mapping from plugin entrypoint name to the corresponding plugin class.
+        dict: Mapping from plugin entrypoint names to the uninstantiated `NaturalLanguageInferenceEngine` classes.
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.AGENT_NLI)
