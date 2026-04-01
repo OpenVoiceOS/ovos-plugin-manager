@@ -48,6 +48,9 @@ DEPRECATED_ENTRYPOINTS = {
 
 class PluginTypes(str, Enum):
     TRIPLES = "opm.triples"
+    ENTITY_LINKER = "opm.entity_linker"
+    TRIPLES_STORE = "opm.triples.store"
+    TRIPLES_REASONER = "opm.triples.reasoner"
     PIPELINE = "opm.pipeline"
     EMBEDDINGS = "opm.embeddings"
     IMAGE_EMBEDDINGS = "opm.embeddings.image"
@@ -114,6 +117,9 @@ class PluginTypes(str, Enum):
 
 class PluginConfigTypes(str, Enum):
     TRIPLES = "opm.triples.config"
+    ENTITY_LINKER = "opm.entity_linker.config"
+    TRIPLES_STORE = "opm.triples.store.config"
+    TRIPLES_REASONER = "opm.triples.reasoner.config"
     PIPELINE = "opm.pipeline.config"
     EMBEDDINGS = "opm.embeddings.config"
     IMAGE_EMBEDDINGS = "opm.embeddings.image.config"
