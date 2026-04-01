@@ -29,7 +29,12 @@ class Triple:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def as_tuple(self) -> RawTriple:
-        """Return the triple as a raw (subject, predicate, object) tuple."""
+        """
+        Return a raw triple containing the subject, predicate, and object.
+        
+        Returns:
+            RawTriple: Tuple in the form (subject, predicate, object).
+        """
         return (self.subject, self.predicate, self.obj)
 
 
@@ -58,7 +63,12 @@ class LinkedTriple:
     object_entity: Optional[LinkedEntity] = None
 
     def as_raw(self) -> RawTriple:
-        """Return the triple as a raw (subject, predicate, object) tuple."""
+        """
+        Return the triple as a raw (subject, predicate, object) tuple.
+        
+        Returns:
+            RawTriple: A 3-tuple containing (subject, predicate, object).
+        """
         return (self.subject, self.predicate, self.obj)
 
 
@@ -66,6 +76,15 @@ class TriplesExtractor:
     """Base class for plugins that extract semantic triples from documents."""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Initialize the extractor with optional configuration.
+        
+        Parameters:
+            config (Optional[Dict[str, Any]]): Configuration mapping. May include the key
+                "first_person_token" to override the default token used to represent the
+                first-person subject in extracted triples (default: "USER").
+        
+        """
         self.config = config or {}
         self.first_person_token = self.config.get("first_person_token", "USER")
 
@@ -91,6 +110,12 @@ class TriplesEntailmentEngine:
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Initialize the instance with an optional configuration mapping.
+        
+        Parameters:
+            config: Optional mapping of configuration options for the instance; defaults to an empty dictionary when not provided.
+        """
         self.config = config or {}
 
     @abc.abstractmethod
@@ -136,6 +161,12 @@ class EntityLinker:
     """Base class for plugins that link entity mentions to canonical IDs."""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Initialize the instance with an optional configuration mapping.
+        
+        Parameters:
+            config: Optional mapping of configuration options for the instance; defaults to an empty dictionary when not provided.
+        """
         self.config = config or {}
 
     @abc.abstractmethod
@@ -155,18 +186,18 @@ class EntityLinker:
     def link_triples(self,
                      triples: Iterable[RawTriple],
                      lang: Optional[str] = None) -> Iterable[LinkedTriple]:
-        """Link subject and object entities for each triple.
-
-        Calls link_entities on subject and object strings separately.
-        Subclasses may override for more efficient full-sentence linking.
-
-        Args:
-            triples: Iterable of (subject, predicate, object) raw triples.
-            lang: Optional language code.
-
-        Yields:
-            LinkedTriple for each input triple (may have None entities).
         """
+                     Link subject and object entities for each triple.
+                     
+                     Yields a LinkedTriple for each input raw triple with the original subject, predicate, and object; the subject_entity and object_entity fields will be the first resolved entity for the corresponding span when available, otherwise None. Subclasses may override to provide more efficient or context-aware linking (for example, full-sentence linking).
+                     
+                     Parameters:
+                         triples (Iterable[RawTriple]): Iterable of (subject, predicate, object) raw triples.
+                         lang (Optional[str]): Optional language code.
+                     
+                     Returns:
+                         Iterable[LinkedTriple]: An iterator that yields a LinkedTriple for each input triple; entity fields may be None.
+                     """
         for subject, predicate, obj in triples:
             subj_entities = self.link_entities(subject, lang=lang)
             obj_entities = self.link_entities(obj, lang=lang)
@@ -189,6 +220,12 @@ class TriplesDB:
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Initialize the instance with an optional configuration mapping.
+        
+        Parameters:
+            config: Optional mapping of configuration options for the instance; defaults to an empty dictionary when not provided.
+        """
         self.config = config or {}
 
     @abc.abstractmethod
@@ -198,18 +235,19 @@ class TriplesDB:
             obj: str,
             confidence: float = 1.0,
             metadata: Optional[Dict[str, Any]] = None) -> Triple:
-        """Persist a single triple.
-
-        Args:
-            subject: Triple subject.
-            predicate: Triple predicate.
-            obj: Triple object.
-            confidence: Confidence score (0–1).
-            metadata: Optional metadata dict.
-
-        Returns:
-            Triple: The stored triple object.
         """
+            Store a single triple in the backend.
+            
+            Parameters:
+                subject (str): Triple subject.
+                predicate (str): Triple predicate.
+                obj (str): Triple object.
+                confidence (float): Confidence score between 0 and 1. Defaults to 1.0.
+                metadata (Optional[Dict[str, Any]]): Optional metadata associated with the triple.
+            
+            Returns:
+                Triple: The stored triple object.
+            """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -217,19 +255,19 @@ class TriplesDB:
               subject: Optional[str] = None,
               predicate: Optional[str] = None,
               obj: Optional[str] = None) -> Iterable[Triple]:
-        """Retrieve triples matching a pattern.
-
-        None in any position is a wildcard. At least one of subject/predicate/obj
-        should be provided.
-
-        Args:
-            subject: Subject to match (None = wildcard).
-            predicate: Predicate to match (None = wildcard).
-            obj: Object to match (None = wildcard).
-
-        Yields:
-            Triple objects matching the pattern.
         """
+              Retrieve triples that match the given pattern.
+              
+              None in any position acts as a wildcard; at least one of `subject`, `predicate`, or `obj` must be provided.
+              
+              Parameters:
+                  subject: Subject to match (None = wildcard).
+                  predicate: Predicate to match (None = wildcard).
+                  obj: Object to match (None = wildcard).
+              
+              Yields:
+                  Triple objects that satisfy the provided pattern.
+              """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -237,16 +275,19 @@ class TriplesDB:
                subject: Optional[str] = None,
                predicate: Optional[str] = None,
                obj: Optional[str] = None) -> int:
-        """Delete triples matching a pattern.
-
-        Args:
-            subject: Subject to match (None = wildcard).
-            predicate: Predicate to match (None = wildcard).
-            obj: Object to match (None = wildcard).
-
-        Returns:
-            int: Number of deleted triples.
         """
+               Delete stored triples that match the provided subject/predicate/object pattern.
+               
+               A `None` value for any parameter acts as a wildcard for that position.
+               
+               Parameters:
+                   subject (Optional[str]): Subject to match (None = wildcard).
+                   predicate (Optional[str]): Predicate to match (None = wildcard).
+                   obj (Optional[str]): Object to match (None = wildcard).
+               
+               Returns:
+                   int: Number of triples deleted.
+               """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -263,19 +304,19 @@ class TriplesDB:
                   confidences: Optional[List[float]] = None,
                   metadata: Optional[List[Optional[Dict[str, Any]]]] = None
                   ) -> List[Triple]:
-        """Persist multiple triples.
-
-        Default implementation loops over add(); subclasses may override
-        for bulk-insert efficiency.
-
-        Args:
-            triples: Iterable of (subject, predicate, object).
-            confidences: Per-triple confidence scores (default 1.0 each).
-            metadata: Per-triple metadata dicts (default None each).
-
-        Returns:
-            List of stored Triple objects in input order.
         """
+                  Persist multiple triples in the storage backend.
+                  
+                  This default implementation materializes the input iterable and calls self.add(...) for each triple in order; subclasses may override to provide a more efficient bulk-insert.
+                  
+                  Parameters:
+                      triples (Iterable[RawTriple]): Iterable of (subject, predicate, object) tuples to store.
+                      confidences (Optional[List[float]]): Per-triple confidence scores; if omitted, each triple uses 1.0.
+                      metadata (Optional[List[Optional[Dict[str, Any]]]]): Per-triple metadata dicts; if omitted, each triple uses None.
+                  
+                  Returns:
+                      List[Triple]: Stored Triple objects in the same order as the input triples.
+                  """
         triples_list = list(triples)
         if confidences is None:
             confidences = [1.0] * len(triples_list)
@@ -290,17 +331,17 @@ class TriplesDB:
                      patterns: Iterable[Tuple[Optional[str],
                                               Optional[str],
                                               Optional[str]]]) -> int:
-        """Delete triples for multiple patterns.
-
-        Default implementation loops over delete(); subclasses may override.
-
-        Args:
-            patterns: Iterable of (subject, predicate, object) patterns
-                      where None is a wildcard.
-
-        Returns:
-            int: Total count of deleted triples across all patterns.
         """
+                     Delete triples matching each provided (subject, predicate, object) pattern.
+                     
+                     Each pattern is a tuple where None acts as a wildcard and will match any value; the method deletes all triples that match each pattern and returns the total number removed.
+                     
+                     Parameters:
+                         patterns (Iterable[Tuple[Optional[str], Optional[str], Optional[str]]]): Iterable of (subject, predicate, object) patterns; use None as a wildcard.
+                     
+                     Returns:
+                         int: Total number of triples deleted across all provided patterns.
+                     """
         return sum(self.delete(s, p, o) for s, p, o in patterns)
 
 
@@ -314,6 +355,12 @@ class TriplesReasoner:
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Initialize the instance with an optional configuration mapping.
+        
+        Parameters:
+            config: Optional mapping of configuration options for the instance; defaults to an empty dictionary when not provided.
+        """
         self.config = config or {}
 
     @abc.abstractmethod
@@ -331,15 +378,16 @@ class TriplesReasoner:
     def extract_and_infer(self,
                           extractor: TriplesExtractor,
                           documents: List[str]) -> Iterable[Triple]:
-        """Convenience chain: extract triples from documents, then run inference.
-
-        Args:
-            extractor: A TriplesExtractor instance.
-            documents: Source documents.
-
-        Yields:
-            All extracted triples followed by all inferred triples.
         """
+                          Extract triples from the provided documents using the given extractor, yield the extracted triples, then yield triples inferred from those extracted triples.
+                          
+                          Parameters:
+                              extractor (TriplesExtractor): Extractor used to produce raw triples from documents.
+                              documents (List[str]): Source documents to extract triples from.
+                          
+                          Returns:
+                              Iterable[Triple]: Yields extracted Triple instances in input order followed by Triple instances produced by the reasoner's inference.
+                          """
         raw_triples = list(extractor.extract_triples(documents))
         base_triples = [Triple(s, p, o) for s, p, o in raw_triples]
         yield from base_triples

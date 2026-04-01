@@ -378,13 +378,15 @@ class ToolBox(ABC):
     @property
     def tool_json_list_compact(self) -> List[Dict[str, Union[str, Dict[str, Any]]]]:
         """
-        Compact tool definitions optimized for small LLMs.
-
-        Strips output_schema, title fields, and sub-property descriptions
-        to reduce token usage. ~60% smaller than full schemas.
-
+        Produce a compact list of tool definitions with minimized parameter schemas for use with smaller LLMs.
+        
+        Each item is a dict with keys:
+        - `name`: tool name
+        - `description`: tool description
+        - `parameters`: the tool's argument JSON Schema with top-level `title` and `description` removed and `title` removed from each property to reduce payload size.
+        
         Returns:
-            List of compact tool schema dicts.
+            List[Dict[str, Union[str, Dict[str, Any]]]]: Compact tool schema dictionaries.
         """
         compact = []
         for tool in self.tools.values():
@@ -433,12 +435,11 @@ class ToolBox(ABC):
     @abstractmethod
     def discover_tools(self) -> List[AgentTool]:
         """
-        Abstract method to be implemented by concrete ToolBox plugins.
-
-        This method must define and return the list of AgentTools provided by this plugin.
-        The implementation should be idempotent (safe to call multiple times).
-
+        Provide the list of AgentTool instances exposed by this toolbox.
+        
+        Implementations must return an idempotent list (safe to call multiple times) of the tools this plugin exposes.
+        
         Returns:
-            A list of instantiated AgentTool objects.
+            List[AgentTool]: Instantiated AgentTool objects provided by the toolbox.
         """
         raise NotImplementedError

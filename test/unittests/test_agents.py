@@ -707,6 +707,17 @@ class TestOptionMatcherEngine(unittest.TestCase):
 
         class FakeMatcher(OptionMatcherEngine):
             def match_option(self, utterance, options, lang=None):
+                """
+                Selects a single option from the provided candidates that best matches the given utterance.
+                
+                Parameters:
+                    utterance (str): The user utterance to match.
+                    options (list[str]): Candidate option strings to choose from.
+                    lang (str | None): Optional language tag influencing matching behavior.
+                
+                Returns:
+                    str | None: The chosen option string, or `None` if `options` is empty.
+                """
                 return options[0] if options else None
 
         matcher = FakeMatcher()

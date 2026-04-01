@@ -20,10 +20,11 @@ from ovos_plugin_manager.utils import PluginTypes
 # --- TriplesExtractor helpers ---
 
 def find_triples_plugins() -> Dict[str, Type[TriplesExtractor]]:
-    """Find all installed triples-extraction plugins.
-
+    """
+    Discover installed triples-related plugins.
+    
     Returns:
-        dict mapping plugin entry-point names to plugin classes.
+        dict: Mapping of plugin entry-point names to their uninstantiated plugin classes.
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.TRIPLES)
@@ -45,10 +46,11 @@ def load_triples_plugin(module_name: str) -> Optional[Type[TriplesExtractor]]:
 # --- TriplesStore helpers ---
 
 def find_triples_store_plugins() -> Dict[str, Type[TriplesDB]]:
-    """Find all installed triples storage plugins.
-
+    """
+    Discover installed triples storage plugins.
+    
     Returns:
-        dict mapping plugin entry-point names to plugin classes.
+        A mapping from plugin entry-point names to the corresponding TriplesDB plugin classes.
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.TRIPLES_STORE)
@@ -96,23 +98,25 @@ def load_triples_reasoner_plugin(module_name: str) -> Optional[Type[TriplesReaso
 
 
 def find_entity_linker_plugins() -> Dict[str, Type[EntityLinker]]:
-    """Find all installed entity-linker plugins.
-
+    """
+    Discover installed entity-linker plugins.
+    
     Returns:
-        dict mapping plugin entry-point names to plugin classes.
+        dict: Mapping of plugin entry-point names to their uninstantiated plugin classes.
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.ENTITY_LINKER)
 
 
 def load_entity_linker_plugin(module_name: str) -> Optional[Type[EntityLinker]]:
-    """Get an uninstantiated class for the requested plugin name.
-
-    Args:
-        module_name: Plugin entry-point name to load.
-
+    """
+    Get the uninstantiated EntityLinker plugin class for the given entry-point name.
+    
+    Parameters:
+        module_name (str): Plugin entry-point name to load.
+    
     Returns:
-        Uninstantiated plugin class, or ``None`` if not found.
+        Optional[Type[EntityLinker]]: Uninstantiated plugin class, or `None` if not found.
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.ENTITY_LINKER)
