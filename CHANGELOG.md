@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.4.0a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.4.0a2) (2026-05-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.4.0a1...2.4.0a2)
+
+**Merged pull requests:**
+
+- refactor: migrate to ovos-spec-tools for language matching [\#391](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/391) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.4.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.4.0a1) (2026-03-18)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.3.0a1...2.4.0a1)
