@@ -31,7 +31,7 @@ from functools import lru_cache
 from typing import Optional, List, Dict
 
 from ovos_utils import flatten_list
-from ovos_utils.lang import standardize_lang_tag
+from ovos_spec_tools import standardize_lang
 from ovos_utils.log import LOG
 from quebra_frases import sentence_tokenize
 from ovos_config import Configuration
@@ -55,10 +55,9 @@ class AbstractSolver:
         self.enable_cache = enable_cache
         self.config = config or {}
         self.supported_langs = self.config.get("supported_langs") or []
-        self.default_lang = standardize_lang_tag(internal_lang or
-                                                 self.config.get("lang") or
-                                                 Configuration().get("lang", "en"),
-                                                 macro=True)
+        self.default_lang = standardize_lang(internal_lang or
+                                             self.config.get("lang") or
+                                             Configuration().get("lang", "en"))
         if self.default_lang not in self.supported_langs:
             self.supported_langs.insert(0, self.default_lang)
         self._translator = translator or (OVOSLangTranslationFactory.create() if self.enable_tx else None)
@@ -131,8 +130,8 @@ class AbstractSolver:
         :param source_lang: Source language code.
         :return: Translated text.
         """
-        source_lang = standardize_lang_tag(source_lang or self.detect_language(text), macro=True)
-        target_lang = standardize_lang_tag(target_lang or self.default_lang, macro=True)
+        source_lang = standardize_lang(source_lang or self.detect_language(text))
+        target_lang = standardize_lang(target_lang or self.default_lang)
         if source_lang == target_lang:
             return text  # skip translation
         return self.translator.translate(text,
