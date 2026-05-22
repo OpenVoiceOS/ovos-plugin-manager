@@ -1,6 +1,6 @@
 from ovos_bus_client.session import SessionManager
 from ovos_utils import classproperty
-from ovos_utils.lang import standardize_lang_tag
+from ovos_spec_tools import standardize_lang
 from ovos_utils.process_utils import RuntimeRequirements
 from quebra_frases import word_tokenize
 import abc
@@ -64,7 +64,7 @@ class CoreferenceSolverEngine:
     @property
     def lang(self) -> str:
         lang = self.config.get("lang") or SessionManager.get().lang
-        return standardize_lang_tag(lang)
+        return standardize_lang(lang)
 
     @staticmethod
     def extract_replacements(original, solved):
@@ -106,7 +106,7 @@ class CoreferenceSolverEngine:
         return bucket
 
     def add_context(self, word, solved, lang=None):
-        lang = standardize_lang_tag(lang or self.lang)
+        lang = standardize_lang(lang or self.lang)
         if lang not in self.contexts:
             self.contexts[lang] = {}
         if word not in self.contexts[lang]:
@@ -116,7 +116,7 @@ class CoreferenceSolverEngine:
         self.contexts[lang][word].append(solved)
 
     def extract_context(self, text=None, solved=None, lang=None):
-        lang = standardize_lang_tag(lang or self.lang)
+        lang = standardize_lang(lang or self.lang)
         text = text or self._prev_sentence
         solved = solved or self._prev_solved
         replaced = self.extract_replacements(text, solved)
@@ -125,7 +125,7 @@ class CoreferenceSolverEngine:
         return replaced
 
     def replace_coreferences(self, text, lang=None, set_context=False):
-        lang = standardize_lang_tag(lang or self.lang)
+        lang = standardize_lang(lang or self.lang)
         solved = self.solve_corefs(text, lang=lang)
         self._prev_sentence = text
         self._prev_solved = solved
@@ -134,7 +134,7 @@ class CoreferenceSolverEngine:
         return solved
 
     def replace_coreferences_with_context(self, text, lang=None, context=None, set_context=False):
-        lang = standardize_lang_tag(lang or self.lang)
+        lang = standardize_lang(lang or self.lang)
         lang_context = self.contexts.get(lang) or {}
         default_context = {k: v[0] for k, v in lang_context.items() if v}
 

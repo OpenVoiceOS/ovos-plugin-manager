@@ -18,7 +18,7 @@ from ovos_bus_client.session import SessionManager
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 from ovos_utils import classproperty
 from ovos_utils.fakebus import FakeBus
-from ovos_utils.lang import standardize_lang_tag
+from ovos_spec_tools import standardize_lang
 from ovos_utils.lang.visimes import VISIMES
 from ovos_utils.log import LOG
 from ovos_utils.metrics import Stopwatch
@@ -58,7 +58,7 @@ class TTSContext:
             synth_kwargs (dict, optional): Additional keyword arguments for the synthesizer.
         """
         self.plugin_id = plugin_id
-        self.lang = standardize_lang_tag(lang)
+        self.lang = standardize_lang(lang)
         self.voice = voice
         self.synth_kwargs = synth_kwargs or {}
 
@@ -191,13 +191,13 @@ class TTS:
 
     @property
     def lang(self):
-        return standardize_lang_tag(self._lang or \
+        return standardize_lang(self._lang or \
                                     self.config.get("lang") or \
                                     SessionManager.get().lang)
     @lang.setter
     def lang(self, val):
         # backwards compat
-        self._lang = standardize_lang_tag(val)
+        self._lang = standardize_lang(val)
 
     @property
     def plugin_id(self) -> str:

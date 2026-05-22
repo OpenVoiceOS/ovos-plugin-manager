@@ -4,7 +4,7 @@ from functools import wraps
 from typing import Optional, List, Iterable, Tuple, Dict, Union, Any
 
 from json_database import JsonStorageXDG
-from ovos_utils.lang import standardize_lang_tag
+from ovos_spec_tools import standardize_lang
 from ovos_utils.log import LOG, log_deprecation, deprecated
 from ovos_utils.xdg_utils import xdg_cache_home
 
@@ -34,7 +34,7 @@ def auto_translate(translate_keys: List[str], translate_str_args=True):
 
             lang = kwargs.get("lang")
             if lang:
-                lang = standardize_lang_tag(lang)
+                lang = standardize_lang(lang)
             # check if translation can be skipped
             if any([lang is None,
                     lang == solver.default_lang,
@@ -105,7 +105,7 @@ def auto_detect_lang(text_keys: List[str]):
                             LOG.debug(f"detected 'lang': {lang} in argument '{idx}' for func: {func}")
 
             if lang:
-                lang = standardize_lang_tag(lang)
+                lang = standardize_lang(lang)
             kwargs["lang"] = lang
             return func(*args, **kwargs)
 

@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Optional, List, Iterable, Tuple, Union, Dict, Any
 
 from ovos_bus_client.session import SessionManager, Session
-from ovos_utils.lang import standardize_lang_tag
+from ovos_spec_tools import standardize_lang
 from ovos_utils.log import LOG
 
 
@@ -165,7 +165,7 @@ class AbstractAgentEngine(ABC):
     def lang(self) -> str:
         """Get default language from config or SessionManager."""
         lang = self.config.get("lang") or SessionManager.get().lang
-        return standardize_lang_tag(lang)
+        return standardize_lang(lang)
 
 
 class RetrievalEngine(AbstractAgentEngine):
@@ -642,7 +642,7 @@ class CoreferenceEngine(AbstractAgentEngine):
         3. Pass the result to the NLP solver plugin.
         4. Compare Input vs Output to learn NEW context for next time.
         """
-        lang = standardize_lang_tag(lang or self.lang)
+        lang = standardize_lang(lang or self.lang)
 
         # 1. Cleanup old memories
         self._prune_context(lang)
@@ -675,7 +675,7 @@ class CoreferenceEngine(AbstractAgentEngine):
 
         Example: set_context("her", "mom") -> "Tell her hi" becomes "Tell mom hi"
         """
-        lang = standardize_lang_tag(lang or self.lang)
+        lang = standardize_lang(lang or self.lang)
         if lang not in self.context_data:
             self.context_data[lang] = {}
 
@@ -689,7 +689,7 @@ class CoreferenceEngine(AbstractAgentEngine):
     def reset_context(self, lang: Optional[str] = None):
         """Clear context history. Call this at end of sessions."""
         if lang:
-            self.context_data[standardize_lang_tag(lang)] = {}
+            self.context_data[standardize_lang(lang)] = {}
         else:
             self.context_data = {}
 

@@ -1,9 +1,8 @@
 from typing import Optional, Union
 from ovos_config.config import Configuration
-from ovos_utils.lang import standardize_lang_tag
+from ovos_spec_tools import standardize_lang, lang_distance
 from ovos_utils.log import LOG
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes
-from langcodes import tag_distance
 
 
 def get_plugin_config(config: Optional[dict] = None, section: str = None,
@@ -25,7 +24,7 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
     @return: Configuration for the requested module, including `lang` and `module` keys
     """
     config = config or Configuration()
-    lang = standardize_lang_tag(config.get('lang') or Configuration().get('lang', "en"))
+    lang = standardize_lang(config.get('lang') or Configuration().get('lang', "en"))
     config = (config.get('intentBox', {}).get(section) or config.get(section)
               or config) if section else config
     module = module or config.get('module')
@@ -67,9 +66,9 @@ def get_valid_plugin_configs(configs: dict, lang: str,
     valid_configs = list()
     if include_dialects:
         # Check other dialects of the requested language
-        base_lang = standardize_lang_tag(lang, macro=True)
+        base_lang = standardize_lang(lang)
         for language, confs in configs.items():
-            if tag_distance(base_lang, language) < 10:
+            if lang_distance(base_lang, language) < 10:
                 for config in confs:
                     try:
                         if language != lang:
@@ -130,7 +129,7 @@ def load_plugin_configs(plug_name: str,
     """
     config = load_plugin(plug_name + ".config", plug_type)
     if normalize_language_keys:
-        return {standardize_lang_tag(lang): v for lang, v in config.items()}
+        return {standardize_lang(lang): v for lang, v in config.items()}
     return config
 
 
@@ -155,7 +154,7 @@ def get_plugin_supported_languages(plug_type: PluginTypes) -> dict:
     for plug in find_plugins(plug_type):
         configs = load_plugin_configs(plug, PluginConfigTypes(f"{plug_type.value}.config")) or {}
         for lang, config in configs.items():
-            lang = standardize_lang_tag(lang)
+            lang = standardize_lang(lang)
             lang_configs.setdefault(lang, list())
             lang_configs[lang].append(plug)
     return lang_configs
@@ -171,19 +170,19 @@ def get_plugin_language_configs(plug_type: PluginTypes, lang: str,
     @param include_dialects: if True, also include dialect/macro variants of ``lang``
     @return: dict mapping plugin name to list of matching configuration dicts
     """
-    lang = standardize_lang_tag(lang)
+    lang = standardize_lang(lang)
     plugin_configs = dict()
     for plug in find_plugins(plug_type):
         plugin_configs[plug] = list()
         plug_configs = \
             load_plugin_configs(plug,
                                 PluginConfigTypes(f"{plug_type.value}.config")) or {}
-        plug_configs = {standardize_lang_tag(k): conf
+        plug_configs = {standardize_lang(k): conf
                         for k, conf in plug_configs.items()}
         if include_dialects:
-            macro = standardize_lang_tag(lang, macro=True)
+            macro = standardize_lang(lang)
             for language, configs in plug_configs.items():
-                if tag_distance(macro, language) < 10:
+                if lang_distance(macro, language) < 10:
                     plugin_configs[plug] += configs
         elif lang in plug_configs:
             plugin_configs[plug] += plug_configs[lang]

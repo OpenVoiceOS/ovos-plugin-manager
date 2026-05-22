@@ -3,7 +3,7 @@ from typing import Optional, List
 
 from ovos_bus_client.session import SessionManager
 from ovos_utils import classproperty
-from ovos_utils.lang import standardize_lang_tag
+from ovos_spec_tools import standardize_lang
 from ovos_utils.process_utils import RuntimeRequirements
 
 
@@ -49,7 +49,7 @@ class Segmenter:
     @property
     def lang(self) -> str:
         lang = self.config.get("lang") or SessionManager.get().lang
-        return standardize_lang_tag(lang)
+        return standardize_lang(lang)
 
     @abc.abstractmethod
     def segment(self, text: str, lang: Optional[str] = None) -> List[str]:
