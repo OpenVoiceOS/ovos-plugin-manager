@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.4.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.4.1a1) (2026-06-06)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.4.0a2...2.4.1a1)
+
+**Merged pull requests:**
+
+- fix\(deps\): allow ovos-bus-client 2.x \(widen cap to \<3.0.0\) [\#393](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/393) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.4.0a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.4.0a2) (2026-05-22)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.4.0a1...2.4.0a2)
