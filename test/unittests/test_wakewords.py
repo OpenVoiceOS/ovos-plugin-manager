@@ -20,6 +20,45 @@ _TEST_CONFIG = {
 }
 
 
+class TestWakeWordVerifier(unittest.TestCase):
+    PLUGIN_TYPE = PluginTypes.WAKEWORD_VERIFIER
+
+    @patch("ovos_plugin_manager.utils.find_plugins")
+    def test_find_wake_word_verifier_plugins(self, find_plugins):
+        from ovos_plugin_manager.wakewords import find_wake_word_verifier_plugins
+        find_wake_word_verifier_plugins()
+        find_plugins.assert_called_once_with(self.PLUGIN_TYPE)
+
+    @patch("ovos_plugin_manager.utils.load_plugin")
+    def test_load_wake_word_verifier_plugin(self, load_plugin):
+        from ovos_plugin_manager.wakewords import load_wake_word_verifier_plugin
+        load_wake_word_verifier_plugin("test_verifier_mod")
+        load_plugin.assert_called_once_with("test_verifier_mod", self.PLUGIN_TYPE)
+
+    def test_hot_word_verifier_verify_not_implemented(self):
+        from ovos_plugin_manager.templates.hotwords import HotWordVerifier
+        verifier = HotWordVerifier(config={"threshold": 0.9})
+        self.assertEqual(verifier.config, {"threshold": 0.9})
+        with self.assertRaises(NotImplementedError):
+            verifier.verify(b"\x00" * 1024)
+
+    def test_hot_word_verifier_default_config(self):
+        from ovos_plugin_manager.templates.hotwords import HotWordVerifier
+        verifier = HotWordVerifier()
+        self.assertEqual(verifier.config, {})
+
+    def test_hot_word_verifier_subclass(self):
+        from ovos_plugin_manager.templates.hotwords import HotWordVerifier
+
+        class AlwaysAcceptVerifier(HotWordVerifier):
+            def verify(self, chunk: bytes) -> bool:
+                return True
+
+        verifier = AlwaysAcceptVerifier(config={"model": "dummy"})
+        self.assertTrue(verifier.verify(b"\x00" * 512))
+        self.assertIsInstance(verifier, HotWordVerifier)
+
+
 class TestHotwordsTemplate(unittest.TestCase):
     from ovos_plugin_manager.templates.hotwords import HotWordEngine
     # TODO

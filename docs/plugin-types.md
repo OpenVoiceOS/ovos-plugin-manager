@@ -60,6 +60,7 @@ plugins expose supported-language configuration.
 | `AGENT_COREF` | `opm.agents.coref` | — |
 | `AGENT_YES_NO` | `opm.agents.yesno` | — |
 | `AGENT_MULTIMODAL_ADAPTER` | `opm.agents.multimodal_adapter` | — |
+| `AGENT_TOOLBOX` | `opm.agents.toolbox` | `ToolBox` |
 
 ### Deprecated Solver Types
 
