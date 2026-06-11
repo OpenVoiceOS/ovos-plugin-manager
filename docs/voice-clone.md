@@ -75,6 +75,5 @@ out_wav = cloner.clone_voice("/path/source.wav", "/path/reference.wav")
 
 ## Implementations
 
-**vconnx** — the first reference implementation built against this contract.
-It wraps an ONNX voice-conversion model and produces 16-bit WAV output at the model's
-native sample rate.  See the vconnx repository for installation and usage.
+Implementations register under the `opm.vc` entry-point group and are
+discovered with `find_voice_clone_plugins()`.
