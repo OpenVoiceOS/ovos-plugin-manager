@@ -31,6 +31,7 @@ plugins expose supported-language configuration.
 | `INTENT_TRANSFORMER` | `opm.transformer.intent` | `IntentTransformer` |
 | `PHONEME` | `opm.g2p` | `Grapheme2PhonemePlugin` |
 | `AUDIO2IPA` | `opm.audio2ipa` | `Audio2IPAPlugin` |
+| `VOICE_CLONE` | `opm.vc` | `VoiceClonePlugin` |
 | `KEYWORD_EXTRACTION` | `opm.keywords` | `KeywordExtractor` |
 | `UTTERANCE_SEGMENTATION` | `opm.segmentation` | `UtteranceSegmenter` |
 | `TOKENIZATION` | `opm.tokenization` | `Tokenizer` |
