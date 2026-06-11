@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.6.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.6.0a1) (2026-06-11)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.5.0a1...2.6.0a1)
+
+**Closed issues:**
+
+- Incorrect sample width in 24-bit audio conversion path [\#359](https://github.com/OpenVoiceOS/ovos-plugin-manager/issues/359)
+
+**Merged pull requests:**
+
+- feat: voice-clone plugin family \(opm.vc\) [\#397](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/397) ([JarbasAl](https://github.com/JarbasAl))
+
+## [2.5.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.5.0a1) (2026-06-10)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.4.1a1...2.5.0a1)
+
+**Merged pull requests:**
+
+- tests: add HotWordVerifier tests and AGENT\_TOOLBOX to plugin-types docs [\#395](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/395) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.4.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.4.1a1) (2026-06-06)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.4.0a2...2.4.1a1)
