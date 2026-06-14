@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.6.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.6.1a1) (2026-06-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.6.0a1...2.6.1a1)
+
+**Merged pull requests:**
+
+- fix: declare pydantic as a core dependency \(runtime import in agent\_tools, was test-only\) [\#399](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/399) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.6.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.6.0a1) (2026-06-11)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.5.0a1...2.6.0a1)
