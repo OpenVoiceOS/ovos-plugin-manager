@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.6.1a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.6.1a2) (2026-06-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.6.1a1...2.6.1a2)
+
+**Merged pull requests:**
+
+- fix: correct ovos.plugin.VAD alias to canonical opm.VAD [\#401](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/401) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.6.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.6.1a1) (2026-06-14)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.6.0a1...2.6.1a1)
