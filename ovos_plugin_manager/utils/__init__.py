@@ -25,7 +25,7 @@ DEPRECATED_ENTRYPOINTS = {
     "ovos.plugin.phal.admin": "opm.phal.admin",
     "ovos.plugin.skill": "opm.skill",
     "ovos.plugin.microphone": "opm.microphone",
-    "ovos.plugin.VAD": "opm.vad",
+    "ovos.plugin.VAD": "opm.VAD",
     "ovos.plugin.g2p": "opm.g2p",
     "ovos.plugin.audio2ipa": "opm.audio2ipa",
     'mycroft.plugin.stt': "opm.stt",
