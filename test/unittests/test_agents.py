@@ -36,6 +36,7 @@ from ovos_plugin_manager.templates.agents import (
     ReRankerEngine,
     RetrievalEngine,
     SummarizerEngine,
+    ToolCall,
     YesNoEngine,
 )
 from ovos_plugin_manager.utils import PluginTypes
@@ -81,6 +82,27 @@ class _ChatEngineImpl(ChatEngine):
         """Echo the last user message back."""
         last = messages[-1].content if messages else "hello"
         return AgentMessage(role=MessageRole.ASSISTANT, content=f"echo: {last}")
+
+
+class _ToolChatEngineImpl(ChatEngine):
+    """Minimal tool-aware ChatEngine that echoes back the tools it received."""
+
+    supports_tools = True
+
+    def continue_chat(
+        self,
+        messages: List[AgentMessage],
+        session_id: str = "default",
+        lang: Optional[str] = None,
+        units: Optional[str] = None,
+        tools: Optional[List[Dict]] = None,
+    ) -> AgentMessage:
+        """Return a tool_call when tools are offered, else a plain answer."""
+        if tools:
+            name = tools[0]["function"]["name"]
+            return AgentMessage(role=MessageRole.ASSISTANT, content="",
+                                tool_calls=[ToolCall(id="c1", name=name, arguments={"x": 1})])
+        return AgentMessage(role=MessageRole.ASSISTANT, content="no tools")
 
 
 class _MultimodalChatEngineImpl(MultimodalChatEngine):
@@ -151,6 +173,58 @@ class TestAgentMessage(unittest.TestCase):
         self.assertEqual(msg.audio_content, [])
         self.assertEqual(msg.file_content, [])
 
+    def test_tool_role_exists(self) -> None:
+        """MessageRole.TOOL is available and wire-serializes to 'tool'."""
+        self.assertEqual(MessageRole.TOOL.value, "tool")
+        self.assertIn("tool", {r.value for r in MessageRole})
+
+    def test_tool_fields_default_none(self) -> None:
+        """New tool fields default to None (backward compatible construction)."""
+        msg = AgentMessage(role=MessageRole.USER, content="hi")
+        self.assertIsNone(msg.tool_calls)
+        self.assertIsNone(msg.tool_call_id)
+        self.assertIsNone(msg.name)
+
+    def test_assistant_with_tool_calls(self) -> None:
+        """An assistant message can carry tool_calls; content may be empty."""
+        msg = AgentMessage(role=MessageRole.ASSISTANT, content="",
+                           tool_calls=[ToolCall(id="c1", name="calc", arguments={"a": 2})])
+        self.assertEqual(msg.tool_calls[0].name, "calc")
+        self.assertEqual(msg.tool_calls[0].arguments, {"a": 2})
+
+    def test_tool_result_message(self) -> None:
+        """A TOOL message references the ToolCall it answers."""
+        msg = AgentMessage(role=MessageRole.TOOL, content="4",
+                           tool_call_id="c1", name="calc")
+        self.assertEqual(msg.role, MessageRole.TOOL)
+        self.assertEqual(msg.tool_call_id, "c1")
+
+    def test_multimodal_inherits_tool_fields(self) -> None:
+        """MultimodalAgentMessage inherits the tool fields, defaulting None."""
+        msg = MultimodalAgentMessage(role=MessageRole.ASSISTANT, content="")
+        self.assertIsNone(msg.tool_calls)
+        self.assertIsNone(msg.tool_call_id)
+
+
+class TestToolCall(unittest.TestCase):
+    """Tests for the ToolCall dataclass."""
+
+    def test_fields(self) -> None:
+        tc = ToolCall(id="c1", name="calc", arguments={"a": 1, "b": 2})
+        self.assertEqual((tc.id, tc.name), ("c1", "calc"))
+        self.assertEqual(tc.arguments, {"a": 1, "b": 2})
+
+    def test_arguments_default_empty(self) -> None:
+        tc = ToolCall(id="c1", name="calc")
+        self.assertEqual(tc.arguments, {})
+
+    def test_asdict_roundtrip(self) -> None:
+        from dataclasses import asdict
+        tc = ToolCall(id="c1", name="calc", arguments={"a": 1})
+        d = asdict(tc)
+        self.assertEqual(d, {"id": "c1", "name": "calc", "arguments": {"a": 1}})
+        self.assertEqual(ToolCall(**d), tc)
+
 
 # ---------------------------------------------------------------------------
 # Tests for AgentContextManager
@@ -210,6 +284,29 @@ class TestChatEngine(unittest.TestCase):
         result = self.engine.continue_chat(msgs)
         self.assertIsInstance(result, AgentMessage)
         self.assertIn("ping", result.content)
+
+    def test_supports_tools_default_false(self) -> None:
+        """A plain ChatEngine advertises no tool support."""
+        self.assertFalse(self.engine.supports_tools)
+        self.assertFalse(ChatEngine.supports_tools)
+
+    def test_legacy_signature_still_satisfies_abc(self) -> None:
+        """An engine defining the pre-tools 4-arg continue_chat is still concrete."""
+        # _ChatEngineImpl omits the `tools` kwarg entirely — must still work.
+        msgs = [AgentMessage(role=MessageRole.USER, content="x")]
+        self.assertIsInstance(self.engine.continue_chat(msgs), AgentMessage)
+
+    def test_tool_aware_engine_accepts_tools(self) -> None:
+        """A tool-aware engine accepts the tools= kwarg and returns tool_calls."""
+        engine = _ToolChatEngineImpl()
+        self.assertTrue(engine.supports_tools)
+        specs = [{"type": "function", "function": {"name": "calc", "parameters": {}}}]
+        out = engine.continue_chat([AgentMessage(role=MessageRole.USER, content="2?")],
+                                   tools=specs)
+        self.assertEqual(out.tool_calls[0].name, "calc")
+        # without tools it falls back to a plain answer
+        out2 = engine.continue_chat([AgentMessage(role=MessageRole.USER, content="hi")])
+        self.assertIsNone(out2.tool_calls)
 
     def test_get_response(self) -> None:
         """get_response returns plain string."""

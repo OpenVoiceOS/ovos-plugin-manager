@@ -310,6 +310,42 @@ class ToolBox(ABC):
             for tool in self.tools.values()
         ]
 
+    @staticmethod
+    def tools_to_openai_spec(tool_json_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Convert ``tool_json_list`` entries to the OpenAI ``tools`` spec.
+
+        The OpenAI ``tools``/function-calling shape is the de-facto interchange
+        format across providers (OpenAI, Ollama, llama.cpp, vLLM, …); each
+        ChatEngine re-maps from this neutral spec to its own provider format.
+        Static so callers can convert merged schemas from several toolboxes.
+
+        Args:
+            tool_json_list: Entries shaped like :attr:`tool_json_list` —
+                ``{"name", "description", "argument_schema", "output_schema"}``.
+
+        Returns:
+            ``[{"type": "function", "function": {"name", "description",
+            "parameters"}}]`` where ``parameters`` is the tool's
+            ``argument_schema`` JSON Schema.
+        """
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": tool["name"],
+                    "description": tool.get("description", ""),
+                    "parameters": tool.get("argument_schema",
+                                           {"type": "object", "properties": {}}),
+                },
+            }
+            for tool in tool_json_list
+        ]
+
+    @property
+    def openai_tools(self) -> List[Dict[str, Any]]:
+        """This toolbox's tools as an OpenAI ``tools`` spec (see ``tools_to_openai_spec``)."""
+        return self.tools_to_openai_spec(self.tool_json_list)
+
     # The only mandatory method for concrete plugins to implement
     @abstractmethod
     def discover_tools(self) -> List[AgentTool]:
