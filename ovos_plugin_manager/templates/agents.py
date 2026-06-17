@@ -4,11 +4,18 @@ import time
 from abc import ABC
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, List, Iterable, Tuple, Union, Dict, Any
+from typing import Optional, List, Iterable, Tuple, Union, Dict, Any, TYPE_CHECKING
 
 from ovos_bus_client.session import SessionManager, Session
 from ovos_spec_tools import standardize_lang
 from ovos_utils.log import LOG
+
+if TYPE_CHECKING:
+    from ovos_plugin_manager.templates.agent_tools import ToolBox
+
+# A ChatEngine ``tools`` argument: a ToolBox object (preferred), an OpenAI tool
+# dict, or a list mixing either. Engines call ``ToolBox.normalize_tools`` on it.
+ToolsArg = Optional[Union["ToolBox", Dict[str, Any], List[Union["ToolBox", Dict[str, Any]]]]]
 
 
 class MessageRole(str, Enum):
@@ -239,7 +246,7 @@ class ChatEngine(AbstractAgentEngine):
                       session_id: str = "default",
                       lang: Optional[str] = None,
                       units: Optional[str] = None,
-                      tools: Optional[List[Dict[str, Any]]] = None) -> AgentMessage:
+                      tools: "ToolsArg" = None) -> AgentMessage:
         """
         Generate a response message based on the provided chat history.
 
@@ -248,10 +255,11 @@ class ChatEngine(AbstractAgentEngine):
             session_id (str): Identifier for the session.
             lang (str, optional): BCP-47 language code.
             units (str, optional): Preferred unit system (e.g., "metric", "imperial").
-            tools (list, optional): Tool/function specs (OpenAI ``tools`` shape, e.g.
-                from ``ToolBox.tools_to_openai_spec`` / ``ToolBox.openai_tools``).
-                Only honored when ``supports_tools`` is True; the returned message may
-                carry ``tool_calls``.
+            tools: ``ToolBox`` object(s) (preferred) and/or OpenAI tool dicts to
+                expose to the model. Pass it straight through
+                ``ToolBox.normalize_tools(tools)`` to get the OpenAI spec list.
+                Only honored when ``supports_tools`` is True; the returned message
+                may carry ``tool_calls``.
 
         Returns:
             AgentMessage: The generated response message from the assistant.
@@ -350,7 +358,7 @@ class MultimodalChatEngine(ChatEngine):
                       session_id: str = "default",
                       lang: Optional[str] = None,
                       units: Optional[str] = None,
-                      tools: Optional[List[Dict[str, Any]]] = None) -> MultimodalAgentMessage:
+                      tools: "ToolsArg" = None) -> MultimodalAgentMessage:
         """
         Generate a response message based on the provided chat history.
 
@@ -359,7 +367,7 @@ class MultimodalChatEngine(ChatEngine):
             session_id (str): Identifier for the session.
             lang (str, optional): BCP-47 language code.
             units (str, optional): Preferred unit system (e.g., "metric", "imperial").
-            tools (list, optional): Tool/function specs; see ``ChatEngine.continue_chat``.
+            tools: ToolBox object(s) and/or OpenAI tool dicts; see ``ChatEngine.continue_chat``.
 
         Returns:
             AgentMessage: The generated response message from the assistant.

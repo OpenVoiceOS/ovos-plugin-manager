@@ -116,10 +116,12 @@ result, and `AgentMessage` carries optional tool fields:
 - `tool_call_id` / `name` — set on a `TOOL` message, identifying the `ToolCall` it
   answers.
 
-`continue_chat` accepts an optional `tools` argument (OpenAI `tools` spec — see
-[`agent-tools.md`](agent-tools.md)). An engine that can use it sets the class
-attribute `supports_tools = True` and returns an assistant `AgentMessage` whose
-`tool_calls` are populated when the model requests them. Engines that don't support
+`continue_chat` accepts an optional `tools` argument — pass `ToolBox` object(s)
+directly (preferred) and/or OpenAI tool dicts; the engine coerces it with
+`ToolBox.normalize_tools(tools)` (see [`api/agent-tools.md`](api/agent-tools.md)).
+An engine that can use it sets the class attribute `supports_tools = True` and
+returns an assistant `AgentMessage` whose `tool_calls` are populated when the model
+requests them. Engines that don't support
 tools leave `supports_tools = False` and ignore the argument — the new kwarg is
 optional, so pre-existing 4-arg `continue_chat` overrides keep working unchanged.
 The ordering invariant providers expect: an assistant message carrying `tool_calls`

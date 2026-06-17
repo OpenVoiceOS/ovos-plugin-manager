@@ -228,6 +228,29 @@ class TestToolsToOpenAISpec(unittest.TestCase):
         self.assertEqual(spec, ToolBox.tools_to_openai_spec(tb.tool_json_list))
 
 
+class TestNormalizeTools(unittest.TestCase):
+    def test_none(self):
+        self.assertEqual(ToolBox.normalize_tools(None), [])
+
+    def test_single_toolbox(self):
+        tb = MathToolBox()
+        self.assertEqual(ToolBox.normalize_tools(tb), tb.openai_tools)
+
+    def test_single_dict(self):
+        spec = {"type": "function", "function": {"name": "x"}}
+        self.assertEqual(ToolBox.normalize_tools(spec), [spec])
+
+    def test_list_of_toolboxes(self):
+        tb = MathToolBox()
+        self.assertEqual(ToolBox.normalize_tools([tb]), tb.openai_tools)
+
+    def test_mixed_list(self):
+        tb = MathToolBox()
+        extra = {"type": "function", "function": {"name": "x"}}
+        out = ToolBox.normalize_tools([tb, extra])
+        self.assertEqual(out, tb.openai_tools + [extra])
+
+
 class TestToolBoxBusHandlers(unittest.TestCase):
     def setUp(self):
         self.bus = FakeBus()

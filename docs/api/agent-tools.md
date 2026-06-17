@@ -62,7 +62,14 @@ def tools_to_openai_spec(tool_json_list: List[Dict]) -> List[Dict]   # neutral c
 
 @property
 def openai_tools(self) -> List[Dict]                                  # == tools_to_openai_spec(self.tool_json_list)
+
+@staticmethod
+def normalize_tools(tools) -> List[Dict]   # ToolBox(es) and/or dicts -> OpenAI spec list
 ```
+
+`normalize_tools` is what `ChatEngine`s call on their `tools` argument: it accepts a
+`ToolBox` (preferred), an OpenAI tool dict, or a list mixing either (or `None`), and
+returns a flat OpenAI spec list — so callers can pass toolbox objects directly.
 
 `tools_to_openai_spec` converts `tool_json_list` entries into the OpenAI
 `tools`/function-calling shape (`{"type": "function", "function": {"name",

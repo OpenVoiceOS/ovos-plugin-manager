@@ -346,6 +346,36 @@ class ToolBox(ABC):
         """This toolbox's tools as an OpenAI ``tools`` spec (see ``tools_to_openai_spec``)."""
         return self.tools_to_openai_spec(self.tool_json_list)
 
+    @staticmethod
+    def normalize_tools(
+            tools: "Union[None, ToolBox, Dict[str, Any], List[Union[ToolBox, Dict[str, Any]]]]"
+    ) -> List[Dict[str, Any]]:
+        """Coerce tool input into the OpenAI ``tools`` spec list.
+
+        Lets callers pass ``ToolBox`` objects directly (preferred) or
+        already-built OpenAI tool dicts, or any mix in a list. ChatEngines call
+        this on their ``tools`` argument so they accept both forms uniformly.
+
+        Args:
+            tools: A ``ToolBox``, an OpenAI tool dict, a list mixing either, or None.
+
+        Returns:
+            A flat list of OpenAI tool/function spec dicts (empty for None).
+        """
+        if tools is None:
+            return []
+        if isinstance(tools, ToolBox):
+            return tools.openai_tools
+        if isinstance(tools, dict):
+            return [tools]
+        specs: List[Dict[str, Any]] = []
+        for t in tools:
+            if isinstance(t, ToolBox):
+                specs.extend(t.openai_tools)
+            else:  # already an OpenAI tool dict
+                specs.append(t)
+        return specs
+
     # The only mandatory method for concrete plugins to implement
     @abstractmethod
     def discover_tools(self) -> List[AgentTool]:
