@@ -95,15 +95,39 @@ Each `AgentTool` (`agent_tools.py:40`) carries:
 | `ovos-chat-multimodal-kilo-plugin` | `KiloMultimodalChatEngine` | Kilo | `ovos-kilo-plugin` |
 | `ovos-chat-multimodal-qwen-code-plugin` | `QwenCodeMultimodalChatEngine` | Qwen-Code | `ovos-qwen-code-plugin` |
 
-`ChatEngine.continue_chat` signature — `agents.py:210`:
+`ChatEngine.continue_chat` signature:
 ```python
 def continue_chat(self, messages: List[AgentMessage],
                   session_id: str = "default",
                   lang: Optional[str] = None,
-                  units: Optional[str] = None) -> AgentMessage:
+                  units: Optional[str] = None,
+                  tools: Optional[List[Dict[str, Any]]] = None) -> AgentMessage:
 ```
 
-`ChatEngine` also provides `stream_tokens`, `stream_sentences`, and `get_response` helpers (`agents.py:228–300`). Plugins only need to implement `continue_chat`.
+`ChatEngine` also provides `stream_tokens`, `stream_sentences`, and `get_response` helpers. Plugins only need to implement `continue_chat`.
+
+### Tool calling
+
+A conversation can carry tool turns. `MessageRole.TOOL` is the role of a tool
+result, and `AgentMessage` carries optional tool fields:
+
+- `tool_calls: Optional[List[ToolCall]]` — set on an `ASSISTANT` message that
+  requests tool invocations (`ToolCall(id, name, arguments)`); `content` may be `""`.
+- `tool_call_id` / `name` — set on a `TOOL` message, identifying the `ToolCall` it
+  answers.
+
+`continue_chat` accepts an optional `tools` argument — pass `ToolBox` object(s)
+directly (preferred) and/or OpenAI tool dicts; the engine coerces it with
+`ToolBox.normalize_tools(tools)` (see [`api/agent-tools.md`](api/agent-tools.md)).
+An engine that can use it sets the class attribute `supports_tools = True` and
+returns an assistant `AgentMessage` whose `tool_calls` are populated when the model
+requests them. Engines that don't support
+tools leave `supports_tools = False` and ignore the argument — the new kwarg is
+optional, so pre-existing 4-arg `continue_chat` overrides keep working unchanged.
+The ordering invariant providers expect: an assistant message carrying `tool_calls`
+must be followed by one `TOOL` message per `ToolCall.id`. The orchestration loop
+that drives this lives in `ovos-agentic-loop` (`NativeToolCallEngine`), not in the
+provider engines.
 
 ---
 

@@ -201,6 +201,56 @@ class TestToolJsonList(unittest.TestCase):
         self.assertEqual(tb.tool_json_list, [])
 
 
+class TestToolsToOpenAISpec(unittest.TestCase):
+    def test_staticmethod_shape(self):
+        spec = ToolBox.tools_to_openai_spec([
+            {"name": "add", "description": "Add two ints.",
+             "argument_schema": {"type": "object", "properties": {"a": {"type": "integer"}}},
+             "output_schema": {}},
+        ])
+        self.assertEqual(spec[0]["type"], "function")
+        fn = spec[0]["function"]
+        self.assertEqual(fn["name"], "add")
+        self.assertEqual(fn["description"], "Add two ints.")
+        # parameters is exactly the argument_schema
+        self.assertEqual(fn["parameters"]["properties"]["a"]["type"], "integer")
+
+    def test_missing_description_and_schema_defaults(self):
+        spec = ToolBox.tools_to_openai_spec([{"name": "noop"}])
+        self.assertEqual(spec[0]["function"]["description"], "")
+        self.assertEqual(spec[0]["function"]["parameters"],
+                         {"type": "object", "properties": {}})
+
+    def test_openai_tools_property(self):
+        tb = MathToolBox()
+        spec = tb.openai_tools
+        self.assertEqual(spec[0]["function"]["name"], "add")
+        self.assertEqual(spec, ToolBox.tools_to_openai_spec(tb.tool_json_list))
+
+
+class TestNormalizeTools(unittest.TestCase):
+    def test_none(self):
+        self.assertEqual(ToolBox.normalize_tools(None), [])
+
+    def test_single_toolbox(self):
+        tb = MathToolBox()
+        self.assertEqual(ToolBox.normalize_tools(tb), tb.openai_tools)
+
+    def test_single_dict(self):
+        spec = {"type": "function", "function": {"name": "x"}}
+        self.assertEqual(ToolBox.normalize_tools(spec), [spec])
+
+    def test_list_of_toolboxes(self):
+        tb = MathToolBox()
+        self.assertEqual(ToolBox.normalize_tools([tb]), tb.openai_tools)
+
+    def test_mixed_list(self):
+        tb = MathToolBox()
+        extra = {"type": "function", "function": {"name": "x"}}
+        out = ToolBox.normalize_tools([tb, extra])
+        self.assertEqual(out, tb.openai_tools + [extra])
+
+
 class TestToolBoxBusHandlers(unittest.TestCase):
     def setUp(self):
         self.bus = FakeBus()

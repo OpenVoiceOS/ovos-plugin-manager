@@ -54,6 +54,32 @@ def tool_json_list(self) -> List[Dict]
 
 Returns all tools serialized with JSON Schema argument/output schemas — suitable for sending to an LLM's `tools` API parameter.
 
+**OpenAI tools spec:**
+
+```python
+@staticmethod
+def tools_to_openai_spec(tool_json_list: List[Dict]) -> List[Dict]   # neutral converter
+
+@property
+def openai_tools(self) -> List[Dict]                                  # == tools_to_openai_spec(self.tool_json_list)
+
+@staticmethod
+def normalize_tools(tools) -> List[Dict]   # ToolBox(es) and/or dicts -> OpenAI spec list
+```
+
+`normalize_tools` is what `ChatEngine`s call on their `tools` argument: it accepts a
+`ToolBox` (preferred), an OpenAI tool dict, or a list mixing either (or `None`), and
+returns a flat OpenAI spec list — so callers can pass toolbox objects directly.
+
+`tools_to_openai_spec` converts `tool_json_list` entries into the OpenAI
+`tools`/function-calling shape (`{"type": "function", "function": {"name",
+"description", "parameters"}}`, where `parameters` is the tool's
+`argument_schema`). This is the de-facto interchange format across providers
+(OpenAI, Ollama, llama.cpp, vLLM, …); each `ChatEngine` re-maps from it to its own
+provider format. It is a `@staticmethod` so callers can convert schemas merged from
+several toolboxes (as the `ovos-agentic-loop` `NativeToolCallEngine` does); use the
+`openai_tools` property for a single toolbox.
+
 ---
 
 ## Messagebus Interface
