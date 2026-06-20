@@ -107,7 +107,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_idle template event."""
 
@@ -115,7 +115,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_loading template event."""
 
@@ -123,7 +123,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_status template event."""
 
@@ -131,7 +131,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_error template event."""
 
@@ -139,7 +139,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_text template event."""
 
@@ -147,7 +147,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_image template event."""
 
@@ -155,7 +155,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_animated_image template event."""
 
@@ -163,7 +163,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_list template event."""
 
@@ -171,7 +171,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_grid template event."""
 
@@ -179,7 +179,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_table template event."""
 
@@ -187,7 +187,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_html template event."""
 
@@ -195,7 +195,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_url template event."""
 
@@ -203,7 +203,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_audio_player template event."""
 
@@ -211,7 +211,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_video_player template event."""
 
@@ -219,7 +219,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_media_player template event.
 
@@ -244,7 +244,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_clock template event."""
 
@@ -252,7 +252,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_timer template event."""
 
@@ -260,7 +260,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_weather template event."""
 
@@ -268,7 +268,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_map template event."""
 
@@ -276,7 +276,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_confirm template event."""
 
@@ -284,7 +284,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_select template event."""
 
@@ -292,7 +292,7 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Handle SYSTEM_face template event."""
 
@@ -300,10 +300,10 @@ class AbstractGUIPlugin:
     # Lifecycle hooks
     # ------------------------------------------------------------------
 
-    def on_namespace_activated(self, skill_id: str, site_id: str = "default") -> None:
+    def on_namespace_activated(self, skill_id: str, session_id: str = "default") -> None:
         """Called when a skill's namespace becomes the active (top) namespace."""
 
-    def on_namespace_deactivated(self, skill_id: str, site_id: str = "default") -> None:
+    def on_namespace_deactivated(self, skill_id: str, session_id: str = "default") -> None:
         """Called when a skill's namespace is cleared or removed."""
 
     def on_idle(self) -> None:
@@ -317,7 +317,7 @@ class AbstractGUIPlugin:
         self,
         event_name: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Called for well-known system status events forwarded by ovos-gui.
 
@@ -327,7 +327,7 @@ class AbstractGUIPlugin:
         Args:
             event_name: The original bus message type.
             data:       The message payload.
-            site_id:    Target display site identifier.
+            session_id:    Target session identifier (shared screens share a session_id).
         """
 
     # ------------------------------------------------------------------
@@ -338,14 +338,14 @@ class AbstractGUIPlugin:
         self,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Called whenever a skill sets GUI session data via ``gui.value.set``.
 
         Args:
             skill_id: Namespace / skill that owns the data.
             data:     Full key/value session data dict (excluding reserved keys).
-            site_id:  Target display site identifier.
+            session_id:  Target session identifier (shared screens share a session_id).
         """
 
     # ------------------------------------------------------------------
@@ -382,7 +382,7 @@ class AbstractGUIPlugin:
         template: str,
         skill_id: str,
         data: Dict[str, Any],
-        site_id: str = "default",
+        session_id: str = "default",
     ) -> None:
         """Dispatch a template show event to the appropriate handler method.
 
@@ -390,14 +390,14 @@ class AbstractGUIPlugin:
             template: Template identifier (e.g. ``"SYSTEM_weather"``).
             skill_id: ID of the skill requesting display.
             data:     Session data from the namespace at the time of the call.
-            site_id:  Target display site identifier.
+            session_id:  Target session identifier (shared screens share a session_id).
         """
         handler_name = self._TEMPLATE_HANDLERS.get(template)
         if handler_name:
             handler = getattr(self, handler_name, None)
             if handler:
                 try:
-                    handler(skill_id, data, site_id)
+                    handler(skill_id, data, session_id)
                 except Exception:
                     LOG.exception(
                         f"{self.__class__.__name__}.{handler_name} raised an exception"
