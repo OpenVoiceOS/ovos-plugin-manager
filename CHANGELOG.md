@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.7.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.7.0a1) (2026-06-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.6.1a2...2.7.0a1)
+
+**Merged pull requests:**
+
+- feat: first-class tool calls in the agent message/chat contract [\#403](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/403) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.6.1a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.6.1a2) (2026-06-16)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.6.1a1...2.6.1a2)
