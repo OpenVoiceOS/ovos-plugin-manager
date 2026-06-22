@@ -7,12 +7,11 @@ answer, the OCP pipeline loads providers in-process, gates them by routing, and
 calls :meth:`search` directly.
 
 Routing mirrors :class:`mediavocab.models.protocols.MetadataProvider` — the
-same **four-axis** gate (``media`` / ``playback_type`` / ``content_form`` /
-``genre_filter``) — so the pipeline can skip providers that cannot serve a query
-before paying for a search. The contract differs in one way: a metadata
-*resolver* returns a single best identity match, while media *discovery* returns
-many candidate playables, so :meth:`search` returns a ``list`` of
-:class:`mediavocab.Release`.
+same **three-axis** gate (``media`` / ``playback_type`` / ``genre_filter``) — so
+the pipeline can skip providers that cannot serve a query before paying for a
+search. The contract differs in one way: a metadata *resolver* returns a single
+best identity match, while media *discovery* returns many candidate playables,
+so :meth:`search` returns a ``list`` of :class:`mediavocab.Release`.
 
 Stream extraction is unchanged: a provider returns ``Release`` objects whose
 ``uri`` may be a ``"{sei}//{uri}"`` deferred stream resolved at playback by the
@@ -24,7 +23,7 @@ from typing import ClassVar, List, Optional, Set
 from ovos_utils.log import LOG
 
 from mediavocab import MediaType, Release, Signals
-from mediavocab.taxonomy import PlaybackType, ContentForm
+from mediavocab.taxonomy import PlaybackType
 from mediavocab.models.protocols import provider_matches
 
 
@@ -33,7 +32,7 @@ class MediaProvider(metaclass=ABCMeta):
 
     Subclasses declare their routing via the three class-level sets and
     implement :meth:`is_available` and :meth:`search`. The default
-    :meth:`matches` reuses mediavocab's canonical three-axis gate.
+    :meth:`matches` reuses mediavocab's canonical three-axis routing gate.
 
     Arguments:
         config (dict): configuration dict for the instance.
@@ -50,9 +49,6 @@ class MediaProvider(metaclass=ABCMeta):
     Note: this is ``mediavocab.taxonomy.PlaybackType``, distinct from
     ``ovos_utils.ocp.PlaybackType`` (the backend selector); the two are bridged
     in the pipeline/player, not here."""
-
-    content_form: ClassVar[Set[ContentForm]] = set()
-    """Content-form gate (PRIMARY/TRAILER/EXCERPT/…). Empty ⇒ universal."""
 
     genre_filter: ClassVar[Set[str]] = set()
     """Genre-tag gate (``mediavocab.taxonomy.genre``). Empty ⇒ no gate."""
@@ -78,9 +74,9 @@ class MediaProvider(metaclass=ABCMeta):
         return []
 
     def matches(self, signals: Signals) -> bool:
-        """Four-axis routing test (mediavocab spec). Override only if the
-        default ``(media, playback_type, content_form, genre_filter)`` gate is
-        wrong for this provider."""
+        """Three-axis routing test (mediavocab spec). Override only if the
+        default ``(media, playback_type, genre_filter)`` gate is wrong for this
+        provider."""
         return provider_matches(self, signals)
 
     def shutdown(self):
