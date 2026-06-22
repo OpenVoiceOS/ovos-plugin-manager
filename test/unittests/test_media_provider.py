@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 from mediavocab import MediaType, Release, Work, Signals
-from mediavocab.taxonomy import PlaybackModality
+from mediavocab.taxonomy import PlaybackType, ContentForm
 
 
 def _release(title="Song", media_type=MediaType.MUSIC, conf=0.9, uri="http://x"):
@@ -23,7 +23,7 @@ class TestMediaProviderTemplate(unittest.TestCase):
         class _Prov(MediaProvider):
             name = "dummy"
             media = {MediaType.MUSIC}
-            modality = {PlaybackModality.AUDIO}
+            playback_type = {PlaybackType.AUDIO}
 
             def is_available(self):
                 return True
@@ -33,7 +33,7 @@ class TestMediaProviderTemplate(unittest.TestCase):
 
         self.cls = _Prov
 
-    def test_three_axis_routing(self):
+    def test_four_axis_routing(self):
         p = self.cls()
         # matching medium passes
         self.assertTrue(p.matches(Signals(title="q", medium=MediaType.MUSIC)))
@@ -41,9 +41,12 @@ class TestMediaProviderTemplate(unittest.TestCase):
         self.assertFalse(p.matches(Signals(title="q", medium=MediaType.MOVIE)))
         # no preference passes
         self.assertTrue(p.matches(Signals(title="q")))
-        # modality gate
+        # playback_type gate
         self.assertFalse(p.matches(Signals(title="q",
-                                           modality=PlaybackModality.VIDEO)))
+                                           playback_type=PlaybackType.VIDEO)))
+        # content_form axis: provider declares none ⇒ accepts any
+        self.assertTrue(p.matches(Signals(title="q",
+                                          content_form=ContentForm.TRAILER)))
 
     def test_search_returns_releases(self):
         p = self.cls()
