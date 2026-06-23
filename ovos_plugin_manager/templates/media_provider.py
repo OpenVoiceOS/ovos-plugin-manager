@@ -17,14 +17,18 @@ Stream extraction is unchanged: a provider returns ``Release`` objects whose
 ``uri`` may be a ``"{sei}//{uri}"`` deferred stream resolved at playback by the
 existing ``opm.ocp.extractor`` plugins.
 """
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
-from typing import ClassVar, List, Optional, Set
+from typing import TYPE_CHECKING, ClassVar, List, Optional, Set
 
 from ovos_utils.log import LOG
 
-from mediavocab import MediaType, Release, Signals
-from mediavocab.taxonomy import PlaybackType
-from mediavocab.models.protocols import provider_matches
+if TYPE_CHECKING:
+    # mediavocab is an optional dependency: opm only needs it for type hints here
+    # (the routing primitives live downstream in the plugins that subclass this).
+    from mediavocab import MediaType, Release, Signals
+    from mediavocab.taxonomy import PlaybackType
 
 
 class MediaProvider(metaclass=ABCMeta):
@@ -73,10 +77,14 @@ class MediaProvider(metaclass=ABCMeta):
         """Optional curated/home content. Default: empty."""
         return []
 
-    def matches(self, signals: Signals) -> bool:
+    def matches(self, signals: "Signals") -> bool:
         """Three-axis routing test (mediavocab spec). Override only if the
         default ``(media, playback_type, genre_filter)`` gate is wrong for this
-        provider."""
+        provider.
+
+        Imports mediavocab lazily: a provider subclass that reaches this default
+        already depends on mediavocab, but opm itself must not require it."""
+        from mediavocab.models.protocols import provider_matches
         return provider_matches(self, signals)
 
     def shutdown(self):
