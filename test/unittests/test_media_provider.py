@@ -118,3 +118,62 @@ class TestMediaProviderDiscovery(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestQueryContextGating(unittest.TestCase):
+    """Context-aware routing: serves() = matches() AND device/policy compatible."""
+
+    def _provider(self, **attrs):
+        from ovos_plugin_manager.templates.media_provider import MediaProvider
+
+        class _P(MediaProvider):
+            def is_available(self): return True
+            def search(self, signals, lang="en-us"): return []
+        for k, v in attrs.items():
+            setattr(_P, k, v)
+        return _P()
+
+    def test_query_context_permissive_by_default(self):
+        from ovos_plugin_manager.templates.media_provider import QueryContext
+        ctx = QueryContext()
+        self.assertTrue(ctx.allows_playback([PlaybackType.VIDEO]))
+        self.assertTrue(ctx.allows_genres(["adult"]))
+
+    def test_serves_without_context_equals_matches(self):
+        p = self._provider(name="m", media={MediaType.MOVIE},
+                           playback_type={PlaybackType.VIDEO})
+        sig = Signals.as_query(medium=MediaType.MOVIE, playback_type=PlaybackType.VIDEO)
+        self.assertTrue(p.matches(sig))
+        self.assertTrue(p.serves(sig))            # no context → permissive
+        self.assertTrue(p.serves(sig, None))
+
+    def test_video_provider_skipped_on_audio_only_device(self):
+        from ovos_plugin_manager.templates.media_provider import QueryContext
+        p = self._provider(name="v", media={MediaType.MOVIE},
+                           playback_type={PlaybackType.VIDEO})
+        sig = Signals.as_query(medium=MediaType.MOVIE, playback_type=PlaybackType.VIDEO)
+        self.assertFalse(p.serves(sig, QueryContext(supported_playback_types={"audio"})))
+        self.assertTrue(p.serves(sig, QueryContext(supported_playback_types={"audio", "video"})))
+
+    def test_adult_provider_skipped_when_policy_blocks(self):
+        from ovos_plugin_manager.templates.media_provider import QueryContext
+        p = self._provider(name="x", media={MediaType.MOVIE}, genre_filter={"adult"})
+        sig = Signals.as_query(medium=MediaType.MOVIE, content_genres=["adult"])
+        self.assertFalse(p.serves(sig, QueryContext(blocked_genres={"adult"})))
+        self.assertTrue(p.serves(sig, QueryContext()))
+
+    def test_search_context_defaults_to_search(self):
+        from ovos_plugin_manager.templates.media_provider import QueryContext
+
+        class _P2(self._provider().__class__.__bases__[0]):
+            name = "s"
+            media = {MediaType.MUSIC}
+            def is_available(self): return True
+            def search(self, signals, lang="en-us"):
+                return [_release()]
+        p = _P2()
+        out = p.search_context(Signals.as_query(medium=MediaType.MUSIC),
+                               context=QueryContext(), lang="en-us")
+        self.assertEqual(len(out), 1)
+        # search_safe also accepts context and never raises
+        self.assertEqual(len(p.search_safe(Signals.as_query(), QueryContext())), 1)
