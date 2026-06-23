@@ -43,6 +43,7 @@ plugins expose supported-language configuration.
 | `FACE_EMBEDDINGS` | `opm.embeddings.face` | — |
 | `TRIPLES` | `opm.triples` | — |
 | `STREAM_EXTRACTOR` | `opm.ocp.extractor` | — |
+| `MEDIA_PROVIDER` | `opm.media.provider` | `MediaProvider` |
 | `AUDIO_PLAYER` | `opm.media.audio` | — |
 | `VIDEO_PLAYER` | `opm.media.video` | — |
 | `WEB_PLAYER` | `opm.media.web` | — |
