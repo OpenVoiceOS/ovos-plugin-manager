@@ -9,7 +9,7 @@ description = "OpenVoiceOS plugin manager"
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{name = "jarbasAi", email = "jarbas@openvoiceos.com"}]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "ovos-utils>=0.2.1,<1.0.0",
     "ovos_bus_client>=0.0.8,<3.0.0",
