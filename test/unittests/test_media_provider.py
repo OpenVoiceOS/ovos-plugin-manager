@@ -20,10 +20,11 @@ class TestMediaProviderTemplate(unittest.TestCase):
         class _Prov(MediaProvider):
             name = "dummy"
 
-            def search(self, signals, lang="en-us", **context):
-                # a provider may self-filter on whatever context kwargs it cares about
-                supported = context.get("supported_playback_types")
-                if supported and "audio" not in supported:
+            def search(self, signals, lang="en-us", *,
+                       supported_playback_types=None, blocked_genres=None,
+                       region=None, session_id=None):
+                # a provider may self-filter on whichever kwargs it cares about
+                if supported_playback_types and "audio" not in supported_playback_types:
                     return []
                 return [_release(title=signals.title or "x")]
 
@@ -38,7 +39,8 @@ class TestMediaProviderTemplate(unittest.TestCase):
     def test_search_accepts_context_kwargs(self):
         res = self.cls().search(Signals(title="x"), lang="pt-pt",
                                 supported_playback_types={"audio"},
-                                blocked_genres=set(), region="PT")
+                                blocked_genres=set(), region="PT",
+                                session_id="abc")
         self.assertEqual(len(res), 1)
 
     def test_provider_may_self_filter_on_context(self):
