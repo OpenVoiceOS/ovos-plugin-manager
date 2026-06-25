@@ -98,6 +98,7 @@ class PluginTypes(str, Enum):
     AUDIO_PLAYER = "opm.media.audio"
     VIDEO_PLAYER = "opm.media.video"
     WEB_PLAYER = "opm.media.web"
+    MEDIA_PROVIDER = "opm.media.provider"  # media catalog/search providers (replace OCP search skills)
     PERSONA = "opm.plugin.persona"  # personas are a dict, they have no config because they ARE a config
     AGENT_TOOLBOX = "opm.agents.toolbox"
     VOICE_CLONE = "opm.vc"
@@ -165,6 +166,7 @@ class PluginConfigTypes(str, Enum):
     AUDIO_PLAYER = "opm.media.audio.config"
     VIDEO_PLAYER = "opm.media.video.config"
     WEB_PLAYER = "opm.media.web.config"
+    MEDIA_PROVIDER = "opm.media.provider.config"
 
     # solver plugins are deprecated!
     QUESTION_SOLVER = "opm.solver.config"

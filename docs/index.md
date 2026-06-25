@@ -24,6 +24,7 @@ loading installed plugins at runtime via Python entry points.
   - [Agent Tools](api/agent-tools.md) — ToolBox plugin API (`opm.agents.toolbox`)
 - [Agent Plugins](agents.md) — all available ChatEngine, ToolBox, and Persona plugins with entry point registry
   - [Pipeline](api/pipeline.md) — Intent matching pipeline plugins
+  - [Media Provider](api/media-provider.md) — OCP catalog/search providers (`opm.media.provider`, OVOS-OCP-1)
   - [Language](api/language.md) — Translation and language detection plugins
 
 ## Architecture Overview
