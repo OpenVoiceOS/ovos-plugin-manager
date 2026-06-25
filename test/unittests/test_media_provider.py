@@ -12,7 +12,7 @@ def _release(title="Song", media_type=MediaType.MUSIC, conf=0.9, uri="http://x")
 
 
 class TestMediaProviderTemplate(unittest.TestCase):
-    """The contract is one method: search(signals, context) -> list[Release]."""
+    """The contract is one method: search(signals, lang, **context) -> list[Release]."""
 
     def setUp(self):
         from ovos_plugin_manager.templates.media_provider import MediaProvider
@@ -20,28 +20,32 @@ class TestMediaProviderTemplate(unittest.TestCase):
         class _Prov(MediaProvider):
             name = "dummy"
 
-            def search(self, signals, context):
-                # a provider may self-filter on context
-                if not context.allows_playback(["audio"]):
+            def search(self, signals, lang="en-us", **context):
+                # a provider may self-filter on whatever context kwargs it cares about
+                supported = context.get("supported_playback_types")
+                if supported and "audio" not in supported:
                     return []
                 return [_release(title=signals.title or "x")]
 
         self.cls = _Prov
 
     def test_search_returns_releases(self):
-        from ovos_plugin_manager.templates.media_provider import QueryContext
-        res = self.cls().search(Signals(title="hello"), QueryContext())
+        res = self.cls().search(Signals(title="hello"))
         self.assertEqual(len(res), 1)
         self.assertIsInstance(res[0], Release)
         self.assertEqual(res[0].work.title, "hello")
 
+    def test_search_accepts_context_kwargs(self):
+        res = self.cls().search(Signals(title="x"), lang="pt-pt",
+                                supported_playback_types={"audio"},
+                                blocked_genres=set(), region="PT")
+        self.assertEqual(len(res), 1)
+
     def test_provider_may_self_filter_on_context(self):
-        from ovos_plugin_manager.templates.media_provider import QueryContext
-        p = self.cls()
-        # device that can't play audio → provider returns nothing
+        # device that can't play audio → this provider returns nothing
         self.assertEqual(
-            p.search(Signals(title="x"),
-                     QueryContext(supported_playback_types={"video"})), [])
+            self.cls().search(Signals(title="x"),
+                              supported_playback_types={"video"}), [])
 
     def test_search_is_the_only_abstract_method(self):
         from ovos_plugin_manager.templates.media_provider import MediaProvider
@@ -58,27 +62,6 @@ class TestMediaProviderTemplate(unittest.TestCase):
     def test_config_defaults_to_empty_dict(self):
         self.assertEqual(self.cls().config, {})
         self.assertEqual(self.cls(config={"k": 1}).config, {"k": 1})
-
-
-class TestQueryContext(unittest.TestCase):
-    def test_permissive_by_default(self):
-        from ovos_plugin_manager.templates.media_provider import QueryContext
-        ctx = QueryContext()
-        self.assertTrue(ctx.allows_playback(["video"]))
-        self.assertTrue(ctx.allows_genres(["adult"]))
-
-    def test_allows_playback_gate(self):
-        from ovos_plugin_manager.templates.media_provider import QueryContext
-        ctx = QueryContext(supported_playback_types={"audio"})
-        self.assertTrue(ctx.allows_playback(["audio"]))
-        self.assertFalse(ctx.allows_playback(["video"]))
-        self.assertTrue(ctx.allows_playback(["audio", "video"]))
-
-    def test_allows_genres_gate(self):
-        from ovos_plugin_manager.templates.media_provider import QueryContext
-        ctx = QueryContext(blocked_genres={"adult"})
-        self.assertFalse(ctx.allows_genres(["adult"]))
-        self.assertTrue(ctx.allows_genres(["pop"]))
 
 
 class TestMediaProviderDiscovery(unittest.TestCase):
