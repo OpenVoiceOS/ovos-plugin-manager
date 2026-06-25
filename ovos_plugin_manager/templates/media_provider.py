@@ -56,8 +56,6 @@ class QueryContext:
     lang: str = "en-us"
     region: Optional[str] = None          # ISO 3166-1 alpha-2
     session_id: Optional[str] = None
-    #: forward-compatible bag for capabilities not yet first-class.
-    extras: dict = field(default_factory=dict)
 
     def allows_playback(self, playback_types: Iterable) -> bool:
         """True if the device can render at least one of ``playback_types``
