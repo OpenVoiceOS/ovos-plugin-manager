@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.8.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.8.0a1) (2026-06-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.7.0a1...2.8.0a1)
+
+**Merged pull requests:**
+
+- feat: add MediaProvider plugin type \(opm.media.provider\) [\#405](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/405) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.7.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.7.0a1) (2026-06-20)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.6.1a2...2.7.0a1)
