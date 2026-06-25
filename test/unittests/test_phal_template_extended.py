@@ -52,101 +52,43 @@ class TestPHALPluginRuntimeRequirements(unittest.TestCase):
         self.assertTrue(reqs.no_network_fallback)
 
 
-class TestPHALPluginCoreEvents(unittest.TestCase):
-    """Tests for the core lifecycle bus subscriptions wired on init."""
+class TestPHALPluginIsBareBase(unittest.TestCase):
+    """The base wires no bus events and carries no enclosure/lifecycle handlers."""
 
-    def test_register_core_events_subscribes(self) -> None:
-        """register_core_events wires the audio/wake/speak lifecycle events."""
+    def test_no_bus_subscriptions_on_init(self) -> None:
+        """The base plugin does not wire any bus events on construction."""
         plugin = _make_plugin()
-        wired = {call.args[0] for call in plugin.bus.on.call_args_list}
-        self.assertEqual(wired, {
-            "recognizer_loop:record_begin",
-            "recognizer_loop:record_end",
-            "recognizer_loop:sleep",
-            "recognizer_loop:audio_output_start",
-            "recognizer_loop:audio_output_end",
-            "mycroft.awoken",
-            "speak",
-        })
-
-    def test_no_enclosure_namespace_wired(self) -> None:
-        """No enclosure.* subscriptions are wired by the base plugin."""
-        plugin = _make_plugin()
-        wired = {call.args[0] for call in plugin.bus.on.call_args_list}
-        self.assertFalse(any(t.startswith("enclosure.") for t in wired))
+        self.assertEqual(plugin.bus.on.call_args_list, [])
 
     def test_no_enclosure_abstraction_attributes(self) -> None:
         """The dropped enclosure abstraction leaves no attributes behind."""
         plugin = _make_plugin()
         self.assertFalse(hasattr(plugin, "register_enclosure_namespace"))
+        self.assertFalse(hasattr(plugin, "register_core_events"))
         self.assertFalse(hasattr(plugin, "mouth_events_active"))
         self.assertFalse(hasattr(plugin, "on_eyes_on"))
         self.assertFalse(hasattr(plugin, "on_weather_display"))
 
-
-class TestPHALPluginEventHandlers(unittest.TestCase):
-    """Tests for PHALPlugin stub event handler methods (all are no-ops by default)."""
-
-    def setUp(self) -> None:
-        """Create a plugin instance."""
-        self.plugin: PHALPlugin = _make_plugin()
-
-    def test_on_record_begin(self) -> None:
-        """on_record_begin does not raise."""
-        self.plugin.on_record_begin()
-
-    def test_on_record_end(self) -> None:
-        """on_record_end does not raise."""
-        self.plugin.on_record_end()
-
-    def test_on_audio_output_start(self) -> None:
-        """on_audio_output_start does not raise."""
-        self.plugin.on_audio_output_start()
-
-    def test_on_audio_output_end(self) -> None:
-        """on_audio_output_end does not raise."""
-        self.plugin.on_audio_output_end()
-
-    def test_on_awake(self) -> None:
-        """on_awake does not raise."""
-        self.plugin.on_awake()
-
-    def test_on_sleep(self) -> None:
-        """on_sleep does not raise."""
-        self.plugin.on_sleep()
-
-    def test_on_speak(self) -> None:
-        """on_speak does not raise."""
-        self.plugin.on_speak()
-
-    def test_run(self) -> None:
-        """run does not raise."""
-        self.plugin.run()
+    def test_no_lifecycle_handlers(self) -> None:
+        """The record/speak/wake/sleep handlers moved to the listener mix-in."""
+        plugin = _make_plugin()
+        for name in ("on_record_begin", "on_record_end", "on_audio_output_start",
+                     "on_audio_output_end", "on_awake", "on_sleep", "on_speak"):
+            self.assertFalse(hasattr(plugin, name), name)
 
 
-class TestPHALPluginShutdown(unittest.TestCase):
-    """Tests for PHALPlugin.shutdown."""
+class TestPHALPluginLifecycle(unittest.TestCase):
+    """Tests for the bare plugin lifecycle (run/shutdown)."""
+
+    def test_run_does_not_raise(self) -> None:
+        _make_plugin().run()
 
     def test_shutdown_sets_running_false(self) -> None:
-        """shutdown sets _running to False."""
+        """shutdown sets _running to False without touching the bus."""
         plugin = _make_plugin()
         plugin.shutdown()
         self.assertFalse(plugin._running)
-
-    def test_shutdown_removes_core_events(self) -> None:
-        """shutdown removes the core lifecycle subscriptions."""
-        plugin = _make_plugin()
-        plugin.shutdown()
-        removed = {call.args[0] for call in plugin.bus.remove.call_args_list}
-        self.assertEqual(removed, {
-            "mycroft.awoken",
-            "recognizer_loop:sleep",
-            "speak",
-            "recognizer_loop:record_begin",
-            "recognizer_loop:record_end",
-            "recognizer_loop:audio_output_start",
-            "recognizer_loop:audio_output_end",
-        })
+        self.assertEqual(plugin.bus.remove.call_args_list, [])
 
 
 class TestAdminPluginExtended(unittest.TestCase):

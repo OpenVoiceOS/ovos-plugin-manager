@@ -25,14 +25,15 @@ class PHALValidator:
 
 class PHALPlugin(Thread):
     """
-    This base class is intended to be used to build PHAL plugins, which run
-    inside the ``ovos-PHAL`` service and react to lifecycle bus events
-    (audio in/out, wake, sleep, speak).
-    All of the handlers are optional and for convenience only.
+    Base class for PHAL plugins, which run inside the ``ovos-PHAL`` service.
 
-    The legacy Mark-1 ``enclosure.*`` hardware protocol is no longer wired
-    here. Hardware enclosure plugins mix in ``EnclosureProtocolListener`` from
-    ``ovos-ui-enclosure-protocol`` instead.
+    A PHAL plugin is a background ``Thread`` with access to the message bus
+    (``self.bus``); subclasses wire their own bus handlers and override
+    :meth:`run` for any main loop.
+
+    This base does not wire any bus events. Hardware enclosure plugins mix in
+    ``EnclosureProtocolListener`` from ``ovos-ui-enclosure-protocol`` for the
+    ``enclosure.*`` commands and the record/speak/wake/sleep lifecycle.
     """
     validator = PHALValidator
 
@@ -45,19 +46,7 @@ class PHALPlugin(Thread):
         self.bus = bus or get_mycroft_bus()
         self.log = LOG
         self.name = name
-
-        self.register_core_events()
         self.start()
-
-    def register_core_events(self):
-        # audio events
-        self.bus.on('recognizer_loop:record_begin', self.on_record_begin)
-        self.bus.on('recognizer_loop:record_end', self.on_record_end)
-        self.bus.on("recognizer_loop:sleep", self.on_sleep)
-        self.bus.on('recognizer_loop:audio_output_start', self.on_audio_output_start)
-        self.bus.on('recognizer_loop:audio_output_end', self.on_audio_output_end)
-        self.bus.on("mycroft.awoken", self.on_awake)
-        self.bus.on("speak", self.on_speak)
 
     @classproperty
     def runtime_requirements(cls):
@@ -89,50 +78,12 @@ class PHALPlugin(Thread):
         self.bus.emit(Message(f"{skill_id}.{msg_type}", msg_data, {"skill_id": skill_id}))
 
     def shutdown(self):
-        self.bus.remove("mycroft.awoken", self.on_awake)
-        self.bus.remove("recognizer_loop:sleep", self.on_sleep)
-        self.bus.remove("speak", self.on_speak)
-        self.bus.remove('recognizer_loop:record_begin', self.on_record_begin)
-        self.bus.remove('recognizer_loop:record_end', self.on_record_end)
-        self.bus.remove('recognizer_loop:audio_output_start', self.on_audio_output_start)
-        self.bus.remove('recognizer_loop:audio_output_end', self.on_audio_output_end)
-
         self._running = False
 
     def run(self):
         ''' plugin main loop, override if needed '''
         pass
 
-    # Audio Events
-    def on_record_begin(self, message=None):
-        ''' listening started '''
-        pass
-
-    def on_record_end(self, message=None):
-        ''' listening ended '''
-        pass
-
-    def on_audio_output_start(self, message=None):
-        ''' speaking started '''
-        pass
-
-    def on_audio_output_end(self, message=None):
-        ''' speaking started '''
-        pass
-
-    def on_awake(self, message=None):
-        ''' on wakeup animation '''
-        pass
-
-    def on_sleep(self, message=None):
-        ''' on naptime animation '''
-        # TODO naptime skill animation should be ond here
-        pass
-
-    def on_speak(self, message=None):
-        ''' on speak messages, intended for enclosures that disregard
-        visemes '''
-        pass
 
 class AdminPlugin(PHALPlugin):
     """Running as Admin"""
