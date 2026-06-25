@@ -54,14 +54,15 @@ def load_media_providers(config: Optional[dict] = None) -> Dict[str, MediaProvid
     """
     Instantiate every installed and enabled media provider plugin.
 
-    A provider is loaded when it is not explicitly disabled in config and
-    reports :meth:`MediaProvider.is_available`. Per-provider config lives under
-    ``mycroft.conf`` -> ``media_providers`` -> ``<name>``; a provider is skipped
-    when its config sets ``"enabled": false``.
+    A provider is loaded unless it is explicitly disabled in config. Per-provider
+    config lives under ``mycroft.conf`` -> ``media_providers`` -> ``<name>``; a
+    provider is skipped when its config sets ``"enabled": false``. Runtime
+    availability (missing API key, no network, …) is the provider's own concern —
+    it simply returns ``[]`` from :meth:`MediaProvider.search`.
 
     @param config: optional ``media_providers`` config mapping; read from
         ``Configuration()`` when not provided.
-    @return: dict of provider name to instantiated, available provider.
+    @return: dict of provider name to instantiated provider.
     """
     if config is None:
         try:
@@ -78,10 +79,6 @@ def load_media_providers(config: Optional[dict] = None) -> Dict[str, MediaProvid
             continue
         try:
             instance = clazz(config=plugin_config)
-            if not instance.is_available():
-                LOG.info(f"MediaProvider '{name}' unavailable, skipping")
-                instance.shutdown()
-                continue
             instance.name = instance.name or name
             providers[name] = instance
             LOG.info(f"Loaded MediaProvider plugin: {name}")
