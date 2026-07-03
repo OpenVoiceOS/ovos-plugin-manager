@@ -294,3 +294,16 @@ class TestOVOSPipelineFactory(unittest.TestCase):
             "my-pipe", bus=fake_bus, config={"key": "val"})
         self.assertIs(instance.bus, fake_bus)
         self.assertEqual(instance.config, {"key": "val"})
+
+
+class TestIntentHandlerMatchFields(unittest.TestCase):
+    def test_suppress_activation_defaults_false(self):
+        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+        m = IntentHandlerMatch(match_type="x:intent", skill_id="x")
+        self.assertFalse(m.suppress_activation)
+
+    def test_suppress_activation_settable(self):
+        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+        m = IntentHandlerMatch(match_type="x:stop", skill_id="x",
+                               suppress_activation=True)
+        self.assertTrue(m.suppress_activation)
