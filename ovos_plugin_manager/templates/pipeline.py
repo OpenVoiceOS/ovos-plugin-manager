@@ -18,12 +18,18 @@ class IntentHandlerMatch:
         match_data (Optional[Dict]): Additional data provided by the intent match.
         skill_id (Optional[str]): The skill this handler belongs to.
         utterance (Optional[str]): The original utterance triggering the intent.
+        suppress_activation (bool): When True the orchestrator dispatches the
+            match without activating ``skill_id`` (no ``{skill_id}.activate``).
+            A termination or continuation of an already-active skill's
+            participation — e.g. a stop — sets this, since it must not register
+            the target as a freshly activated skill.
     """
     match_type: str
     match_data: Optional[Dict] = None
     skill_id: Optional[str] = None
     utterance: Optional[str] = None
     updated_session: Optional[Session] = None
+    suppress_activation: bool = False
 
 
 class PipelinePlugin:
