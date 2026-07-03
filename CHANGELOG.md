@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.9.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.9.0a1) (2026-07-03)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.8.0a1...2.9.0a1)
+
+**Merged pull requests:**
+
+- feat: add suppress\_activation field to IntentHandlerMatch [\#408](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/408) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.8.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.8.0a1) (2026-06-25)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.7.0a1...2.8.0a1)
