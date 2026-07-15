@@ -9,6 +9,7 @@ loading installed plugins at runtime via Python entry points.
 ## Contents
 
 - [Plugin Types & Entry Points](plugin-types.md) — full `PluginTypes` enum and `setup.py` entry point names
+- [Transformer Pipelines](transformers.md) — the six transformer chains, runner services, config, ordering and deployment surfaces
 - [Writing a Plugin](writing-plugins.md) — step-by-step guide with `setup.py` template
 - [Configuration Utilities](configuration.md) — `get_plugin_config`, language configs, sorting
 - [Installation Utilities](installation.md) — `pip_install`, `search_pip`
