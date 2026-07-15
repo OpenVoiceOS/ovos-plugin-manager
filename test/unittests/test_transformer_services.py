@@ -112,6 +112,112 @@ class TestPriorityOrdering(unittest.TestCase):
         self.assertEqual(utterances, ["first:last:hello"])
 
 
+class TestExplicitOrder(unittest.TestCase):
+    """OVOS-TRANSFORM §4: explicit deployer order wins over priorities."""
+
+    def _service(self, config):
+        plugins = {"plug-a": _UttPrefixer, "plug-b": _UttPrefixer,
+                   "plug-c": _UttPrefixer}
+        with patch.object(UtteranceTransformersService, "plugin_finder",
+                          staticmethod(_fake_finder(plugins))):
+            service = UtteranceTransformersService(config=config)
+        for name, plugin in service.loaded_plugins.items():
+            plugin.name = name
+        return service
+
+    def test_order_overrides_priorities(self):
+        service = self._service({"plug-a": {"priority": 1}, "plug-b": {},
+                                 "order": ["plug-b", "plug-a"]})
+        self.assertEqual([p.name for p in service.plugins],
+                         ["plug-b", "plug-a"])
+
+    def test_loaded_but_unlisted_plugins_do_not_run(self):
+        service = self._service({"plug-a": {}, "plug-b": {},
+                                 "order": ["plug-b"]})
+        self.assertEqual([p.name for p in service.plugins], ["plug-b"])
+
+    def test_order_enables_plugins_without_config_entry(self):
+        service = self._service({"order": ["plug-c"]})
+        self.assertEqual(list(service.loaded_plugins), ["plug-c"])
+
+    def test_order_key_is_not_a_plugin(self):
+        service = self._service({"plug-a": {}, "order": ["plug-a"]})
+        self.assertNotIn("order", service.loaded_plugins)
+
+
+class TestCancellation(unittest.TestCase):
+    """OVOS-TRANSFORM §8.1 cancellation signal handling."""
+
+    class _Canceller(UtteranceTransformer):
+        def __init__(self, name="canceller", priority=1, data=None):
+            super().__init__(name, priority, {})
+            self.data = data or {"canceled": True, "cancel_reason": "stop_word"}
+
+        def transform(self, utterances, context=None):
+            return utterances, dict(self.data)
+
+    def _service(self, *plugins):
+        with patch.object(UtteranceTransformersService, "plugin_finder",
+                          staticmethod(_fake_finder({}))):
+            service = UtteranceTransformersService(config={})
+        for p in plugins:
+            service.loaded_plugins[p.name] = p
+        return service
+
+    def test_valid_signal_stops_chain_and_stamps_cancel_by(self):
+        late = _UttPrefixer("late", priority=99)
+        service = self._service(self._Canceller(), late)
+        utterances, context = service.transform(["hi"])
+        self.assertEqual(utterances, ["hi"])  # late plugin never ran
+        self.assertTrue(context["canceled"])
+        self.assertEqual(context["cancel_reason"], "stop_word")
+        self.assertEqual(context["cancel_by"], "canceller")
+
+    def test_cancel_by_cannot_be_spoofed(self):
+        canceller = self._Canceller(data={"canceled": True,
+                                          "cancel_reason": "policy_block",
+                                          "cancel_by": "someone-else"})
+        service = self._service(canceller)
+        _, context = service.transform(["hi"])
+        self.assertEqual(context["cancel_by"], "canceller")
+
+    def test_incomplete_pair_is_stripped_and_chain_continues(self):
+        canceller = self._Canceller(data={"canceled": True})  # no reason
+        late = _UttPrefixer("late", priority=99)
+        service = self._service(canceller, late)
+        utterances, context = service.transform(["hi"])
+        self.assertEqual(utterances, ["late:hi"])
+        self.assertNotIn("canceled", context)
+        self.assertNotIn("cancel_by", context)
+
+    def test_reason_without_canceled_is_stripped(self):
+        canceller = self._Canceller(data={"cancel_reason": "stop_word"})
+        service = self._service(canceller)
+        _, context = service.transform(["hi"])
+        self.assertNotIn("cancel_reason", context)
+
+    def test_dialog_chain_cancellation(self):
+        class CancellingDialog(DialogTransformer):
+            def transform(self, dialog, context=None):
+                context = context or {}
+                context.update({"canceled": True,
+                                "cancel_reason": "policy_block"})
+                return dialog, context
+
+        class Upper(DialogTransformer):
+            def transform(self, dialog, context=None):
+                return dialog.upper(), context or {}
+
+        with patch.object(DialogTransformersService, "plugin_finder",
+                          staticmethod(_fake_finder({}))):
+            service = DialogTransformersService(config={})
+        service.loaded_plugins["c"] = CancellingDialog("c", priority=1)
+        service.loaded_plugins["u"] = Upper("u", priority=99)
+        dialog, context = service.transform("hello")
+        self.assertEqual(dialog, "hello")  # chain stopped before Upper
+        self.assertEqual(context["cancel_by"], "c")
+
+
 class TestBusBinding(unittest.TestCase):
 
     def test_bus_bound_on_load(self):

@@ -9,10 +9,19 @@ Loading is config-gated and opt-in: a plugin is only loaded if its name
 appears in the service's config section and its entry does not set
 ``"active": false``.
 
-Ordering follows OVOS-TRANSFORM-1 §4: lower ``priority`` number runs
-first (``sort_ascending=True``, the default). Consumers that relied on
-the legacy descending traversal ("priority 1 runs last and wins") can
-pass ``sort_ascending=False``.
+Ordering follows OVOS-TRANSFORM §4: lower ``priority`` number runs
+first (``sort_ascending=True``, the default). An explicit deployer
+order — an ``"order"`` list of plugin names in the config section —
+wins over priorities; loaded plugins absent from that list are not
+run. Consumers that relied on the legacy descending traversal
+("priority 1 runs last and wins") can pass ``sort_ascending=False``;
+this escape hatch is deprecated and will be removed.
+
+Cancellation follows OVOS-TRANSFORM §8.1: a plugin signals by
+returning both ``"canceled": true`` and ``"cancel_reason"`` in its
+context; the runner stamps ``"cancel_by"`` and stops the chain. An
+incomplete pair is a shape violation: logged, stripped, chain
+continues. Terminal bus events (§8.2) are the consumer's concern.
 """
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -73,10 +82,17 @@ class TransformersService:
         return list(cls.plugin_finder().keys())
 
     def load_plugins(self) -> None:
+        # reserved config keys that are not plugin entries
+        enabled = set(self.config.keys()) - {"order", "blacklisted_skills"}
+        explicit_order = self.config.get("order")
+        if isinstance(explicit_order, list):
+            # plugins in the explicit chain are enabled even without
+            # their own config entry
+            enabled |= set(explicit_order)
         for plug_name, plug in self.find_plugins():
-            if plug_name not in self.config:
+            if plug_name not in enabled:
                 continue
-            plug_config = self.config[plug_name] or {}
+            plug_config = self.config.get(plug_name) or {}
             if isinstance(plug_config, dict) and not plug_config.get("active", True):
                 continue
             try:
@@ -113,16 +129,51 @@ class TransformersService:
     def plugins(self) -> list:
         """Loaded plugins in execution order.
 
-        With ``sort_ascending=True`` (OVOS-TRANSFORM-1 §4) a plugin with
-        ``priority=1`` runs first; later plugins see and may override its
-        output. With ``sort_ascending=False`` (legacy) a plugin with
-        ``priority=1`` runs last and has the final say.
+        An explicit deployer order (an ``"order"`` list of plugin names in
+        the config section) wins over priorities per OVOS-TRANSFORM §4;
+        loaded plugins absent from the list are not run.
+
+        Otherwise, with ``sort_ascending=True`` (OVOS-TRANSFORM §4) a
+        plugin with ``priority=1`` runs first; later plugins see and may
+        override its output. With ``sort_ascending=False`` (deprecated
+        legacy behavior) a plugin with ``priority=1`` runs last and has
+        the final say.
         """
         if self._sorted_plugins is None:
-            self._sorted_plugins = sorted(self.loaded_plugins.values(),
-                                          key=lambda k: k.priority,
-                                          reverse=not self.sort_ascending)
+            explicit_order = self.config.get("order")
+            if isinstance(explicit_order, list):
+                self._sorted_plugins = [self.loaded_plugins[name]
+                                        for name in explicit_order
+                                        if name in self.loaded_plugins]
+            else:
+                self._sorted_plugins = sorted(self.loaded_plugins.values(),
+                                              key=lambda k: k.priority,
+                                              reverse=not self.sort_ascending)
         return self._sorted_plugins
+
+    def _check_cancellation(self, data: dict, module) -> bool:
+        """Validate a §8.1 cancellation signal in a plugin's returned context.
+
+        Returns True when a valid ``canceled``/``cancel_reason`` pair is
+        present, stamping ``cancel_by`` from the emitting plugin (never
+        from a value the plugin set itself). An incomplete pair is a
+        shape violation: logged, stripped from ``data`` in place, and the
+        chain proceeds as if the plugin returned its input unchanged.
+        """
+        if not isinstance(data, dict):
+            return False
+        if data.get("canceled") is True and data.get("cancel_reason"):
+            data["cancel_by"] = module.name
+            LOG.info(f"{self.transformer_type} chain canceled by "
+                     f"{module.name}: {data['cancel_reason']}")
+            return True
+        if "canceled" in data or "cancel_reason" in data:
+            LOG.warning(f"{module.name} signalled an incomplete cancellation "
+                        "pair (OVOS-TRANSFORM §8.1 requires both 'canceled' "
+                        "and 'cancel_reason'), ignoring it")
+            data.pop("canceled", None)
+            data.pop("cancel_reason", None)
+        return False
 
     def shutdown(self) -> None:
         for module in self.plugins:
@@ -149,7 +200,10 @@ class UtteranceTransformersService(TransformersService):
                 utterances, data = module.transform(utterances, context)
                 _safe = {k: v for k, v in data.items() if k != "session"}  # no leaking TTS/STT creds in logs
                 LOG.debug(f"{module.name}: {_safe}")
+                canceled = self._check_cancellation(data, module)
                 context = merge_dict(context, data)
+                if canceled:
+                    break
             except Exception as e:
                 LOG.warning(f"{module.name} transform exception: {e}")
         return utterances, context
@@ -168,7 +222,10 @@ class MetadataTransformersService(TransformersService):
                 data = module.transform(context)
                 _safe = {k: v for k, v in data.items() if k != "session"}  # no leaking TTS/STT creds in logs
                 LOG.debug(f"{module.name}: {_safe}")
+                canceled = self._check_cancellation(data, module)
                 context = merge_dict(context, data)
+                if canceled:
+                    break
             except Exception as e:
                 LOG.warning(f"{module.name} transform exception: {e}")
         return context
@@ -214,6 +271,8 @@ class DialogTransformersService(TransformersService):
             try:
                 dialog, context = module.transform(dialog, context=context)
                 LOG.debug(f"{module.name}: {dialog}")
+                if self._check_cancellation(context, module):
+                    break
             except Exception:
                 LOG.exception(f"{module.name} transform exception")
         return dialog, context
@@ -236,6 +295,8 @@ class TTSTransformersService(TransformersService):
             try:
                 wav_file, context = module.transform(wav_file, context=context)
                 LOG.debug(f"{module.name}: {wav_file}")
+                if self._check_cancellation(context, module):
+                    break
             except Exception:
                 LOG.exception(f"{module.name} transform exception")
         return wav_file, context
@@ -300,7 +361,10 @@ class AudioTransformersService(TransformersService):
                 chunk = module.feed_speech_utterance(chunk)
                 chunk, data = module.transform(chunk)
                 LOG.debug(f"{module.name}: {data}")
+                canceled = self._check_cancellation(data, module)
                 context = merge_dict(context, data)
+                if canceled:
+                    break
             except Exception:
                 LOG.exception(f"{module.name} transform exception")
         return chunk, context
