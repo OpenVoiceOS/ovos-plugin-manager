@@ -51,6 +51,7 @@ class TransformersService:
         self.loaded_plugins = {}
         self.has_loaded = False
         self.sort_ascending = sort_ascending
+        self._sorted_plugins = None
         self.config = self._resolve_section(config)
         self.load_plugins()
 
@@ -92,6 +93,7 @@ class TransformersService:
             except Exception:
                 LOG.exception(f"Failed to load {self.transformer_type} "
                               f"transformer plugin: {plug_name}")
+        self._sorted_plugins = None
         self.has_loaded = True
 
     def _bind_plugin(self, plugin) -> None:
@@ -116,9 +118,11 @@ class TransformersService:
         output. With ``sort_ascending=False`` (legacy) a plugin with
         ``priority=1`` runs last and has the final say.
         """
-        return sorted(self.loaded_plugins.values(),
-                      key=lambda k: k.priority,
-                      reverse=not self.sort_ascending)
+        if self._sorted_plugins is None:
+            self._sorted_plugins = sorted(self.loaded_plugins.values(),
+                                          key=lambda k: k.priority,
+                                          reverse=not self.sort_ascending)
+        return self._sorted_plugins
 
     def shutdown(self) -> None:
         for module in self.plugins:

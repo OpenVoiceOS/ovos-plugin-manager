@@ -92,6 +92,7 @@ class TestPriorityOrdering(unittest.TestCase):
         service = UtteranceTransformersService.__new__(UtteranceTransformersService)
         service.bus = None
         service.sort_ascending = sort_ascending
+        service._sorted_plugins = None
         service.loaded_plugins = {"first": first, "last": last}
         service.config = {}
         service.has_loaded = True
