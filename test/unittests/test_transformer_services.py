@@ -199,14 +199,19 @@ class TestCancellation(unittest.TestCase):
         _, context = service.transform(["hi"])
         self.assertEqual(context["cancel_by"], "canceller")
 
-    def test_incomplete_pair_is_stripped_and_chain_continues(self):
-        canceller = self._Canceller(data={"canceled": True})  # no reason
+    def test_legacy_canceled_without_reason_still_cancels(self):
+        """Plugins that predate §8.1 signal with 'canceled' alone; the
+        cancellation is honored with the spec's fallback reason."""
+        canceller = self._Canceller(data={"canceled": True,
+                                          "cancel_word": "nevermind"})
         late = _UttPrefixer("late", priority=99)
         service = self._service(canceller, late)
         utterances, context = service.transform(["hi"])
-        self.assertEqual(utterances, ["late:hi"])
-        self.assertNotIn("canceled", context)
-        self.assertNotIn("cancel_by", context)
+        self.assertEqual(utterances, ["hi"])  # chain stopped
+        self.assertTrue(context["canceled"])
+        self.assertEqual(context["cancel_reason"], "other")
+        self.assertEqual(context["cancel_by"], "canceller")
+        self.assertEqual(context["cancel_word"], "nevermind")
 
     def test_reason_without_canceled_is_stripped(self):
         canceller = self._Canceller(data={"cancel_reason": "stop_word"})

@@ -178,7 +178,15 @@ class TransformersService:
         """
         if not isinstance(data, dict):
             return False
-        if data.get("canceled") is True and data.get("cancel_reason"):
+        if data.get("canceled") is True:
+            if not data.get("cancel_reason"):
+                # legacy plugins (pre OVOS-TRANSFORM §8.1) signal with
+                # "canceled" alone — honor the cancellation and default the
+                # reason to the spec's universal fallback
+                LOG.warning(f"{module.name} signalled 'canceled' without a "
+                            "'cancel_reason' (required by OVOS-TRANSFORM "
+                            "§8.1), defaulting to 'other'")
+                data["cancel_reason"] = "other"
             data["cancel_by"] = module.name
             LOG.info(f"{self.transformer_type} chain canceled by "
                      f"{module.name}: {data['cancel_reason']}")
