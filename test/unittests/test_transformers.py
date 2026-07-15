@@ -293,7 +293,7 @@ class TestTransformerPluginUtils(unittest.TestCase):
         find_audio_transformer_plugins()
         mock_find.assert_called_once_with(PluginTypes.AUDIO_TRANSFORMER)
 
-    @patch("ovos_plugin_manager.utils.find_plugins")
+    @patch("ovos_plugin_manager.dialog_transformers.find_plugins")
     def test_find_dialog_transformers(self, mock_find):
         from ovos_plugin_manager.dialog_transformers import find_dialog_transformer_plugins
         find_dialog_transformer_plugins()
