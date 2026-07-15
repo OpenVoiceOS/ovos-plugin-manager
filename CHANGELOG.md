@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.10.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.10.0a1) (2026-07-15)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.9.0a1...2.10.0a1)
+
+**Merged pull requests:**
+
+- feat: canonical transformer pipeline runner services [\#410](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/410) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.9.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.9.0a1) (2026-07-03)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.8.0a1...2.9.0a1)
