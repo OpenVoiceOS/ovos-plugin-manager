@@ -306,7 +306,7 @@ class TTSTransformer:
         self.priority = priority
         if not config:
             config_core = dict(Configuration())
-            config = config_core.get("dialog_transformers", {}).get(self.name)
+            config = config_core.get("tts_transformers", {}).get(self.name)
         self.config = config or {}
 
     def bind(self, bus=None):
