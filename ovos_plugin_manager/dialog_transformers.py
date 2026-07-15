@@ -3,8 +3,9 @@ from ovos_plugin_manager.utils import PluginTypes
 from ovos_plugin_manager.utils import load_plugin, find_plugins
 # TTS transformer helpers live in ovos_plugin_manager.tts_transformers,
 # re-exported here for backwards compatibility
-from ovos_plugin_manager.tts_transformers import (find_tts_transformer_plugins,
-                                                  load_tts_transformer_plugin)
+from ovos_plugin_manager.tts_transformers import (
+    find_tts_transformer_plugins as find_tts_transformer_plugins,
+    load_tts_transformer_plugin as load_tts_transformer_plugin)
 
 
 def find_dialog_transformer_plugins() -> dict:

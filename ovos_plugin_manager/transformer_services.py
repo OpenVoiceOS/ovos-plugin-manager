@@ -23,6 +23,7 @@ context; the runner stamps ``"cancel_by"`` and stops the chain. An
 incomplete pair is a shape violation: logged, stripped, chain
 continues. Terminal bus events (§8.2) are the consumer's concern.
 """
+import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from ovos_config import Configuration
@@ -96,9 +97,9 @@ class TransformersService:
             if isinstance(plug_config, dict) and not plug_config.get("active", True):
                 continue
             try:
-                try:
+                if self._accepts_config_kwarg(plug):
                     plugin = plug(config=plug_config)
-                except TypeError:
+                else:
                     # plugin does not accept a config kwarg, it self-reads
                     # its section from Configuration()
                     plugin = plug()
@@ -111,6 +112,21 @@ class TransformersService:
                               f"transformer plugin: {plug_name}")
         self._sorted_plugins = None
         self.has_loaded = True
+
+    @staticmethod
+    def _accepts_config_kwarg(plug) -> bool:
+        """Check whether a plugin constructor takes a ``config`` kwarg.
+
+        Signature inspection instead of try/except so a TypeError raised
+        inside the constructor propagates instead of being masked by a
+        silent no-config retry.
+        """
+        try:
+            params = inspect.signature(plug).parameters.values()
+        except (TypeError, ValueError):
+            return True
+        return any(p.name == "config" or p.kind == inspect.Parameter.VAR_KEYWORD
+                   for p in params)
 
     def _bind_plugin(self, plugin) -> None:
         try:
@@ -173,10 +189,16 @@ class TransformersService:
                         "and 'cancel_reason'), ignoring it")
             data.pop("canceled", None)
             data.pop("cancel_reason", None)
+        # cancel_by is orchestrator-stamped only — never accept a
+        # plugin-supplied value outside a valid cancellation signal
+        data.pop("cancel_by", None)
         return False
 
     def shutdown(self) -> None:
-        for module in self.plugins:
+        # iterate everything loaded, not self.plugins — an explicit "order"
+        # list excludes unlisted plugins from execution but they still need
+        # to be shut down
+        for module in self.loaded_plugins.values():
             try:
                 if hasattr(module, "shutdown"):
                     module.shutdown()
@@ -267,6 +289,11 @@ class DialogTransformersService(TransformersService):
         @return: transformed dialog to be sent to TTS
         """
         context = context or {}
+        skill_id = context.get("skill_id")
+        if skill_id and skill_id in self.blacklisted_skills:
+            LOG.debug(f"dialog from blacklisted skill {skill_id} "
+                      "not transformed")
+            return dialog, context
         for module in self.plugins:
             try:
                 dialog, context = module.transform(dialog, context=context)
@@ -333,20 +360,26 @@ class AudioTransformersService(TransformersService):
     def feed_audio(self, chunk: bytes) -> None:
         """Feed a chunk of untagged (not speech) audio to all loaded plugins."""
         for module in self.plugins:
-            module.feed_audio_chunk(chunk)
+            try:
+                module.feed_audio_chunk(chunk)
+            except Exception:
+                LOG.exception(f"{module.name} failed to consume audio chunk")
 
     def feed_hotword(self, chunk: bytes) -> None:
         """Feed a chunk of hotword audio to all loaded plugins."""
         for module in self.plugins:
-            module.feed_hotword_chunk(chunk)
+            try:
+                module.feed_hotword_chunk(chunk)
+            except Exception:
+                LOG.exception(f"{module.name} failed to consume hotword chunk")
 
     def feed_speech(self, chunk: bytes) -> None:
         """Feed a chunk of speech audio to all loaded plugins."""
-        try:
-            for module in self.plugins:
+        for module in self.plugins:
+            try:
                 module.feed_speech_chunk(chunk)
-        except Exception:
-            LOG.exception("error feeding speech chunk to audio transformers")
+            except Exception:
+                LOG.exception(f"{module.name} failed to consume speech chunk")
 
     def transform(self, chunk: bytes,
                   context: Optional[dict] = None) -> Tuple[bytes, dict]:
@@ -355,7 +388,8 @@ class AudioTransformersService(TransformersService):
         @param chunk: bytes of audio data
         @return: transformed audio data, dict context
         """
-        context = context or dict(self.default_context)
+        # start from the defaults, caller-provided keys override them
+        context = {**self.default_context, **(context or {})}
         for module in self.plugins:
             try:
                 chunk = module.feed_speech_utterance(chunk)

@@ -63,17 +63,26 @@ class TestLoadingGate(unittest.TestCase):
                 self.priority = 50
                 self.name = "no-config"
 
-        def strict_ctor(config=None):
-            if config is not None:
-                raise TypeError("unexpected keyword argument")
-            return NoConfigPlugin()
-
-        # simulate a plugin class whose ctor rejects config=
-        plug = Mock(side_effect=[TypeError("no kwarg"), NoConfigPlugin()])
         with patch.object(UtteranceTransformersService, "plugin_finder",
-                          staticmethod(_fake_finder({"plug-a": plug}))):
+                          staticmethod(_fake_finder({"plug-a": NoConfigPlugin}))):
             service = UtteranceTransformersService(config={"plug-a": {}})
         self.assertIn("plug-a", service.loaded_plugins)
+
+    def test_constructor_type_error_is_not_masked(self):
+        """A TypeError raised INSIDE a config-accepting constructor must not
+        trigger a silent no-config retry."""
+        calls = []
+
+        class BuggyPlugin:
+            def __init__(self, config=None):
+                calls.append(config)
+                raise TypeError("bug inside constructor")
+
+        with patch.object(UtteranceTransformersService, "plugin_finder",
+                          staticmethod(_fake_finder({"plug-a": BuggyPlugin}))):
+            service = UtteranceTransformersService(config={"plug-a": {}})
+        self.assertNotIn("plug-a", service.loaded_plugins)
+        self.assertEqual(calls, [{}])  # constructed once, never retried
 
     def test_failed_plugin_does_not_break_loading(self):
         bad = Mock(side_effect=Exception("boom"))
@@ -144,6 +153,15 @@ class TestExplicitOrder(unittest.TestCase):
         service = self._service({"plug-a": {}, "order": ["plug-a"]})
         self.assertNotIn("order", service.loaded_plugins)
 
+    def test_shutdown_reaches_plugins_excluded_from_order(self):
+        service = self._service({"plug-a": {}, "plug-b": {},
+                                 "order": ["plug-b"]})
+        stopped = []
+        for plugin in service.loaded_plugins.values():
+            plugin.shutdown = lambda name=plugin.name: stopped.append(name)
+        service.shutdown()
+        self.assertEqual(sorted(stopped), ["plug-a", "plug-b"])
+
 
 class TestCancellation(unittest.TestCase):
     """OVOS-TRANSFORM §8.1 cancellation signal handling."""
@@ -195,6 +213,14 @@ class TestCancellation(unittest.TestCase):
         service = self._service(canceller)
         _, context = service.transform(["hi"])
         self.assertNotIn("cancel_reason", context)
+
+    def test_stray_cancel_by_is_stripped(self):
+        """cancel_by is orchestrator-stamped only; a plugin-supplied value
+        outside a valid cancellation signal never reaches the context."""
+        canceller = self._Canceller(data={"cancel_by": "impostor"})
+        service = self._service(canceller)
+        _, context = service.transform(["hi"])
+        self.assertNotIn("cancel_by", context)
 
     def test_dialog_chain_cancellation(self):
         class CancellingDialog(DialogTransformer):
@@ -279,6 +305,19 @@ class TestServiceTransforms(unittest.TestCase):
         self.assertIn("skill-ovos-icanhazdadjokes.openvoiceos",
                       service.blacklisted_skills)
 
+    def test_dialog_from_blacklisted_skill_not_transformed(self):
+        class Upper(DialogTransformer):
+            def transform(self, dialog, context=None):
+                return dialog.upper(), context or {}
+
+        service = self._empty(DialogTransformersService)
+        service.loaded_plugins["u"] = Upper("u")
+        context = {"skill_id": "skill-ovos-icanhazdadjokes.openvoiceos"}
+        dialog, _ = service.transform("why did the chicken", context)
+        self.assertEqual(dialog, "why did the chicken")
+        dialog, _ = service.transform("hello", {"skill_id": "other.skill"})
+        self.assertEqual(dialog, "HELLO")
+
     def test_tts_transform(self):
         class Tts(TTSTransformer):
             def transform(self, wav_file, context=None):
@@ -348,6 +387,28 @@ class TestAudioTransformersService(unittest.TestCase):
         chunk, context = service.transform(b"audio-bytes")
         self.assertEqual(chunk, b"audio-bytes")
         self.assertEqual(context, {"source": "audio", "stt_lang": "pt-PT"})
+
+    def test_caller_context_overlays_defaults(self):
+        service = self._empty(config={},
+                              default_context={"source": "audio",
+                                               "destination": ["skills"]})
+        _, context = service.transform(b"x", {"source": "hivemind"})
+        self.assertEqual(context, {"source": "hivemind",
+                                   "destination": ["skills"]})
+
+    def test_broken_feeder_does_not_starve_the_rest(self):
+        bad = Mock()
+        bad.priority = 1
+        bad.name = "bad"
+        bad.feed_audio_chunk.side_effect = Exception("boom")
+        good = Mock()
+        good.priority = 2
+        good.name = "good"
+        service = self._empty(config={})
+        service.loaded_plugins = {"bad": bad, "good": good}
+        service._sorted_plugins = None
+        service.feed_audio(b"1")
+        good.feed_audio_chunk.assert_called_once_with(b"1")
 
     def test_feed_helpers_reach_plugins(self):
         plugin = Mock()
