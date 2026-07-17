@@ -9,16 +9,18 @@ from combo_lock import NamedLock
 from ovos_utils.log import LOG, log_deprecation, deprecated
 
 from ovos_plugin_manager.exceptions import PipException
+from ovos_plugin_manager._deprecation import imported_internally
 from ovos_plugin_manager.version import VERSION_MAJOR
 
 # Calculate next major version for deprecation
 _deprecation_version = f"{VERSION_MAJOR + 1}.0"
 
-# Deprecation notice for this module
-log_deprecation(f"ovos_plugin_manager.installation module is deprecated and will be removed in v{_deprecation_version}",
-                func_name="installation module",
-                func_module="ovos_plugin_manager.installation",
-                deprecation_version=_deprecation_version)
+# Deprecation notice for external callers of this module
+if not imported_internally(__name__):
+    log_deprecation(f"ovos_plugin_manager.installation module is deprecated and will be removed in v{_deprecation_version}",
+                    func_name="installation module",
+                    func_module="ovos_plugin_manager.installation",
+                    deprecation_version=_deprecation_version)
 
 # default constraints to use if none are given
 DEFAULT_CONSTRAINTS = '/etc/mycroft/constraints.txt'
