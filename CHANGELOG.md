@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.10.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.10.2a1) (2026-07-17)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.10.1a1...2.10.2a1)
+
+**Merged pull requests:**
+
+- fix: stop internal wiring from firing deprecation notices [\#414](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/414) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.10.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.10.1a1) (2026-07-15)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.10.0a1...2.10.1a1)
