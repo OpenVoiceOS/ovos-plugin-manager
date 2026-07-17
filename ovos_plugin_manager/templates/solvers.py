@@ -8,14 +8,16 @@ from ovos_spec_tools import standardize_lang
 from ovos_utils.log import LOG, log_deprecation, deprecated
 from ovos_utils.xdg_utils import xdg_cache_home
 
+from ovos_plugin_manager._deprecation import imported_internally
 from ovos_plugin_manager.templates.language import LanguageTranslator, LanguageDetector
 from ovos_plugin_manager.thirdparty.solvers import AbstractSolver
 from ovos_plugin_manager.version import VERSION_MAJOR
 
-log_deprecation("ovos_plugin_manager.templates.solvers has been deprecated and will be removed in the next major release.\n"
-                "Please migrate your code to use AbstractAgentEngine.\n"
-                "The new classes live in ovos_plugin_manager.templates.agents",
-                f"{VERSION_MAJOR + 1}.0.0")
+if not imported_internally(__name__):
+    log_deprecation("ovos_plugin_manager.templates.solvers has been deprecated and will be removed in the next major release.\n"
+                    "Please migrate your code to use AbstractAgentEngine.\n"
+                    "The new classes live in ovos_plugin_manager.templates.agents",
+                    f"{VERSION_MAJOR + 1}.0.0")
 
 
 def auto_translate(translate_keys: List[str], translate_str_args=True):
