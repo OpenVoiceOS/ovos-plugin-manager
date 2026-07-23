@@ -39,6 +39,20 @@ from ovos_plugin_manager.text_transformers import find_utterance_transformer_plu
 from ovos_plugin_manager.tts_transformers import find_tts_transformer_plugins
 
 
+def _stamp_provenance(context: dict, key: str, transformer_id: str) -> None:
+    """Stamp transformer self-identification per OVOS-TRANSFORM-1 §1.3.
+
+    On every touch a transformer performs, its own ``transformer_id`` MUST be
+    the last element of the corresponding ``<type>_transformer_ids`` list. The
+    orchestrator enforces this by appending the id once per execution window,
+    creating the list if absent.
+    """
+    ids = context.get(key)
+    if not isinstance(ids, list):
+        ids = []
+    context[key] = ids + [transformer_id]
+
+
 class TransformersService:
     """Base class for transformer pipeline runners.
 
@@ -227,11 +241,27 @@ class UtteranceTransformersService(TransformersService):
         context = context or {}
         for module in self.plugins:
             try:
-                utterances, data = module.transform(utterances, context)
+                result = module.transform(utterances, context)
+                # OVOS-TRANSFORM-1 §7: a wrong-shape return is treated the
+                # same as a raised exception -> log and proceed with the
+                # prior transformer's output unchanged.
+                if not (isinstance(result, (tuple, list)) and len(result) == 2):
+                    LOG.warning(f"{module.name} returned wrong shape "
+                                f"(expected (utterances, context)): {type(result)}; "
+                                f"ignoring its output")
+                    continue
+                new_utterances, data = result
+                if not isinstance(data, dict):
+                    LOG.warning(f"{module.name} returned non-dict context; "
+                                f"ignoring its output")
+                    continue
                 _safe = {k: v for k, v in data.items() if k != "session"}  # no leaking TTS/STT creds in logs
                 LOG.debug(f"{module.name}: {_safe}")
                 canceled = self._check_cancellation(data, module)
                 context = merge_dict(context, data)
+                utterances = new_utterances
+                # OVOS-TRANSFORM-1 §1.3: stamp the transformer's self-identification
+                _stamp_provenance(context, "utterance_transformer_ids", module.name)
                 if canceled:
                     break
             except Exception as e:
@@ -250,10 +280,19 @@ class MetadataTransformersService(TransformersService):
         for module in self.plugins:
             try:
                 data = module.transform(context)
+                # OVOS-TRANSFORM-1 §7: reject wrong-shape returns; a metadata
+                # transformer's only output is a Message.context dict (§3.3).
+                if not isinstance(data, dict):
+                    LOG.warning(f"{module.name} returned wrong shape "
+                                f"(expected context dict): {type(data)}; "
+                                f"ignoring its output")
+                    continue
                 _safe = {k: v for k, v in data.items() if k != "session"}  # no leaking TTS/STT creds in logs
                 LOG.debug(f"{module.name}: {_safe}")
                 canceled = self._check_cancellation(data, module)
                 context = merge_dict(context, data)
+                # OVOS-TRANSFORM-1 §1.3: stamp the transformer's self-identification
+                _stamp_provenance(context, "metadata_transformer_ids", module.name)
                 if canceled:
                     break
             except Exception as e:
@@ -270,7 +309,25 @@ class IntentTransformersService(TransformersService):
     def transform(self, intent: IntentHandlerMatch) -> IntentHandlerMatch:
         for module in self.plugins:
             try:
-                intent = module.transform(intent)
+                result = module.transform(intent)
+                # OVOS-TRANSFORM-1 §7 / §3.4: reject wrong-shape returns.
+                if not isinstance(result, IntentHandlerMatch):
+                    LOG.warning(f"{module.name} returned wrong shape "
+                                f"(expected IntentHandlerMatch): {type(result)}; "
+                                f"ignoring its output")
+                    continue
+                # OVOS-TRANSFORM-1 §3.4 identity invariant: an intent
+                # transformer MUST NOT change the dispatch identity
+                # (skill_id / match_type). If it does, discard the output
+                # and keep the prior Match — this is the orchestrator-side
+                # safety net for a MUST NOT the transformer already owes.
+                if (result.match_type != intent.match_type or
+                        result.skill_id != intent.skill_id):
+                    LOG.warning(f"{module.name} attempted to change intent "
+                                f"identity (match_type/skill_id); ignoring its "
+                                f"output per OVOS-TRANSFORM-1 §3.4")
+                    continue
+                intent = result
                 LOG.debug(f"{module.name}: {intent}")
             except Exception as e:
                 LOG.warning(f"{module.name} transform exception: {e}")
