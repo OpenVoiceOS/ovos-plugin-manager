@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.11.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.1a1) (2026-07-23)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.0a1...2.11.1a1)
+
+**Merged pull requests:**
+
+- fix: add config kwarg to ToolBox.\_\_init\_\_ [\#418](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/418) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.11.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.0a1) (2026-07-23)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.10.2a1...2.11.0a1)
