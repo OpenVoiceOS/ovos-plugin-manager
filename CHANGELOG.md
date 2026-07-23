@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.11.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.0a1) (2026-07-23)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.10.2a1...2.11.0a1)
+
+**Merged pull requests:**
+
+- feat: OVOS-TRANSFORM-1 conformance in shared transformer service bases [\#417](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/417) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.10.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.10.2a1) (2026-07-17)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.10.1a1...2.10.2a1)
