@@ -61,18 +61,50 @@ class ToolBox(ABC):
     tools as services over the OVOS messagebus and provides a direct execution interface.
 
     Entry point group: ``opm.agents.toolbox``
+
+    Contract:
+        - ``toolbox_id`` is a CLASS ATTRIBUTE declared by each concrete plugin
+          (matching its entry-point name), NOT a required constructor argument.
+        - The constructor signature is ``(config=None, bus=None, toolbox_id=None)``,
+          matching every other OPM plugin type (``config`` first, ``bus`` optional).
+        - Loaders/factories instantiate with exactly ``cls(config=cfg, bus=bus)`` --
+          no try/except fallbacks, no guessing of the constructor signature.
+        - ``toolbox_id`` may optionally be passed to the constructor as an opt-in
+          override, useful for adapters that front multiple instances of the same
+          class (e.g. an MCP/UTCP adapter pointed at two different servers). Plugins
+          that don't need this may ignore the parameter entirely.
+        - A missing/empty ``toolbox_id`` (neither declared on the class nor passed in)
+          raises ``ValueError`` at construction time.
     """
 
-    def __init__(self, toolbox_id: str,
-                 bus: Optional[Union[MessageBusClient, FakeBus]] = None):
+    #: Class attribute: plugin identity, matches the entry-point name.
+    #: Concrete plugins MUST override this.
+    toolbox_id: str = ""
+
+    def __init__(self,
+                 config: Optional[Dict[str, Any]] = None,
+                 bus: Optional[Union[MessageBusClient, FakeBus]] = None,
+                 toolbox_id: Optional[str] = None):
         """
         Initializes the ToolBox. Note: Messagebus binding is deferred until `bind()` is called.
 
         Args:
-            toolbox_id: A unique identifier for this ToolBox instance (usually the entrypoint name, e.g., 'web_search_tools').
+            config: Plugin-specific configuration dict.
             bus: The OVOS Messagebus client instance. If provided, `bind()` is called automatically.
+            toolbox_id: Optional instance-level override of the class-level ``toolbox_id``.
+                Only needed by adapters that front multiple instances of the same class.
+
+        Raises:
+            ValueError: If neither the class nor the constructor call defines a
+                non-empty ``toolbox_id``.
         """
-        self.toolbox_id: str = toolbox_id  # Unique ID for the toolbox
+        # opt-in instance override (multi-instance adapters e.g. MCP/UTCP fronting 2 servers)
+        if toolbox_id:
+            self.toolbox_id = toolbox_id
+        if not self.toolbox_id:
+            raise ValueError(f"{type(self).__name__} must define a class-level toolbox_id")
+
+        self.config: Dict[str, Any] = config or {}
         self.bus: Optional[Union[MessageBusClient, FakeBus]] = None
 
         # Internal cache for discovered tools, mapped by name
@@ -80,7 +112,7 @@ class ToolBox(ABC):
         try:
             self.tools = {tool.name: tool for tool in self.discover_tools()}
         except Exception as e:
-            LOG.debug(f"ToolBox '{toolbox_id}' failed initial tool discovery, will retry on first use: {e}")
+            LOG.debug(f"ToolBox '{self.toolbox_id}' deferred tool discovery: {e}")
 
         # Initialize the messagebus connection if provided
         if bus:

@@ -28,6 +28,35 @@ Base Pydantic models for tool contracts. Subclass these when defining a tool. JS
 
 Abstract base class for tool plugins. Groups related `AgentTool` instances, registers messagebus handlers, and enforces validation.
 
+**Contract:**
+
+```python
+class MyToolBox(ToolBox):
+    toolbox_id = "my_toolbox"   # class attribute, matches the entry-point name
+
+    def __init__(self, config=None, bus=None):
+        super().__init__(config=config, bus=bus)
+```
+
+- `toolbox_id` is a **class attribute** declared by the plugin — it is *not* a
+  required constructor argument. It must match the plugin's entry-point name.
+- The constructor signature is `(config=None, bus=None, toolbox_id=None)`,
+  matching every other OPM plugin type (`config` first, `bus` optional).
+- Loaders/factories always instantiate with exactly `cls(config=cfg, bus=bus)` —
+  there is no try/except fallback and no guessing of the constructor signature.
+- `toolbox_id=` may optionally be passed to the constructor as an **opt-in
+  override** for adapters that front multiple instances of the same class (e.g.
+  an MCP/UTCP adapter pointed at two different servers). Plugins that don't need
+  multi-instancing can ignore this parameter entirely.
+- A missing/empty `toolbox_id` (neither declared on the class nor passed in)
+  raises `ValueError` at construction time.
+
+> **Breaking change (alpha, no back-compat shim):** earlier revisions took
+> `toolbox_id` as a required positional constructor argument
+> (`ToolBox.__init__(self, toolbox_id, bus=None)`). That form is gone. Plugins
+> must declare `toolbox_id` as a class attribute and forward `config`/`bus` to
+> `super().__init__()`.
+
 **Abstract method — must implement:**
 
 ```python
@@ -131,8 +160,10 @@ def fetch_weather(args: WeatherArgs) -> WeatherOutput:
 
 
 class WeatherToolBox(ToolBox):
-    def __init__(self, bus=None):
-        super().__init__(toolbox_id="weather_tools", bus=bus)
+    toolbox_id = "weather_tools"
+
+    def __init__(self, config=None, bus=None):
+        super().__init__(config=config, bus=bus)
 
     def discover_tools(self) -> List[AgentTool]:
         return [
@@ -162,11 +193,55 @@ Errors from `discover_tools()` at init are logged at `DEBUG` level and retried l
 
 ---
 
-## Discovery
+## Loader & Factory — `ovos_plugin_manager/agent_tools.py`
+
+Discovery, loading, and configuration follow the same conventions as the
+STT/TTS/VAD loaders.
 
 ```python
-from ovos_plugin_manager.persona import find_toolbox_plugins
+from ovos_plugin_manager.agent_tools import (
+    find_toolbox_plugins, load_toolbox_plugin,
+    get_toolbox_configs, get_toolbox_module_configs,
+    OVOSToolBoxFactory, create,
+)
 
 plugins = find_toolbox_plugins()
 # {"my_toolbox": MyToolBox, ...}
+
+clazz = load_toolbox_plugin("my_toolbox")
+# MyToolBox (uninstantiated)
 ```
+
+| Function | Description |
+|---|---|
+| `find_toolbox_plugins()` | Discover all installed `ToolBox` plugins over entry-point group `opm.agents.toolbox`. Returns `{name: class}`. |
+| `load_toolbox_plugin(name)` | Load a single uninstantiated `ToolBox` class by entry-point name. |
+| `get_toolbox_configs()` | Get all valid configurations for every installed ToolBox plugin (config group `opm.agents.toolbox.config`, i.e. `PluginConfigTypes.AGENT_TOOLBOX`). |
+| `get_toolbox_module_configs(name)` | Get valid configurations for a single named plugin. |
+| `get_toolbox_config(config=None)` | Resolve the relevant `agent_toolbox` section from a global `Configuration()` (or an already plugin-specific dict) for factory use. |
+
+**Factory:**
+
+```toml
+# mycroft.conf
+[agent_toolbox]
+module = "my_toolbox"
+
+[agent_toolbox.my_toolbox]
+api_key = "..."
+```
+
+```python
+from ovos_plugin_manager.agent_tools import OVOSToolBoxFactory, create
+
+toolbox = OVOSToolBoxFactory.create(bus=bus)   # reads global Configuration()
+# or, equivalently
+toolbox = create(bus=bus)
+```
+
+`OVOSToolBoxFactory.get_class(config=None)` resolves and loads only the class
+(no instantiation); `OVOSToolBoxFactory.create(config=None, bus=None)` /
+the module-level `create(config=None, bus=None)` convenience function resolve
+the configured module, instantiate it, and pass along `config` and `bus`
+exactly as `cls(config=plugin_config, bus=bus)` — no fallback, no signature
+guessing.
