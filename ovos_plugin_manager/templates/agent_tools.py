@@ -63,47 +63,33 @@ class ToolBox(ABC):
     Entry point group: ``opm.agents.toolbox``
 
     Contract:
-        - ``toolbox_id`` is a CLASS ATTRIBUTE declared by each concrete plugin
-          (matching its entry-point name), NOT a required constructor argument.
-        - The constructor signature is ``(config=None, bus=None, toolbox_id=None)``,
-          matching every other OPM plugin type (``config`` first, ``bus`` optional).
-        - Loaders/factories instantiate with exactly ``cls(config=cfg, bus=bus)`` --
-          no try/except fallbacks, no guessing of the constructor signature.
-        - ``toolbox_id`` may optionally be passed to the constructor as an opt-in
-          override, useful for adapters that front multiple instances of the same
-          class (e.g. an MCP/UTCP adapter pointed at two different servers). Plugins
-          that don't need this may ignore the parameter entirely.
-        - A missing/empty ``toolbox_id`` (neither declared on the class nor passed in)
-          raises ``ValueError`` at construction time.
+        - ``toolbox_id`` is a normal, required, first-positional constructor
+          argument -- not a class attribute. This matches how every other OPM
+          plugin type declares its identity.
+        - Concrete plugins define ``__init__(self, config=None, bus=None)`` and
+          call ``super().__init__(toolbox_id="<entry-point-name>", config=config,
+          bus=bus)``.
+        - Loaders/factories instantiate with exactly ``cls(config=cfg, bus=bus)``
+          -- they never pass ``toolbox_id`` themselves; the plugin supplies it.
+        - Multi-instance adapters (e.g. an MCP/UTCP adapter fronting several
+          servers) simply expose ``toolbox_id`` in their own ``__init__``
+          signature and forward it to ``super().__init__()``. No special base
+          class support is needed for this.
     """
 
-    #: Class attribute: plugin identity, matches the entry-point name.
-    #: Concrete plugins MUST override this.
-    toolbox_id: str = ""
-
     def __init__(self,
+                 toolbox_id: str,
                  config: Optional[Dict[str, Any]] = None,
-                 bus: Optional[Union[MessageBusClient, FakeBus]] = None,
-                 toolbox_id: Optional[str] = None):
+                 bus: Optional[Union[MessageBusClient, FakeBus]] = None):
         """
         Initializes the ToolBox. Note: Messagebus binding is deferred until `bind()` is called.
 
         Args:
+            toolbox_id: Unique plugin identity, matching its entry-point name.
             config: Plugin-specific configuration dict.
             bus: The OVOS Messagebus client instance. If provided, `bind()` is called automatically.
-            toolbox_id: Optional instance-level override of the class-level ``toolbox_id``.
-                Only needed by adapters that front multiple instances of the same class.
-
-        Raises:
-            ValueError: If neither the class nor the constructor call defines a
-                non-empty ``toolbox_id``.
         """
-        # opt-in instance override (multi-instance adapters e.g. MCP/UTCP fronting 2 servers)
-        if toolbox_id:
-            self.toolbox_id = toolbox_id
-        if not self.toolbox_id:
-            raise ValueError(f"{type(self).__name__} must define a class-level toolbox_id")
-
+        self.toolbox_id: str = toolbox_id
         self.config: Dict[str, Any] = config or {}
         self.bus: Optional[Union[MessageBusClient, FakeBus]] = None
 

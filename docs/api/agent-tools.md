@@ -32,30 +32,26 @@ Abstract base class for tool plugins. Groups related `AgentTool` instances, regi
 
 ```python
 class MyToolBox(ToolBox):
-    toolbox_id = "my_toolbox"   # class attribute, matches the entry-point name
-
     def __init__(self, config=None, bus=None):
-        super().__init__(config=config, bus=bus)
+        super().__init__(toolbox_id="my_toolbox", config=config, bus=bus)
 ```
 
-- `toolbox_id` is a **class attribute** declared by the plugin — it is *not* a
-  required constructor argument. It must match the plugin's entry-point name.
-- The constructor signature is `(config=None, bus=None, toolbox_id=None)`,
-  matching every other OPM plugin type (`config` first, `bus` optional).
+- `toolbox_id` is a normal, required, first-positional constructor argument on
+  the base class — **not** a class attribute. No other OPM plugin type declares
+  its identity as a class attribute, and `ToolBox` doesn't either.
+- Concrete plugins define `__init__(self, config=None, bus=None)` and call
+  `super().__init__(toolbox_id="<entry-point-name>", config=config, bus=bus)`,
+  passing the entry-point name as a literal.
 - Loaders/factories always instantiate with exactly `cls(config=cfg, bus=bus)` —
-  there is no try/except fallback and no guessing of the constructor signature.
-- `toolbox_id=` may optionally be passed to the constructor as an **opt-in
-  override** for adapters that front multiple instances of the same class (e.g.
-  an MCP/UTCP adapter pointed at two different servers). Plugins that don't need
-  multi-instancing can ignore this parameter entirely.
-- A missing/empty `toolbox_id` (neither declared on the class nor passed in)
-  raises `ValueError` at construction time.
-
-> **Breaking change (alpha, no back-compat shim):** earlier revisions took
-> `toolbox_id` as a required positional constructor argument
-> (`ToolBox.__init__(self, toolbox_id, bus=None)`). That form is gone. Plugins
-> must declare `toolbox_id` as a class attribute and forward `config`/`bus` to
-> `super().__init__()`.
+  they never pass `toolbox_id`; the plugin supplies it internally via `super()`.
+- Multi-instance adapters (e.g. an MCP/UTCP adapter fronting multiple servers)
+  simply expose `toolbox_id` in their own `__init__` signature and forward it:
+  ```python
+  class MultiToolBox(ToolBox):
+      def __init__(self, config=None, bus=None, toolbox_id="ovos-mcp-toolbox"):
+          super().__init__(toolbox_id=toolbox_id, config=config, bus=bus)
+  ```
+  No special base-class support is needed for this.
 
 **Abstract method — must implement:**
 
@@ -160,10 +156,8 @@ def fetch_weather(args: WeatherArgs) -> WeatherOutput:
 
 
 class WeatherToolBox(ToolBox):
-    toolbox_id = "weather_tools"
-
     def __init__(self, config=None, bus=None):
-        super().__init__(config=config, bus=bus)
+        super().__init__(toolbox_id="weather_tools", config=config, bus=bus)
 
     def discover_tools(self) -> List[AgentTool]:
         return [

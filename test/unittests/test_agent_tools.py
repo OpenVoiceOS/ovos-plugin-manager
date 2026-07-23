@@ -46,11 +46,9 @@ def failing_logic(args: AddArgs) -> AddOutput:
 
 
 class MathToolBox(ToolBox):
-    toolbox_id = "math_tools"
-
-    def __init__(self, config=None, bus=None, fail_discover: bool = False, **kwargs):
+    def __init__(self, config=None, bus=None, fail_discover: bool = False):
         self._fail_discover = fail_discover
-        super().__init__(config=config, bus=bus, **kwargs)
+        super().__init__(toolbox_id="math_tools", config=config, bus=bus)
 
     def discover_tools(self) -> List[AgentTool]:
         if self._fail_discover:
@@ -67,10 +65,8 @@ class MathToolBox(ToolBox):
 
 
 class FailingToolBox(ToolBox):
-    toolbox_id = "failing_tools"
-
     def __init__(self, config=None, bus=None):
-        super().__init__(config=config, bus=bus)
+        super().__init__(toolbox_id="failing_tools", config=config, bus=bus)
 
     def discover_tools(self) -> List[AgentTool]:
         return [
@@ -130,12 +126,11 @@ class TestToolBoxInit(unittest.TestCase):
 
 
 class TestToolBoxContract(unittest.TestCase):
-    """Tests for the (config=None, bus=None, toolbox_id=None) contract."""
+    """Tests for the (toolbox_id, config=None, bus=None) constructor contract."""
 
-    def test_class_attr_toolbox_id(self):
+    def test_toolbox_id_passed_through_super(self):
         tb = MathToolBox()
         self.assertEqual(tb.toolbox_id, "math_tools")
-        self.assertEqual(MathToolBox.toolbox_id, "math_tools")
 
     def test_config_passthrough(self):
         cfg = {"api_key": "secret", "some_option": 42}
@@ -151,32 +146,30 @@ class TestToolBoxContract(unittest.TestCase):
         tb = MathToolBox(config={"x": 1}, bus=bus)
         self.assertIs(tb.bus, bus)
 
-    def test_missing_toolbox_id_raises_value_error(self):
-        class NoIdToolBox(ToolBox):
+    def test_toolbox_id_required_positional_on_base(self):
+        class NoOverrideToolBox(ToolBox):
             def discover_tools(self) -> List[AgentTool]:
                 return []
 
-        with self.assertRaises(ValueError):
-            NoIdToolBox()
+        with self.assertRaises(TypeError):
+            NoOverrideToolBox()  # base __init__ requires toolbox_id
 
-    def test_optional_toolbox_id_override(self):
+        tb = NoOverrideToolBox(toolbox_id="no_override_tools")
+        self.assertEqual(tb.toolbox_id, "no_override_tools")
+
+    def test_multi_instance_adapter_forwards_toolbox_id(self):
         class MultiInstanceToolBox(ToolBox):
-            toolbox_id = "multi_tools"
+            def __init__(self, config=None, bus=None, toolbox_id="multi_tools"):
+                super().__init__(toolbox_id=toolbox_id, config=config, bus=bus)
 
             def discover_tools(self) -> List[AgentTool]:
                 return []
+
+        tb_default = MultiInstanceToolBox()
+        self.assertEqual(tb_default.toolbox_id, "multi_tools")
 
         tb = MultiInstanceToolBox(toolbox_id="multi_tools_server_a")
         self.assertEqual(tb.toolbox_id, "multi_tools_server_a")
-        # class attribute is untouched
-        self.assertEqual(MultiInstanceToolBox.toolbox_id, "multi_tools")
-
-    def test_empty_string_override_does_not_clobber_class_id(self):
-        tb = MathToolBox(toolbox_id="")
-        self.assertEqual(tb.toolbox_id, "math_tools")
-
-    def test_base_class_default_is_empty_string(self):
-        self.assertEqual(ToolBox.toolbox_id, "")
 
 
 class TestToolBoxCallTool(unittest.TestCase):
