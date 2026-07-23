@@ -63,16 +63,20 @@ class ToolBox(ABC):
     Entry point group: ``opm.agents.toolbox``
     """
 
-    def __init__(self, toolbox_id: str,
+    def __init__(self,
+                 toolbox_id: str,
+                 config: Optional[Dict[str, Any]] = None,
                  bus: Optional[Union[MessageBusClient, FakeBus]] = None):
         """
         Initializes the ToolBox. Note: Messagebus binding is deferred until `bind()` is called.
 
         Args:
-            toolbox_id: A unique identifier for this ToolBox instance (usually the entrypoint name, e.g., 'web_search_tools').
+            toolbox_id: Unique plugin identity, matching its entry-point name.
+            config: Plugin-specific configuration dict.
             bus: The OVOS Messagebus client instance. If provided, `bind()` is called automatically.
         """
-        self.toolbox_id: str = toolbox_id  # Unique ID for the toolbox
+        self.toolbox_id: str = toolbox_id
+        self.config: Dict[str, Any] = config or {}
         self.bus: Optional[Union[MessageBusClient, FakeBus]] = None
 
         # Internal cache for discovered tools, mapped by name
@@ -80,7 +84,7 @@ class ToolBox(ABC):
         try:
             self.tools = {tool.name: tool for tool in self.discover_tools()}
         except Exception as e:
-            LOG.debug(f"ToolBox '{toolbox_id}' failed initial tool discovery, will retry on first use: {e}")
+            LOG.debug(f"ToolBox '{self.toolbox_id}' deferred tool discovery: {e}")
 
         # Initialize the messagebus connection if provided
         if bus:

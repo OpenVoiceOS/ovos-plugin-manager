@@ -174,11 +174,8 @@ class MyOutput(ToolOutput):
     result: str = Field(..., description="Tool result.")
 
 class MyToolBox(ToolBox):
-    toolbox_id = "my-tools"
-
-    def __init__(self, config=None):
-        self.config = config or {}
-        super().__init__(toolbox_id=self.toolbox_id)
+    def __init__(self, config=None, bus=None):
+        super().__init__(toolbox_id="my-tools", config=config, bus=bus)
 
     def discover_tools(self):
         return [AgentTool(
