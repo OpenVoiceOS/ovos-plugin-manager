@@ -60,6 +60,11 @@ class ToolBox(ABC):
     Each ToolBox is a discoverable plugin that groups related AgentTools. It exposes
     tools as services over the OVOS messagebus and provides a direct execution interface.
 
+    **Plugin Contract:** A concrete ToolBox plugin must define its own __init__ method
+    (with signature ``__init__(self, config=None)`` or similar) that sets its toolbox_id
+    and calls ``super().__init__(toolbox_id=...)``. Loaders must always instantiate
+    plugins with no arguments (e.g., ``cls()``) and never pass toolbox_id directly.
+
     Entry point group: ``opm.agents.toolbox``
     """
 
@@ -69,7 +74,8 @@ class ToolBox(ABC):
         Initializes the ToolBox. Note: Messagebus binding is deferred until `bind()` is called.
 
         Args:
-            toolbox_id: A unique identifier for this ToolBox instance (usually the entrypoint name, e.g., 'web_search_tools').
+            toolbox_id: A unique identifier for this ToolBox instance. Must be set by the
+                concrete subclass's own __init__ method; never supplied by the loader.
             bus: The OVOS Messagebus client instance. If provided, `bind()` is called automatically.
         """
         self.toolbox_id: str = toolbox_id  # Unique ID for the toolbox
