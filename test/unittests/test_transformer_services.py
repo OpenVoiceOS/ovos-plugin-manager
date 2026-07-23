@@ -112,7 +112,8 @@ class TestPriorityOrdering(unittest.TestCase):
         self.assertEqual([p.name for p in service.plugins], ["first", "last"])
         utterances, context = service.transform(["hello"])
         self.assertEqual(utterances, ["last:first:hello"])
-        self.assertEqual(context, {"first": True, "last": True})
+        self.assertEqual(context, {"first": True, "last": True,
+                                   "utterance_transformer_ids": ["first", "last"]})
 
     def test_legacy_descending_low_priority_runs_last(self):
         service = self._service(sort_ascending=False)
@@ -293,7 +294,8 @@ class TestServiceTransforms(unittest.TestCase):
         service = self._empty(MetadataTransformersService)
         service.loaded_plugins["m"] = Meta("m")
         context = service.transform({"seed": 1})
-        self.assertEqual(context, {"seed": 1, "injected": True})
+        self.assertEqual(context, {"seed": 1, "injected": True,
+                                   "metadata_transformer_ids": ["m"]})
 
     def test_dialog_transform(self):
         class Dialog(DialogTransformer):
@@ -452,6 +454,149 @@ class TestTTSTransformersModule(unittest.TestCase):
             find_tts_transformer_plugins, load_tts_transformer_plugin)
         self.assertTrue(callable(find_tts_transformer_plugins))
         self.assertTrue(callable(load_tts_transformer_plugin))
+
+
+class TestTransform1Conformance(unittest.TestCase):
+    """OVOS-TRANSFORM-1 §1.3 provenance, §7 wrong-shape rejection and §3.4
+    intent dispatch-identity invariant."""
+
+    def _empty(self, klass, **kwargs):
+        with patch.object(klass, "plugin_finder", staticmethod(_fake_finder({}))):
+            return klass(config={}, **kwargs)
+
+    # §1.3 -- provenance stamping
+    def test_utterance_provenance_stamped_in_order(self):
+        p1 = _UttPrefixer("p1", priority=10)
+        p2 = _UttPrefixer("p2", priority=20)
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["p1"] = p1
+        service.loaded_plugins["p2"] = p2
+        _, context = service.transform(["hi"])
+        self.assertEqual(context.get("utterance_transformer_ids"), ["p1", "p2"])
+
+    def test_metadata_provenance_stamped_in_order(self):
+        class Meta(MetadataTransformer):
+            def transform(self, context=None):
+                return {}
+
+        p1 = Meta("p1", priority=10)
+        p2 = Meta("p2", priority=20)
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["p1"] = p1
+        service.loaded_plugins["p2"] = p2
+        context = service.transform({})
+        self.assertEqual(context.get("metadata_transformer_ids"), ["p1", "p2"])
+
+    # §7 -- wrong-shape returns rejected, prior output kept
+    def test_utterance_wrong_shape_rejected(self):
+        class Bad(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                return "not a tuple"
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["bad"] = Bad("bad", priority=10)
+        utterances, context = service.transform(["hello"], {"k": "v"})
+        self.assertEqual(utterances, ["hello"])
+        self.assertEqual(context, {"k": "v"})
+
+    def test_utterance_wrong_arity_rejected(self):
+        class Bad(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                return ["x"], {}, "extra"
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["bad"] = Bad("bad", priority=10)
+        utterances, _ = service.transform(["hello"], {})
+        self.assertEqual(utterances, ["hello"])
+
+    def test_utterance_non_dict_context_rejected(self):
+        class Bad(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                return ["x"], "not a dict"
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["bad"] = Bad("bad", priority=10)
+        utterances, context = service.transform(["hello"], {"k": "v"})
+        self.assertEqual(utterances, ["hello"])
+        self.assertEqual(context, {"k": "v"})
+
+    def test_metadata_wrong_shape_rejected(self):
+        class Bad(MetadataTransformer):
+            def transform(self, context=None):
+                return ["not", "a", "dict"]
+
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["bad"] = Bad("bad", priority=10)
+        context = service.transform({"k": "v"})
+        self.assertEqual(context, {"k": "v"})
+
+    def test_intent_wrong_shape_rejected(self):
+        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+        from ovos_plugin_manager.templates.transformers import IntentTransformer
+
+        class Bad(IntentTransformer):
+            def transform(self, intent):
+                return {"not": "a match"}
+
+        original = IntentHandlerMatch(match_type="skillA:foo", match_data={},
+                                      skill_id="skillA", utterance="hello")
+        service = self._empty(IntentTransformersService)
+        service.loaded_plugins["bad"] = Bad("bad", priority=10)
+        result = service.transform(original)
+        self.assertEqual(result.match_type, "skillA:foo")
+
+    # §3.4 -- intent dispatch-identity invariant
+    def test_intent_identity_change_rejected(self):
+        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+        from ovos_plugin_manager.templates.transformers import IntentTransformer
+
+        class Rogue(IntentTransformer):
+            def transform(self, intent):
+                return IntentHandlerMatch(match_type="skillB:bar", match_data={},
+                                          skill_id="skillB", utterance="hello")
+
+        original = IntentHandlerMatch(match_type="skillA:foo", match_data={},
+                                      skill_id="skillA", utterance="hello")
+        service = self._empty(IntentTransformersService)
+        service.loaded_plugins["rogue"] = Rogue("rogue", priority=50)
+        result = service.transform(original)
+        self.assertEqual(result.match_type, "skillA:foo")
+        self.assertEqual(result.skill_id, "skillA")
+
+    def test_intent_skill_id_change_rejected(self):
+        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+        from ovos_plugin_manager.templates.transformers import IntentTransformer
+
+        class Rogue(IntentTransformer):
+            def transform(self, intent):
+                return IntentHandlerMatch(match_type="skillA:foo", match_data={},
+                                          skill_id="evil", utterance="hello")
+
+        original = IntentHandlerMatch(match_type="skillA:foo", match_data={},
+                                      skill_id="skillA", utterance="hello")
+        service = self._empty(IntentTransformersService)
+        service.loaded_plugins["rogue"] = Rogue("rogue", priority=50)
+        result = service.transform(original)
+        self.assertEqual(result.skill_id, "skillA")
+
+    def test_intent_identity_preserving_change_accepted(self):
+        """§3.4 permits enriching match_data while identity is unchanged."""
+        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+        from ovos_plugin_manager.templates.transformers import IntentTransformer
+
+        class Enricher(IntentTransformer):
+            def transform(self, intent):
+                return IntentHandlerMatch(match_type=intent.match_type,
+                                          match_data={"slot": "value"},
+                                          skill_id=intent.skill_id,
+                                          utterance=intent.utterance)
+
+        original = IntentHandlerMatch(match_type="skillA:foo", match_data={},
+                                      skill_id="skillA", utterance="hello")
+        service = self._empty(IntentTransformersService)
+        service.loaded_plugins["e"] = Enricher("e", priority=50)
+        result = service.transform(original)
+        self.assertEqual(result.match_data.get("slot"), "value")
 
 
 if __name__ == "__main__":
