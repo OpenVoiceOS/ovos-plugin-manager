@@ -61,20 +61,6 @@ class ToolBox(ABC):
     tools as services over the OVOS messagebus and provides a direct execution interface.
 
     Entry point group: ``opm.agents.toolbox``
-
-    Contract:
-        - ``toolbox_id`` is a normal, required, first-positional constructor
-          argument -- not a class attribute. This matches how every other OPM
-          plugin type declares its identity.
-        - Concrete plugins define ``__init__(self, config=None, bus=None)`` and
-          call ``super().__init__(toolbox_id="<entry-point-name>", config=config,
-          bus=bus)``.
-        - Loaders/factories instantiate with exactly ``cls(config=cfg, bus=bus)``
-          -- they never pass ``toolbox_id`` themselves; the plugin supplies it.
-        - Multi-instance adapters (e.g. an MCP/UTCP adapter fronting several
-          servers) simply expose ``toolbox_id`` in their own ``__init__``
-          signature and forward it to ``super().__init__()``. No special base
-          class support is needed for this.
     """
 
     def __init__(self,

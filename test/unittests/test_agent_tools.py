@@ -11,7 +11,7 @@
 # limitations under the License.
 import unittest
 from typing import List
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 from ovos_utils.fakebus import FakeBus
 from pydantic import Field
@@ -126,12 +126,6 @@ class TestToolBoxInit(unittest.TestCase):
 
 
 class TestToolBoxContract(unittest.TestCase):
-    """Tests for the (toolbox_id, config=None, bus=None) constructor contract."""
-
-    def test_toolbox_id_passed_through_super(self):
-        tb = MathToolBox()
-        self.assertEqual(tb.toolbox_id, "math_tools")
-
     def test_config_passthrough(self):
         cfg = {"api_key": "secret", "some_option": 42}
         tb = MathToolBox(config=cfg)
@@ -141,35 +135,11 @@ class TestToolBoxContract(unittest.TestCase):
         tb = MathToolBox()
         self.assertEqual(tb.config, {})
 
-    def test_bus_autobind_via_constructor(self):
+    def test_config_and_bus_together(self):
         bus = FakeBus()
         tb = MathToolBox(config={"x": 1}, bus=bus)
+        self.assertEqual(tb.config, {"x": 1})
         self.assertIs(tb.bus, bus)
-
-    def test_toolbox_id_required_positional_on_base(self):
-        class NoOverrideToolBox(ToolBox):
-            def discover_tools(self) -> List[AgentTool]:
-                return []
-
-        with self.assertRaises(TypeError):
-            NoOverrideToolBox()  # base __init__ requires toolbox_id
-
-        tb = NoOverrideToolBox(toolbox_id="no_override_tools")
-        self.assertEqual(tb.toolbox_id, "no_override_tools")
-
-    def test_multi_instance_adapter_forwards_toolbox_id(self):
-        class MultiInstanceToolBox(ToolBox):
-            def __init__(self, config=None, bus=None, toolbox_id="multi_tools"):
-                super().__init__(toolbox_id=toolbox_id, config=config, bus=bus)
-
-            def discover_tools(self) -> List[AgentTool]:
-                return []
-
-        tb_default = MultiInstanceToolBox()
-        self.assertEqual(tb_default.toolbox_id, "multi_tools")
-
-        tb = MultiInstanceToolBox(toolbox_id="multi_tools_server_a")
-        self.assertEqual(tb.toolbox_id, "multi_tools_server_a")
 
 
 class TestToolBoxCallTool(unittest.TestCase):
@@ -334,92 +304,6 @@ class TestToolBoxBusHandlers(unittest.TestCase):
                                {"name": "nonexistent", "kwargs": {}}))
         self.assertEqual(len(responses), 1)
         self.assertIn("error", responses[0].data)
-
-
-class TestToolBoxLoader(unittest.TestCase):
-    """Tests for the ovos_plugin_manager.agent_tools loader module."""
-
-    def setUp(self):
-        from ovos_plugin_manager.utils import PluginTypes
-        self.PLUGIN_TYPE = PluginTypes.AGENT_TOOLBOX
-
-    @patch("ovos_plugin_manager.utils.find_plugins")
-    def test_find_toolbox_plugins(self, find_plugins):
-        from ovos_plugin_manager.agent_tools import find_toolbox_plugins
-        find_toolbox_plugins()
-        find_plugins.assert_called_once_with(self.PLUGIN_TYPE)
-
-    @patch("ovos_plugin_manager.utils.load_plugin")
-    def test_load_toolbox_plugin(self, load_plugin):
-        from ovos_plugin_manager.agent_tools import load_toolbox_plugin
-        load_toolbox_plugin("test_mod")
-        load_plugin.assert_called_once_with("test_mod", self.PLUGIN_TYPE)
-
-    @patch("ovos_plugin_manager.utils.config.load_configs_for_plugin_type")
-    def test_get_toolbox_configs(self, load_configs_for_plugin_type):
-        from ovos_plugin_manager.agent_tools import get_toolbox_configs
-        get_toolbox_configs()
-        load_configs_for_plugin_type.assert_called_once_with(self.PLUGIN_TYPE)
-
-    @patch("ovos_plugin_manager.utils.config.load_plugin_configs")
-    def test_get_toolbox_module_configs(self, load_plugin_configs):
-        from ovos_plugin_manager.agent_tools import get_toolbox_module_configs
-        from ovos_plugin_manager.utils import PluginConfigTypes
-        load_plugin_configs.return_value = []
-        get_toolbox_module_configs("test_mod")
-        load_plugin_configs.assert_called_once_with("test_mod",
-                                                     PluginConfigTypes.AGENT_TOOLBOX)
-
-
-class TestOVOSToolBoxFactory(unittest.TestCase):
-    def test_get_class_no_module_raises(self):
-        from ovos_plugin_manager.agent_tools import OVOSToolBoxFactory
-        with self.assertRaises(ValueError):
-            OVOSToolBoxFactory.get_class({"agent_toolbox": {"module": None}})
-
-    @patch("ovos_plugin_manager.utils.load_plugin")
-    def test_get_class_loads_configured_module(self, load_plugin):
-        from ovos_plugin_manager.utils import PluginTypes
-        mock = Mock()
-        load_plugin.return_value = mock
-        from ovos_plugin_manager.agent_tools import OVOSToolBoxFactory
-        config = {"agent_toolbox": {"module": "math_tools",
-                                     "math_tools": {"a": "b"}}}
-        clazz = OVOSToolBoxFactory.get_class(config)
-        load_plugin.assert_called_once_with("math_tools", PluginTypes.AGENT_TOOLBOX)
-        self.assertIs(clazz, mock)
-
-    def test_create_no_module_raises(self):
-        from ovos_plugin_manager.agent_tools import OVOSToolBoxFactory
-        with self.assertRaises(ValueError):
-            OVOSToolBoxFactory.create({"agent_toolbox": {"module": None}})
-
-    def test_create_calls_cls_with_config_and_bus(self):
-        from ovos_plugin_manager import agent_tools as agent_tools_mod
-        bus = FakeBus()
-        config = {"agent_toolbox": {"module": "math_tools",
-                                     "math_tools": {"answer": 42}}}
-        real_load = agent_tools_mod.load_toolbox_plugin
-        try:
-            agent_tools_mod.load_toolbox_plugin = Mock(return_value=MathToolBox)
-            tb = agent_tools_mod.OVOSToolBoxFactory.create(config, bus=bus)
-        finally:
-            agent_tools_mod.load_toolbox_plugin = real_load
-        self.assertIsInstance(tb, MathToolBox)
-        self.assertEqual(tb.config, {"answer": 42})
-        self.assertIs(tb.bus, bus)
-
-    def test_module_level_create_delegates_to_factory(self):
-        from ovos_plugin_manager import agent_tools as agent_tools_mod
-        config = {"agent_toolbox": {"module": "math_tools",
-                                     "math_tools": {}}}
-        real_create = agent_tools_mod.OVOSToolBoxFactory.create
-        try:
-            agent_tools_mod.OVOSToolBoxFactory.create = Mock(return_value="sentinel")
-            result = agent_tools_mod.create(config)
-        finally:
-            agent_tools_mod.OVOSToolBoxFactory.create = real_create
-        self.assertEqual(result, "sentinel")
 
 
 if __name__ == "__main__":

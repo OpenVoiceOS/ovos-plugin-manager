@@ -28,31 +28,6 @@ Base Pydantic models for tool contracts. Subclass these when defining a tool. JS
 
 Abstract base class for tool plugins. Groups related `AgentTool` instances, registers messagebus handlers, and enforces validation.
 
-**Contract:**
-
-```python
-class MyToolBox(ToolBox):
-    def __init__(self, config=None, bus=None):
-        super().__init__(toolbox_id="my_toolbox", config=config, bus=bus)
-```
-
-- `toolbox_id` is a normal, required, first-positional constructor argument on
-  the base class — **not** a class attribute. No other OPM plugin type declares
-  its identity as a class attribute, and `ToolBox` doesn't either.
-- Concrete plugins define `__init__(self, config=None, bus=None)` and call
-  `super().__init__(toolbox_id="<entry-point-name>", config=config, bus=bus)`,
-  passing the entry-point name as a literal.
-- Loaders/factories always instantiate with exactly `cls(config=cfg, bus=bus)` —
-  they never pass `toolbox_id`; the plugin supplies it internally via `super()`.
-- Multi-instance adapters (e.g. an MCP/UTCP adapter fronting multiple servers)
-  simply expose `toolbox_id` in their own `__init__` signature and forward it:
-  ```python
-  class MultiToolBox(ToolBox):
-      def __init__(self, config=None, bus=None, toolbox_id="ovos-mcp-toolbox"):
-          super().__init__(toolbox_id=toolbox_id, config=config, bus=bus)
-  ```
-  No special base-class support is needed for this.
-
 **Abstract method — must implement:**
 
 ```python
@@ -156,8 +131,8 @@ def fetch_weather(args: WeatherArgs) -> WeatherOutput:
 
 
 class WeatherToolBox(ToolBox):
-    def __init__(self, config=None, bus=None):
-        super().__init__(toolbox_id="weather_tools", config=config, bus=bus)
+    def __init__(self, bus=None):
+        super().__init__(toolbox_id="weather_tools", bus=bus)
 
     def discover_tools(self) -> List[AgentTool]:
         return [
@@ -187,55 +162,11 @@ Errors from `discover_tools()` at init are logged at `DEBUG` level and retried l
 
 ---
 
-## Loader & Factory — `ovos_plugin_manager/agent_tools.py`
-
-Discovery, loading, and configuration follow the same conventions as the
-STT/TTS/VAD loaders.
+## Discovery
 
 ```python
-from ovos_plugin_manager.agent_tools import (
-    find_toolbox_plugins, load_toolbox_plugin,
-    get_toolbox_configs, get_toolbox_module_configs,
-    OVOSToolBoxFactory, create,
-)
+from ovos_plugin_manager.persona import find_toolbox_plugins
 
 plugins = find_toolbox_plugins()
 # {"my_toolbox": MyToolBox, ...}
-
-clazz = load_toolbox_plugin("my_toolbox")
-# MyToolBox (uninstantiated)
 ```
-
-| Function | Description |
-|---|---|
-| `find_toolbox_plugins()` | Discover all installed `ToolBox` plugins over entry-point group `opm.agents.toolbox`. Returns `{name: class}`. |
-| `load_toolbox_plugin(name)` | Load a single uninstantiated `ToolBox` class by entry-point name. |
-| `get_toolbox_configs()` | Get all valid configurations for every installed ToolBox plugin (config group `opm.agents.toolbox.config`, i.e. `PluginConfigTypes.AGENT_TOOLBOX`). |
-| `get_toolbox_module_configs(name)` | Get valid configurations for a single named plugin. |
-| `get_toolbox_config(config=None)` | Resolve the relevant `agent_toolbox` section from a global `Configuration()` (or an already plugin-specific dict) for factory use. |
-
-**Factory:**
-
-```toml
-# mycroft.conf
-[agent_toolbox]
-module = "my_toolbox"
-
-[agent_toolbox.my_toolbox]
-api_key = "..."
-```
-
-```python
-from ovos_plugin_manager.agent_tools import OVOSToolBoxFactory, create
-
-toolbox = OVOSToolBoxFactory.create(bus=bus)   # reads global Configuration()
-# or, equivalently
-toolbox = create(bus=bus)
-```
-
-`OVOSToolBoxFactory.get_class(config=None)` resolves and loads only the class
-(no instantiation); `OVOSToolBoxFactory.create(config=None, bus=None)` /
-the module-level `create(config=None, bus=None)` convenience function resolve
-the configured module, instantiate it, and pass along `config` and `bus`
-exactly as `cls(config=plugin_config, bus=bus)` — no fallback, no signature
-guessing.
