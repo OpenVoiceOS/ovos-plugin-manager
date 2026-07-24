@@ -23,6 +23,8 @@ class IntentHandlerMatch:
             A termination or continuation of an already-active skill's
             participation — e.g. a stop — sets this, since it must not register
             the target as a freshly activated skill.
+        intent_context (Optional[Dict]): Context keywords this match promotes
+            into the session's intent_context, per OVOS-CONTEXT-1 §5.1.
     """
     match_type: str
     match_data: Optional[Dict] = None
@@ -30,6 +32,7 @@ class IntentHandlerMatch:
     utterance: Optional[str] = None
     updated_session: Optional[Session] = None
     suppress_activation: bool = False
+    intent_context: Optional[Dict] = None
 
 
 class PipelinePlugin:
