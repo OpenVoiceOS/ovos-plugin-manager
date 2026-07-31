@@ -1,7 +1,7 @@
 # Installation Utilities
 
-`ovos_plugin_manager.installation` provides helpers for installing plugins at runtime via
-`pip` and for searching PyPI for OVOS-compatible packages.
+`ovos_plugin_manager.installation` has helpers to install plugins at runtime with `pip`,
+and to search PyPI for OVOS-compatible packages.
 
 ## `pip_install`
 
@@ -13,14 +13,14 @@ def pip_install(
 ) -> bool
 ```
 
-Install one or more Python packages using the current interpreter's `pip`. Packages are
-installed sequentially in the order given.
+Install one or more Python packages with the current interpreter's `pip`. The function
+installs packages in the order given.
 
-If the interpreter binary is not writable by the current user, `sudo -n pip install` is
-attempted automatically.
+If the current user cannot write to the interpreter binary, the function tries
+`sudo -n pip install` automatically.
 
-A named lock (`ovos_pip.lock`) serializes concurrent calls so that parallel plugin
-installers do not race.
+A named lock (`ovos_pip.lock`) serializes concurrent calls, so parallel plugin installers
+do not race each other.
 
 **Parameters**
 
@@ -55,7 +55,7 @@ def search_pip(
 ) -> Iterator[Tuple[str, str]]
 ```
 
-Search PyPI for packages matching `query` by scraping `pypi.org/search`.
+Search PyPI for packages that match `query`. The function scrapes `pypi.org/search`.
 
 **Parameters**
 
@@ -81,8 +81,7 @@ for name, desc in search_pip("ovos-tts-plugin", max_results=5):
 
 ## `OpenVoiceOSPlugin.install`
 
-The `OpenVoiceOSPlugin` class (see `ovos_plugin_manager.plugin_entry`) wraps `pip_install`
-for convenience:
+The `OpenVoiceOSPlugin` class (see `ovos_plugin_manager.plugin_entry`) wraps `pip_install`:
 
 ```python
 from ovos_plugin_manager.plugin_entry import OpenVoiceOSPlugin
@@ -91,17 +90,22 @@ p = OpenVoiceOSPlugin({"package_name": "ovos-stt-plugin-whisper"})
 p.install()  # calls pip_install(["ovos-stt-plugin-whisper"])
 ```
 
-If `package_name` is not set but a GitHub `url` is present, it installs via
+If `package_name` is not set but a GitHub `url` is present, the plugin installs with
 `pip install git+<url>`.
 
 ---
 
 ## `PipException`
 
-Raised by `pip_install` when a package fails to install.
+`pip_install` raises this error when a package fails to install.
 
 ```python
 from ovos_plugin_manager.exceptions import PipException
 ```
 
-Subclasses `RuntimeError`. The error message includes the pip exit code and stderr.
+`PipException` subclasses `RuntimeError`. The error message includes the pip exit code and
+stderr.
+
+---
+
+[Home](index.md) · [Plugin Types →](plugin-types.md)
