@@ -1,13 +1,13 @@
 # Voice Cloning Plugins (`opm.vc`)
 
-Voice-cloning plugins perform **audio-to-audio** voice conversion: given a source
-speech file and a short reference speaker sample, the plugin outputs new audio that
-carries the linguistic content of the source but sounds like the reference speaker.
+Voice-cloning plugins perform audio-to-audio voice conversion. Given a source speech file
+and a short reference speaker sample, the plugin outputs new audio that carries the
+linguistic content of the source but sounds like the reference speaker.
 
-> **Scope boundary — text input is out of scope.**  Voice cloning from text (zero-shot
-> TTS with a speaker reference) belongs in TTS plugins and is configured via the TTS
-> plugin's own `config` section.  The `opm.vc` family deals exclusively with
-> already-recorded speech as input; it never receives raw text.
+> **Scope boundary: text input is out of scope.** Voice cloning from text (zero-shot TTS
+> with a speaker reference) belongs in TTS plugins, and you configure it through the TTS
+> plugin's own `config` section. The `opm.vc` family takes only already-recorded speech as
+> input. It never receives raw text.
 
 ---
 
@@ -24,8 +24,8 @@ Config section: `voice_clone`
 | `sample_rate → int` | Output sample rate in Hz (default 24000). Override to advertise the engine's native rate. |
 | `available_languages → List[str]` | BCP-47 tags supported. Return `[]` for language-agnostic engines (default). |
 
-`__init__(self, config=None)` stores the plugin-specific config dict; no further
-initialisation is mandated.
+`__init__(self, config=None)` stores the plugin-specific config dict. No other
+initialization step is required.
 
 ---
 
@@ -75,5 +75,9 @@ out_wav = cloner.clone_voice("/path/source.wav", "/path/reference.wav")
 
 ## Implementations
 
-Implementations register under the `opm.vc` entry-point group and are
-discovered with `find_voice_clone_plugins()`.
+Implementations register under the `opm.vc` entry-point group. Find them with
+`find_voice_clone_plugins()`.
+
+---
+
+[← Transformers](transformers.md) · [Home](index.md) · [Agent Plugins →](agents.md)

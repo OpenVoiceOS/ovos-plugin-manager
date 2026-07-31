@@ -1,6 +1,6 @@
 # Agent Plugins
 
-The agent plugin system extends OPM with composable NLP components for conversational AI, tool use, and text understanding. Plugins are discovered via Python entry points exactly like all other OPM plugin types.
+The agent plugin system extends OPM with composable NLP components for conversational AI, tool use, and text understanding. OPM discovers these plugins through Python entry points, the same way it discovers every other plugin type.
 
 Base classes: `ovos_plugin_manager/templates/agents.py`, `ovos_plugin_manager/templates/agent_tools.py`
 
@@ -10,35 +10,35 @@ Base classes: `ovos_plugin_manager/templates/agents.py`, `ovos_plugin_manager/te
 
 | Group | Base Class | Purpose |
 |---|---|---|
-| `opm.agents.chat` | `ChatEngine` | Multi-turn chat / agentic loops — `continue_chat(messages)` → `AgentMessage` |
+| `opm.agents.chat` | `ChatEngine` | Multi-turn chat and agentic loops, through `continue_chat(messages)` to `AgentMessage` |
 | `opm.agents.chat.multimodal` | `MultimodalChatEngine` | Chat with image/audio/file inputs |
 | `opm.agents.toolbox` | `ToolBox` | Groups of callable `AgentTool` functions exposed to agents via bus or direct call |
 | `opm.agents.summarizer` | `SummarizerEngine` / `ChatSummarizerEngine` | Document or chat-history summarisation |
 | `opm.agents.retrieval` | `RetrievalEngine` | Knowledge-base / vector-index query (`query(q, lang, k)` → `List[Tuple[str, float]]`) |
-| `opm.plugin.persona` | `dict` | Static persona config dict; consumed by `ovos-persona` to wire a ChatEngine with a system prompt |
+| `opm.plugin.persona` | `dict` | Static persona config dict, consumed by `ovos-persona` to wire a ChatEngine with a system prompt |
 
-`AgentContextManager` (`agents.py:35`) — optional companion base class for plugins that augment conversation context (RAG, memory, history trimming). Not a standalone entry point group; used inside `ChatEngine` implementations.
+`AgentContextManager` (`agents.py:35`) is an optional companion base class for plugins that augment conversation context (RAG, memory, history trimming). It is not a standalone entry point group. `ChatEngine` implementations use it internally.
 
 ---
 
 ## Available ToolBoxes (`opm.agents.toolbox`)
 
-Each `ToolBox` implements `discover_tools() → List[AgentTool]` (`agent_tools.py:314`). Tools are callable directly via `ToolBox.call_tool(name, kwargs)` or over the OVOS bus via the `ovos.persona.tools.{toolbox_id}.call` message topic (`agent_tools.py:102`).
+Each `ToolBox` implements `discover_tools() → List[AgentTool]` (`agent_tools.py:314`). You can call tools directly with `ToolBox.call_tool(name, kwargs)`, or over the OVOS bus with the `ovos.persona.tools.{toolbox_id}.call` message topic (`agent_tools.py:102`).
 
 | Plugin ID | Class | Tools | Package | API Key |
 |---|---|---|---|---|
-| `ovos-wikipedia-tools` | `WikipediaToolBox` | `search_wikipedia`, `get_wikipedia_sections`, `get_wikipedia_page` | `ovos-wikipedia-solver` | None — public Wikipedia REST API |
-| `ovos-ddg-tools` | `DuckDuckGoToolBox` | `search_duckduckgo`, `get_duckduckgo_infobox` | `ovos-ddg-solver-plugin` | None — DuckDuckGo Instant Answer API |
-| `ovos-wolfram-alpha-tools` | `WolframAlphaToolBox` | `compute`, `compute_full` | `ovos-wolfram-alpha-solver` | Optional — free key at developer.wolframalpha.com; demo key bundled |
-| `ovos-weather-tools` | `WeatherToolBox` | `get_current_weather`, `get_daily_forecast`, `get_hourly_forecast` | `ovos-skill-weather` | None — Open-Meteo public API |
-| `ovos-datetime-tools` | `DateTimeToolBox` | `get_current_datetime`, `convert_timezone`, `get_timezone_for_location` | `ovos-skill-date-time` | None — stdlib + pytz |
+| `ovos-wikipedia-tools` | `WikipediaToolBox` | `search_wikipedia`, `get_wikipedia_sections`, `get_wikipedia_page` | `ovos-wikipedia-solver` | None, public Wikipedia REST API |
+| `ovos-ddg-tools` | `DuckDuckGoToolBox` | `search_duckduckgo`, `get_duckduckgo_infobox` | `ovos-ddg-solver-plugin` | None, DuckDuckGo Instant Answer API |
+| `ovos-wolfram-alpha-tools` | `WolframAlphaToolBox` | `compute`, `compute_full` | `ovos-wolfram-alpha-solver` | Optional, free key at developer.wolframalpha.com, and a demo key ships in the plugin |
+| `ovos-weather-tools` | `WeatherToolBox` | `get_current_weather`, `get_daily_forecast`, `get_hourly_forecast` | `ovos-skill-weather` | None, Open-Meteo public API |
+| `ovos-datetime-tools` | `DateTimeToolBox` | `get_current_datetime`, `convert_timezone`, `get_timezone_for_location` | `ovos-skill-date-time` | None, stdlib + pytz |
 | `ovos-ip-tools` | `IPAddressToolBox` | `get_local_ip_addresses`, `get_public_ip` | `ovos-skill-ip` | None |
-| `ovos-iss-tools` | `ISSLocationToolBox` | `get_iss_position`, `get_iss_crew` | `ovos-skill-iss-location` | Optional — geonames.org user for reverse geocoding |
-| `ovos-speedtest-tools` | `SpeedTestToolBox` | `run_speedtest` | `ovos-skill-speedtest` | None — Speedtest.net |
-| `ovos-wallpapers-tools` | `WallpapersToolBox` | `search_wallpapers` | `ovos-skill-wallpapers` | None — wallhaven.cc public API |
-| `ovos-wikihow-tools` | `WikiHowToolBox` | `search_wikihow`, `get_wikihow_steps` | `ovos-skill-wikihow` | None — pywikihow scraper |
-| `ovos-wordnet-tools` | `WordNetToolBox` | `lookup_word`, `define_word` | `ovos-skill-wordnet` | None — local NLTK corpus |
-| `ovos-skill-md-toolbox` | `SkillMDToolBox` | dynamic — one tool per installed `SKILL.md` | `ovos-agentic-loop` | Requires a configured `ChatEngine` (brain) |
+| `ovos-iss-tools` | `ISSLocationToolBox` | `get_iss_position`, `get_iss_crew` | `ovos-skill-iss-location` | Optional, geonames.org user for reverse geocoding |
+| `ovos-speedtest-tools` | `SpeedTestToolBox` | `run_speedtest` | `ovos-skill-speedtest` | None, Speedtest.net |
+| `ovos-wallpapers-tools` | `WallpapersToolBox` | `search_wallpapers` | `ovos-skill-wallpapers` | None, wallhaven.cc public API |
+| `ovos-wikihow-tools` | `WikiHowToolBox` | `search_wikihow`, `get_wikihow_steps` | `ovos-skill-wikihow` | None, pywikihow scraper |
+| `ovos-wordnet-tools` | `WordNetToolBox` | `lookup_word`, `define_word` | `ovos-skill-wordnet` | None, local NLTK corpus |
+| `ovos-skill-md-toolbox` | `SkillMDToolBox` | dynamic: one tool per installed `SKILL.md` | `ovos-agentic-loop` | Requires a configured `ChatEngine` (brain) |
 | `ovos-filesystem-tools` | `FileSystemToolBox` | `read_file`, `write_file`, `list_directory`, `search_in_files`, `find_files` | `ovos-agentic-loop` | None |
 | `ovos-shell-tools` | `ShellToolBox` | `run_command` | `ovos-agentic-loop` | None |
 | `ovos-web-search-tools` | `WebSearchToolBox` | `web_search` | `ovos-agentic-loop` | None |
@@ -47,13 +47,13 @@ Each `ToolBox` implements `discover_tools() → List[AgentTool]` (`agent_tools.p
 ### Tool schema
 
 Each `AgentTool` (`agent_tools.py:40`) carries:
-- `name` — snake_case identifier used by the LLM
-- `description` — natural-language purpose shown to the LLM
-- `argument_schema` — Pydantic `ToolArguments` subclass; JSON Schema auto-generated for LLM tool-calling APIs
-- `output_schema` — Pydantic `ToolOutput` subclass; validated on every call
-- `tool_call` — the Python callable; receives an instantiated `ToolArguments`, returns `ToolOutput`
+- `name`: snake_case identifier the LLM uses
+- `description`: natural-language purpose shown to the LLM
+- `argument_schema`: Pydantic `ToolArguments` subclass. JSON Schema is auto-generated from it for LLM tool-calling APIs
+- `output_schema`: Pydantic `ToolOutput` subclass, validated on every call
+- `tool_call`: the Python callable. It receives an instantiated `ToolArguments` and returns `ToolOutput`
 
-`ToolBox.tool_json_list` (`agent_tools.py:290`) converts all tools to the JSON Schema list format expected by OpenAI / Anthropic / Gemini tool-calling endpoints.
+`ToolBox.tool_json_list` (`agent_tools.py:290`) converts all tools to the JSON Schema list format that OpenAI, Anthropic, and Gemini tool-calling endpoints expect.
 
 ---
 
@@ -108,32 +108,32 @@ def continue_chat(self, messages: List[AgentMessage],
 
 ### Tool calling
 
-A conversation can carry tool turns. `MessageRole.TOOL` is the role of a tool
-result, and `AgentMessage` carries optional tool fields:
+A conversation can carry tool turns. `MessageRole.TOOL` is the role of a tool result.
+`AgentMessage` carries optional tool fields:
 
-- `tool_calls: Optional[List[ToolCall]]` — set on an `ASSISTANT` message that
-  requests tool invocations (`ToolCall(id, name, arguments)`); `content` may be `""`.
-- `tool_call_id` / `name` — set on a `TOOL` message, identifying the `ToolCall` it
+- `tool_calls: Optional[List[ToolCall]]`: set on an `ASSISTANT` message that
+  requests tool invocations (`ToolCall(id, name, arguments)`). `content` may be `""`.
+- `tool_call_id` / `name`: set on a `TOOL` message, and identify the `ToolCall` it
   answers.
 
-`continue_chat` accepts an optional `tools` argument — pass `ToolBox` object(s)
-directly (preferred) and/or OpenAI tool dicts; the engine coerces it with
+`continue_chat` accepts an optional `tools` argument. Pass `ToolBox` object(s) directly
+(preferred), OpenAI tool dicts, or both. The engine coerces the argument with
 `ToolBox.normalize_tools(tools)` (see [`api/agent-tools.md`](api/agent-tools.md)).
-An engine that can use it sets the class attribute `supports_tools = True` and
+An engine that can use tools sets the class attribute `supports_tools = True`, and
 returns an assistant `AgentMessage` whose `tool_calls` are populated when the model
-requests them. Engines that don't support
-tools leave `supports_tools = False` and ignore the argument — the new kwarg is
-optional, so pre-existing 4-arg `continue_chat` overrides keep working unchanged.
-The ordering invariant providers expect: an assistant message carrying `tool_calls`
-must be followed by one `TOOL` message per `ToolCall.id`. The orchestration loop
-that drives this lives in `ovos-agentic-loop` (`NativeToolCallEngine`), not in the
-provider engines.
+requests them. An engine that does not support tools leaves `supports_tools = False`
+and ignores the argument. The kwarg is optional, so existing 4-arg `continue_chat`
+overrides keep working unchanged.
+
+Providers expect this ordering: an assistant message that carries `tool_calls` must be
+followed by one `TOOL` message per `ToolCall.id`. The orchestration loop that drives this
+lives in `ovos-agentic-loop` (`NativeToolCallEngine`), not in the provider engines.
 
 ---
 
 ## Available Personas (`opm.plugin.persona`)
 
-Each persona entry is a dict defining `chat_engine`, `system_prompt`, and optionally `toolboxes`. Loaded and wired by the `ovos-persona` service.
+Each persona entry is a dict that defines `chat_engine`, `system_prompt`, and optionally `toolboxes`. The `ovos-persona` service loads and wires each entry.
 
 | Persona ID | Backend | Package |
 |---|---|---|
@@ -187,7 +187,7 @@ class MyToolBox(ToolBox):
         )]
 ```
 
-`ToolBox.call_tool` validates input and output against the Pydantic schemas automatically (`agent_tools.py:195`). `discover_tools` is called once at init and again lazily if a tool is not found in the cache (`agent_tools.py:104`).
+`ToolBox.call_tool` validates input and output against the Pydantic schemas automatically (`agent_tools.py:195`). `discover_tools` runs once at init, and again lazily if a tool is not found in the cache (`agent_tools.py:104`).
 
 ---
 
@@ -230,4 +230,8 @@ Config is passed as a plain `dict` to `__init__`. OPM reads plugin config from t
 | `system_prompt` | `str` | `""` | System prompt for `AgentContextManager` plugins (`agents.py:61`) |
 | `context_ttl` | `int` | `120` | Seconds before coreference context is pruned (`agents.py:598`) |
 
-ToolBox-specific keys are documented in each plugin's module docstring.
+Each plugin's module docstring documents its ToolBox-specific keys.
+
+---
+
+[← Voice Cloning](voice-clone.md) · [Home](index.md)

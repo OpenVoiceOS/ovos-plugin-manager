@@ -1,10 +1,10 @@
 # Writing an OVOS Plugin
 
-This guide shows how to package a new OVOS plugin from scratch using `setup.py`.
+This guide shows how to package a new OVOS plugin from scratch with `setup.py`.
 
 ## 1. Implement the base class
 
-Choose the appropriate template from `ovos_plugin_manager.templates.*` and subclass it.
+Choose the matching template from `ovos_plugin_manager.templates.*` and subclass it.
 
 ### Example: STT plugin
 
@@ -84,7 +84,7 @@ class MyWakeWord(HotWordEngine):
 
 ## 2. Expose the plugin via `setup.py`
 
-Register your class under the correct entry point group so OPM can discover it.
+Register your class under the correct entry point group. This lets OPM discover it.
 
 ```python
 # setup.py
@@ -120,7 +120,7 @@ See [Plugin Types](plugin-types.md) for the full list.
 pip install -e .
 ```
 
-The plugin is now discoverable by OPM without any additional registration:
+OPM can now discover the plugin without any other registration step:
 
 ```python
 from ovos_plugin_manager.stt import find_stt_plugins, load_stt_plugin
@@ -130,9 +130,9 @@ MySTT = load_stt_plugin("my-engine-stt")
 
 ## 4. Expose language configurations (optional)
 
-Plugins that support multiple voices/languages/models should expose a `.config` entry
-point returning a dict of `{lang: [list_of_config_dicts]}`. Each config dict represents
-one voice/model variant and can include:
+A plugin that supports multiple voices, languages, or models should expose a `.config`
+entry point that returns a dict of `{lang: [list_of_config_dicts]}`. Each config dict
+represents one voice or model variant, and can include:
 
 | Key | Type | Description |
 |---|---|---|
@@ -162,7 +162,7 @@ class MyTTSPluginConfig:
 ## 5. `RuntimeRequirements`
 
 Override `runtime_requirements` to declare connectivity needs. OVOS uses this to decide
-whether the plugin can be loaded before network/internet is available.
+whether it can load the plugin before the network or internet is available.
 
 ```python
 from ovos_utils.process_utils import RuntimeRequirements
@@ -182,7 +182,7 @@ class MySTTPlugin(STT):
         )
 ```
 
-For a fully offline plugin, all values are `False` / `True` as appropriate.
+For a fully offline plugin, set each value to `False` or `True` as appropriate.
 
 ## 6. PHAL plugins
 
@@ -209,3 +209,7 @@ class MyPHALPlugin(PHALPlugin):
 # setup.py entry_points
 "opm.phal": ["my-phal-plugin = my_phal:MyPHALPlugin"]
 ```
+
+---
+
+[← Plugin Types](plugin-types.md) · [Home](index.md) · [Configuration →](configuration.md)
