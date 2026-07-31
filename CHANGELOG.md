@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.11.1a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.1a2) (2026-07-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.1a1...2.11.1a2)
+
+**Merged pull requests:**
+
+- docs: rewrite README in Simplified Technical English [\#423](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/423) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.11.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.1a1) (2026-07-23)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.0a1...2.11.1a1)
