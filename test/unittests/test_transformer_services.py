@@ -9,7 +9,7 @@ from ovos_plugin_manager.templates.transformers import (AudioTransformer,
 from ovos_plugin_manager.transformer_services import (
     AudioTransformersService, DialogTransformersService,
     IntentTransformersService, MetadataTransformersService,
-    TTSTransformersService, UtteranceTransformersService)
+    TTSTransformersService, UtteranceTransformersService, _RedactedContext)
 
 
 class _UttPrefixer(UtteranceTransformer):
@@ -514,6 +514,46 @@ class TestTransform1Conformance(unittest.TestCase):
         self.assertIs(context, original)
         self.assertEqual(context["nested"], {"lang": "en-us", "touched": True})
         self.assertEqual(context["metadata_transformer_ids"], ["in-place"])
+
+    def test_empty_utterance_context_preserves_identity(self):
+        class InPlace(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                context["touched"] = True
+                return utterances, context
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["in-place"] = InPlace("in-place", priority=10)
+        original = {}
+        _, context = service.transform(["hello"], original)
+        self.assertIs(context, original)
+        self.assertTrue(context["touched"])
+
+    def test_empty_metadata_context_preserves_identity(self):
+        class InPlace(MetadataTransformer):
+            def transform(self, context=None):
+                context["touched"] = True
+                return context
+
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["in-place"] = InPlace("in-place", priority=10)
+        original = {}
+        context = service.transform(original)
+        self.assertIs(context, original)
+        self.assertTrue(context["touched"])
+
+    def test_redacted_context_filters_only_when_formatted(self):
+        class CountingContext(dict):
+            item_reads = 0
+
+            def items(self):
+                self.item_reads += 1
+                return super().items()
+
+        context = CountingContext(session={"token": "secret"}, visible=True)
+        redacted = _RedactedContext(context)
+        self.assertEqual(context.item_reads, 0)
+        self.assertEqual(str(redacted), "{'visible': True}")
+        self.assertEqual(context.item_reads, 1)
 
     # §7 -- wrong-shape returns rejected, prior output kept
     def test_utterance_wrong_shape_rejected(self):
