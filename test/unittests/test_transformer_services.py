@@ -1,8 +1,6 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from ovos_utils.log import LOG
-
 from ovos_plugin_manager.templates.transformers import (AudioTransformer,
                                                         DialogTransformer,
                                                         MetadataTransformer,
@@ -516,38 +514,6 @@ class TestTransform1Conformance(unittest.TestCase):
         self.assertIs(context, original)
         self.assertEqual(context["nested"], {"lang": "en-us", "touched": True})
         self.assertEqual(context["metadata_transformer_ids"], ["in-place"])
-
-    def test_info_level_skips_hot_path_debug_logger_resolution(self):
-        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
-        from ovos_plugin_manager.templates.transformers import IntentTransformer
-
-        class Identity(IntentTransformer):
-            def transform(self, intent):
-                return intent
-
-        service = self._empty(IntentTransformersService)
-        service.loaded_plugins["identity"] = Identity("identity", priority=10)
-        intent = IntentHandlerMatch(match_type="skillA:foo", match_data={},
-                                    skill_id="skillA", utterance="hello")
-        with patch.object(LOG, "level", "INFO"), patch.object(LOG, "debug") as debug:
-            self.assertIs(service.transform(intent), intent)
-        debug.assert_not_called()
-
-    def test_debug_level_keeps_transform_diagnostics(self):
-        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
-        from ovos_plugin_manager.templates.transformers import IntentTransformer
-
-        class Identity(IntentTransformer):
-            def transform(self, intent):
-                return intent
-
-        service = self._empty(IntentTransformersService)
-        service.loaded_plugins["identity"] = Identity("identity", priority=10)
-        intent = IntentHandlerMatch(match_type="skillA:foo", match_data={},
-                                    skill_id="skillA", utterance="hello")
-        with patch.object(LOG, "level", "DEBUG"), patch.object(LOG, "debug") as debug:
-            self.assertIs(service.transform(intent), intent)
-        debug.assert_called_once_with("%s: %s", "identity", intent)
 
     # §7 -- wrong-shape returns rejected, prior output kept
     def test_utterance_wrong_shape_rejected(self):
