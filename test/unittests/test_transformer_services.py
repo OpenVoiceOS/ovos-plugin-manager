@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import Mock, patch
 
+from ovos_utils.log import LOG
+
 from ovos_plugin_manager.templates.transformers import (AudioTransformer,
                                                         DialogTransformer,
                                                         MetadataTransformer,
@@ -486,6 +488,66 @@ class TestTransform1Conformance(unittest.TestCase):
         service.loaded_plugins["p2"] = p2
         context = service.transform({})
         self.assertEqual(context.get("metadata_transformer_ids"), ["p1", "p2"])
+
+    def test_in_place_utterance_context_is_not_merged_into_itself(self):
+        class InPlace(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                context["nested"]["touched"] = True
+                return utterances, context
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["in-place"] = InPlace("in-place", priority=10)
+        original = {"nested": {"lang": "en-us"}}
+        _, context = service.transform(["hello"], original)
+        self.assertIs(context, original)
+        self.assertEqual(context["nested"], {"lang": "en-us", "touched": True})
+        self.assertEqual(context["utterance_transformer_ids"], ["in-place"])
+
+    def test_in_place_metadata_context_is_not_merged_into_itself(self):
+        class InPlace(MetadataTransformer):
+            def transform(self, context=None):
+                context["nested"]["touched"] = True
+                return context
+
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["in-place"] = InPlace("in-place", priority=10)
+        original = {"nested": {"lang": "en-us"}}
+        context = service.transform(original)
+        self.assertIs(context, original)
+        self.assertEqual(context["nested"], {"lang": "en-us", "touched": True})
+        self.assertEqual(context["metadata_transformer_ids"], ["in-place"])
+
+    def test_info_level_skips_hot_path_debug_logger_resolution(self):
+        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+        from ovos_plugin_manager.templates.transformers import IntentTransformer
+
+        class Identity(IntentTransformer):
+            def transform(self, intent):
+                return intent
+
+        service = self._empty(IntentTransformersService)
+        service.loaded_plugins["identity"] = Identity("identity", priority=10)
+        intent = IntentHandlerMatch(match_type="skillA:foo", match_data={},
+                                    skill_id="skillA", utterance="hello")
+        with patch.object(LOG, "level", "INFO"), patch.object(LOG, "debug") as debug:
+            self.assertIs(service.transform(intent), intent)
+        debug.assert_not_called()
+
+    def test_debug_level_keeps_transform_diagnostics(self):
+        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+        from ovos_plugin_manager.templates.transformers import IntentTransformer
+
+        class Identity(IntentTransformer):
+            def transform(self, intent):
+                return intent
+
+        service = self._empty(IntentTransformersService)
+        service.loaded_plugins["identity"] = Identity("identity", priority=10)
+        intent = IntentHandlerMatch(match_type="skillA:foo", match_data={},
+                                    skill_id="skillA", utterance="hello")
+        with patch.object(LOG, "level", "DEBUG"), patch.object(LOG, "debug") as debug:
+            self.assertIs(service.transform(intent), intent)
+        debug.assert_called_once_with("%s: %s", "identity", intent)
 
     # §7 -- wrong-shape returns rejected, prior output kept
     def test_utterance_wrong_shape_rejected(self):
