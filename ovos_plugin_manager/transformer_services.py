@@ -39,19 +39,6 @@ from ovos_plugin_manager.text_transformers import find_utterance_transformer_plu
 from ovos_plugin_manager.tts_transformers import find_tts_transformer_plugins
 
 
-class _RedactedContext:
-    """Defer session-safe context formatting until a log record is emitted."""
-
-    __slots__ = ("context",)
-
-    def __init__(self, context: dict):
-        self.context = context
-
-    def __str__(self) -> str:
-        return str({key: value for key, value in self.context.items()
-                    if key != "session"})
-
-
 def _stamp_provenance(context: dict, key: str, transformer_id: str) -> None:
     """Stamp transformer self-identification per OVOS-TRANSFORM-1 §1.3.
 
@@ -269,9 +256,7 @@ class UtteranceTransformersService(TransformersService):
                     LOG.warning(f"{module.name} returned non-dict context; "
                                 f"ignoring its output")
                     continue
-                # Defer filtering until DEBUG is actually formatted, while
-                # keeping TTS/STT credentials in the session out of logs.
-                LOG.debug("%s: %s", module.name, _RedactedContext(data))
+                LOG.debug("%s: %s", module.name, data)
                 canceled = self._check_cancellation(data, module)
                 # In-place transformers commonly return the exact context
                 # object they received. Merging an object into itself is a
@@ -309,9 +294,7 @@ class MetadataTransformersService(TransformersService):
                                 f"(expected context dict): {type(data)}; "
                                 f"ignoring its output")
                     continue
-                # Defer filtering until DEBUG is actually formatted, while
-                # keeping TTS/STT credentials in the session out of logs.
-                LOG.debug("%s: %s", module.name, _RedactedContext(data))
+                LOG.debug("%s: %s", module.name, data)
                 canceled = self._check_cancellation(data, module)
                 if data is not context:
                     context = merge_dict(context, data)
