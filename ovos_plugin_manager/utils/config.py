@@ -1,6 +1,6 @@
 from typing import Optional, Union
 from ovos_config.config import Configuration
-from ovos_spec_tools import standardize_lang, lang_distance
+from ovos_spec_tools import standardize_lang, lang_matches
 from ovos_utils.log import LOG
 from ovos_plugin_manager.utils import load_plugin, find_plugins, PluginTypes, PluginConfigTypes
 
@@ -68,7 +68,7 @@ def get_valid_plugin_configs(configs: dict, lang: str,
         # Check other dialects of the requested language
         base_lang = standardize_lang(lang)
         for language, confs in configs.items():
-            if lang_distance(base_lang, language) < 10:
+            if lang_matches(base_lang, language):
                 for config in confs:
                     try:
                         if language != lang:
@@ -182,7 +182,7 @@ def get_plugin_language_configs(plug_type: PluginTypes, lang: str,
         if include_dialects:
             macro = standardize_lang(lang)
             for language, configs in plug_configs.items():
-                if lang_distance(macro, language) < 10:
+                if lang_matches(macro, language):
                     plugin_configs[plug] += configs
         elif lang in plug_configs:
             plugin_configs[plug] += plug_configs[lang]
