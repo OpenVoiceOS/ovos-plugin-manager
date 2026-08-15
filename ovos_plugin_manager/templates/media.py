@@ -16,10 +16,21 @@ class MediaBackend(metaclass=ABCMeta):
        bus (MessageBusClient): Mycroft messagebus emitter
    """
 
+    #: Whether this backend can seek within a track. Backends that cannot
+    #: seek (e.g. live streams) should set this to False; consumers can
+    #: check it before calling seek_forward/seek_backward.
+    supports_seek = True
+
+    #: Whether this backend can pause/resume playback. Backends that cannot
+    #: pause (e.g. live streams) should set this to False; consumers can
+    #: check it before calling ocp_pause/ocp_resume.
+    supports_pause = True
+
     def __init__(self, config=None, bus=None):
         if MediaState is None:
             raise RuntimeError("Please update to ovos-utils~=0.1.")
         self._now_playing = None  # single uri
+        self._ocp_playing = False  # tracks whether ocp_start has run without a matching stop/error
         self._track_start_callback = None
         self.supports_mime_hints = False
         self.config = config or {}
@@ -35,13 +46,26 @@ class MediaBackend(metaclass=ABCMeta):
 
     def load_track(self, uri: str, metadata: dict = None):
         self._now_playing = uri
+        self._ocp_playing = False  # new track queued, ocp_start needs to (re)start playback
         self.meta.update(metadata or {})
         LOG.debug(f"queuing for {self.__class__.__name__} playback: {uri}")
         self.bus.emit(Message("ovos.common_play.media.state",
                               {"state": MediaState.LOADED_MEDIA}))
 
     def ocp_start(self):
-        """Emit OCP status events for play"""
+        """Emit OCP status events for play.
+
+        Idempotent: if playback was already started by a previous call and
+        has not since been stopped (ocp_stop) or errored (ocp_error), this
+        is a no-op. This prevents duplicate LOADED_MEDIA/PLAYING events and
+        a duplicate call to play() when ocp_start is invoked again while
+        playback is already active.
+        """
+        if self._ocp_playing:
+            LOG.debug(f"{self.__class__.__name__}.ocp_start called while "
+                      f"already playing, ignoring")
+            return
+        self._ocp_playing = True
         self.bus.emit(Message("ovos.common_play.player.state",
                               {"state": PlayerState.PLAYING}))
         self.bus.emit(Message("ovos.common_play.media.state",
@@ -52,6 +76,7 @@ class MediaBackend(metaclass=ABCMeta):
         """Emit OCP status events for playback error"""
         if self._now_playing:
             self._now_playing = None
+            self._ocp_playing = False
             self.bus.emit(Message("ovos.common_play.media.state",
                                   {"state": MediaState.INVALID_MEDIA}))
             self.bus.emit(Message("ovos.common_play.player.state",
@@ -61,6 +86,7 @@ class MediaBackend(metaclass=ABCMeta):
         """Emit OCP status events for stop"""
         if self._now_playing:
             self._now_playing = None
+            self._ocp_playing = False
             self.bus.emit(Message("ovos.common_play.player.state",
                                   {"state": PlayerState.STOPPED}))
             self.bus.emit(Message("ovos.common_play.media.state",
@@ -172,8 +198,12 @@ class MediaBackend(metaclass=ABCMeta):
             seconds (int): number of seconds to seek, if negative rewind
         """
         miliseconds = seconds * 1000
-        new_pos = self.get_track_position() + miliseconds
-        self.set_track_position(new_pos)
+        position = self.get_track_position()
+        if position is None:
+            LOG.debug(f"{self.__class__.__name__} reported no track "
+                      f"position, ignoring seek_forward")
+            return
+        self.set_track_position(position + miliseconds)
 
     def seek_backward(self, seconds=1):
         """Rewind X seconds.
@@ -182,8 +212,12 @@ class MediaBackend(metaclass=ABCMeta):
             seconds (int): number of seconds to seek, if negative jump forward.
         """
         miliseconds = seconds * 1000
-        new_pos = self.get_track_position() - miliseconds
-        self.set_track_position(new_pos)
+        position = self.get_track_position()
+        if position is None:
+            LOG.debug(f"{self.__class__.__name__} reported no track "
+                      f"position, ignoring seek_backward")
+            return
+        self.set_track_position(position - miliseconds)
 
     def track_info(self):
         """Get info about current playing track.
@@ -210,10 +244,12 @@ class AudioPlayerBackend(MediaBackend):
                               {"state": TrackState.QUEUED_AUDIO}))
 
     def ocp_start(self):
-        """Emit OCP status events for play"""
+        """Emit OCP status events for play. Idempotent, see MediaBackend.ocp_start."""
+        was_playing = self._ocp_playing
         super().ocp_start()
-        self.bus.emit(Message("ovos.common_play.track.state",
-                              {"state": TrackState.PLAYING_AUDIO}))
+        if not was_playing:
+            self.bus.emit(Message("ovos.common_play.track.state",
+                                  {"state": TrackState.PLAYING_AUDIO}))
 
 
 class RemoteAudioPlayerBackend(AudioPlayerBackend):
@@ -234,10 +270,12 @@ class VideoPlayerBackend(MediaBackend):
                               {"state": TrackState.QUEUED_VIDEO}))
 
     def ocp_start(self):
-        """Emit OCP status events for play"""
+        """Emit OCP status events for play. Idempotent, see MediaBackend.ocp_start."""
+        was_playing = self._ocp_playing
         super().ocp_start()
-        self.bus.emit(Message("ovos.common_play.track.state",
-                              {"state": TrackState.PLAYING_VIDEO}))
+        if not was_playing:
+            self.bus.emit(Message("ovos.common_play.track.state",
+                                  {"state": TrackState.PLAYING_VIDEO}))
 
 
 class RemoteVideoPlayerBackend(VideoPlayerBackend):
@@ -259,10 +297,12 @@ class WebPlayerBackend(MediaBackend):
                               {"state": TrackState.QUEUED_WEBVIEW}))
 
     def ocp_start(self):
-        """Emit OCP status events for play"""
+        """Emit OCP status events for play. Idempotent, see MediaBackend.ocp_start."""
+        was_playing = self._ocp_playing
         super().ocp_start()
-        self.bus.emit(Message("ovos.common_play.track.state",
-                              {"state": TrackState.PLAYING_WEBVIEW}))
+        if not was_playing:
+            self.bus.emit(Message("ovos.common_play.track.state",
+                                  {"state": TrackState.PLAYING_WEBVIEW}))
 
 
 class RemoteWebPlayerBackend(WebPlayerBackend):

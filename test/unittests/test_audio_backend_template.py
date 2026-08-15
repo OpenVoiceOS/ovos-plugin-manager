@@ -147,6 +147,66 @@ class TestAudioBackend(unittest.TestCase):
         self.backend.seek_backward(3)
         self.backend.set_track_position.assert_called_once_with(-3000)
 
+    def test_seek_forward_none_position_does_not_raise(self) -> None:
+        """seek_forward must not raise when get_track_position() returns None."""
+        with patch.object(self.backend, "get_track_position", return_value=None), \
+                patch.object(self.backend, "set_track_position") as set_pos:
+            self.backend.seek_forward(1)  # should not raise TypeError
+            set_pos.assert_not_called()
+
+    def test_seek_backward_none_position_does_not_raise(self) -> None:
+        """seek_backward must not raise when get_track_position() returns None."""
+        with patch.object(self.backend, "get_track_position", return_value=None), \
+                patch.object(self.backend, "set_track_position") as set_pos:
+            self.backend.seek_backward(1)  # should not raise TypeError
+            set_pos.assert_not_called()
+
+    def test_ocp_start_reentry_does_not_double_emit(self) -> None:
+        """Calling ocp_start twice while already playing must not
+        re-emit PLAYING/LOADED_MEDIA/track.state a second time."""
+        self.backend._now_playing = "http://example.com/audio.mp3"
+        with patch.object(self.backend.bus, "emit") as emit_mock:
+            self.backend.ocp_start()
+            first_emit_count = emit_mock.call_count
+            self.assertGreater(first_emit_count, 0)
+
+            self.backend.ocp_start()  # re-entry: already LOADED/PLAYING
+            self.assertEqual(emit_mock.call_count, first_emit_count)
+
+    def test_ocp_start_after_stop_emits_again(self) -> None:
+        """ocp_start after an intervening ocp_stop must emit again."""
+        self.backend._now_playing = "http://example.com/audio.mp3"
+        with patch.object(self.backend.bus, "emit") as emit_mock:
+            self.backend.ocp_start()
+            first_emit_count = emit_mock.call_count
+            self.backend.ocp_stop()
+            self.backend._now_playing = "http://example.com/audio.mp3"
+            self.backend.ocp_start()
+            self.assertGreater(emit_mock.call_count, first_emit_count)
+
+    def test_ocp_start_after_load_track_emits_again(self) -> None:
+        """ocp_start after a new load_track must emit again."""
+        with patch.object(self.backend.bus, "emit") as emit_mock:
+            self.backend.load_track("http://example.com/a.mp3")
+            self.backend.ocp_start()
+            first_emit_count = emit_mock.call_count
+            self.backend.load_track("http://example.com/b.mp3")
+            self.backend.ocp_start()
+            self.assertGreater(emit_mock.call_count, first_emit_count)
+
+    def test_ocp_error_resets_ocp_playing(self) -> None:
+        """ocp_error clears the ocp_start idempotency guard."""
+        self.backend._now_playing = "http://example.com/audio.mp3"
+        self.backend.ocp_start()
+        self.assertTrue(self.backend._ocp_playing)
+        self.backend.ocp_error()
+        self.assertFalse(self.backend._ocp_playing)
+
+    def test_capability_flag_defaults(self) -> None:
+        """supports_seek and supports_pause default to True."""
+        self.assertTrue(self.backend.supports_seek)
+        self.assertTrue(self.backend.supports_pause)
+
     def test_set_track_start_callback(self) -> None:
         """set_track_start_callback stores the callback."""
         cb = MagicMock()

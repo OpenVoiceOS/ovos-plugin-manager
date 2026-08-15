@@ -18,9 +18,20 @@ class AudioBackend(metaclass=ABCMeta):
         bus (MessageBusClient): OpenVoiceOS messagebus emitter
     """
 
+    #: Whether this backend can seek within a track. Backends that cannot
+    #: seek (e.g. live streams) should set this to False; consumers can
+    #: check it before calling seek_forward/seek_backward.
+    supports_seek = True
+
+    #: Whether this backend can pause/resume playback. Backends that cannot
+    #: pause (e.g. live streams) should set this to False; consumers can
+    #: check it before calling ocp_pause/ocp_resume.
+    supports_pause = True
+
     def __init__(self, config=None, bus=None, name=None):
         self.name = name or self.__class__.__name__
         self._now_playing = None  # single uri
+        self._ocp_playing = False  # tracks whether ocp_start has run without a matching stop/error
         self._tracks = []  # list of dicts for OCP entries
         self._idx = 0
         self._track_start_callback = None
@@ -203,8 +214,12 @@ class AudioBackend(metaclass=ABCMeta):
             seconds (int): number of seconds to seek, if negative rewind
         """
         miliseconds = seconds * 1000
-        new_pos = self.get_track_position() + miliseconds
-        self.set_track_position(new_pos)
+        position = self.get_track_position()
+        if position is None:
+            LOG.debug(f"{self.__class__.__name__} reported no track "
+                      f"position, ignoring seek_forward")
+            return
+        self.set_track_position(position + miliseconds)
 
     def seek_backward(self, seconds=1):
         """Rewind X seconds.
@@ -213,8 +228,12 @@ class AudioBackend(metaclass=ABCMeta):
             seconds (int): number of seconds to seek, if negative jump forward.
         """
         miliseconds = seconds * 1000
-        new_pos = self.get_track_position() - miliseconds
-        self.set_track_position(new_pos)
+        position = self.get_track_position()
+        if position is None:
+            LOG.debug(f"{self.__class__.__name__} reported no track "
+                      f"position, ignoring seek_backward")
+            return
+        self.set_track_position(position - miliseconds)
 
     def set_track_start_callback(self, callback_func):
         """Register callback on track start.
@@ -267,6 +286,7 @@ class AudioBackend(metaclass=ABCMeta):
         In ovos audio backends are single-track, playlists are handled by OCP
         """
         self._now_playing = uri
+        self._ocp_playing = False  # new track queued, ocp_start needs to (re)start playback
         LOG.debug(f"queuing for {self.__class__.__name__} playback: {uri}")
         self.bus.emit(Message("ovos.common_play.media.state",
                               {"state": MediaState.LOADING_MEDIA}))
@@ -280,7 +300,19 @@ class AudioBackend(metaclass=ABCMeta):
                                "length": self.get_track_length()}))
 
     def ocp_start(self):
-        """Emit OCP status events for play"""
+        """Emit OCP status events for play.
+
+        Idempotent: if playback was already started by a previous call and
+        has not since been stopped (ocp_stop) or errored (ocp_error), this
+        is a no-op. This prevents duplicate PLAYING/LOADED_MEDIA/track.state
+        events when ocp_start is invoked again while playback is already
+        active.
+        """
+        if self._ocp_playing:
+            LOG.debug(f"{self.__class__.__name__}.ocp_start called while "
+                      f"already playing, ignoring")
+            return
+        self._ocp_playing = True
         self.bus.emit(Message("ovos.common_play.player.state",
                               {"state": PlayerState.PLAYING}))
         self.bus.emit(Message("ovos.common_play.media.state",
@@ -291,14 +323,16 @@ class AudioBackend(metaclass=ABCMeta):
     def ocp_error(self):
         """Emit OCP status events for playback error"""
         if self._now_playing:
+            self._now_playing = None
+            self._ocp_playing = False
             self.bus.emit(Message("ovos.common_play.media.state",
                                   {"state": MediaState.INVALID_MEDIA}))
-            self._now_playing = None
 
     def ocp_stop(self):
         """Emit OCP status events for stop"""
         if self._now_playing:
             self._now_playing = None
+            self._ocp_playing = False
             self.bus.emit(Message("ovos.common_play.player.state",
                                   {"state": PlayerState.STOPPED}))
             self.bus.emit(Message("ovos.common_play.media.state",
