@@ -355,6 +355,44 @@ class TestServiceTransforms(unittest.TestCase):
         service.shutdown()  # must not raise
         plugin.shutdown.assert_called_once()
 
+    def test_utterance_transform_debug_log_redacts_session(self):
+        secret = {"password": "hunter2", "access_key": "sekrit"}
+
+        class Leaky(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                return utterances, {"session": secret}
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["leaky"] = Leaky("leaky", priority=1)
+        from ovos_plugin_manager.transformer_services import LOG
+        with patch.object(LOG, "level", "DEBUG"), \
+                patch.object(LOG, "debug") as mock_debug:
+            service.transform(["hi"], {})
+        self.assertTrue(mock_debug.called)
+        logged = "".join(str(a) for call in mock_debug.call_args_list
+                          for a in call.args)
+        self.assertNotIn("hunter2", logged)
+        self.assertNotIn("sekrit", logged)
+
+    def test_metadata_transform_debug_log_redacts_session(self):
+        secret = {"password": "hunter2", "access_key": "sekrit"}
+
+        class Leaky(MetadataTransformer):
+            def transform(self, context=None):
+                return {"session": secret}
+
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["leaky"] = Leaky("leaky", priority=1)
+        from ovos_plugin_manager.transformer_services import LOG
+        with patch.object(LOG, "level", "DEBUG"), \
+                patch.object(LOG, "debug") as mock_debug:
+            service.transform({})
+        self.assertTrue(mock_debug.called)
+        logged = "".join(str(a) for call in mock_debug.call_args_list
+                          for a in call.args)
+        self.assertNotIn("hunter2", logged)
+        self.assertNotIn("sekrit", logged)
+
 
 class TestAudioTransformersService(unittest.TestCase):
 

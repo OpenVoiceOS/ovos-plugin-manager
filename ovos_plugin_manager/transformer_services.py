@@ -24,6 +24,7 @@ incomplete pair is a shape violation: logged, stripped, chain
 continues. Terminal bus events (§8.2) are the consumer's concern.
 """
 import inspect
+import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from ovos_config import Configuration
@@ -37,6 +38,20 @@ from ovos_plugin_manager.metadata_transformers import find_metadata_transformer_
 from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
 from ovos_plugin_manager.text_transformers import find_utterance_transformer_plugins
 from ovos_plugin_manager.tts_transformers import find_tts_transformer_plugins
+
+
+def _debug_enabled() -> bool:
+    """Return whether the shared OVOS logger will emit debug records.
+
+    ``LOG.debug`` resolves its caller with ``inspect.stack`` before the
+    standard logger rejects a disabled record. Transformer runners are hot
+    paths, so avoid that comparatively expensive work at INFO and above.
+    ``LOG.level`` accepts the same string or integer values as stdlib logging.
+    """
+    level = LOG.level
+    if isinstance(level, str):
+        level = getattr(logging, level.upper(), logging.INFO)
+    return level <= logging.DEBUG
 
 
 def _stamp_provenance(context: dict, key: str, transformer_id: str) -> None:
@@ -256,7 +271,10 @@ class UtteranceTransformersService(TransformersService):
                     LOG.warning(f"{module.name} returned non-dict context; "
                                 f"ignoring its output")
                     continue
-                LOG.debug("%s: %s", module.name, data)
+                if _debug_enabled():
+                    # Do not leak TTS/STT credentials from the session.
+                    safe = {k: v for k, v in data.items() if k != "session"}
+                    LOG.debug("%s: %s", module.name, safe)
                 canceled = self._check_cancellation(data, module)
                 # In-place transformers commonly return the exact context
                 # object they received. Merging an object into itself is a
@@ -294,7 +312,10 @@ class MetadataTransformersService(TransformersService):
                                 f"(expected context dict): {type(data)}; "
                                 f"ignoring its output")
                     continue
-                LOG.debug("%s: %s", module.name, data)
+                if _debug_enabled():
+                    # Do not leak TTS/STT credentials from the session.
+                    safe = {k: v for k, v in data.items() if k != "session"}
+                    LOG.debug("%s: %s", module.name, safe)
                 canceled = self._check_cancellation(data, module)
                 if data is not context:
                     context = merge_dict(context, data)
