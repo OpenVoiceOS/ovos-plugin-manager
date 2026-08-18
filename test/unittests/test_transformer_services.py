@@ -355,6 +355,44 @@ class TestServiceTransforms(unittest.TestCase):
         service.shutdown()  # must not raise
         plugin.shutdown.assert_called_once()
 
+    def test_utterance_transform_debug_log_redacts_session(self):
+        secret = {"password": "hunter2", "access_key": "sekrit"}
+
+        class Leaky(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                return utterances, {"session": secret}
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["leaky"] = Leaky("leaky", priority=1)
+        from ovos_plugin_manager.transformer_services import LOG
+        with patch.object(LOG, "level", "DEBUG"), \
+                patch.object(LOG, "debug") as mock_debug:
+            service.transform(["hi"], {})
+        self.assertTrue(mock_debug.called)
+        logged = "".join(str(a) for call in mock_debug.call_args_list
+                          for a in call.args)
+        self.assertNotIn("hunter2", logged)
+        self.assertNotIn("sekrit", logged)
+
+    def test_metadata_transform_debug_log_redacts_session(self):
+        secret = {"password": "hunter2", "access_key": "sekrit"}
+
+        class Leaky(MetadataTransformer):
+            def transform(self, context=None):
+                return {"session": secret}
+
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["leaky"] = Leaky("leaky", priority=1)
+        from ovos_plugin_manager.transformer_services import LOG
+        with patch.object(LOG, "level", "DEBUG"), \
+                patch.object(LOG, "debug") as mock_debug:
+            service.transform({})
+        self.assertTrue(mock_debug.called)
+        logged = "".join(str(a) for call in mock_debug.call_args_list
+                          for a in call.args)
+        self.assertNotIn("hunter2", logged)
+        self.assertNotIn("sekrit", logged)
+
 
 class TestAudioTransformersService(unittest.TestCase):
 
@@ -487,6 +525,60 @@ class TestTransform1Conformance(unittest.TestCase):
         context = service.transform({})
         self.assertEqual(context.get("metadata_transformer_ids"), ["p1", "p2"])
 
+    def test_in_place_utterance_context_is_not_merged_into_itself(self):
+        class InPlace(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                context["nested"]["touched"] = True
+                return utterances, context
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["in-place"] = InPlace("in-place", priority=10)
+        original = {"nested": {"lang": "en-us"}}
+        _, context = service.transform(["hello"], original)
+        self.assertIs(context, original)
+        self.assertEqual(context["nested"], {"lang": "en-us", "touched": True})
+        self.assertEqual(context["utterance_transformer_ids"], ["in-place"])
+
+    def test_in_place_metadata_context_is_not_merged_into_itself(self):
+        class InPlace(MetadataTransformer):
+            def transform(self, context=None):
+                context["nested"]["touched"] = True
+                return context
+
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["in-place"] = InPlace("in-place", priority=10)
+        original = {"nested": {"lang": "en-us"}}
+        context = service.transform(original)
+        self.assertIs(context, original)
+        self.assertEqual(context["nested"], {"lang": "en-us", "touched": True})
+        self.assertEqual(context["metadata_transformer_ids"], ["in-place"])
+
+    def test_empty_utterance_context_preserves_identity(self):
+        class InPlace(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                context["touched"] = True
+                return utterances, context
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["in-place"] = InPlace("in-place", priority=10)
+        original = {}
+        _, context = service.transform(["hello"], original)
+        self.assertIs(context, original)
+        self.assertTrue(context["touched"])
+
+    def test_empty_metadata_context_preserves_identity(self):
+        class InPlace(MetadataTransformer):
+            def transform(self, context=None):
+                context["touched"] = True
+                return context
+
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["in-place"] = InPlace("in-place", priority=10)
+        original = {}
+        context = service.transform(original)
+        self.assertIs(context, original)
+        self.assertTrue(context["touched"])
+
     # §7 -- wrong-shape returns rejected, prior output kept
     def test_utterance_wrong_shape_rejected(self):
         class Bad(UtteranceTransformer):
@@ -597,6 +689,39 @@ class TestTransform1Conformance(unittest.TestCase):
         service.loaded_plugins["e"] = Enricher("e", priority=50)
         result = service.transform(original)
         self.assertEqual(result.match_data.get("slot"), "value")
+
+
+class TestDebugEnabledGate(unittest.TestCase):
+    """ovos-utils' LOG is a custom class: no isEnabledFor, no inheritance --
+    LOG.level is the single source of truth for the hot-path debug gate."""
+
+    def _gate(self, level):
+        from ovos_plugin_manager.transformer_services import (LOG,
+                                                              _debug_enabled)
+        with patch.object(LOG, "level", level):
+            return _debug_enabled()
+
+    def test_debug_levels_enable(self):
+        import logging
+        self.assertTrue(self._gate("DEBUG"))
+        self.assertTrue(self._gate(logging.DEBUG))
+        self.assertTrue(self._gate(5))  # custom level below DEBUG
+
+    def test_info_and_above_disable(self):
+        import logging
+        self.assertFalse(self._gate("INFO"))
+        self.assertFalse(self._gate("WARNING"))
+        self.assertFalse(self._gate(logging.ERROR))
+
+    def test_notset_disables(self):
+        """NOTSET defers to the stdlib root logger (WARNING by default),
+        which drops debug records -- the gate must not treat 0 as enabled."""
+        import logging
+        self.assertFalse(self._gate("NOTSET"))
+        self.assertFalse(self._gate(logging.NOTSET))
+
+    def test_unknown_level_name_disables(self):
+        self.assertFalse(self._gate("VERBOSE_NONSENSE"))
 
 
 if __name__ == "__main__":

@@ -24,6 +24,7 @@ incomplete pair is a shape violation: logged, stripped, chain
 continues. Terminal bus events (§8.2) are the consumer's concern.
 """
 import inspect
+import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from ovos_config import Configuration
@@ -37,6 +38,27 @@ from ovos_plugin_manager.metadata_transformers import find_metadata_transformer_
 from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
 from ovos_plugin_manager.text_transformers import find_utterance_transformer_plugins
 from ovos_plugin_manager.tts_transformers import find_tts_transformer_plugins
+
+
+def _debug_enabled() -> bool:
+    """Return whether the shared OVOS logger will emit debug records.
+
+    ``LOG.debug`` resolves its caller with ``inspect.stack`` before the
+    standard logger rejects a disabled record. Transformer runners are hot
+    paths, so avoid that comparatively expensive work at INFO and above.
+
+    ``LOG`` is ovos-utils' custom logger class: it has no ``isEnabledFor``
+    and no level inheritance -- ``LOG.level`` (stdlib name string or int) is
+    the single source of truth. ``NOTSET`` makes the stdlib logger underneath
+    defer to the root logger (WARNING by default), which drops debug records,
+    so treat it as debug-disabled rather than letting it fall through the
+    ``<=`` comparison as 0.
+    """
+    level = LOG.level
+    if isinstance(level, str):
+        resolved = logging.getLevelName(level.upper())
+        level = resolved if isinstance(resolved, int) else logging.INFO
+    return logging.NOTSET < level <= logging.DEBUG
 
 
 def _stamp_provenance(context: dict, key: str, transformer_id: str) -> None:
@@ -238,7 +260,8 @@ class UtteranceTransformersService(TransformersService):
 
     def transform(self, utterances: List[str],
                   context: Optional[dict] = None) -> Tuple[List[str], dict]:
-        context = context or {}
+        if context is None:
+            context = {}
         for module in self.plugins:
             try:
                 result = module.transform(utterances, context)
@@ -255,10 +278,18 @@ class UtteranceTransformersService(TransformersService):
                     LOG.warning(f"{module.name} returned non-dict context; "
                                 f"ignoring its output")
                     continue
-                _safe = {k: v for k, v in data.items() if k != "session"}  # no leaking TTS/STT creds in logs
-                LOG.debug(f"{module.name}: {_safe}")
+                if _debug_enabled():
+                    # Do not leak TTS/STT credentials from the session.
+                    safe = {k: v for k, v in data.items() if k != "session"}
+                    LOG.debug("%s: %s", module.name, safe)
                 canceled = self._check_cancellation(data, module)
-                context = merge_dict(context, data)
+                # In-place transformers commonly return the exact context
+                # object they received. Merging an object into itself is a
+                # no-op for flat data and recursively walks identical nested
+                # mappings until RecursionError. Preserve the same object and
+                # only merge when a plugin returned a distinct delta/result.
+                if data is not context:
+                    context = merge_dict(context, data)
                 utterances = new_utterances
                 # OVOS-TRANSFORM-1 §1.3: stamp the transformer's self-identification
                 _stamp_provenance(context, "utterance_transformer_ids", module.name)
@@ -276,7 +307,8 @@ class MetadataTransformersService(TransformersService):
     plugin_finder = staticmethod(find_metadata_transformer_plugins)
 
     def transform(self, context: Optional[dict] = None) -> dict:
-        context = context or {}
+        if context is None:
+            context = {}
         for module in self.plugins:
             try:
                 data = module.transform(context)
@@ -287,10 +319,13 @@ class MetadataTransformersService(TransformersService):
                                 f"(expected context dict): {type(data)}; "
                                 f"ignoring its output")
                     continue
-                _safe = {k: v for k, v in data.items() if k != "session"}  # no leaking TTS/STT creds in logs
-                LOG.debug(f"{module.name}: {_safe}")
+                if _debug_enabled():
+                    # Do not leak TTS/STT credentials from the session.
+                    safe = {k: v for k, v in data.items() if k != "session"}
+                    LOG.debug("%s: %s", module.name, safe)
                 canceled = self._check_cancellation(data, module)
-                context = merge_dict(context, data)
+                if data is not context:
+                    context = merge_dict(context, data)
                 # OVOS-TRANSFORM-1 §1.3: stamp the transformer's self-identification
                 _stamp_provenance(context, "metadata_transformer_ids", module.name)
                 if canceled:
@@ -328,7 +363,7 @@ class IntentTransformersService(TransformersService):
                                 f"output per OVOS-TRANSFORM-1 §3.4")
                     continue
                 intent = result
-                LOG.debug(f"{module.name}: {intent}")
+                LOG.debug("%s: %s", module.name, intent)
             except Exception as e:
                 LOG.warning(f"{module.name} transform exception: {e}")
         return intent
@@ -362,7 +397,7 @@ class DialogTransformersService(TransformersService):
         for module in self.plugins:
             try:
                 dialog, context = module.transform(dialog, context=context)
-                LOG.debug(f"{module.name}: {dialog}")
+                LOG.debug("%s: %s", module.name, dialog)
                 if self._check_cancellation(context, module):
                     break
             except Exception:
@@ -386,7 +421,7 @@ class TTSTransformersService(TransformersService):
         for module in self.plugins:
             try:
                 wav_file, context = module.transform(wav_file, context=context)
-                LOG.debug(f"{module.name}: {wav_file}")
+                LOG.debug("%s: %s", module.name, wav_file)
                 if self._check_cancellation(context, module):
                     break
             except Exception:
@@ -459,7 +494,7 @@ class AudioTransformersService(TransformersService):
             try:
                 chunk = module.feed_speech_utterance(chunk)
                 chunk, data = module.transform(chunk)
-                LOG.debug(f"{module.name}: {data}")
+                LOG.debug("%s: %s", module.name, data)
                 canceled = self._check_cancellation(data, module)
                 context = merge_dict(context, data)
                 if canceled:
