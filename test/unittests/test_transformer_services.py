@@ -691,5 +691,38 @@ class TestTransform1Conformance(unittest.TestCase):
         self.assertEqual(result.match_data.get("slot"), "value")
 
 
+class TestDebugEnabledGate(unittest.TestCase):
+    """ovos-utils' LOG is a custom class: no isEnabledFor, no inheritance --
+    LOG.level is the single source of truth for the hot-path debug gate."""
+
+    def _gate(self, level):
+        from ovos_plugin_manager.transformer_services import (LOG,
+                                                              _debug_enabled)
+        with patch.object(LOG, "level", level):
+            return _debug_enabled()
+
+    def test_debug_levels_enable(self):
+        import logging
+        self.assertTrue(self._gate("DEBUG"))
+        self.assertTrue(self._gate(logging.DEBUG))
+        self.assertTrue(self._gate(5))  # custom level below DEBUG
+
+    def test_info_and_above_disable(self):
+        import logging
+        self.assertFalse(self._gate("INFO"))
+        self.assertFalse(self._gate("WARNING"))
+        self.assertFalse(self._gate(logging.ERROR))
+
+    def test_notset_disables(self):
+        """NOTSET defers to the stdlib root logger (WARNING by default),
+        which drops debug records -- the gate must not treat 0 as enabled."""
+        import logging
+        self.assertFalse(self._gate("NOTSET"))
+        self.assertFalse(self._gate(logging.NOTSET))
+
+    def test_unknown_level_name_disables(self):
+        self.assertFalse(self._gate("VERBOSE_NONSENSE"))
+
+
 if __name__ == "__main__":
     unittest.main()

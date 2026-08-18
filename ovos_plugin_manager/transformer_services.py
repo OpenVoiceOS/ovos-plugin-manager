@@ -46,12 +46,19 @@ def _debug_enabled() -> bool:
     ``LOG.debug`` resolves its caller with ``inspect.stack`` before the
     standard logger rejects a disabled record. Transformer runners are hot
     paths, so avoid that comparatively expensive work at INFO and above.
-    ``LOG.level`` accepts the same string or integer values as stdlib logging.
+
+    ``LOG`` is ovos-utils' custom logger class: it has no ``isEnabledFor``
+    and no level inheritance -- ``LOG.level`` (stdlib name string or int) is
+    the single source of truth. ``NOTSET`` makes the stdlib logger underneath
+    defer to the root logger (WARNING by default), which drops debug records,
+    so treat it as debug-disabled rather than letting it fall through the
+    ``<=`` comparison as 0.
     """
     level = LOG.level
     if isinstance(level, str):
-        level = getattr(logging, level.upper(), logging.INFO)
-    return level <= logging.DEBUG
+        resolved = logging.getLevelName(level.upper())
+        level = resolved if isinstance(resolved, int) else logging.INFO
+    return logging.NOTSET < level <= logging.DEBUG
 
 
 def _stamp_provenance(context: dict, key: str, transformer_id: str) -> None:
