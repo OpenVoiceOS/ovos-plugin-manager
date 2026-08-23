@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.11.1a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.1a3) (2026-08-23)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.1a2...2.11.1a3)
+
+**Merged pull requests:**
+
+- perf: remove transformer runner hot-path overhead [\#427](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/427) ([goldyfruit](https://github.com/goldyfruit))
+
 ## [2.11.1a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.1a2) (2026-07-31)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.1a1...2.11.1a2)
