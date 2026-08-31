@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.11.1a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.1a4) (2026-08-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.1a3...2.11.1a4)
+
+**Merged pull requests:**
+
+- docs: add prerelease-quirks entry for 2.11.1a3 [\#432](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/432) ([JarbasAl](https://github.com/JarbasAl))
+- fix: use the shared language-match helper for dialect configs [\#428](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/428) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.11.1a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.1a3) (2026-08-23)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.1a2...2.11.1a3)
