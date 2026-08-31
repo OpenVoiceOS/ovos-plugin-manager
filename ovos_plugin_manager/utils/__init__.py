@@ -15,6 +15,7 @@ from collections import deque
 
 import time
 from enum import Enum
+from importlib.metadata import entry_points
 from ovos_utils.log import LOG, log_deprecation, deprecated
 from threading import Event, Lock
 from typing import Optional, Union
@@ -211,38 +212,18 @@ def find_plugins(plug_type: PluginTypes = None) -> dict:
 
 find_plugins._errored = []
 
-# compat with older python versions
-try:
-    from importlib_metadata import entry_points
+def _iter_plugins(plug_type):
+    """
+    Yields all entry points for the specified plugin group.
 
-    def _iter_plugins(plug_type):
-        """
-        Yields all entry points for the specified plugin group.
-        
-        Parameters:
-            plug_type: The entry point group name to search for.
-        
-        Yields:
-            Entry points belonging to the specified group.
-        """
-        for entry_point in entry_points(group=plug_type):
-            yield entry_point
-except ImportError:
+    Parameters:
+        plug_type: The entry point group name to search for.
 
-    import pkg_resources  # deprecated in newer python versions
-
-    def _iter_plugins(plug_type):
-        """
-        Yield all entry points for the specified plugin group using pkg_resources.
-        
-        Parameters:
-            plug_type (str): The entry point group name to search for.
-        
-        Yields:
-            EntryPoint: Each discovered entry point in the specified group.
-        """
-        for entry_point in pkg_resources.iter_entry_points(plug_type):
-            yield entry_point
+    Yields:
+        Entry points belonging to the specified group.
+    """
+    for entry_point in entry_points(group=plug_type):
+        yield entry_point
 
 
 def _iter_entrypoints(plug_type: Union[str, PluginTypes]):

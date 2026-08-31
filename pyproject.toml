@@ -18,7 +18,6 @@ dependencies = [
     "requests~=2.32",
     "quebra_frases",
     "ovos-spec-tools[langcodes]>=1.6.1a1",
-    "importlib_metadata",
     "setuptools; python_version>='3.12'",
     "standard-aifc; python_version>='3.13'",
     "audioop-lts; python_version>='3.13'",
