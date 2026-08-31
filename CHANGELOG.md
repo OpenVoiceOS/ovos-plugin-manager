@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.11.5a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.5a1) (2026-08-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.4a1...2.11.5a1)
+
+**Merged pull requests:**
+
+- fix: PHALPlugin.shutdown\(\) removes the handlers it actually registered [\#438](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/438) ([JarbasAl](https://github.com/JarbasAl))
+
+## [2.11.4a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.4a1) (2026-08-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.3a1...2.11.4a1)
+
 ## [2.11.3a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.3a1) (2026-08-31)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.2a1...2.11.3a1)
