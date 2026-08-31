@@ -725,5 +725,88 @@ class TestOptionMatcherEngine(unittest.TestCase):
         self.assertIsNone(matcher.match_option("anything", []))
 
 
+# ---------------------------------------------------------------------------
+# Tests for ChatEngine __init_subclass__ 'tools' conformance check
+# ---------------------------------------------------------------------------
+
+class TestChatEngineToolsConformance(unittest.TestCase):
+    """Tests for the ChatEngine.__init_subclass__ 'tools' signature check."""
+
+    def test_conforming_subclass_no_warning(self) -> None:
+        """A subclass naming 'tools' produces no warning."""
+        with patch("ovos_plugin_manager.templates.agents.LOG") as mock_log:
+            class _ConformingEngine(ChatEngine):
+                def continue_chat(self, messages, session_id="default",
+                                  lang=None, units=None, tools=None):
+                    return AgentMessage(role=MessageRole.ASSISTANT, content="ok")
+
+            mock_log.warning.assert_not_called()
+
+    def test_non_conforming_subclass_warns_once(self) -> None:
+        """A subclass omitting 'tools' warns exactly once, naming the class."""
+        with patch("ovos_plugin_manager.templates.agents.LOG") as mock_log:
+            class _LegacyEngine(ChatEngine):
+                def continue_chat(self, messages, session_id="default",
+                                  lang=None, units=None):
+                    return AgentMessage(role=MessageRole.ASSISTANT, content="ok")
+
+            mock_log.warning.assert_called_once()
+            msg = mock_log.warning.call_args[0][0]
+            self.assertIn("_LegacyEngine", msg)
+
+            # instantiating the class again must not re-warn
+            _LegacyEngine()
+            _LegacyEngine()
+            mock_log.warning.assert_called_once()
+
+    def test_kwargs_subclass_no_warning(self) -> None:
+        """A subclass accepting **kwargs is considered conforming."""
+        with patch("ovos_plugin_manager.templates.agents.LOG") as mock_log:
+            class _KwargsEngine(ChatEngine):
+                def continue_chat(self, messages, session_id="default",
+                                  lang=None, units=None, **kwargs):
+                    return AgentMessage(role=MessageRole.ASSISTANT, content="ok")
+
+            mock_log.warning.assert_not_called()
+
+    def test_dispatch_uses_keyword_arguments(self) -> None:
+        """Base wrappers (stream_tokens/stream_sentences/get_response) call
+        continue_chat with keyword arguments, not positionally.
+
+        The subclass below declares ``lang`` and ``session_id`` in swapped
+        order relative to the base ``ChatEngine.continue_chat`` signature.
+        Under positional dispatch, the wrapper's ``self.continue_chat(messages,
+        session_id, lang, units)`` call would silently bind the caller's
+        ``session_id`` value into this subclass's ``lang`` parameter slot
+        (and vice versa) - a real regression that a same-order subclass can
+        never surface. Under keyword dispatch the values land in the
+        correctly named parameters regardless of declaration order.
+        """
+        calls = []
+
+        class _RecordingEngine(ChatEngine):
+            def continue_chat(self, messages, lang="default",
+                              session_id=None, units=None, *, tools=None):
+                calls.append(dict(messages=messages, session_id=session_id,
+                                  lang=lang, units=units, tools=tools))
+                return AgentMessage(role=MessageRole.ASSISTANT, content="hi there")
+
+        engine = _RecordingEngine()
+        msgs = [AgentMessage(role=MessageRole.USER, content="ping")]
+
+        list(engine.stream_tokens(msgs, session_id="s1", lang="en-us", units="metric"))
+        list(engine.stream_sentences(msgs, session_id="s2", lang="pt-pt", units="imperial"))
+        engine.get_response("hello", session_id="s3", lang="es-es", units="metric")
+
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(calls[0]["session_id"], "s1")
+        self.assertEqual(calls[0]["lang"], "en-us")
+        self.assertEqual(calls[0]["units"], "metric")
+        self.assertEqual(calls[1]["session_id"], "s2")
+        self.assertEqual(calls[1]["lang"], "pt-pt")
+        self.assertEqual(calls[2]["session_id"], "s3")
+        self.assertEqual(calls[2]["lang"], "es-es")
+
+
 if __name__ == "__main__":
     unittest.main()
