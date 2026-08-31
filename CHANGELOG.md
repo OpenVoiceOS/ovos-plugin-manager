@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.11.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.2a1) (2026-08-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.1a4...2.11.2a1)
+
+**Merged pull requests:**
+
+- fix: dispatch ChatEngine.continue\_chat with keyword arguments [\#429](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/429) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.11.1a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.1a4) (2026-08-31)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.1a3...2.11.1a4)
