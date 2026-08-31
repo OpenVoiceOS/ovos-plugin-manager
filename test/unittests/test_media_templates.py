@@ -277,6 +277,58 @@ class TestMediaBackend(unittest.TestCase):
         """seek_backward updates track position."""
         self.backend.seek_backward(1)  # get_track_position() - 1000ms
 
+    def test_seek_forward_none_position_does_not_raise(self) -> None:
+        """seek_forward must not raise when get_track_position() returns None."""
+        with patch.object(self.backend, "get_track_position", return_value=None), \
+                patch.object(self.backend, "set_track_position") as set_pos:
+            self.backend.seek_forward(1)  # should not raise TypeError
+            set_pos.assert_not_called()
+
+    def test_seek_backward_none_position_does_not_raise(self) -> None:
+        """seek_backward must not raise when get_track_position() returns None."""
+        with patch.object(self.backend, "get_track_position", return_value=None), \
+                patch.object(self.backend, "set_track_position") as set_pos:
+            self.backend.seek_backward(1)  # should not raise TypeError
+            set_pos.assert_not_called()
+
+    def test_ocp_start_reentry_does_not_double_play(self) -> None:
+        """Calling ocp_start twice while already playing must not call
+        play() twice nor re-emit LOADED_MEDIA/PLAYING a second time."""
+        self.backend._now_playing = "file:///test.mp3"
+        with patch.object(self.backend, "play") as play_mock, \
+                patch.object(self.backend.bus, "emit") as emit_mock:
+            self.backend.ocp_start()
+            self.assertEqual(play_mock.call_count, 1)
+            first_emit_count = emit_mock.call_count
+
+            self.backend.ocp_start()  # re-entry: already LOADED/PLAYING
+            self.assertEqual(play_mock.call_count, 1)
+            self.assertEqual(emit_mock.call_count, first_emit_count)
+
+    def test_ocp_start_after_stop_plays_again(self) -> None:
+        """ocp_start after an intervening ocp_stop must start playback again."""
+        self.backend._now_playing = "file:///test.mp3"
+        with patch.object(self.backend, "play") as play_mock:
+            self.backend.ocp_start()
+            self.backend.ocp_stop()
+            self.backend._now_playing = "file:///test.mp3"
+            self.backend.ocp_start()
+            self.assertEqual(play_mock.call_count, 2)
+
+    def test_ocp_start_after_load_track_plays_again(self) -> None:
+        """ocp_start after a new load_track must start playback again."""
+        with patch.object(self.backend, "play") as play_mock:
+            self.backend.load_track("file:///a.mp3")
+            self.backend.ocp_start()
+            self.backend.load_track("file:///b.mp3")
+            self.backend.ocp_start()
+            self.assertEqual(play_mock.call_count, 2)
+
+    def test_capability_flag_defaults(self) -> None:
+        """supports_seek and supports_pause default to True."""
+        self.assertTrue(self.backend.supports_seek)
+        self.assertTrue(self.backend.supports_pause)
+
     def test_track_info(self) -> None:
         """track_info returns meta dict."""
         self.backend.meta = {"artist": "Test Artist"}
@@ -309,6 +361,18 @@ class TestAudioPlayerBackend(unittest.TestCase):
         """ocp_start emits PLAYING_AUDIO track state."""
         self.backend._now_playing = "file:///test.mp3"
         self.backend.ocp_start()  # Should not raise
+
+    def test_ocp_start_reentry_does_not_double_emit_track_state(self) -> None:
+        """Re-entrant ocp_start on AudioPlayerBackend must not re-emit
+        PLAYING_AUDIO nor call play() again."""
+        self.backend._now_playing = "file:///test.mp3"
+        with patch.object(self.backend, "play") as play_mock, \
+                patch.object(self.backend.bus, "emit") as emit_mock:
+            self.backend.ocp_start()
+            count_after_first = emit_mock.call_count
+            self.backend.ocp_start()
+            self.assertEqual(play_mock.call_count, 1)
+            self.assertEqual(emit_mock.call_count, count_after_first)
 
 
 # ---------------------------------------------------------------------------
