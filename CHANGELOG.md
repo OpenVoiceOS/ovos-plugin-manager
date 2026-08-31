@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.11.3a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.3a1) (2026-08-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.2a1...2.11.3a1)
+
 ## [2.11.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.2a1) (2026-08-31)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.1a4...2.11.2a1)
