@@ -379,17 +379,71 @@ class ToolBox(ABC):
             else:  # already an OpenAI tool dict
                 specs.append(t)
         return specs
+    @property
+    def tool_json_list_compact(self) -> List[Dict[str, Union[str, Dict[str, Any]]]]:
+        """
+        Produce a compact list of tool definitions with minimized parameter schemas for use with smaller LLMs.
+        
+        Each item is a dict with keys:
+        - `name`: tool name
+        - `description`: tool description
+        - `parameters`: the tool's argument JSON Schema with top-level `title` and `description` removed and `title` removed from each property to reduce payload size.
+        
+        Returns:
+            List[Dict[str, Union[str, Dict[str, Any]]]]: Compact tool schema dictionaries.
+        """
+        compact = []
+        for tool in self.tools.values():
+            schema = tool.argument_schema.model_json_schema()
+            # Strip bloat
+            schema.pop("title", None)
+            schema.pop("description", None)
+            for prop in schema.get("properties", {}).values():
+                prop.pop("title", None)
+            compact.append({
+                "name": tool.name,
+                "description": tool.description,
+                "parameters": schema,
+            })
+        return compact
+
+    @property
+    def tool_openai_format(self) -> List[Dict[str, Any]]:
+        """
+        Tool definitions in OpenAI function-calling format.
+
+        Suitable for passing as the ``tools`` parameter in
+        ``/v1/chat/completions`` requests.
+
+        Returns:
+            List of OpenAI-format tool dicts.
+        """
+        tools = []
+        for tool in self.tools.values():
+            schema = tool.argument_schema.model_json_schema()
+            schema.pop("title", None)
+            schema.pop("description", None)
+            for prop in schema.get("properties", {}).values():
+                prop.pop("title", None)
+            tools.append({
+                "type": "function",
+                "function": {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": schema,
+                },
+            })
+        return tools
 
     # The only mandatory method for concrete plugins to implement
     @abstractmethod
     def discover_tools(self) -> List[AgentTool]:
         """
-        Abstract method to be implemented by concrete ToolBox plugins.
-
-        This method must define and return the list of AgentTools provided by this plugin.
-        The implementation should be idempotent (safe to call multiple times).
-
+        Provide the list of AgentTool instances exposed by this toolbox.
+        
+        Implementations must return an idempotent list (safe to call multiple times) of the tools this plugin exposes.
+        
         Returns:
-            A list of instantiated AgentTool objects.
+            List[AgentTool]: Instantiated AgentTool objects provided by the toolbox.
         """
         raise NotImplementedError

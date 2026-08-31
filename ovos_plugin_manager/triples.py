@@ -10,21 +10,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Discovery and configuration utilities for triples-extraction plugins."""
-from typing import Dict, List, Optional, Type, Union
+"""Discovery and configuration utilities for triples-related plugins."""
+from typing import Dict, Optional, Type
 
-from ovos_plugin_manager.templates.triples import TriplesExtractor
-from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.templates.triples import TriplesExtractor, TriplesDB, TriplesReasoner, EntityLinker
+from ovos_plugin_manager.utils import PluginTypes
 
+
+# --- TriplesExtractor helpers ---
 
 def find_triples_plugins() -> Dict[str, Type[TriplesExtractor]]:
-    """Find all installed triples-extraction plugins.
-
+    """
+    Discover installed triples-related plugins.
+    
     Returns:
-        dict mapping plugin entry-point names to plugin classes.
+        dict: Mapping of plugin entry-point names to their uninstantiated plugin classes.
     """
     from ovos_plugin_manager.utils import find_plugins
-    return find_plugins(PluginTypes.COREFERENCE_SOLVER)
+    return find_plugins(PluginTypes.TRIPLES)
 
 
 def load_triples_plugin(module_name: str) -> Optional[Type[TriplesExtractor]]:
@@ -37,27 +40,83 @@ def load_triples_plugin(module_name: str) -> Optional[Type[TriplesExtractor]]:
         Uninstantiated plugin class, or ``None`` if not found.
     """
     from ovos_plugin_manager.utils import load_plugin
-    return load_plugin(module_name, PluginTypes.COREFERENCE_SOLVER)
+    return load_plugin(module_name, PluginTypes.TRIPLES)
 
 
-def get_triples_configs() -> Dict[str, List[dict]]:
-    """Get valid plugin configurations keyed by plugin name.
+# --- TriplesStore helpers ---
 
-    Returns:
-        dict mapping plugin names to their list of configuration dicts.
+def find_triples_store_plugins() -> Dict[str, Type[TriplesDB]]:
     """
-    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
-    return load_configs_for_plugin_type(PluginTypes.TRIPLES)
+    Discover installed triples storage plugins.
+    
+    Returns:
+        A mapping from plugin entry-point names to the corresponding TriplesDB plugin classes.
+    """
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(PluginTypes.TRIPLES_STORE)
 
 
-def get_triples_module_configs(module_name: str) -> Union[Dict[str, list], dict]:
-    """Get valid configuration for the specified plugin.
+def load_triples_store_plugin(module_name: str) -> Optional[Type[TriplesDB]]:
+    """Get an uninstantiated class for the requested storage plugin.
 
     Args:
-        module_name: Plugin entry-point name to get configuration for.
+        module_name: Plugin entry-point name to load.
 
     Returns:
-        dict configuration for the plugin (if provided).
+        Uninstantiated plugin class, or ``None`` if not found.
     """
-    from ovos_plugin_manager.utils.config import load_plugin_configs
-    return load_plugin_configs(module_name, PluginConfigTypes.TRIPLES, True)
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(module_name, PluginTypes.TRIPLES_STORE)
+
+
+# --- TriplesReasoner helpers ---
+
+def find_triples_reasoner_plugins() -> Dict[str, Type[TriplesReasoner]]:
+    """Find all installed triples reasoner plugins.
+
+    Returns:
+        dict mapping plugin entry-point names to plugin classes.
+    """
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(PluginTypes.TRIPLES_REASONER)
+
+
+def load_triples_reasoner_plugin(module_name: str) -> Optional[Type[TriplesReasoner]]:
+    """Get an uninstantiated class for the requested reasoner plugin.
+
+    Args:
+        module_name: Plugin entry-point name to load.
+
+    Returns:
+        Uninstantiated plugin class, or ``None`` if not found.
+    """
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(module_name, PluginTypes.TRIPLES_REASONER)
+
+
+# --- EntityLinker helpers ---
+
+
+def find_entity_linker_plugins() -> Dict[str, Type[EntityLinker]]:
+    """
+    Discover installed entity-linker plugins.
+    
+    Returns:
+        dict: Mapping of plugin entry-point names to their uninstantiated plugin classes.
+    """
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(PluginTypes.ENTITY_LINKER)
+
+
+def load_entity_linker_plugin(module_name: str) -> Optional[Type[EntityLinker]]:
+    """
+    Get the uninstantiated EntityLinker plugin class for the given entry-point name.
+    
+    Parameters:
+        module_name (str): Plugin entry-point name to load.
+    
+    Returns:
+        Optional[Type[EntityLinker]]: Uninstantiated plugin class, or `None` if not found.
+    """
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(module_name, PluginTypes.ENTITY_LINKER)
