@@ -4,6 +4,21 @@ Behavior changes since the last stable release, newest first. This file is
 reset at each stable release; entries that remove or deprecate behavior
 become the deprecation ledger for the next semver cycle.
 
+## 2.11.4a2
+
+- `PHALPlugin.shutdown()` now removes exactly the `(topic, handler)` pairs
+  the instance registered, tracked in a list appended to by every call
+  through a new `_on()` wrapper used in `register_core_events()` and
+  `register_enclosure_namespace()`. Previously `shutdown()` called
+  `bus.remove(topic, <handler>)` with a hardcoded handler that in several
+  cases (`enclosure.mouth.talk`, `.think`, `.listen`, `.smile`, `.viseme`,
+  and `enclosure.eyes.level`, whose removal used the wrong topic name
+  `enclosure.eyes.brightness`) did not match the callable actually passed to
+  `bus.on()`, and `recognizer_loop:audio_output_end` was never removed at
+  all. Since bus listener removal is an identity check, those handlers kept
+  firing after a plugin was shut down or reloaded. A shut-down `PHALPlugin`
+  now stops reacting to every event it registered for.
+
 ## 2.11.2a2
 
 - Plugin entry-point discovery now imports `entry_points` from the standard
