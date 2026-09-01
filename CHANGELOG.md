@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.11.6a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.6a1) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.5a1...2.11.6a1)
+
+**Merged pull requests:**
+
+- fix: allow ovos-config 3.x [\#437](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/437) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.11.5a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.5a1) (2026-08-31)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.4a1...2.11.5a1)
