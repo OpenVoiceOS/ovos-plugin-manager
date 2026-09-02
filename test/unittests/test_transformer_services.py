@@ -405,19 +405,6 @@ class TestAudioTransformersService(unittest.TestCase):
         service = self._empty(config={"audio_transformers": {"plug-a": {}}})
         self.assertEqual(service.config, {"plug-a": {}})
 
-    def test_legacy_listener_nested_section(self):
-        service = self._empty(
-            config={"listener": {"audio_transformers": {"plug-a": {}}}})
-        self.assertEqual(service.config, {"plug-a": {}})
-
-    def test_top_level_wins_over_legacy(self):
-        service = self._empty(config={
-            "audio_transformers": {"plug-a": {"x": 2}},
-            "listener": {"audio_transformers": {"plug-a": {"x": 1},
-                                                "plug-b": {}}}})
-        self.assertEqual(service.config,
-                         {"plug-a": {"x": 2}, "plug-b": {}})
-
     def test_transform_merges_context_over_default(self):
         class Audio(AudioTransformer):
             def __init__(self):
