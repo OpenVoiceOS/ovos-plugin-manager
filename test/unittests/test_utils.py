@@ -541,8 +541,8 @@ class TestUtils(unittest.TestCase):
             self.assertTrue(cfg_type.value.endswith('.config'))
 
     @patch("ovos_plugin_manager.utils.LOG.error")
-    @patch("ovos_plugin_manager.utils._iter_entrypoints")
-    def test_find_plugins(self, iter_entrypoints, log_error):
+    @patch("ovos_plugin_manager.utils._iter_plugins")
+    def test_find_plugins(self, iter_plugins, log_error):
         from ovos_plugin_manager.utils import find_plugins
         good_plugin = Mock(name="working_plugin")
         bad_plugin = Mock(name="failing_plugin")
@@ -550,7 +550,7 @@ class TestUtils(unittest.TestCase):
             side_effect=Exception("This plugin doesn't load"))
 
         # Test load valid plugin
-        iter_entrypoints.return_value = [good_plugin]
+        iter_plugins.return_value = [good_plugin]
         valid_loaded = find_plugins()
         self.assertEqual(len(valid_loaded), 1)
         self.assertEqual(list(valid_loaded.keys())[0], good_plugin.name)
@@ -558,7 +558,7 @@ class TestUtils(unittest.TestCase):
         log_error.assert_not_called()
 
         # Test load with invalid plugin
-        iter_entrypoints.return_value.append(bad_plugin)
+        iter_plugins.return_value.append(bad_plugin)
         with_invalid_loaded = find_plugins()
         self.assertEqual(with_invalid_loaded.keys(), valid_loaded.keys())
         log_error.assert_called_once()

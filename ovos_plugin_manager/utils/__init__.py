@@ -16,36 +16,9 @@ from collections import deque
 import time
 from enum import Enum
 from importlib.metadata import entry_points
-from ovos_utils.log import LOG, log_deprecation, deprecated
+from ovos_utils.log import LOG
 from threading import Event, Lock
-from typing import Optional, Union
-
-DEPRECATED_ENTRYPOINTS = {
-    "ovos.plugin.gui": "opm.gui",
-    "ovos.plugin.phal": "opm.phal",
-    "ovos.plugin.phal.admin": "opm.phal.admin",
-    "ovos.plugin.skill": "opm.skill",
-    "ovos.plugin.microphone": "opm.microphone",
-    "ovos.plugin.VAD": "opm.VAD",
-    "ovos.plugin.g2p": "opm.g2p",
-    "ovos.plugin.audio2ipa": "opm.audio2ipa",
-    'mycroft.plugin.stt': "opm.stt",
-    'mycroft.plugin.tts': "opm.tts",
-    'mycroft.plugin.wake_word': "opm.wake_word",
-    "neon.plugin.lang.translate": "opm.lang.translate",
-    "neon.plugin.lang.detect": "opm.lang.detect",
-    "neon.plugin.text": "opm.transformer.text",
-    "neon.plugin.metadata": "opm.transformer.metadata",
-    "neon.plugin.audio": "opm.transformer.audio",
-    "neon.plugin.solver": "opm.solver.question",
-    "intentbox.coreference": "opm.coreference",
-    "intentbox.keywords": "opm.keywords",
-    "intentbox.segmentation": "opm.segmentation",
-    "intentbox.tokenization": "opm.tokenization",
-    "intentbox.postag": "opm.postag",
-    "ovos.ocp.extractor": "opm.ocp.extractor"
-}
-
+from typing import Optional
 
 class PluginTypes(str, Enum):
     TRIPLES = "opm.triples"
@@ -196,7 +169,8 @@ def find_plugins(plug_type: PluginTypes = None) -> dict:
     else:
         plugs = plug_type
     for plug in plugs:
-        for entry_point in _iter_entrypoints(plug):
+        identifier = plug.value if isinstance(plug, PluginTypes) else plug
+        for entry_point in _iter_plugins(identifier):
             try:
                 entrypoints[entry_point.name] = entry_point.load()
                 if entry_point.name not in entrypoints:
@@ -226,40 +200,6 @@ def _iter_plugins(plug_type):
         yield entry_point
 
 
-def _iter_entrypoints(plug_type: Union[str, PluginTypes]):
-    """
-    Yield all entry points for the specified plugin type, including deprecated identifiers for backward compatibility.
-    
-    Parameters:
-        plug_type (str or PluginTypes): The entry point group name or PluginTypes enum value to search for.
-    
-    Yields:
-        Entry points matching the requested type, including those found under deprecated group names with a warning.
-    """
-    OLD = {v: k for k, v in DEPRECATED_ENTRYPOINTS.items()}
-    identifier = plug_type.value if isinstance(plug_type, PluginTypes) else plug_type
-    old_identifier = OLD.get(plug_type)
-
-    if identifier in DEPRECATED_ENTRYPOINTS:
-        LOG.warning(
-            f"requested old style identifier, please update your code to request '{old_identifier}' instead of '{identifier}'")
-        identifier, old_identifier = DEPRECATED_ENTRYPOINTS[identifier], identifier
-
-    for entry_point in _iter_plugins(identifier):
-        yield entry_point
-
-    if old_identifier:
-        for e in _iter_plugins(old_identifier):
-            if e.name not in _iter_entrypoints._warnings:
-                _iter_entrypoints._warnings.append(e.name)
-                LOG.warning(
-                    f"old style entrypoint detected for plugin '{e.name}' - '{old_identifier}' should be renamed to '{identifier}'")
-            yield e
-
-
-_iter_entrypoints._warnings = []
-
-
 def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
     """
     Load a plugin by name from the specified plugin type.
@@ -287,9 +227,7 @@ class ReadWriteStream:
     with an optional maximum buffer size
     """
 
-    def __init__(self, s=b'', chop_samples=-1, max_size=None):
-        if chop_samples != -1:
-            log_deprecation("'chop_samples' kwarg has been deprecated and will be ignored", "1.0.0")
+    def __init__(self, s=b'', max_size=None):
         self.buffer = deque(s)
         self.write_event = Event()
         self.lock = Lock()

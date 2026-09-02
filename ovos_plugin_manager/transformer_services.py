@@ -441,22 +441,6 @@ class AudioTransformersService(TransformersService):
         self.default_context = default_context or {}
         super().__init__(bus=bus, config=config, sort_ascending=sort_ascending)
 
-    @classmethod
-    def _resolve_section(cls, config: Optional[dict]) -> dict:
-        if config is None:
-            config = Configuration()
-        # legacy location: nested under the "listener" section
-        listener = config.get("listener") or {}
-        if cls.config_section in listener:
-            if cls.config_section not in config:
-                LOG.warning("'listener.audio_transformers' is deprecated, "
-                            "move the section to top-level 'audio_transformers'")
-                return dict(listener.get(cls.config_section) or {})
-            # both defined: top-level wins, merged over legacy
-            return merge_dict(dict(listener.get(cls.config_section) or {}),
-                              dict(config.get(cls.config_section) or {}))
-        return super()._resolve_section(config)
-
     def feed_audio(self, chunk: bytes) -> None:
         """Feed a chunk of untagged (not speech) audio to all loaded plugins."""
         for module in self.plugins:

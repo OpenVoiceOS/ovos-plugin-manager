@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from ovos_plugin_manager.utils import PluginTypes
 from ovos_plugin_manager.utils import find_plugins
-from ovos_utils.log import LOG, log_deprecation
+from ovos_utils.log import LOG
 
 
 def get_installed_skill_ids(conf: Optional[dict] = None) -> List[str]:
@@ -107,16 +107,9 @@ def get_default_skills_directory(conf: Optional[dict] = None) -> str:
         Absolute path to default skills directory
     """
     conf = conf or read_mycroft_config()
-    path_override = conf["skills"].get("directory_override")
     folder = conf["skills"].get("directory") or "skills"
 
-    # if .conf wants to use a specific path, use it!
-    if path_override:
-        log_deprecation("'directory_override' is deprecated!"
-                        "add the new path to 'extra_directories' instead",
-                        "1.0.0")
-        skills_folder = expanduser(path_override)
-    elif conf["skills"].get("extra_directories") and \
+    if conf["skills"].get("extra_directories") and \
             len(conf["skills"].get("extra_directories")) > 0:
         skills_folder = expanduser(conf["skills"]["extra_directories"][0])
     else:
