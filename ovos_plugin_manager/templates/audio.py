@@ -254,7 +254,7 @@ class AudioBackend(metaclass=ABCMeta):
         try:
             from ovos_ocp_files_plugin.plugin import OCPFilesMetadataExtractor
             return OCPFilesMetadataExtractor.extract_metadata(uri)
-        except:
+        except Exception:
             meta = {"uri": uri,
                     "skill_id": "mycroft.audio_interface",
                     "playback": PlaybackType.AUDIO,  # TODO mime type check

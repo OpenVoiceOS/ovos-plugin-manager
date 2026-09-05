@@ -1,5 +1,6 @@
-from ovos_plugin_manager.utils import normalize_lang, \
-    PluginTypes, PluginConfigTypes
+from typing import Dict, Optional, Type
+
+from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_plugin_manager.utils.config import get_valid_plugin_configs, \
     sort_plugin_configs, get_plugin_config
@@ -7,20 +8,26 @@ from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.stt import STT, StreamingSTT, StreamThread
 
 
-def find_stt_plugins() -> dict:
+def find_stt_plugins() -> Dict[str, Type[STT]]:
     """
-    Find all installed plugins
-    @return: dict plugin names to entrypoints
+    Discover installed STT plugins available via the plugin manager.
+    
+    Returns:
+        A dictionary mapping plugin entrypoint names to the uninstantiated STT plugin class (`Type[STT]`).
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.STT)
 
 
-def load_stt_plugin(module_name: str) -> type(STT):
+def load_stt_plugin(module_name: str) -> Type[STT]:
     """
-    Get an uninstantiated class for the requested module_name
-    @param module_name: Plugin entrypoint name to load
-    @return: Uninstantiated class
+    Return the uninstantiated STT plugin class for the given plugin entrypoint name.
+    
+    Parameters:
+        module_name (str): Plugin entrypoint name to load.
+    
+    Returns:
+        Type[STT]: The STT plugin class corresponding to module_name.
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.STT)
@@ -81,7 +88,8 @@ def get_stt_config(config: dict = None, module: str = None) -> dict:
     """
     from ovos_plugin_manager.utils.config import get_plugin_config
     stt_config = get_plugin_config(config, "stt", module)
-    assert stt_config.get('lang') is not None, "expected lang but got None"
+    if stt_config.get('lang') is None:
+        raise ValueError("expected lang but got None")
     return stt_config
 
 

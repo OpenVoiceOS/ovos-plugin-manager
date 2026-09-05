@@ -27,9 +27,95 @@ _FALLBACK_CONFIG = {
 }
 
 
+class _ConcreteVAD:
+    from ovos_plugin_manager.templates.vad import VADEngine as _Base
+
+    class _Impl(_Base):
+        def is_silence(self, chunk) -> bool:
+            """
+            Determines whether an audio chunk represents silence by checking for only zero bytes.
+            
+            Parameters:
+                chunk (bytes): PCM audio data for the frame to evaluate.
+            
+            Returns:
+                bool: True if every byte in `chunk` is 0x00, False otherwise.
+            """
+            return chunk == b'\x00' * len(chunk)
+
+
+_ConcreteVAD = _ConcreteVAD._Impl
+
+
 class TestVADTemplate(unittest.TestCase):
-    from ovos_plugin_manager.templates.vad import VADEngine
-    # TODO
+
+    def test_default_config(self):
+        """
+        Verify the concrete VAD uses the expected default configuration.
+        
+        Asserts that padding_duration_ms is 300, frame_duration_ms is 30, and thresh is 0.8.
+        """
+        vad = _ConcreteVAD()
+        self.assertEqual(vad.padding_duration_ms, 300)
+        self.assertEqual(vad.frame_duration_ms, 30)
+        self.assertEqual(vad.thresh, 0.8)
+
+    def test_config_override(self):
+        vad = _ConcreteVAD(config={"padding_duration_ms": 100,
+                                    "frame_duration_ms": 10,
+                                    "thresh": 0.5},
+                            sample_rate=8000)
+        self.assertEqual(vad.padding_duration_ms, 100)
+        self.assertEqual(vad.frame_duration_ms, 10)
+        self.assertEqual(vad.thresh, 0.5)
+        self.assertEqual(vad.sample_rate, 8000)
+
+    def test_is_silence_concrete(self):
+        vad = _ConcreteVAD()
+        silent = b'\x00' * 320
+        noisy = b'\x01' * 320
+        self.assertTrue(vad.is_silence(silent))
+        self.assertFalse(vad.is_silence(noisy))
+
+    def test_frame_generator(self):
+        vad = _ConcreteVAD(sample_rate=16000,
+                            config={"frame_duration_ms": 30})
+        # 16000 Hz * 30ms / 1000 * 2 bytes/sample = 960 bytes per frame
+        frame_size = int(16000 * (30 / 1000.0) * 2)
+        audio = b'\x01' * (frame_size * 3)
+        frames = list(vad._frame_generator(audio))
+        self.assertEqual(len(frames), 3)
+        for f in frames:
+            self.assertEqual(len(f.bytes), frame_size)
+
+    def test_extract_speech_silence(self):
+        vad = _ConcreteVAD(sample_rate=16000,
+                            config={"frame_duration_ms": 30})
+        # All-silence audio → no speech detected → returns None
+        frame_size = int(16000 * (30 / 1000.0) * 2)
+        silent_audio = b'\x00' * (frame_size * 20)
+        result = vad.extract_speech(silent_audio)
+        self.assertIsNone(result)
+
+    def test_reset(self):
+        vad = _ConcreteVAD()
+        # reset() should not raise
+        vad.reset()
+
+    def test_audio_frame(self):
+        from ovos_plugin_manager.templates.vad import AudioFrame
+        frame = AudioFrame(b'\x01\x02', timestamp=0.5, duration=10)
+        self.assertEqual(frame.bytes, b'\x01\x02')
+        self.assertEqual(frame.timestamp, 0.5)
+        self.assertEqual(frame.duration, 10)
+
+    def test_runtime_requirements(self):
+        from ovos_utils.process_utils import RuntimeRequirements
+        vad = _ConcreteVAD()
+        req = vad.runtime_requirements
+        self.assertIsInstance(req, RuntimeRequirements)
+        self.assertFalse(req.internet_before_load)
+        self.assertFalse(req.requires_internet)
 
 
 class TestVAD(unittest.TestCase):

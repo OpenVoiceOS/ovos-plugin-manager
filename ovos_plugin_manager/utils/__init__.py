@@ -14,8 +14,8 @@
 from collections import deque
 
 import time
-import warnings
 from enum import Enum
+from importlib.metadata import entry_points
 from ovos_utils.log import LOG, log_deprecation, deprecated
 from threading import Event, Lock
 from typing import Optional, Union
@@ -26,7 +26,7 @@ DEPRECATED_ENTRYPOINTS = {
     "ovos.plugin.phal.admin": "opm.phal.admin",
     "ovos.plugin.skill": "opm.skill",
     "ovos.plugin.microphone": "opm.microphone",
-    "ovos.plugin.VAD": "opm.vad",
+    "ovos.plugin.VAD": "opm.VAD",
     "ovos.plugin.g2p": "opm.g2p",
     "ovos.plugin.audio2ipa": "opm.audio2ipa",
     'mycroft.plugin.stt': "opm.stt",
@@ -78,13 +78,19 @@ class PluginTypes(str, Enum):
     INTENT_TRANSFORMER = "opm.transformer.intent"
     AGENT_MEMORY = "opm.agents.memory"
     AGENT_MULTIMODAL_ADAPTER = "opm.agents.multimodal_adapter"
-    QUESTION_SOLVER = "opm.solver.question"
-    CHAT_SOLVER = "opm.solver.chat"
-    TLDR_SOLVER = "opm.solver.summarization"
-    ENTAILMENT_SOLVER = "opm.solver.entailment"
-    MULTIPLE_CHOICE_SOLVER = "opm.solver.multiple_choice"
-    READING_COMPREHENSION_SOLVER = "opm.solver.reading_comprehension"
-    COREFERENCE_SOLVER = "opm.coreference"
+    AGENT_CHAT = "opm.agents.chat"
+    AGENT_CHAT_MULTIMODAL = "opm.agents.chat.multimodal"
+    AGENT_RETRIEVAL = "opm.agents.retrieval"
+    AGENT_DOC_RETRIEVAL = "opm.agents.retrieval.documents"
+    AGENT_QA_RETRIEVAL = "opm.agents.retrieval.qa"
+    AGENT_RERANKER = "opm.agents.reranker"
+    AGENT_SUMMARIZER = "opm.agents.summarizer"
+    AGENT_CHAT_SUMMARIZER = "opm.agents.summarizer.chat"
+    AGENT_EXTRACTIVE_QA = "opm.agents.extractive_qa"
+    AGENT_NLI = "opm.agents.nli"
+    AGENT_COREF = "opm.agents.coref"
+    AGENT_YES_NO = "opm.agents.yesno"
+    AGENT_OPTION_MATCHER = "opm.agents.option_matcher"
     KEYWORD_EXTRACTION = "opm.keywords"
     UTTERANCE_SEGMENTATION = "opm.segmentation"
     TOKENIZATION = "opm.tokenization"
@@ -93,8 +99,19 @@ class PluginTypes(str, Enum):
     AUDIO_PLAYER = "opm.media.audio"
     VIDEO_PLAYER = "opm.media.video"
     WEB_PLAYER = "opm.media.web"
+    MEDIA_PROVIDER = "opm.media.provider"  # media catalog/search providers (replace OCP search skills)
     PERSONA = "opm.plugin.persona"  # personas are a dict, they have no config because they ARE a config
+    AGENT_TOOLBOX = "opm.agents.toolbox"
+    VOICE_CLONE = "opm.vc"
 
+    # solver plugins are deprecated!
+    QUESTION_SOLVER = "opm.solver.question"
+    CHAT_SOLVER = "opm.solver.chat"
+    TLDR_SOLVER = "opm.solver.summarization"
+    ENTAILMENT_SOLVER = "opm.solver.entailment"
+    MULTIPLE_CHOICE_SOLVER = "opm.solver.multiple_choice"
+    READING_COMPREHENSION_SOLVER = "opm.solver.reading_comprehension"
+    COREFERENCE_SOLVER = "opm.coreference"
 
 class PluginConfigTypes(str, Enum):
     TRIPLES = "opm.triples.config"
@@ -127,13 +144,21 @@ class PluginConfigTypes(str, Enum):
     INTENT_TRANSFORMER = "opm.transformer.intent.config"
     AGENT_MEMORY = "opm.agents.memory.config"
     AGENT_MULTIMODAL_ADAPTER = "opm.agents.multimodal_adapter.config"
-    QUESTION_SOLVER = "opm.solver.config"
-    CHAT_SOLVER = "opm.solver.chat.config"
-    TLDR_SOLVER = "opm.solver.summarization.config"
-    ENTAILMENT_SOLVER = "opm.solver.entailment.config"
-    MULTIPLE_CHOICE_SOLVER = "opm.solver.multiple_choice.config"
-    READING_COMPREHENSION_SOLVER = "opm.solver.reading_comprehension.config"
-    COREFERENCE_SOLVER = "opm.coreference.config"
+    AGENT_CHAT = "opm.agents.chat.config"
+    AGENT_CHAT_MULTIMODAL = "opm.agents.chat.multimodal.config"
+    AGENT_RETRIEVAL = "opm.agents.retrieval.config"
+    AGENT_DOC_RETRIEVAL = "opm.agents.retrieval.documents.config"
+    AGENT_QA_RETRIEVAL = "opm.agents.retrieval.qa.config"
+    AGENT_RERANKER = "opm.agents.reranker.config"
+    AGENT_SUMMARIZER = "opm.agents.summarizer.config"
+    AGENT_CHAT_SUMMARIZER = "opm.agents.summarizer.chat.config"
+    AGENT_EXTRACTIVE_QA = "opm.agents.extractive_qa.config"
+    AGENT_NLI = "opm.agents.nli.config"
+    AGENT_COREF = "opm.agents.coref.config"
+    AGENT_YES_NO = "opm.agents.yesno.config"
+    AGENT_OPTION_MATCHER = "opm.agents.option_matcher.config"
+    AGENT_TOOLBOX = "opm.agents.toolbox.config"
+    VOICE_CLONE = "opm.vc.config"
     KEYWORD_EXTRACTION = "opm.keywords.config"
     UTTERANCE_SEGMENTATION = "opm.segmentation.config"
     TOKENIZATION = "opm.tokenization.config"
@@ -142,7 +167,16 @@ class PluginConfigTypes(str, Enum):
     AUDIO_PLAYER = "opm.media.audio.config"
     VIDEO_PLAYER = "opm.media.video.config"
     WEB_PLAYER = "opm.media.web.config"
+    MEDIA_PROVIDER = "opm.media.provider.config"
 
+    # solver plugins are deprecated!
+    QUESTION_SOLVER = "opm.solver.config"
+    CHAT_SOLVER = "opm.solver.chat.config"
+    TLDR_SOLVER = "opm.solver.summarization.config"
+    ENTAILMENT_SOLVER = "opm.solver.entailment.config"
+    MULTIPLE_CHOICE_SOLVER = "opm.solver.multiple_choice.config"
+    READING_COMPREHENSION_SOLVER = "opm.solver.reading_comprehension.config"
+    COREFERENCE_SOLVER = "opm.coreference.config"
 
 def find_plugins(plug_type: PluginTypes = None) -> dict:
     """
@@ -178,38 +212,18 @@ def find_plugins(plug_type: PluginTypes = None) -> dict:
 
 find_plugins._errored = []
 
-# compat with older python versions
-try:
-    from importlib_metadata import entry_points
+def _iter_plugins(plug_type):
+    """
+    Yields all entry points for the specified plugin group.
 
-    def _iter_plugins(plug_type):
-        """
-        Yields all entry points for the specified plugin group.
-        
-        Parameters:
-            plug_type: The entry point group name to search for.
-        
-        Yields:
-            Entry points belonging to the specified group.
-        """
-        for entry_point in entry_points(group=plug_type):
-            yield entry_point
-except ImportError:
+    Parameters:
+        plug_type: The entry point group name to search for.
 
-    import pkg_resources  # deprecated in newer python versions
-
-    def _iter_plugins(plug_type):
-        """
-        Yield all entry points for the specified plugin group using pkg_resources.
-        
-        Parameters:
-            plug_type (str): The entry point group name to search for.
-        
-        Yields:
-            EntryPoint: Each discovered entry point in the specified group.
-        """
-        for entry_point in pkg_resources.iter_entry_points(plug_type):
-            yield entry_point
+    Yields:
+        Entry points belonging to the specified group.
+    """
+    for entry_point in entry_points(group=plug_type):
+        yield entry_point
 
 
 def _iter_entrypoints(plug_type: Union[str, PluginTypes]):
@@ -265,17 +279,6 @@ def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
     plug_type = plug_type or "all plugin types"
     LOG.warning(f'Could not find the plugin {plug_type}.{plug_name}')
     return None
-
-
-@deprecated("normalize_lang has been deprecated! update to 'from ovos_utils.lang import standardize_lang_tag'", "1.0.0")
-def normalize_lang(lang):
-    warnings.warn(
-        "update to 'from ovos_utils.lang import standardize_lang_tag'",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    from ovos_utils.lang import standardize_lang_tag
-    return standardize_lang_tag(lang)
 
 
 class ReadWriteStream:

@@ -18,7 +18,7 @@ from ovos_bus_client.session import SessionManager
 from ovos_plugin_manager.utils.tts_cache import TextToSpeechCache, hash_sentence
 from ovos_utils import classproperty
 from ovos_utils.fakebus import FakeBus
-from ovos_utils.lang import standardize_lang_tag
+from ovos_spec_tools import standardize_lang
 from ovos_utils.lang.visimes import VISIMES
 from ovos_utils.log import LOG
 from ovos_utils.metrics import Stopwatch
@@ -58,7 +58,7 @@ class TTSContext:
             synth_kwargs (dict, optional): Additional keyword arguments for the synthesizer.
         """
         self.plugin_id = plugin_id
-        self.lang = standardize_lang_tag(lang)
+        self.lang = standardize_lang(lang)
         self.voice = voice
         self.synth_kwargs = synth_kwargs or {}
 
@@ -191,13 +191,13 @@ class TTS:
 
     @property
     def lang(self):
-        return standardize_lang_tag(self._lang or \
+        return standardize_lang(self._lang or \
                                     self.config.get("lang") or \
                                     SessionManager.get().lang)
     @lang.setter
     def lang(self, val):
         # backwards compat
-        self._lang = standardize_lang_tag(val)
+        self._lang = standardize_lang(val)
 
     @property
     def plugin_id(self) -> str:
@@ -249,27 +249,36 @@ class TTS:
         return "", None
 
     def preprocess_sentence(self, sentence: str) -> List[str]:
-        """Default preprocessing is a sentence_tokenizer,
-        ie. splits the utterance into sub-sentences using quebra_frases
-
-        This method can be overridden to create chunks suitable to the
-        TTS engine in question.
-
-        Arguments:
-            sentence (str): sentence to preprocess
-
+        """
+        Split an utterance into sub-sentences suitable for synthesis.
+        
+        If sentence tokenization is enabled in the instance config, returns the sentence split into parts; otherwise returns a single-element list containing the original sentence. Subclasses may override to provide engine-specific chunking.
+        
+        Parameters:
+            sentence (str): Utterance to preprocess.
+        
         Returns:
-            list: list of sentence parts
+            List[str]: List of sentence parts for synthesis.
         """
         if self.config.get("sentence_tokenize"):  # TODO default to True on next major release
-            return quebra_frases.sentence_tokenize(sentence)
+            try:
+                return quebra_frases.sentence_tokenize(sentence)
+            except Exception:
+                LOG.warning("quebra_frases.sentence_tokenize failed, falling back to newline split")
+                return sentence.split("\n")
         return [sentence]
 
     def modify_tag(self, tag):
-        """Override to modify each supported ssml tag.
-
-        Arguments:
-            tag (str): SSML tag to check and possibly transform.
+        """
+        Modify an SSML tag before synthesis.
+        
+        Called for each supported SSML tag to allow plugins to transform or normalize the tag string.
+        
+        Parameters:
+            tag (str): The SSML tag text to inspect or modify.
+        
+        Returns:
+            str: The transformed SSML tag (or the original tag if no change is made).
         """
         return tag
 
@@ -335,7 +344,7 @@ class TTS:
         if include_tags:
             return to_speak
         else:
-            return to_speak.lstrip("<speak>").rstrip("</speak>")
+            return to_speak.removeprefix("<speak>").removesuffix("</speak>")
 
     def validate_ssml(self, utterance):
         """Check if engine supports ssml, if not remove all tags.
@@ -351,9 +360,12 @@ class TTS:
 
         # Validate speak tags
         if not self.ssml_tags or "speak" not in self.ssml_tags:
-            self.format_speak_tags(utterance, False)
+            utterance = self.format_speak_tags(utterance, False)
         elif self.ssml_tags and "speak" in self.ssml_tags:
-            self.format_speak_tags(utterance)
+            # Normalize speak tags only if already present in the utterance;
+            # do not inject speak tags into utterances that have none.
+            if "<speak>" in utterance or "</speak>" in utterance:
+                utterance = self.format_speak_tags(utterance)
 
         # if ssml is not supported by TTS engine remove all tags
         if not self.ssml_tags:
