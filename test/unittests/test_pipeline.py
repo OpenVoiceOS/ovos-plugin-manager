@@ -297,13 +297,15 @@ class TestOVOSPipelineFactory(unittest.TestCase):
 
 
 class TestIntentHandlerMatchFields(unittest.TestCase):
-    def test_suppress_activation_defaults_false(self):
+    def test_suppress_activation_field_removed(self):
         from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
         m = IntentHandlerMatch(match_type="x:intent", skill_id="x")
-        self.assertFalse(m.suppress_activation)
+        # Field should not exist after removal
+        self.assertFalse(hasattr(m, 'suppress_activation'))
 
-    def test_suppress_activation_settable(self):
+    def test_construct_without_suppress_activation(self):
         from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
-        m = IntentHandlerMatch(match_type="x:stop", skill_id="x",
-                               suppress_activation=True)
-        self.assertTrue(m.suppress_activation)
+        # Should be able to construct IntentHandlerMatch without suppress_activation
+        m = IntentHandlerMatch(match_type="x:stop", skill_id="x")
+        self.assertEqual(m.match_type, "x:stop")
+        self.assertEqual(m.skill_id, "x")
