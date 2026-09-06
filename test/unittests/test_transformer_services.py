@@ -68,6 +68,35 @@ class TestLoadingGate(unittest.TestCase):
             service = UtteranceTransformersService(config={"plug-a": {}})
         self.assertIn("plug-a", service.loaded_plugins)
 
+    def test_configured_but_not_found_plugin_warns(self):
+        from ovos_plugin_manager.transformer_services import LOG
+        with patch.object(UtteranceTransformersService, "plugin_finder",
+                          staticmethod(_fake_finder({"plug-a": _UttPrefixer}))), \
+             patch.object(LOG, "warning") as warn:
+            UtteranceTransformersService(
+                config={"plug-a": {}, "plug-missing": {}})
+        calls = [c for c in warn.call_args_list if "plug-missing" in c.args[0]]
+        self.assertEqual(len(calls), 1)
+        self.assertIn("utterance_transformers", calls[0].args[0])
+
+    def test_configured_and_found_plugin_does_not_warn(self):
+        from ovos_plugin_manager.transformer_services import LOG
+        with patch.object(UtteranceTransformersService, "plugin_finder",
+                          staticmethod(_fake_finder({"plug-a": _UttPrefixer}))), \
+             patch.object(LOG, "warning") as warn:
+            UtteranceTransformersService(config={"plug-a": {}})
+        warn.assert_not_called()
+
+    def test_disabled_missing_plugin_does_not_warn(self):
+        from ovos_plugin_manager.transformer_services import LOG
+        with patch.object(UtteranceTransformersService, "plugin_finder",
+                          staticmethod(_fake_finder({"plug-a": _UttPrefixer}))), \
+             patch.object(LOG, "warning") as warn:
+            UtteranceTransformersService(
+                config={"plug-a": {},
+                       "plug-missing": {"active": False}})
+        warn.assert_not_called()
+
     def test_constructor_type_error_is_not_masked(self):
         """A TypeError raised INSIDE a config-accepting constructor must not
         trigger a silent no-config retry."""
