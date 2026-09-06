@@ -50,6 +50,7 @@ use to expose supported-language configuration.
 | `DIALOG_TRANSFORMER` | `opm.transformer.dialog` | `DialogTransformer` |
 | `TTS_TRANSFORMER` | `opm.transformer.tts` | `TTSTransformer` |
 | `INTENT_TRANSFORMER` | `opm.transformer.intent` | `IntentTransformer` |
+| `TYPED_SLOTS_TRANSFORMER` | `opm.transformer.typed_slots` | `TypedSlotsTransformer` |
 
 ### Phonemes, voice, and text processing
 
