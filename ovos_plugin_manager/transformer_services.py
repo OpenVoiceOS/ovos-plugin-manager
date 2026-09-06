@@ -126,7 +126,9 @@ class TransformersService:
             # plugins in the explicit chain are enabled even without
             # their own config entry
             enabled |= set(explicit_order)
+        found_names = set()
         for plug_name, plug in self.find_plugins():
+            found_names.add(plug_name)
             if plug_name not in enabled:
                 continue
             plug_config = self.config.get(plug_name) or {}
@@ -146,6 +148,15 @@ class TransformersService:
             except Exception:
                 LOG.exception(f"Failed to load {self.transformer_type} "
                               f"transformer plugin: {plug_name}")
+        # a name enabled in config but never returned by the finder is not
+        # installed at all -- OPM only iterates what it finds, so this would
+        # otherwise fail silently (no log line whatsoever)
+        for plug_name in enabled - found_names:
+            plug_config = self.config.get(plug_name) or {}
+            if isinstance(plug_config, dict) and not plug_config.get("active", True):
+                continue
+            LOG.warning(f"'{plug_name}' is enabled in the '{self.config_section}' "
+                        f"config section but is not installed")
         self._sorted_plugins = None
         self.has_loaded = True
 
