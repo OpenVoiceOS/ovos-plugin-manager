@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.12.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.12.1a1) (2026-09-06)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.12.0a1...2.12.1a1)
+
+**Merged pull requests:**
+
+- fix: warn once when a configured transformer plugin is not installed [\#447](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/447) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.12.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.12.0a1) (2026-09-06)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.6a2...2.12.0a1)
@@ -375,17 +383,9 @@
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.3a1...1.0.3)
 
-**Merged pull requests:**
-
-- Release 1.0.3a1 [\#328](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/328) ([github-actions[bot]](https://github.com/apps/github-actions))
-
 ## [1.0.3a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.3a1) (2025-06-10)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.2...1.0.3a1)
-
-**Merged pull requests:**
-
-- refactor: simplify pipeline factory, missed in previous PR [\#327](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/327) ([JarbasAl](https://github.com/JarbasAl))
 
 ## [1.0.2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.2) (2025-06-08)
 
