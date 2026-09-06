@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.12.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.12.0a1) (2026-09-06)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.6a2...2.12.0a1)
+
+**Merged pull requests:**
+
+- feat: TypedSlotsTransformer template \(OVOS-TRANSFORM-1 §3.7\) [\#445](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/445) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.11.6a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.11.6a2) (2026-09-05)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.11.6a1...2.11.6a2)
@@ -340,19 +348,19 @@
 
 ## [2.0.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.0a1) (2025-07-22)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...2.0.0a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a3...2.0.0a1)
 
 **Breaking changes:**
 
 - feat!: add collections and batch operations support to embeddings plu… [\#333](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/333) ([JarbasAl](https://github.com/JarbasAl))
 
-## [1.0.4a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a2) (2025-07-22)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a3...1.0.4a2)
-
 ## [1.0.4a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a3) (2025-07-22)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a3)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...1.0.4a3)
+
+## [1.0.4a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a2) (2025-07-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a2)
 
 **Merged pull requests:**
 
@@ -383,105 +391,53 @@
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.2a1...1.0.2)
 
-**Merged pull requests:**
-
-- Release 1.0.2a1 [\#326](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/326) ([github-actions[bot]](https://github.com/apps/github-actions))
-
 ## [1.0.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.2a1) (2025-06-08)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.1...1.0.2a1)
-
-**Merged pull requests:**
-
-- fix: wakeword factory [\#325](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/325) ([JarbasAl](https://github.com/JarbasAl))
 
 ## [1.0.1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.1) (2025-06-08)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.1a1...1.0.1)
 
-**Merged pull requests:**
-
-- Release 1.0.1a1 [\#324](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/324) ([github-actions[bot]](https://github.com/apps/github-actions))
-
 ## [1.0.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.1a1) (2025-06-08)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.0...1.0.1a1)
-
-**Merged pull requests:**
-
-- fix: typing mistakes from 1.0.0 [\#323](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/323) ([JarbasAl](https://github.com/JarbasAl))
 
 ## [1.0.0](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.0) (2025-06-08)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.0a1...1.0.0)
 
-**Merged pull requests:**
-
-- Release 1.0.0a1 [\#322](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/322) ([github-actions[bot]](https://github.com/apps/github-actions))
-
 ## [1.0.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.0a1) (2025-06-07)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.9.0...1.0.0a1)
-
-**Breaking changes:**
-
-- refactor!: improve typing and deprecations [\#314](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/314) ([JarbasAl](https://github.com/JarbasAl))
 
 ## [0.9.0](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.9.0) (2025-05-27)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.9.0a2...0.9.0)
 
-**Merged pull requests:**
-
-- Release 0.9.0a2 [\#320](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/320) ([github-actions[bot]](https://github.com/apps/github-actions))
-
 ## [0.9.0a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.9.0a2) (2025-05-27)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.9.0a1...0.9.0a2)
-
-**Merged pull requests:**
-
-- Create intent\_transformers.py [\#319](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/319) ([JarbasAl](https://github.com/JarbasAl))
 
 ## [0.9.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.9.0a1) (2025-05-27)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.7...0.9.0a1)
 
-**Merged pull requests:**
-
-- feat: intent transformers [\#316](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/316) ([JarbasAl](https://github.com/JarbasAl))
-
 ## [0.8.7](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.7) (2025-05-27)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.7a1...0.8.7)
-
-**Merged pull requests:**
-
-- Release 0.8.7a1 [\#313](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/313) ([github-actions[bot]](https://github.com/apps/github-actions))
 
 ## [0.8.7a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.7a1) (2025-04-23)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.6...0.8.7a1)
 
-**Merged pull requests:**
-
-- Fix/error handling autotx [\#311](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/311) ([JarbasAl](https://github.com/JarbasAl))
-
 ## [0.8.6](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.6) (2025-03-27)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.6a1...0.8.6)
 
-**Merged pull requests:**
-
-- Release 0.8.6a1 [\#310](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/310) ([github-actions[bot]](https://github.com/apps/github-actions))
-
 ## [0.8.6a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.6a1) (2025-03-27)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/0.8.5...0.8.6a1)
-
-**Merged pull requests:**
-
-- fix: handle plugin failures in auto translation decorators for Solver… [\#309](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/309) ([JarbasAl](https://github.com/JarbasAl))
 
 ## [0.8.5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/0.8.5) (2025-03-27)
 
