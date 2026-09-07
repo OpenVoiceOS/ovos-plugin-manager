@@ -1,6 +1,5 @@
 from ovos_config import Configuration
-from ovos_utils.log import LOG, deprecated
-import warnings
+from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.microphone import Microphone
 from ovos_plugin_manager.utils import PluginTypes
 
@@ -22,22 +21,6 @@ def load_microphone_plugin(module_name: str) -> type(Microphone):
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.MIC)
-
-
-@deprecated("get_microphone_config is deprecated, use Configuration() directly", "1.0.0")
-def get_microphone_config(config=None):
-    """
-    Get relevant configuration for factory methods
-    @param config: global Configuration OR plugin class-specific configuration
-    @return: plugin class-specific configuration
-    """
-    warnings.warn(
-        "get_microphone_config is deprecated, use Configuration() directly",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    from ovos_plugin_manager.utils.config import get_plugin_config
-    return get_plugin_config(config, "microphone")
 
 
 class OVOSMicrophoneFactory:
