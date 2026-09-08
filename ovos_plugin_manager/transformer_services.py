@@ -98,12 +98,47 @@ class TransformersService:
         self.has_loaded = False
         self.sort_ascending = sort_ascending
         self._sorted_plugins = None
+        self._section_named = self._section_was_named(config)
         self.config = self._resolve_section(config)
         self.load_plugins()
 
     @classmethod
+    def _section_was_named(cls, config: Optional[dict]) -> bool:
+        """Whether the mapping to use was found under this stage's own key.
+
+        ``False`` means :meth:`_resolve_section` used the mapping it was
+        given AS the section. That is right for a caller passing the section
+        directly and wrong for one passing a whole configuration that does
+        not carry the section, and the two are indistinguishable from here.
+
+        Nothing branches on this except how an entry that names no installed
+        plugin is reported (see :meth:`load_plugins`). Callers should pass
+        ``config[cls.config_section]`` rather than the whole configuration.
+        """
+        if not cls.config_section:
+            return False
+        if config is None:
+            # the service read the deployment itself, so there is nothing to
+            # be ambiguous about
+            return True
+        if cls.config_section in config:
+            return True
+        # a caller that handed over exactly what this stage's section holds
+        # did the right thing. This is an equality against the deployment's
+        # own value, not a guess about the mapping's shape.
+        try:
+            return config == dict(Configuration().get(cls.config_section) or {})
+        except Exception:
+            return False
+
+    @classmethod
     def _resolve_section(cls, config: Optional[dict]) -> dict:
-        """Accept either a full core config or the section mapping itself."""
+        """Accept either a full core config or the section mapping itself.
+
+        A caller should pass its own section. When the mapping carries no
+        ``config_section`` key the mapping itself is used, which cannot be
+        told apart from a whole configuration that lacks the section.
+        """
         if config is None:
             config = Configuration()
         if cls.config_section and cls.config_section in config:
@@ -151,12 +186,29 @@ class TransformersService:
         # a name enabled in config but never returned by the finder is not
         # installed at all -- OPM only iterates what it finds, so this would
         # otherwise fail silently (no log line whatsoever)
+        missing = []
         for plug_name in enabled - found_names:
             plug_config = self.config.get(plug_name) or {}
             if isinstance(plug_config, dict) and not plug_config.get("active", True):
                 continue
-            LOG.warning(f"'{plug_name}' is enabled in the '{self.config_section}' "
-                        f"config section but is not installed")
+            missing.append(plug_name)
+        if missing and self._section_named:
+            for plug_name in sorted(missing):
+                LOG.warning(f"'{plug_name}' is enabled in the "
+                            f"'{self.config_section}' config section but is "
+                            f"not installed")
+        elif missing:
+            # the mapping was used as the section without being found under
+            # its key, so an entry naming no plugin may be a plugin that is
+            # missing, or a key of a configuration that was passed whole.
+            # One line states both, rather than asserting the first once
+            # per entry.
+            LOG.warning(
+                f"the mapping given to {type(self).__name__} names no "
+                f"installed plugin for: {', '.join(sorted(missing))}. It "
+                f"carried no '{self.config_section}' key and was used as "
+                f"the section itself. If it is a whole configuration, pass "
+                f"config['{self.config_section}'] instead.")
         self._sorted_plugins = None
         self.has_loaded = True
 
@@ -451,6 +503,15 @@ class AudioTransformersService(TransformersService):
                  default_context: Optional[dict] = None):
         self.default_context = default_context or {}
         super().__init__(bus=bus, config=config, sort_ascending=sort_ascending)
+
+    @classmethod
+    def _section_was_named(cls, config: Optional[dict]) -> bool:
+        """The legacy nested location names the section too."""
+        if config is None:
+            config = Configuration()
+        listener = config.get("listener") or {}
+        return (cls.config_section in listener
+                or super()._section_was_named(config))
 
     @classmethod
     def _resolve_section(cls, config: Optional[dict]) -> dict:
