@@ -157,8 +157,11 @@ class TypedSlotsTransformer:
     this purpose - that is an utterance or metadata transformer's job.
     """
 
-    #: Types this plugin is able to compute; the orchestrator skips a
-    #: plugin whose ``supported_types`` shares nothing with the declared set.
+    #: Types this plugin is able to compute. Selection between loaded
+    #: plugins is by ``order``/``priority`` only (OVOS-TRANSFORM-1 §3.7);
+    #: the orchestrator never second-guesses the selected plugin by this
+    #: field, it calls it regardless of overlap with the declared set and
+    #: lets ``drop_unregistered_typed_slots`` filter the returned map.
     supported_types: FrozenSet[str] = frozenset()
 
     def __init__(self, name, priority=50, config=None):
