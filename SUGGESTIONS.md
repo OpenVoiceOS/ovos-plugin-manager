@@ -226,6 +226,6 @@ except Exception:
 
 **Problem**: `thirdparty/solvers.py` line 1 contains `# TODO - delete this file in next major release`. It carries a BSD-3 license header inconsistent with the rest of the repo (Apache-2.0), and `templates/solvers.py` fires a deprecation warning on import.
 
-**Fix**: Schedule removal in the next major version bump. Until then, ensure `CHANGELOG.md` and `MAINTENANCE_REPORT.md` document the deprecation timeline clearly.
+**Fix**: Schedule removal in the next major version bump. Until then, ensure `CHANGELOG.md` and `AI_TRANSPARENCY_LOG.md` document the deprecation timeline clearly.
 
 **Impact**: Low short-term — reduces code surface and license ambiguity.
