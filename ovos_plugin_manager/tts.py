@@ -1,5 +1,7 @@
 import json
 import os
+from typing import Dict, Optional, Type
+
 from ovos_plugin_manager.templates.tts import TTS, TTSContext, TTSValidator, TextToSpeechCache, ConcatTTS
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 from ovos_utils.log import LOG
@@ -7,20 +9,26 @@ from ovos_utils.xdg_utils import xdg_data_home
 from hashlib import md5
 
 
-def find_tts_plugins() -> dict:
+def find_tts_plugins() -> Dict[str, Type[TTS]]:
     """
-    Find all installed plugins
-    @return: dict plugin names to entrypoints
+    Discover installed TTS plugins.
+    
+    Returns:
+        Dict[str, Type[TTS]]: Mapping of entry point name to the uninstantiated TTS plugin class.
     """
     from ovos_plugin_manager.utils import find_plugins
     return find_plugins(PluginTypes.TTS)
 
 
-def load_tts_plugin(module_name: str) -> type(TTS):
+def load_tts_plugin(module_name: str) -> Type[TTS]:
     """
-    Get an uninstantiated class for the requested module_name
-    @param module_name: Plugin entrypoint name to load
-    @return: Uninstantiated class
+    Load an uninstantiated TTS plugin class by its entrypoint name.
+    
+    Parameters:
+        module_name (str): Plugin entrypoint name to load.
+    
+    Returns:
+        The TTS plugin class (uninstantiated).
     """
     from ovos_plugin_manager.utils import load_plugin
     return load_plugin(module_name, PluginTypes.TTS)
@@ -37,9 +45,14 @@ def get_tts_configs() -> dict:
 
 def get_tts_module_configs(module_name: str) -> dict:
     """
-    Get a dict of lang to list of valid config dicts for a specific plugin
-    @param module_name: name of plugin to get configurations for
-    @return: {lang: [list of config dicts]}
+    Retrieve language-specific TTS configuration lists for a plugin.
+    
+    Parameters:
+        module_name (str): Name of the TTS plugin to load configurations for.
+    
+    Returns:
+        dict: Mapping of language code (str) to a list of configuration dicts for that language.
+              Each list is sorted by the "priority" key in ascending order (default priority is 60).
     """
     from ovos_plugin_manager.utils.config import load_plugin_configs
     configs = load_plugin_configs(module_name, PluginConfigTypes.TTS)
@@ -49,22 +62,29 @@ def get_tts_module_configs(module_name: str) -> dict:
     return configs
 
 
-def get_tts_lang_configs(lang, include_dialects=False):
+def get_tts_lang_configs(lang: str, include_dialects: bool = False) -> dict:
     """
-    Get a dict of plugins names to sorted list of valid configurations
-    @param lang: language to get configurations for (i.e. en, en-US)
-    @param include_dialects: If true, include configs for other locales
-        (i.e. include en-GB configs for lang=en-US)
-    @return: dict plugin name to list of valid configs sorted by priority
+    Retrieve TTS configuration lists for a language across installed TTS plugins.
+    
+    Parameters:
+    	lang (str): Language tag to query (e.g., "en", "en-US").
+    	include_dialects (bool): If true, include configurations for related dialects/locales
+    		(e.g., include "en-GB" when querying "en-US").
+    
+    Returns:
+    	dict: Mapping of plugin name to a list of valid configuration dictionaries for the
+    		specified language; each list is sorted by the `priority` key (higher priority first).
     """
     from ovos_plugin_manager.utils.config import get_plugin_language_configs
     return get_plugin_language_configs(PluginTypes.TTS, lang, include_dialects)
 
 
-def get_tts_supported_langs():
+def get_tts_supported_langs() -> dict:
     """
-    Get a dict of languages to valid configuration options
-    @return: dict lang to list of plugins that support that lang
+    List languages and which TTS plugins support each language.
+    
+    Returns:
+        dict: Mapping from language code (str) to a list of plugin names (list[str]) that provide TTS support for that language.
     """
     from ovos_plugin_manager.utils.config import get_plugin_supported_languages
     return get_plugin_supported_languages(PluginTypes.TTS)
@@ -72,22 +92,48 @@ def get_tts_supported_langs():
 
 def get_tts_config(config: dict = None, module: str = None) -> dict:
     """
-    Get relevant configuration for factory methods
-    @param config: global Configuration OR plugin class-specific configuration
-    @param module: TTS module to get configuration for
-    @return: plugin class-specific configuration
+    Return configuration for TTS plugins used by factory methods.
+    
+    Parameters:
+        config (dict, optional): Global configuration or plugin-specific configuration to use.
+        module (str, optional): TTS plugin module name to retrieve configuration for; if omitted, returns the general TTS configuration.
+    
+    Returns:
+        dict: Resolved plugin-specific configuration dictionary.
     """
     from ovos_plugin_manager.utils.config import get_plugin_config
     return get_plugin_config(config, 'tts', module)
 
 
-def get_voice_id(plugin_name, lang, tts_config):
+def get_voice_id(plugin_name: str, lang: str, tts_config: dict) -> str:
+    """
+    Produce a stable unique identifier for a TTS voice configuration.
+    
+    Parameters:
+        plugin_name (str): TTS plugin entry point name.
+        lang (str): BCP-47 language code.
+        tts_config (dict): Voice-specific configuration dictionary; keys order does not affect identity.
+    
+    Returns:
+        str: Identifier in the form "<plugin_name>_<lang>_<config_hash>" where <config_hash> is a stable hash of the configuration.
+    """
     tts_hash = md5(json.dumps(tts_config,
                               sort_keys=True).encode("utf-8")).hexdigest()
     return f"{plugin_name}_{lang}_{tts_hash}"
 
 
-def scan_voices():
+def scan_voices() -> dict:
+    """
+    Enumerate installed TTS plugins and persist each discovered voice configuration to disk.
+    
+    For each supported language and voice variant this creates a JSON file at
+    ~/.local/share/OPM/voice_configs/<lang>/<voice_id>.json containing the voice configuration.
+    Existing voice metadata keys (priority, display_name, offline, gender) are moved into a `meta`
+    sub-dictionary and the `module` key is set to the plugin name.
+    
+    Returns:
+        voice_ids (dict): Mapping from `voice_id` (str) to the voice configuration dict written to disk.
+    """
     voice_ids = {}
     for lang in get_tts_supported_langs():
         VOICES_FOLDER = f"{xdg_data_home()}/OPM/voice_configs/{lang}"
@@ -109,12 +155,25 @@ def scan_voices():
     return voice_ids
 
 
-def get_voices(scan=False):
+def get_voices(scan: bool = False) -> dict:
+    """
+    List all available TTS voice configurations, optionally re-scanning installed plugins first.
+    
+    Voice configuration files are read from ~/.local/share/OPM/voice_configs/<lang>/. Call scan_voices() or pass scan=True to refresh on-disk voice definitions before loading.
+    
+    Parameters:
+        scan (bool): If True, re-scan installed TTS plugins and update on-disk voice configs before reading.
+    
+    Returns:
+        dict: Mapping of voice_id (filename) to the loaded voice configuration dictionary.
+    """
     if scan:
         scan_voices()
     voice_ids = {}
     for lang in get_tts_supported_langs():
         VOICES_FOLDER = f"{xdg_data_home()}/OPM/voice_configs/{lang}"
+        if not os.path.isdir(VOICES_FOLDER):
+            continue
         for voice in os.listdir(VOICES_FOLDER):
             with open(f"{VOICES_FOLDER}/{voice}") as f:
                 voice_ids[voice] = json.load(f)

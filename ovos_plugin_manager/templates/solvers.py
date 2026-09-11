@@ -4,12 +4,20 @@ from functools import wraps
 from typing import Optional, List, Iterable, Tuple, Dict, Union, Any
 
 from json_database import JsonStorageXDG
-from ovos_utils.lang import standardize_lang_tag
-from ovos_utils.log import LOG, log_deprecation
+from ovos_spec_tools import standardize_lang
+from ovos_utils.log import LOG, log_deprecation, deprecated
 from ovos_utils.xdg_utils import xdg_cache_home
 
+from ovos_plugin_manager._deprecation import imported_internally
 from ovos_plugin_manager.templates.language import LanguageTranslator, LanguageDetector
 from ovos_plugin_manager.thirdparty.solvers import AbstractSolver
+from ovos_plugin_manager.version import VERSION_MAJOR
+
+if not imported_internally(__name__):
+    log_deprecation("ovos_plugin_manager.templates.solvers has been deprecated and will be removed in the next major release.\n"
+                    "Please migrate your code to use AbstractAgentEngine.\n"
+                    "The new classes live in ovos_plugin_manager.templates.agents",
+                    f"{VERSION_MAJOR + 1}.0.0")
 
 
 def auto_translate(translate_keys: List[str], translate_str_args=True):
@@ -28,7 +36,7 @@ def auto_translate(translate_keys: List[str], translate_str_args=True):
 
             lang = kwargs.get("lang")
             if lang:
-                lang = standardize_lang_tag(lang)
+                lang = standardize_lang(lang)
             # check if translation can be skipped
             if any([lang is None,
                     lang == solver.default_lang,
@@ -99,7 +107,7 @@ def auto_detect_lang(text_keys: List[str]):
                             LOG.debug(f"detected 'lang': {lang} in argument '{idx}' for func: {func}")
 
             if lang:
-                lang = standardize_lang_tag(lang)
+                lang = standardize_lang(lang)
             kwargs["lang"] = lang
             return func(*args, **kwargs)
 
@@ -133,6 +141,9 @@ class QuestionSolver(AbstractSolver):
             enable_cache (bool): Flag to enable caching.
             internal_lang (Optional[str]): Internal language code. Defaults to None.
         """
+        log_deprecation("QuestionSolver has been deprecated and will be removed in the next major release. "
+                        "Please migrate your code to use ChatEngine / RetrievalEngine",
+                        f"{VERSION_MAJOR + 1}.0.0")
         super().__init__(config, translator, detector, priority,
                          enable_tx, enable_cache, internal_lang,
                          *args, **kwargs)
@@ -264,7 +275,7 @@ class QuestionSolver(AbstractSolver):
             # search data
             try:
                 data = _call_with_sanitized_kwargs(self.get_data, query, lang=lang, units=units)
-            except:
+            except Exception:
                 return {}
 
         # save to cache
@@ -438,6 +449,9 @@ class CorpusSolver(QuestionSolver):
                  enable_tx: bool = False,
                  enable_cache: bool = False,
                  *args, **kwargs):
+        log_deprecation("CorpusSolver has been deprecated and will be removed in the next major release. "
+                        "Please migrate your code to use DocumentIndexerEngine/QAIndexerEngine",
+                        f"{VERSION_MAJOR + 1}.0.0")
         super().__init__(config, translator, detector,
                          priority, enable_tx, enable_cache,
                          *args, **kwargs)
@@ -458,7 +472,7 @@ class CorpusSolver(QuestionSolver):
         res = []
         for doc, score in self.query(query, lang, k=k):
             # this log can be very spammy, only enable for debug during dev
-            #LOG.debug(f"Rank {len(res) + 1} (score: {score}): {doc}")
+            # LOG.debug(f"Rank {len(res) + 1} (score: {score}): {doc}")
             if self.config.get("min_conf"):
                 if score >= self.config["min_conf"]:
                     res.append((score, doc))
@@ -509,6 +523,12 @@ class TldrSolver(AbstractSolver):
     handling automatic translation as needed.
     """
 
+    def __init__(self, *args, **kwargs):
+        log_deprecation("TldrSolver has been deprecated and will be removed in the next major release. "
+                        "Please migrate your code to use SummarizerEngine",
+                        f"{VERSION_MAJOR + 1}.0.0")
+        super().__init__(*args, **kwargs)
+
     @abc.abstractmethod
     def get_tldr(self, document: str,
                  lang: Optional[str] = None) -> str:
@@ -546,6 +566,12 @@ class EvidenceSolver(AbstractSolver):
     Solver for NLP reading comprehension tasks,
     handling automatic translation as needed.
     """
+
+    def __init__(self, *args, **kwargs):
+        log_deprecation("EvidenceSolver has been deprecated and will be removed in the next major release. "
+                        "Please migrate your code to use ExtractiveQAEngine",
+                        f"{VERSION_MAJOR + 1}.0.0")
+        super().__init__(*args, **kwargs)
 
     @abc.abstractmethod
     def get_best_passage(self, evidence: str, question: str,
@@ -588,6 +614,12 @@ class MultipleChoiceSolver(AbstractSolver):
     handling automatic translation as needed.
     """
 
+    def __init__(self, *args, **kwargs):
+        log_deprecation("MultipleChoiceSolver has been deprecated and will be removed in the next major release. "
+                        "Please migrate your code to use ReRankerEngine",
+                        f"{VERSION_MAJOR + 1}.0.0")
+        super().__init__(*args, **kwargs)
+
     @abc.abstractmethod
     def rerank(self, query: str, options: List[str],
                lang: Optional[str] = None,
@@ -628,6 +660,12 @@ class MultipleChoiceSolver(AbstractSolver):
 class EntailmentSolver(AbstractSolver):
     """ select best answer from question + multiple choice
     handling automatic translation back and forth as needed"""
+
+    def __init__(self, *args, **kwargs):
+        log_deprecation("EntailmentSolver has been deprecated and will be removed in the next major release. "
+                        "Please migrate your code to use NaturalLanguageInferenceEngine",
+                        f"{VERSION_MAJOR + 1}.0.0")
+        super().__init__(*args, **kwargs)
 
     @abc.abstractmethod
     def check_entailment(self, premise: str, hypothesis: str,

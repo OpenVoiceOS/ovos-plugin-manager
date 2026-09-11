@@ -1,5 +1,5 @@
 from typing import Optional
-from ovos_plugin_manager.utils import normalize_lang, PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 from ovos_plugin_manager.templates.audio2ipa import Audio2IPA
 from ovos_utils.log import LOG
 
