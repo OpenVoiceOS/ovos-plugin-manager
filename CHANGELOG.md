@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.12.2a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.12.2a1) (2026-09-11)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.12.1a1...2.12.2a1)
+
+**Merged pull requests:**
+
+- fix: supported\_types is self-description, not a selection gate [\#449](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/449) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.12.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.12.1a1) (2026-09-06)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.12.0a1...2.12.1a1)
@@ -352,28 +360,22 @@
 **Merged pull requests:**
 
 - Release 2.0.0a2 [\#337](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/337) ([github-actions[bot]](https://github.com/apps/github-actions))
-- Update requests requirement from ~=2.26 to ~=2.32 in /requirements [\#330](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/330) ([dependabot[bot]](https://github.com/apps/dependabot))
 
 ## [2.0.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.0a1) (2025-07-22)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a3...2.0.0a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...2.0.0a1)
 
 **Breaking changes:**
 
 - feat!: add collections and batch operations support to embeddings plu… [\#333](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/333) ([JarbasAl](https://github.com/JarbasAl))
 
-## [1.0.4a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a3) (2025-07-22)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...1.0.4a3)
-
 ## [1.0.4a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a2) (2025-07-22)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a2)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a3...1.0.4a2)
 
-**Merged pull requests:**
+## [1.0.4a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a3) (2025-07-22)
 
-- Update langcodes requirement from ~=3.3.0 to ~=3.5.0 in /requirements [\#332](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/332) ([dependabot[bot]](https://github.com/apps/dependabot))
-- Update combo-lock requirement from ~=0.2 to ~=0.3 in /requirements [\#331](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/331) ([dependabot[bot]](https://github.com/apps/dependabot))
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a3)
 
 ## [1.0.4a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a1) (2025-06-18)
 
