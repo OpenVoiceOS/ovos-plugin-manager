@@ -755,3 +755,75 @@ class TestDebugEnabledGate(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestUnresolvedSectionIsReportedOnce(unittest.TestCase):
+    """An entry that names no installed plugin is reported once per entry
+    when the section was found under its own key, and in a single line when
+    the mapping was used as the section without being found under it.
+
+    The two cases are indistinguishable from inside the service, so the
+    second states what it did and what to pass instead, rather than
+    asserting once per entry that a plugin is missing.
+    """
+
+    FULL_CONFIG = {
+        "lang": "en-US",
+        "listener": {},
+        "websocket": {},
+        "tts": {},
+        "date_format": "DMY",
+        "system_unit": "metric",
+    }
+
+    def _warnings(self, config):
+        with patch.object(UtteranceTransformersService, "find_plugins",
+                          classmethod(lambda cls: {}.items())), \
+             patch("ovos_plugin_manager.transformer_services.LOG.warning") as w:
+            UtteranceTransformersService(Mock(), config=config)
+        return [c.args[0] for c in w.call_args_list]
+
+    def test_a_whole_configuration_is_one_line_naming_every_entry(self):
+        warnings = self._warnings(dict(self.FULL_CONFIG))
+        self.assertEqual(len(warnings), 1, warnings)
+        for key in self.FULL_CONFIG:
+            self.assertIn(key, warnings[0])
+        self.assertIn("utterance_transformers", warnings[0])
+
+    def test_the_named_section_still_reports_once_per_plugin(self):
+        warnings = self._warnings(
+            {"utterance_transformers": {"p1": {}, "p2": {}}})
+        self.assertEqual(len(warnings), 2, warnings)
+        self.assertEqual({"p1" in w for w in warnings}, {True, False})
+
+    def test_a_bare_section_still_names_its_missing_plugin(self):
+        """A caller passing the section keeps an actionable message."""
+        warnings = self._warnings({"p1": {}})
+        self.assertEqual(len(warnings), 1, warnings)
+        self.assertIn("p1", warnings[0])
+
+    def test_an_inactive_entry_is_not_reported(self):
+        self.assertEqual(self._warnings({"p1": {"active": False}}), [])
+
+    def test_nothing_missing_says_nothing(self):
+        self.assertEqual(self._warnings({}), [])
+
+    def test_the_resolved_section_is_not_treated_as_ambiguous(self):
+        """A caller handing over exactly what the section holds did the right
+        thing, and must not be told to do what it already did.
+
+        This is the shape every swept caller uses:
+        ``config.get("utterance_transformers") or {}``. The mapping cannot
+        contain its own section key, so a check for that key alone reads a
+        correct caller as a mistaken one.
+        """
+        from ovos_config import Configuration
+        section = dict(Configuration().get("utterance_transformers") or {})
+        if not section:
+            self.skipTest("deployment ships no utterance_transformers section")
+        warnings = self._warnings(section)
+        self.assertTrue(warnings, "the genuine per-entry warnings must remain")
+        for w in warnings:
+            self.assertNotIn("used as the section itself", w)
+        for name in section:
+            self.assertTrue(any(f"'{name}'" in w for w in warnings), name)
