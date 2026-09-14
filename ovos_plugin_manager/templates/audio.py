@@ -313,12 +313,17 @@ class AudioBackend(metaclass=ABCMeta):
                       f"already playing, ignoring")
             return
         self._ocp_playing = True
-        self.bus.emit(Message("ovos.common_play.player.state",
-                              {"state": PlayerState.PLAYING}))
-        self.bus.emit(Message("ovos.common_play.media.state",
-                              {"state": MediaState.LOADED_MEDIA}))
-        self.bus.emit(Message("ovos.common_play.track.state",
-                              {"state": TrackState.PLAYING_AUDIOSERVICE}))
+        try:
+            self.bus.emit(Message("ovos.common_play.player.state",
+                                  {"state": PlayerState.PLAYING}))
+            self.bus.emit(Message("ovos.common_play.media.state",
+                                  {"state": MediaState.LOADED_MEDIA}))
+            self.bus.emit(Message("ovos.common_play.track.state",
+                                  {"state": TrackState.PLAYING_AUDIOSERVICE}))
+        except Exception:
+            # status was never fully reported, allow a later ocp_start to retry
+            self._ocp_playing = False
+            raise
 
     def ocp_error(self):
         """Emit OCP status events for playback error"""

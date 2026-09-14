@@ -66,11 +66,16 @@ class MediaBackend(metaclass=ABCMeta):
                       f"already playing, ignoring")
             return
         self._ocp_playing = True
-        self.bus.emit(Message("ovos.common_play.player.state",
-                              {"state": PlayerState.PLAYING}))
-        self.bus.emit(Message("ovos.common_play.media.state",
-                              {"state": MediaState.LOADED_MEDIA}))
-        self.play()
+        try:
+            self.bus.emit(Message("ovos.common_play.player.state",
+                                  {"state": PlayerState.PLAYING}))
+            self.bus.emit(Message("ovos.common_play.media.state",
+                                  {"state": MediaState.LOADED_MEDIA}))
+            self.play()
+        except Exception:
+            # playback never actually started, allow a later ocp_start to retry
+            self._ocp_playing = False
+            raise
 
     def ocp_error(self):
         """Emit OCP status events for playback error"""

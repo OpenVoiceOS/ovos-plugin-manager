@@ -225,6 +225,19 @@ class TestAudioBackend(unittest.TestCase):
         self.backend.ocp_error()
         self.assertFalse(self.backend._ocp_playing)
 
+    def test_ocp_start_clears_flag_when_emit_raises(self) -> None:
+        """If a status emit raises, _ocp_playing must be reset so a later
+        ocp_start retries instead of silently no-op'ing forever."""
+        self.backend._now_playing = "http://example.com/audio.mp3"
+        with patch.object(self.backend.bus, "emit", side_effect=RuntimeError("boom")):
+            with self.assertRaises(RuntimeError):
+                self.backend.ocp_start()
+        self.assertFalse(self.backend._ocp_playing)
+
+        with patch.object(self.backend.bus, "emit") as emit_mock:
+            self.backend.ocp_start()
+            self.assertGreater(emit_mock.call_count, 0)
+
     def test_capability_flag_defaults(self) -> None:
         """supports_seek and supports_pause default to True."""
         self.assertTrue(self.backend.supports_seek)

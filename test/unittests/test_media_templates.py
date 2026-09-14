@@ -340,6 +340,19 @@ class TestMediaBackend(unittest.TestCase):
             self.backend.ocp_start()
             self.assertEqual(play_mock.call_count, 2)
 
+    def test_ocp_start_clears_flag_when_play_raises(self) -> None:
+        """If play() raises, _ocp_playing must be reset so a later ocp_start
+        retries instead of silently no-op'ing forever."""
+        self.backend._now_playing = "file:///test.mp3"
+        with patch.object(self.backend, "play", side_effect=RuntimeError("boom")):
+            with self.assertRaises(RuntimeError):
+                self.backend.ocp_start()
+        self.assertFalse(self.backend._ocp_playing)
+
+        with patch.object(self.backend, "play") as play_mock:
+            self.backend.ocp_start()
+            self.assertEqual(play_mock.call_count, 1)
+
     def test_capability_flag_defaults(self) -> None:
         """supports_seek and supports_pause default to True."""
         self.assertTrue(self.backend.supports_seek)
