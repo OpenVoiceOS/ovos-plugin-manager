@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.12.4a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.12.4a1) (2026-09-19)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.12.3a1...2.12.4a1)
+
+**Merged pull requests:**
+
+- fix: guard media template seek, re-entry and the stop flag, add capability flags [\#453](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/453) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [2.12.3a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.12.3a1) (2026-09-16)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.12.2a1...2.12.3a1)
@@ -365,21 +373,17 @@
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.0.0a1...2.0.0a2)
 
-**Merged pull requests:**
-
-- Release 2.0.0a2 [\#337](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/337) ([github-actions[bot]](https://github.com/apps/github-actions))
-
 ## [2.0.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.0a1) (2025-07-22)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...2.0.0a1)
-
-## [1.0.4a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a2) (2025-07-22)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a3...1.0.4a2)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a3...2.0.0a1)
 
 ## [1.0.4a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a3) (2025-07-22)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a3)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...1.0.4a3)
+
+## [1.0.4a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a2) (2025-07-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a2)
 
 ## [1.0.4a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a1) (2025-06-18)
 
