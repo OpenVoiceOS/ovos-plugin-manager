@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.12.5a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.12.5a1) (2026-09-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.12.4a1...2.12.5a1)
+
+**Merged pull requests:**
+
+- fix: stop rebinding speech\_recognition.AudioFile [\#457](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/457) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [2.12.4a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.12.4a1) (2026-09-19)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.12.3a1...2.12.4a1)
@@ -236,7 +244,6 @@
 **Merged pull requests:**
 
 - chore: Add comprehensive API documentation  and unit tests for plugin systems [\#376](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/376) ([JarbasAl](https://github.com/JarbasAl))
-- feat: tool plugins [\#340](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/340) ([JarbasAl](https://github.com/JarbasAl))
 
 ## [2.2.3a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.3a1) (2026-01-30)
 
@@ -348,26 +355,13 @@
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.0a1...2.1.0)
 
-**Merged pull requests:**
-
-- Release 2.1.0a1 [\#342](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/342) ([github-actions[bot]](https://github.com/apps/github-actions))
-
 ## [2.1.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.0a1) (2025-11-04)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.0.1a1...2.1.0a1)
 
-**Merged pull requests:**
-
-- feat: ww verifier [\#341](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/341) ([JarbasAl](https://github.com/JarbasAl))
-
 ## [2.0.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.1a1) (2025-10-07)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.0.0a2...2.0.1a1)
-
-**Merged pull requests:**
-
-- Release 2.0.1a1 [\#339](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/339) ([github-actions[bot]](https://github.com/apps/github-actions))
-- fix: let ovos-audio know the actual text associated with each audio c… [\#338](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/338) ([JarbasAl](https://github.com/JarbasAl))
 
 ## [2.0.0a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.0a2) (2025-07-22)
 
