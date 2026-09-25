@@ -37,7 +37,10 @@ test = [
     "pytest-cov",
     "python-vlc",
     "ovos-hardware-helpers>=1.0.0",
-    "mediavocab>=1.0.0"
+    "mediavocab>=1.0.0",
+    # opm patches speech_recognition.AudioData; the tests that hold that
+    # patch to its contract must RUN, never skip for a missing package
+    "SpeechRecognition"
 ]
 
 [tool.setuptools]
