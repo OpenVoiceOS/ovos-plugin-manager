@@ -1,6 +1,8 @@
 from typing import Optional
 from ovos_config import Configuration
-from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
+from typing import Tuple
+
+from ovos_plugin_manager.utils import PluginTypes, next_fallback_module, PluginConfigTypes
 from ovos_plugin_manager.templates.g2p import Grapheme2PhonemePlugin, PhonemeAlphabet
 from ovos_utils.log import LOG
 
@@ -97,7 +99,7 @@ class OVOSG2PFactory:
         return load_g2p_plugin(g2p_module)
 
     @classmethod
-    def create(cls, config=None):
+    def create(cls, config=None, *, _tried: Tuple[str, ...] = ()):
         """Factory method to create a G2P engine based on configuration.
 
         The configuration file ``mycroft.conf`` contains a ``g2p`` section with
@@ -110,18 +112,24 @@ class OVOSG2PFactory:
         config = config or Configuration()
         if "g2p" in config:
             config = config["g2p"]
+        # A copy: the walk writes the module it is trying into the section, and
+        # the section handed in is usually the live Configuration.
+        config = dict(config)
         g2p_config = get_g2p_config(config)
         g2p_module = g2p_config.get('module', 'dummy')
         fallback = g2p_config.get("fallback_module")
+        tried = tuple(_tried) + (g2p_module,)
         try:
             clazz = OVOSG2PFactory.get_class(g2p_config)
             g2p = clazz(g2p_config)
             LOG.debug(f'Loaded plugin {g2p_module}')
         except Exception:
             LOG.exception('The selected G2P plugin could not be loaded.')
-            if fallback in config and fallback != g2p_module:
-                LOG.info(f"Attempting to load fallback plugin instead: {fallback}")
-                config["module"] = fallback
-                return cls.create(config)
+            nxt = next_fallback_module(fallback, tried)
+            if nxt:
+                LOG.info(f"Attempting to load fallback plugin instead: {nxt}")
+                config["module"] = nxt
+                return cls.create(config, _tried=tried)
+            LOG.error(f"G2P fallback chain exhausted, tried: {list(tried)}")
             raise
         return g2p

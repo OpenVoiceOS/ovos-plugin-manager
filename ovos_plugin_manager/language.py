@@ -1,10 +1,13 @@
+from typing import Tuple
+
 from ovos_plugin_manager.utils.config import get_plugin_config
 from ovos_utils.log import LOG
 
 from ovos_config import Configuration
 from ovos_plugin_manager.templates.language import LanguageTranslator, \
     LanguageDetector
-from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
+from ovos_plugin_manager.utils import (PluginTypes, PluginConfigTypes,
+                                       next_fallback_module)
 
 
 def find_tx_plugins() -> dict:
@@ -106,7 +109,8 @@ class OVOSLangDetectionFactory:
         return load_lang_detect_plugin(lang_module)
 
     @classmethod
-    def create(cls, config=None) -> LanguageDetector:
+    def create(cls, config=None, *,
+               _tried: Tuple[str, ...] = ()) -> LanguageDetector:
         """
         Factory method to create a LangDetection engine based on configuration
 
@@ -120,9 +124,13 @@ class OVOSLangDetectionFactory:
         config = config or Configuration()
         if "language" in config:
             config = config["language"]
+        # A copy: the walk writes the module it is trying into the section, and
+        # the section handed in is usually the live Configuration.
+        config = dict(config)
         lang_module = config.get("detection_module", config.get("module"))
         cfg = config.get(lang_module, {})
         fallback = cfg.get("fallback_module")
+        tried = tuple(_tried) + (lang_module,)
         try:
             config["module"] = lang_module
             clazz = OVOSLangDetectionFactory.get_class(config)
@@ -133,10 +141,13 @@ class OVOSLangDetectionFactory:
                                                   lang_module))
         except Exception:
             LOG.exception(f'Language Detection plugin {lang_module} could not be loaded!')
-            if fallback in config and fallback != lang_module:
-                LOG.info(f"Attempting to load fallback plugin instead: {fallback}")
-                config["detection_module"] = fallback
-                return cls.create(config)
+            nxt = next_fallback_module(fallback, tried)
+            if nxt:
+                LOG.info(f"Attempting to load fallback plugin instead: {nxt}")
+                config["detection_module"] = nxt
+                return cls.create(config, _tried=tried)
+            LOG.error(f"Language Detection fallback chain exhausted, "
+                      f"tried: {list(tried)}")
             raise
 
 
@@ -163,7 +174,8 @@ class OVOSLangTranslationFactory:
         return load_tx_plugin(lang_module)
 
     @classmethod
-    def create(cls, config=None) -> LanguageTranslator:
+    def create(cls, config=None, *,
+               _tried: Tuple[str, ...] = ()) -> LanguageTranslator:
         """
         Factory method to create a LangTranslation engine based on configuration
 
@@ -177,9 +189,13 @@ class OVOSLangTranslationFactory:
         config = config or Configuration()
         if "language" in config:
             config = config["language"]
+        # A copy: the walk writes the module it is trying into the section, and
+        # the section handed in is usually the live Configuration.
+        config = dict(config)
         lang_module = config.get("translation_module", config.get("module"))
         cfg = config.get(lang_module, {})
         fallback = cfg.get("fallback_module")
+        tried = tuple(_tried) + (lang_module,)
         try:
             config["module"] = lang_module
             clazz = OVOSLangTranslationFactory.get_class(config)
@@ -190,8 +206,11 @@ class OVOSLangTranslationFactory:
                                                   lang_module))
         except Exception:
             LOG.exception(f'Language Translation plugin {lang_module} could not be loaded!')
-            if fallback in config and fallback != lang_module:
-                LOG.info(f"Attempting to load fallback plugin instead: {fallback}")
-                config["translation_module"] = fallback
-                return cls.create(config)
+            nxt = next_fallback_module(fallback, tried)
+            if nxt:
+                LOG.info(f"Attempting to load fallback plugin instead: {nxt}")
+                config["translation_module"] = nxt
+                return cls.create(config, _tried=tried)
+            LOG.error(f"Language Translation fallback chain exhausted, "
+                      f"tried: {list(tried)}")
             raise
