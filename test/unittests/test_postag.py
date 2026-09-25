@@ -4,11 +4,16 @@ from unittest.mock import patch
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
-class TestPostag(unittest.TestCase):
+class TestPOSTagTemplate(unittest.TestCase):
+    def test_postag_extractor(self):
+        from ovos_plugin_manager.templates.postag import PosTagger
+        self.assertTrue(hasattr(PosTagger, 'postag'))
+
+
+class TestPOSTag(unittest.TestCase):
     PLUGIN_TYPE = PluginTypes.POSTAG
     CONFIG_TYPE = PluginConfigTypes.POSTAG
     TEST_CONFIG = {"test": True}
-    CONFIG_SECTION = "postag"
     TEST_LANG = "en-US"
 
     @patch("ovos_plugin_manager.utils.find_plugins")
@@ -48,15 +53,3 @@ class TestPostag(unittest.TestCase):
         from ovos_plugin_manager.postag import get_postag_supported_langs
         get_postag_supported_langs()
         get_supported_languages.assert_called_once_with(self.PLUGIN_TYPE)
-
-    @patch("ovos_plugin_manager.utils.config.get_plugin_config")
-    def test_get_config(self, get_config):
-        from ovos_plugin_manager.postag import get_postag_config
-        get_postag_config(self.TEST_CONFIG)
-        get_config.assert_called_once_with(self.TEST_CONFIG,
-                                           self.CONFIG_SECTION)
-
-
-class TestPosTaggerFactory(unittest.TestCase):
-    from ovos_plugin_manager.postag import OVOSPosTaggerFactory
-    # TODO

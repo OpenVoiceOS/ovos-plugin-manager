@@ -1,6 +1,6 @@
 import unittest
 
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
@@ -67,5 +67,49 @@ class TestKeywords(unittest.TestCase):
 
 
 class TestKeywordsFactory(unittest.TestCase):
-    from ovos_plugin_manager.keywords import OVOSKeywordExtractorFactory
-    # TODO
+    @patch("ovos_plugin_manager.keywords.load_keyword_extract_plugin")
+    @patch("ovos_plugin_manager.keywords.get_keyword_extract_config")
+    def test_get_class(self, mock_get_config, mock_load_plugin):
+        from ovos_plugin_manager.keywords import OVOSKeywordExtractorFactory
+        mock_get_config.return_value = {"module": "test_module"}
+        mock_load_plugin.return_value = Mock()
+
+        OVOSKeywordExtractorFactory.get_class()
+        mock_load_plugin.assert_called_once_with("test_module")
+
+    @patch("ovos_plugin_manager.keywords.load_keyword_extract_plugin")
+    @patch("ovos_plugin_manager.keywords.get_keyword_extract_config")
+    def test_get_class_with_mapping(self, mock_get_config, mock_load_plugin):
+        from ovos_plugin_manager.keywords import OVOSKeywordExtractorFactory
+        mock_get_config.return_value = {"module": "dummy"}
+        mock_load_plugin.return_value = Mock()
+
+        OVOSKeywordExtractorFactory.get_class()
+        # Should use the mapped module name
+        mock_load_plugin.assert_called_once_with("ovos-keyword-plugin-dummy")
+
+    @patch("ovos_plugin_manager.keywords.OVOSKeywordExtractorFactory.get_class")
+    @patch("ovos_plugin_manager.keywords.get_keyword_extract_config")
+    def test_create(self, mock_get_config, mock_get_class):
+        from ovos_plugin_manager.keywords import OVOSKeywordExtractorFactory
+        mock_class = Mock()
+        mock_instance = Mock()
+        mock_class.return_value = mock_instance
+        mock_get_class.return_value = mock_class
+        mock_get_config.return_value = {"module": "test_module", "test_module": {"param": "value"}}
+
+        result = OVOSKeywordExtractorFactory.create()
+        self.assertEqual(result, mock_instance)
+        mock_class.assert_called_once_with({"param": "value"})
+
+    @patch("ovos_plugin_manager.keywords.OVOSKeywordExtractorFactory.get_class")
+    @patch("ovos_plugin_manager.keywords.get_keyword_extract_config")
+    def test_create_fallback_on_error(self, mock_get_config, mock_get_class):
+        from ovos_plugin_manager.keywords import OVOSKeywordExtractorFactory
+        mock_get_config.return_value = {"module": "bad_module"}
+        mock_get_class.side_effect = Exception("Module not found")
+
+        result = OVOSKeywordExtractorFactory.create()
+        # Should return a default KeywordExtractor on error
+        from ovos_plugin_manager.templates.keywords import KeywordExtractor
+        self.assertIsInstance(result, KeywordExtractor)

@@ -1,6 +1,6 @@
 import unittest
 
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
 
 
@@ -13,9 +13,29 @@ class TestPHALTemplate(unittest.TestCase):
         self.assertFalse(PHALValidator.validate({"enabled": False}))
         self.assertFalse(PHALValidator.validate({"enabled": None}))
 
-    def test_PHAL_Plugin(self):
-        from ovos_plugin_manager.templates.phal import PHALValidator
-        # TODO
+    @patch("ovos_plugin_manager.templates.phal.get_mycroft_bus")
+    @patch("ovos_plugin_manager.templates.phal.Configuration", return_value={})
+    def test_PHAL_Plugin(self, mock_cfg, mock_bus):
+        from ovos_plugin_manager.templates.phal import PHALPlugin
+        mock_bus_instance = MagicMock()
+        mock_bus.return_value = mock_bus_instance
+
+        # Prevent the daemon thread from actually starting
+        with patch.object(PHALPlugin, "start"):
+            plugin = PHALPlugin(bus=mock_bus_instance,
+                                name="test-phal",
+                                config={"key": "val"})
+
+        self.assertEqual(plugin.name, "test-phal")
+        self.assertEqual(plugin.config, {"key": "val"})
+        self.assertIs(plugin.bus, mock_bus_instance)
+        self.assertIsInstance(plugin.validator, type)
+
+        # emit() should call bus.emit with a correctly scoped message type
+        plugin.emit("ready")
+        mock_bus_instance.emit.assert_called_once()
+        emitted_msg = mock_bus_instance.emit.call_args[0][0]
+        self.assertIn("ovos.PHAL.test-phal.ready", emitted_msg.msg_type)
 
     def test_Admin_Validator(self):
         from ovos_plugin_manager.templates.phal import AdminValidator
@@ -25,9 +45,20 @@ class TestPHALTemplate(unittest.TestCase):
         self.assertFalse(AdminValidator.validate({"enabled": False}))
         self.assertFalse(AdminValidator.validate({"enabled": None}))
 
-    def test_Admin_Plugin(self):
-        from ovos_plugin_manager.templates.phal import AdminPlugin
-        # TODO
+    @patch("ovos_plugin_manager.templates.phal.get_mycroft_bus")
+    @patch("ovos_plugin_manager.templates.phal.Configuration", return_value={})
+    def test_Admin_Plugin(self, mock_cfg, mock_bus):
+        from ovos_plugin_manager.templates.phal import AdminPlugin, PHALPlugin
+        mock_bus_instance = MagicMock()
+        mock_bus.return_value = mock_bus_instance
+
+        with patch.object(AdminPlugin, "start"):
+            plugin = AdminPlugin(bus=mock_bus_instance,
+                                 name="test-admin",
+                                 config={})
+
+        self.assertIsInstance(plugin, PHALPlugin)
+        self.assertEqual(plugin.name, "test-admin")
 
 class TestPHAL(unittest.TestCase):
     PLUGIN_TYPE = PluginTypes.PHAL

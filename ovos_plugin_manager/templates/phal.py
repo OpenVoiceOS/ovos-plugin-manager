@@ -1,4 +1,5 @@
 from threading import Thread
+from typing import Optional
 
 from ovos_bus_client.message import Message
 from ovos_config import Configuration
@@ -41,6 +42,7 @@ class PHALPlugin(Thread):
         self.bus = bus or get_mycroft_bus()
         self.log = LOG
         self.name = name
+        self._registered_handlers = []
 
         self.register_enclosure_namespace()
         self.register_core_events()
@@ -48,85 +50,73 @@ class PHALPlugin(Thread):
         self._activate_mouth_events()
         self.start()
 
+    def _on(self, topic, handler):
+        """Register a bus handler and remember it so `shutdown` can remove
+        the exact (topic, handler) pair it registered."""
+        self.bus.on(topic, handler)
+        self._registered_handlers.append((topic, handler))
+
     def register_core_events(self):
         # audio events
-        self.bus.on('recognizer_loop:record_begin', self.on_record_begin)
-        self.bus.on('recognizer_loop:record_end', self.on_record_end)
-        self.bus.on("recognizer_loop:sleep", self.on_sleep)
-        self.bus.on('recognizer_loop:audio_output_start', self.on_audio_output_start)
-        self.bus.on('recognizer_loop:audio_output_end', self.on_audio_output_end)
-        self.bus.on("mycroft.awoken", self.on_awake)
-        self.bus.on("speak", self.on_speak)
+        self._on('recognizer_loop:record_begin', self.on_record_begin)
+        self._on('recognizer_loop:record_end', self.on_record_end)
+        self._on("recognizer_loop:sleep", self.on_sleep)
+        self._on('recognizer_loop:audio_output_start', self.on_audio_output_start)
+        self._on('recognizer_loop:audio_output_end', self.on_audio_output_end)
+        self._on("mycroft.awoken", self.on_awake)
+        self._on("speak", self.on_speak)
 
     def register_enclosure_namespace(self):
-        self.bus.on("enclosure.notify.no_internet", self.on_no_internet)
-        self.bus.on("enclosure.reset", self.on_reset)
+        self._on("enclosure.notify.no_internet", self.on_no_internet)
+        self._on("enclosure.reset", self.on_reset)
 
         # enclosure commands for OpenVoiceOS's Hardware.
-        self.bus.on("enclosure.system.reset", self.on_system_reset)
-        self.bus.on("enclosure.system.mute", self.on_system_mute)
-        self.bus.on("enclosure.system.unmute", self.on_system_unmute)
-        self.bus.on("enclosure.system.blink", self.on_system_blink)
+        self._on("enclosure.system.reset", self.on_system_reset)
+        self._on("enclosure.system.mute", self.on_system_mute)
+        self._on("enclosure.system.unmute", self.on_system_unmute)
+        self._on("enclosure.system.blink", self.on_system_blink)
 
         # enclosure commands for eyes
-        self.bus.on('enclosure.eyes.on', self.on_eyes_on)
-        self.bus.on('enclosure.eyes.off', self.on_eyes_off)
-        self.bus.on('enclosure.eyes.blink', self.on_eyes_blink)
-        self.bus.on('enclosure.eyes.narrow', self.on_eyes_narrow)
-        self.bus.on('enclosure.eyes.look', self.on_eyes_look)
-        self.bus.on('enclosure.eyes.color', self.on_eyes_color)
-        self.bus.on('enclosure.eyes.level', self.on_eyes_brightness)
-        self.bus.on('enclosure.eyes.volume', self.on_eyes_volume)
-        self.bus.on('enclosure.eyes.spin', self.on_eyes_spin)
-        self.bus.on('enclosure.eyes.timedspin', self.on_eyes_timed_spin)
-        self.bus.on('enclosure.eyes.reset', self.on_eyes_reset)
-        self.bus.on('enclosure.eyes.setpixel', self.on_eyes_set_pixel)
-        self.bus.on('enclosure.eyes.fill', self.on_eyes_fill)
+        self._on('enclosure.eyes.on', self.on_eyes_on)
+        self._on('enclosure.eyes.off', self.on_eyes_off)
+        self._on('enclosure.eyes.blink', self.on_eyes_blink)
+        self._on('enclosure.eyes.narrow', self.on_eyes_narrow)
+        self._on('enclosure.eyes.look', self.on_eyes_look)
+        self._on('enclosure.eyes.color', self.on_eyes_color)
+        self._on('enclosure.eyes.level', self.on_eyes_brightness)
+        self._on('enclosure.eyes.volume', self.on_eyes_volume)
+        self._on('enclosure.eyes.spin', self.on_eyes_spin)
+        self._on('enclosure.eyes.timedspin', self.on_eyes_timed_spin)
+        self._on('enclosure.eyes.reset', self.on_eyes_reset)
+        self._on('enclosure.eyes.setpixel', self.on_eyes_set_pixel)
+        self._on('enclosure.eyes.fill', self.on_eyes_fill)
 
         # enclosure commands for mouth
-        self.bus.on("enclosure.mouth.events.activate", self._activate_mouth_events)
-        self.bus.on("enclosure.mouth.events.deactivate", self._deactivate_mouth_events)
-        self.bus.on("enclosure.mouth.talk", self._on_mouth_talk)
-        self.bus.on("enclosure.mouth.think", self._on_mouth_think)
-        self.bus.on("enclosure.mouth.listen", self._on_mouth_listen)
-        self.bus.on("enclosure.mouth.smile", self._on_mouth_smile)
-        self.bus.on("enclosure.mouth.viseme", self._on_mouth_viseme)
-        self.bus.on("enclosure.mouth.viseme_list", self._on_mouth_viseme_list)
+        self._on("enclosure.mouth.events.activate", self._activate_mouth_events)
+        self._on("enclosure.mouth.events.deactivate", self._deactivate_mouth_events)
+        self._on("enclosure.mouth.talk", self._on_mouth_talk)
+        self._on("enclosure.mouth.think", self._on_mouth_think)
+        self._on("enclosure.mouth.listen", self._on_mouth_listen)
+        self._on("enclosure.mouth.smile", self._on_mouth_smile)
+        self._on("enclosure.mouth.viseme", self._on_mouth_viseme)
+        self._on("enclosure.mouth.viseme_list", self._on_mouth_viseme_list)
 
         # mouth/matrix display
-        self.bus.on("enclosure.mouth.reset", self.on_display_reset)
-        self.bus.on("enclosure.mouth.text", self.on_text)
-        self.bus.on("enclosure.mouth.display", self.on_display)
-        self.bus.on("enclosure.weather.display", self.on_weather_display)
+        self._on("enclosure.mouth.reset", self.on_display_reset)
+        self._on("enclosure.mouth.text", self.on_text)
+        self._on("enclosure.mouth.display", self.on_display)
+        self._on("enclosure.weather.display", self.on_weather_display)
 
 
     @classproperty
     def runtime_requirements(cls):
-        """ skill developers should override this if they do not require connectivity
-         some examples:
-         IOT plugin that controls devices via LAN could return:
-            scans_on_init = True
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=scans_on_init,
-                                 requires_internet=False,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=False)
-         online search plugin with a local cache:
-            has_cache = False
-            RuntimeRequirements(internet_before_load=not has_cache,
-                                 network_before_load=not has_cache,
-                                 requires_internet=True,
-                                 requires_network=True,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
-         a fully offline plugin:
-            RuntimeRequirements(internet_before_load=False,
-                                 network_before_load=False,
-                                 requires_internet=False,
-                                 requires_network=False,
-                                 no_internet_fallback=True,
-                                 no_network_fallback=True)
+        """
+        Provide the plugin's runtime connectivity requirements; subclasses should override to declare different needs.
+        
+        This default indicates the plugin does not require internet or network before load or at runtime and that both no-internet and no-network fallbacks are allowed. Subclasses can return a RuntimeRequirements instance with different flags to express their specific connectivity and fallback requirements.
+        
+        Returns:
+            RuntimeRequirements: Instance describing internet/network requirements and fallback behaviour.
         """
         return RuntimeRequirements(internet_before_load=False,
                                    network_before_load=False,
@@ -135,53 +125,22 @@ class PHALPlugin(Thread):
                                    no_internet_fallback=True,
                                    no_network_fallback=True)
 
-    def emit(self, msg_type, msg_data=None):
+    def emit(self, msg_type: str, msg_data: Optional[dict] = None) -> None:
+        """
+        Emit a bus message scoped to this plugin under the topic 'ovos.PHAL.<name>.<msg_type>'.
+        
+        Parameters:
+            msg_type (str): Message type suffix (e.g., "ready").
+            msg_data (Optional[dict]): Optional payload to include in the message.
+        """
         skill_id = f"ovos.PHAL.{self.name}"
         LOG.info(f"{skill_id}.{msg_type}")
         self.bus.emit(Message(f"{skill_id}.{msg_type}", msg_data, {"skill_id": skill_id}))
 
     def shutdown(self):
-        self.bus.remove("enclosure.reset", self.on_reset)
-        self.bus.remove("enclosure.system.reset", self.on_system_reset)
-        self.bus.remove("enclosure.system.mute", self.on_system_mute)
-        self.bus.remove("enclosure.system.unmute", self.on_system_unmute)
-        self.bus.remove("enclosure.system.blink", self.on_system_blink)
-
-        self.bus.remove("enclosure.eyes.on", self.on_eyes_on)
-        self.bus.remove("enclosure.eyes.off", self.on_eyes_off)
-        self.bus.remove("enclosure.eyes.blink", self.on_eyes_blink)
-        self.bus.remove("enclosure.eyes.narrow", self.on_eyes_narrow)
-        self.bus.remove("enclosure.eyes.look", self.on_eyes_look)
-        self.bus.remove("enclosure.eyes.color", self.on_eyes_color)
-        self.bus.remove("enclosure.eyes.brightness", self.on_eyes_brightness)
-        self.bus.remove("enclosure.eyes.reset", self.on_eyes_reset)
-        self.bus.remove("enclosure.eyes.timedspin", self.on_eyes_timed_spin)
-        self.bus.remove("enclosure.eyes.volume", self.on_eyes_volume)
-        self.bus.remove("enclosure.eyes.spin", self.on_eyes_spin)
-        self.bus.remove("enclosure.eyes.setpixel", self.on_eyes_set_pixel)
-        self.bus.remove('enclosure.eyes.fill', self.on_eyes_fill)
-
-        self.bus.remove("enclosure.mouth.reset", self.on_display_reset)
-        self.bus.remove("enclosure.mouth.talk", self.on_talk)
-        self.bus.remove("enclosure.mouth.think", self.on_think)
-        self.bus.remove("enclosure.mouth.listen", self.on_listen)
-        self.bus.remove("enclosure.mouth.smile", self.on_smile)
-        self.bus.remove("enclosure.mouth.viseme", self.on_viseme)
-        self.bus.remove("enclosure.mouth.viseme_list", self._on_mouth_viseme_list)
-        self.bus.remove("enclosure.mouth.text", self.on_text)
-        self.bus.remove("enclosure.mouth.display", self.on_display)
-        self.bus.remove("enclosure.mouth.events.activate", self._activate_mouth_events)
-        self.bus.remove("enclosure.mouth.events.deactivate", self._deactivate_mouth_events)
-
-        self.bus.remove("enclosure.weather.display", self.on_weather_display)
-
-        self.bus.remove("mycroft.awoken", self.on_awake)
-        self.bus.remove("recognizer_loop:sleep", self.on_sleep)
-        self.bus.remove("speak", self.on_speak)
-        self.bus.remove('recognizer_loop:record_begin', self.on_record_begin)
-        self.bus.remove('recognizer_loop:record_end', self.on_record_end)
-        self.bus.remove('recognizer_loop:audio_output_start', self.on_audio_output_start)
-        self.bus.remove("enclosure.notify.no_internet", self.on_no_internet)
+        for topic, handler in self._registered_handlers:
+            self.bus.remove(topic, handler)
+        self._registered_handlers = []
 
         self._deactivate_mouth_events()
         self._running = False
