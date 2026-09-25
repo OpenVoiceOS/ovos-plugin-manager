@@ -217,7 +217,7 @@ class TestMediaBackend(unittest.TestCase):
         """v1 bus-coupled verbs must not survive on the v2 template."""
         for name in ("ocp_start", "ocp_stop", "ocp_pause", "ocp_resume",
                      "ocp_error", "set_track_start_callback",
-                     "seek_forward", "seek_backward"):
+                     "seek_forward", "seek_backward", "playback_time"):
             self.assertFalse(hasattr(MediaBackend, name),
                               f"{name} should have been removed in v2")
 
@@ -256,8 +256,14 @@ class TestMediaBackend(unittest.TestCase):
 
     def test_position_trio_concrete_defaults(self) -> None:
         """get_track_length/get_track_position/set_track_position are
-        concrete on the base class: -1 (unknown) for the getters, a no-op
-        for the setter, since can_seek defaults to False."""
+        concrete on the base class: None for the getters, a no-op for the
+        setter, since can_seek defaults to False.
+
+        None and -1 are different answers. None is "nothing is playing, so
+        there is no position or duration to report". -1 is get_track_length's
+        answer for something that IS playing and has no finite duration, a
+        live stream. A backend that never tracks either reports None.
+        """
         class _NoSeek(MediaBackend):
             def supported_uris(self):
                 return []
@@ -280,9 +286,84 @@ class TestMediaBackend(unittest.TestCase):
 
         backend = _NoSeek()
         self.assertFalse(backend.can_seek)
-        self.assertEqual(backend.get_track_length(), -1)
-        self.assertEqual(backend.get_track_position(), -1)
+        self.assertIsNone(backend.get_track_length())
+        self.assertIsNone(backend.get_track_position())
         backend.set_track_position(5000)  # no-op, must not raise
+
+    def test_a_live_stream_reports_a_position_and_minus_one_length(self) -> None:
+        """The distinction the contract turns on, and the reason two
+        sentinels are needed rather than one.
+
+        A live stream IS playing, so it has an elapsed position -- None
+        would be wrong. It has no end, so its length is -1 -- None would be
+        wrong there too, because None already means "nothing is playing".
+        A consumer that collapsed the two could not tell a live stream from
+        a stopped player.
+        """
+        class _LiveStream(MediaBackend):
+            def supported_uris(self):
+                return ["http", "https"]
+
+            def load_track(self, uri, metadata=None):
+                return True
+
+            def play(self):
+                pass
+
+            def _stop(self):
+                return True
+
+            def pause(self):
+                pass
+
+            def resume(self):
+                pass
+
+            def get_track_length(self):
+                return -1          # playing, but no finite duration
+
+            def get_track_position(self):
+                return 42_000      # and it still has an elapsed position
+
+        backend = _LiveStream()
+        self.assertEqual(backend.get_track_length(), -1)
+        self.assertEqual(backend.get_track_position(), 42_000)
+        self.assertIsNotNone(backend.get_track_position(),
+                             "a live stream has a position")
+
+    def test_zero_is_a_position_and_not_an_unknown(self) -> None:
+        """The start of a track is 0, and 0 is not None.
+
+        A consumer that coalesces with ``or`` cannot tell them apart and
+        would treat the first millisecond of every track as unknown, so the
+        contract says test ``is None``. This pins the value the template
+        hands such a consumer.
+        """
+        class _AtTheStart(MediaBackend):
+            def supported_uris(self):
+                return []
+
+            def load_track(self, uri, metadata=None):
+                return True
+
+            def play(self):
+                pass
+
+            def _stop(self):
+                return True
+
+            def pause(self):
+                pass
+
+            def resume(self):
+                pass
+
+            def get_track_position(self):
+                return 0
+
+        backend = _AtTheStart()
+        self.assertEqual(backend.get_track_position(), 0)
+        self.assertIsNotNone(backend.get_track_position())
 
     def test_stop_sets_flag_before_delegating_to_stop_impl(self) -> None:
         """Concrete stop() must set _stop_requested=True BEFORE calling
@@ -352,7 +433,14 @@ class TestMediaBackend(unittest.TestCase):
 
     def test_report_track_end_always_clears_stop_requested_flag(self) -> None:
         """Whichever branch report_track_end takes, _stop_requested must
-        end up False, so a stale flag can't leak into the next track."""
+        end up False.
+
+        This covers the three branches of report_track_end and nothing more.
+        It does NOT establish that a stale flag cannot leak into the next
+        track: the leak happens on the paths that never reach this function,
+        and those are covered by
+        ``TestStopRequestedFlagCannotGoStale`` below.
+        """
         # error branch
         self.backend._stop_requested = True
         self.backend.report_track_end(error=RuntimeError("boom"))
@@ -367,9 +455,11 @@ class TestMediaBackend(unittest.TestCase):
         self.backend.report_track_end()
         self.assertFalse(self.backend._stop_requested)
 
+
     def test_seekable_backend_overrides_position_trio(self) -> None:
         """A backend that supports seeking overrides all three and sets
-        can_seek=True; the default -1/no-op behaviour must not leak through."""
+        can_seek=True; the default None/no-op behaviour must not leak
+        through."""
         class _Seekable(MediaBackend):
             can_seek = True
 
@@ -409,6 +499,136 @@ class TestMediaBackend(unittest.TestCase):
         self.assertEqual(backend.get_track_length(), 60000)
         backend.set_track_position(1234)
         self.assertEqual(backend.get_track_position(), 1234)
+
+
+class TestStopRequestedFlagCannotGoStale(unittest.TestCase):
+    """The two paths that set ``_stop_requested`` and never clear it.
+
+    ``stop()`` records the flag so a later ``report_track_end`` from an exit
+    callback can tell a requested stop from a natural end. Only
+    ``report_track_end`` cleared it, so any path that set the flag and never
+    reached that function left it set, and the NEXT natural end reported
+    ``STOPPED``.
+
+    That matters more than a wrong label. ``STOPPED`` and ``END_OF_MEDIA``
+    are the two facts that decide whether the playlist advances, and this
+    template's design is that the plugin reports the fact and the daemon
+    does not second-guess it. A stale flag therefore stops the playlist with
+    nothing in the log to say why.
+    """
+
+    class _Backend(MediaBackend):
+        def __init__(self, stop_ok=True, config=None):
+            super().__init__(config=config)
+            self.stop_ok = stop_ok
+
+        def supported_uris(self):
+            return ["file"]
+
+        def load_track(self, uri, metadata=None):
+            self.report(PlaybackEvent.TRACK_START, uri=uri)
+            return True
+
+        def play(self):
+            pass
+
+        def _stop(self):
+            if isinstance(self.stop_ok, BaseException):
+                raise self.stop_ok
+            return self.stop_ok
+
+        def pause(self):
+            pass
+
+        def resume(self):
+            pass
+
+    def _bind(self, stop_ok=True):
+        seen = []
+        backend = self._Backend(stop_ok=stop_ok)
+        backend.bind_event_reporter(lambda event, **data: seen.append(event))
+        return backend, seen
+
+    def test_a_stop_that_did_not_take_leaves_no_flag(self):
+        """``_stop()`` returned False, so no stop is pending and the track's
+        own natural end is a natural end."""
+        backend, seen = self._bind(stop_ok=False)
+        backend.load_track("file://a")
+        backend.play()
+        self.assertFalse(backend.stop(), "the fixture's _stop returns False")
+        self.assertFalse(backend._stop_requested,
+                         "a stop that did not take left the flag set")
+        seen.clear()
+        backend.report_track_end(uri="file://a")
+        self.assertEqual(seen, [PlaybackEvent.END_OF_MEDIA])
+
+    def test_a_stop_that_raised_leaves_no_flag(self):
+        """``_stop()`` raised, so the stop did not take either. The flag is
+        cleared on this path for the same reason as on the False path, and
+        the exception still reaches the caller."""
+        backend, seen = self._bind(stop_ok=RuntimeError("the backend is gone"))
+        backend.load_track("file://a")
+        backend.play()
+        with self.assertRaises(RuntimeError):
+            backend.stop()
+        self.assertFalse(backend._stop_requested,
+                         "a stop that raised left the flag set")
+        seen.clear()
+        backend.report_track_end(uri="file://a")
+        self.assertEqual(seen, [PlaybackEvent.END_OF_MEDIA])
+
+    def test_the_flag_does_not_cross_a_track_boundary(self):
+        """A stop whose track never reached ``report_track_end``, then the
+        next track loads, plays and ends by itself."""
+        backend, seen = self._bind()
+        backend.load_track("file://a")
+        backend.play()
+        backend.stop()
+        backend.load_track("file://b")          # TRACK_START clears it
+        backend.play()
+        self.assertFalse(backend._stop_requested,
+                         "the flag crossed into the next track")
+        seen.clear()
+        backend.report_track_end(uri="file://b")
+        self.assertEqual(seen, [PlaybackEvent.END_OF_MEDIA])
+
+    def test_track_start_clears_the_flag_with_no_reporter_bound(self):
+        """The clear is internal state, not a report, so it happens even
+        when nothing is listening. Placed before ``report``'s unbound early
+        return for this reason."""
+        backend = self._Backend()
+        backend.load_track("file://a")
+        backend.play()
+        backend.stop()
+        self.assertTrue(backend._stop_requested)
+        backend.report(PlaybackEvent.TRACK_START, uri="file://b")
+        self.assertFalse(backend._stop_requested)
+
+    def test_the_control_a_stop_that_took_still_reports_stopped(self):
+        """The control that keeps the two cases above from being a
+        regression: a real stop must still report STOPPED, or the fix would
+        have removed the feature rather than the leak."""
+        backend, seen = self._bind()
+        backend.load_track("file://a")
+        backend.play()
+        self.assertTrue(backend.stop())
+        self.assertTrue(backend._stop_requested,
+                        "a stop that took must still be pending")
+        seen.clear()
+        backend.report_track_end(uri="file://a")
+        self.assertEqual(seen, [PlaybackEvent.STOPPED])
+
+    def test_the_control_a_natural_end_with_no_stop_at_all(self):
+        """The reviewer's own control: the same call in the same state, with
+        a clean flag."""
+        backend, seen = self._bind()
+        backend.load_track("file://a")
+        backend.play()
+        seen.clear()
+        backend.report_track_end(uri="file://a")
+        self.assertEqual(seen, [PlaybackEvent.END_OF_MEDIA])
+
+
 
 
 class _RecordingBus:

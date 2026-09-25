@@ -15,6 +15,15 @@ class PlaybackEvent(enum.Enum):
     is reported through ``load_track``'s return value, and turning that
     into a state transition (and any wire message) is the daemon's job,
     not the plugin's.
+
+    ``PAUSED`` and ``RESUMED`` are **observation-only** and optional. A
+    plugin reports them when it observes a transition that was not
+    initiated through its own verb - a human pausing from the device's own
+    app, or another application taking the player. On a backend where
+    pause is only ever a daemon-initiated verb, they are never reported at
+    all, and that is correct. A daemon therefore MUST NOT treat the
+    arrival of ``PAUSED`` as the signal that a pause happened, and MUST NOT
+    wait for one after calling ``pause()``.
     """
     TRACK_START = "track_start"
     PAUSED = "paused"
@@ -62,6 +71,16 @@ class MediaBackend(metaclass=ABCMeta):
     what happened, so a change made outside OVOS entirely (a user pausing
     from the device's own app) still surfaces correctly as a
     ``PAUSED``/``RESUMED``/``STOPPED`` report.
+
+    Say it as one rule: a backend with an external observer SHOULD have
+    exactly one reporting path, and it is the observer. A backend without
+    one reports from its verbs. Two ports of this template solved the same
+    problem in opposite ways - one tracked its self-caused transitions so
+    its poller would not re-report them, the other made its verbs silent
+    and let its listener report everything - and both were defensible
+    because the template did not say which. The observer-only shape is the
+    rule here, because one path cannot disagree with itself, while two
+    paths must be kept in agreement forever.
 
     External-state detection may be event-driven (native signals or
     listener callbacks from the remote player's own SDK - preferred where
@@ -122,7 +141,30 @@ class MediaBackend(metaclass=ABCMeta):
         from a previous track's watcher thread firing after a new track
         has already loaded). An event reported without a ``uri`` cannot be
         staleness-checked by the daemon.
+
+        **Re-entrancy.** A plugin MAY call ``report()`` synchronously from
+        inside any verb, including ``stop()``: a backend that stops its
+        player and observes the stop in the same call stack is ordinary
+        and correct. The reporter therefore runs on the caller's own
+        thread, and the daemon re-enters its own event handling before the
+        verb has returned. A host MUST NOT hold a lock across a verb call.
+        Snapshot what it needs under a brief lock, release it, and only
+        then call the backend. ovos-media wedged permanently on exactly
+        this: it called ``stop()`` under its non-reentrant lock, the
+        backend reported from inside ``stop()``, and the handler wanted
+        the same lock.
         """
+        if event == PlaybackEvent.TRACK_START:
+            # A new track is playing, so any stop recorded against the
+            # previous one is spent. The flag must never cross a track
+            # boundary: a stop() whose track ended without reaching
+            # report_track_end would otherwise make the NEXT track's
+            # natural end report STOPPED.
+            #
+            # This is before the unbound early return on purpose. The flag
+            # is internal state that governs later reports, not a report,
+            # so a backend with no reporter bound must still clear it.
+            self._stop_requested = False
         if self._event_reporter is None:
             LOG.debug(f"{self.__class__.__name__} not bound to an event "
                       f"reporter, dropping {event}")
@@ -188,6 +230,14 @@ class MediaBackend(metaclass=ABCMeta):
             uri (str): uri to load
             metadata (dict): track metadata
 
+        On an engine with no separate prepare step, loading and starting
+        are one operation, and ``load_track`` MAY begin physical playback.
+        mplayer's slave-mode ``loadfile`` is the example. Such a backend
+        reports ``TRACK_START`` from ``load_track``, and its ``play()`` is
+        allowed to be close to a no-op. A daemon MUST therefore tolerate a
+        ``TRACK_START`` that arrives before it calls ``play()``, and MUST
+        NOT treat that ordering as an error.
+
         Returns:
             bool: True if the track was loaded successfully
         """
@@ -196,7 +246,9 @@ class MediaBackend(metaclass=ABCMeta):
     def play(self):
         """Start playback.
 
-        Starts playing the loaded track.
+        Starts playing the loaded track. On a backend whose engine has no
+        separate prepare step this may be close to a no-op, because
+        ``load_track`` already started the audio - see ``load_track``.
         """
 
     def stop(self) -> bool:
@@ -212,7 +264,22 @@ class MediaBackend(metaclass=ABCMeta):
             bool: True if playback was stopped, otherwise False
         """
         self._stop_requested = True
-        return self._stop()
+        try:
+            stopped = self._stop()
+        except Exception:
+            # The stop did not take here either: it raised. The flag is
+            # cleared for the same reason as the False path below, before
+            # the exception goes on to the caller.
+            self._stop_requested = False
+            raise
+        if not stopped:
+            # The stop did not take, so no stop is pending. Leaving the flag
+            # set would make this track's next natural end report STOPPED,
+            # and by this template's own design the daemon must not
+            # second-guess a reported fact: the playlist would stop
+            # advancing with nothing in the log to say why.
+            self._stop_requested = False
+        return stopped
 
     @abstractmethod
     def _stop(self) -> bool:
@@ -255,26 +322,52 @@ class MediaBackend(metaclass=ABCMeta):
         OpenVoiceOS has lowered it using ``lower_volume``. No-op by default.
         """
 
-    def get_track_length(self) -> int:
+    def get_track_length(self) -> Optional[int]:
         """
         Get the duration of the current track in milliseconds.
 
-        Concrete default returns -1 (unknown), since ``can_seek`` defaults
-        to False and a backend that can't seek has no reason to track
+        Two different unknowns, and they are not the same answer:
+
+        * ``None`` -- nothing is playing, so there is no track to have a
+          duration.
+        * ``-1`` -- something is playing but it has no finite duration. A
+          live stream is the case: it has a position but no end.
+        * otherwise the duration in milliseconds.
+
+        Concrete default returns ``None``, since ``can_seek`` defaults to
+        False and a backend that can't seek has no reason to track
         duration. Backends that support seeking should override this,
         return a real value, and set ``can_seek = True``.
         """
-        return -1
+        return None
 
-    def get_track_position(self) -> int:
+    def get_track_position(self) -> Optional[int]:
         """
         Get current playback position in milliseconds.
 
-        Concrete default returns -1 (unknown); see ``get_track_length``.
+        * ``None`` -- nothing is playing, so there is no position.
+        * otherwise the elapsed position in milliseconds. A live stream
+          answers here like any other track: it has no known length, but it
+          does have an elapsed position.
+
+        Concrete default returns ``None``; see ``get_track_length``.
         Backends that support seeking should override this and set
         ``can_seek = True``.
+
+        ``0`` is a legitimate position -- the start of a track -- and is not
+        an unknown. A consumer must therefore test ``is None`` rather than
+        coalesce with ``or``, which cannot tell ``0`` from ``None`` and
+        would treat the first millisecond of every track as unknown.
+
+        A consumer that computes a RELATIVE seek skips it when the position
+        is ``None``: there is no base to offset from, and guessing one seeks
+        somewhere the listener did not ask for. That is what the in-fleet
+        consumers do rather than a rule this template has to invent --
+        ``AudioBackend.seek_forward``/``seek_backward`` in the v1 template
+        return early on ``None``, and the media daemon's relative-seek
+        handler does the same before it offsets.
         """
-        return -1
+        return None
 
     def set_track_position(self, milliseconds: int):
         """
