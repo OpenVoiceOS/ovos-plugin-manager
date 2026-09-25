@@ -241,3 +241,110 @@ class TestLangTranslationFactory(unittest.TestCase):
                                                        **{'module': 'good', 'lang': 'en-US'}})
         finally:
             OVOSLangTranslationFactory.get_class = real_get_class
+
+
+# --- the fallback chain walk (T-5111) ----------------------------------------
+
+# A factory follows `fallback_module` from one link of the chain to the next.
+# Whether a link has a configuration block of its own says nothing about whether
+# its plugin is installed, so the walk must not stop at a link that carries no
+# block. The default `language` section of ovos-config ends its detector chain
+# at `ovos-lang-detect-ngram-lm`, which carries no block, and the walk stopped
+# one link early and reported the middle link as the failure.
+
+_CHAIN_WITHOUT_BLOCKS = {
+    "language": {
+        "detection_module": "bad",
+        "translation_module": "bad",
+        "bad": {"fallback_module": "good"},
+        # `good` deliberately carries NO configuration block of its own.
+    }
+}
+_CYCLIC_CHAIN = {
+    "language": {
+        "detection_module": "bad",
+        "translation_module": "bad",
+        "bad": {"fallback_module": "worse"},
+        "worse": {"fallback_module": "bad"},
+    }
+}
+
+
+class TestLanguageFallbackChain(unittest.TestCase):
+    """The walk follows the chain, not the configuration keys."""
+
+    def _factory(self, which):
+        from ovos_plugin_manager.language import (OVOSLangDetectionFactory,
+                                                  OVOSLangTranslationFactory)
+        return {"detect": OVOSLangDetectionFactory,
+                "translate": OVOSLangTranslationFactory}[which]
+
+    def _run(self, which, config):
+        """Create through `which` factory; every module but `good` fails."""
+        factory = self._factory(which)
+        real_get_class = factory.get_class
+        tried = []
+        made = Mock()
+
+        def _get_class(cfg):
+            tried.append(cfg["module"])
+            if cfg["module"] == "good":
+                return made
+            raise RuntimeError(f"{cfg['module']} is not installed")
+
+        factory.get_class = Mock(side_effect=_get_class)
+        try:
+            return factory.create(config=config), tried
+        finally:
+            factory.get_class = real_get_class
+
+    @patch("ovos_plugin_manager.utils.config.Configuration",
+           return_value={"lang": "en-US"})
+    def test_detect_follows_a_fallback_with_no_config_block(self, _):
+        got, tried = self._run("detect", _CHAIN_WITHOUT_BLOCKS)
+        self.assertEqual(tried, ["bad", "good"])
+        self.assertIsNotNone(got)
+
+    @patch("ovos_plugin_manager.utils.config.Configuration",
+           return_value={"lang": "en-US"})
+    def test_translate_follows_a_fallback_with_no_config_block(self, _):
+        got, tried = self._run("translate", _CHAIN_WITHOUT_BLOCKS)
+        self.assertEqual(tried, ["bad", "good"])
+        self.assertIsNotNone(got)
+
+    @patch("ovos_plugin_manager.utils.config.Configuration",
+           return_value={"lang": "en-US"})
+    def test_detect_stops_on_a_cyclic_chain(self, _):
+        """A chain that points back at itself raises, and does not recurse."""
+        with self.assertRaises(Exception) as ctx:
+            self._run("detect", _CYCLIC_CHAIN)
+        self.assertNotIsInstance(ctx.exception, RecursionError)
+
+    @patch("ovos_plugin_manager.utils.config.Configuration",
+           return_value={"lang": "en-US"})
+    def test_detect_tries_each_link_once_on_a_cyclic_chain(self, _):
+        from ovos_plugin_manager.language import OVOSLangDetectionFactory
+        real_get_class = OVOSLangDetectionFactory.get_class
+        tried = []
+
+        def _get_class(cfg):
+            tried.append(cfg["module"])
+            raise RuntimeError("nothing is installed")
+
+        OVOSLangDetectionFactory.get_class = Mock(side_effect=_get_class)
+        try:
+            with self.assertRaises(Exception):
+                OVOSLangDetectionFactory.create(config=_CYCLIC_CHAIN)
+        finally:
+            OVOSLangDetectionFactory.get_class = real_get_class
+        self.assertEqual(tried, ["bad", "worse"])
+
+    @patch("ovos_plugin_manager.utils.config.Configuration",
+           return_value={"lang": "en-US"})
+    def test_create_does_not_write_to_the_caller_config(self, _):
+        """The factory must not edit the live Configuration it was handed."""
+        from copy import deepcopy
+        config = deepcopy(_CHAIN_WITHOUT_BLOCKS)
+        before = deepcopy(config)
+        self._run("detect", config)
+        self.assertEqual(config, before)

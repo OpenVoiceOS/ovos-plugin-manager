@@ -18,7 +18,7 @@ from enum import Enum
 from importlib.metadata import entry_points
 from ovos_utils.log import LOG, log_deprecation, deprecated
 from threading import Event, Lock
-from typing import Optional, Union
+from typing import Iterable, Optional, Union
 
 DEPRECATED_ENTRYPOINTS = {
     "ovos.plugin.gui": "opm.gui",
@@ -280,6 +280,31 @@ def load_plugin(plug_name: str, plug_type: Optional[PluginTypes] = None):
         return plugins[plug_name]
     plug_type = plug_type or "all plugin types"
     LOG.warning(f'Could not find the plugin {plug_type}.{plug_name}')
+    return None
+
+
+def next_fallback_module(fallback: Optional[str],
+                         tried: Iterable[str]) -> Optional[str]:
+    """Return the next module of a factory's fallback chain, or None.
+
+    A factory reads `fallback_module` from the configuration block of the module
+    it just failed to build, then tries that module instead. The name of a
+    fallback says nothing about whether the plugin is installed, and a module
+    needs no configuration block of its own to be installable: a block holds
+    settings, not availability. A factory therefore follows any fallback that is
+    named and that it has not tried yet, and stops when the chain names nothing
+    new. Stopping on a name already tried is what keeps a chain that points back
+    at itself from recursing until the process dies.
+
+    Args:
+        fallback: the `fallback_module` of the module that just failed, if any.
+        tried: every module this walk has already attempted.
+
+    Returns:
+        The module to try next, or None when the walk is finished.
+    """
+    if fallback and fallback not in tried:
+        return fallback
     return None
 
 

@@ -244,3 +244,49 @@ class TestVADFactory(unittest.TestCase):
         config['VAD'] = {'module': 'fake'}
         fake_config = get_vad_config(config)
         self.assertEqual(fake_config, {'module': 'fake'})
+
+
+class TestVADFallbackChain(unittest.TestCase):
+    """The walk follows the chain, not the configuration keys (T-5111)."""
+
+    CHAIN = {
+        "VAD": {
+            "module": "bad",
+            "bad": {"fallback_module": "good"},
+            # `good` deliberately carries NO configuration block of its own.
+        }
+    }
+    CYCLE = {
+        "VAD": {
+            "module": "bad",
+            "bad": {"fallback_module": "worse"},
+            "worse": {"fallback_module": "bad"},
+        }
+    }
+
+    def _run(self, config):
+        from ovos_plugin_manager.vad import OVOSVADFactory
+        real_get_class = OVOSVADFactory.get_class
+        tried = []
+
+        def _get_class(cfg):
+            tried.append(cfg["module"])
+            if cfg["module"] == "good":
+                return Mock()
+            raise RuntimeError(f"{cfg['module']} is not installed")
+
+        OVOSVADFactory.get_class = Mock(side_effect=_get_class)
+        try:
+            return OVOSVADFactory.create(config=deepcopy(config)), tried
+        finally:
+            OVOSVADFactory.get_class = real_get_class
+
+    def test_follows_a_fallback_with_no_config_block(self):
+        got, tried = self._run(self.CHAIN)
+        self.assertEqual(tried, ["bad", "good"])
+        self.assertIsNotNone(got)
+
+    def test_stops_on_a_cyclic_chain(self):
+        with self.assertRaises(Exception) as ctx:
+            self._run(self.CYCLE)
+        self.assertNotIsInstance(ctx.exception, RecursionError)
