@@ -124,7 +124,7 @@ class QuestionSolver(AbstractSolver):
     def __init__(self, config: Optional[Dict] = None,
                  translator: Optional[LanguageTranslator] = None,
                  detector: Optional[LanguageDetector] = None,
-                 priority: int = 50,
+                 priority: Optional[int] = None,
                  enable_tx: bool = False,
                  enable_cache: bool = False,
                  internal_lang: Optional[str] = None,
@@ -136,7 +136,8 @@ class QuestionSolver(AbstractSolver):
             config (Optional[Dict]): Optional configuration dictionary.
             translator (Optional[LanguageTranslator]): Optional language translator.
             detector (Optional[LanguageDetector]): Optional language detector.
-            priority (int): Priority of the solver.
+            priority (Optional[int]): Priority of the solver. None keeps
+                whatever the class declares, or 50 when it declares nothing.
             enable_tx (bool): Flag to enable translation.
             enable_cache (bool): Flag to enable caching.
             internal_lang (Optional[str]): Internal language code. Defaults to None.
@@ -445,7 +446,7 @@ class CorpusSolver(QuestionSolver):
     def __init__(self, config=None,
                  translator: Optional[LanguageTranslator] = None,
                  detector: Optional[LanguageDetector] = None,
-                 priority: int = 50,
+                 priority: Optional[int] = None,
                  enable_tx: bool = False,
                  enable_cache: bool = False,
                  *args, **kwargs):
@@ -494,7 +495,7 @@ class QACorpusSolver(CorpusSolver):
     def __init__(self, config=None,
                  translator: Optional[LanguageTranslator] = None,
                  detector: Optional[LanguageDetector] = None,
-                 priority: int = 50,
+                 priority: Optional[int] = None,
                  enable_tx: bool = False,
                  enable_cache: bool = False,
                  *args, **kwargs):

@@ -256,3 +256,112 @@ class TestShutdown(unittest.TestCase):
         # Should not raise
         result = solver.shutdown()
         self.assertIsNone(result)
+
+
+# ---------------------------------------------------------------------------
+# priority: the class attribute must survive construction
+# ---------------------------------------------------------------------------
+
+class TestPriorityResolution(unittest.TestCase):
+    """A solver that declares ``priority`` in its class body keeps that value.
+
+    ovos-persona builds every handler as ``plug_class(config=config)`` and then
+    orders them on ``.priority``. ``AbstractSolver.__init__`` used to assign its
+    own ``priority=50`` keyword unconditionally, so the instance attribute
+    shadowed the class attribute: a plugin that declared ``priority = 9999`` to
+    sort last still sorted at 50, and a fallback answered before the real
+    engine. The whole constructor chain is covered, because every subclass
+    passes ``priority`` up positionally and each one had its own default of 50.
+    """
+
+    @staticmethod
+    def _solvers():
+        """One subclass per constructor in the chain, each declaring 9999."""
+        from ovos_plugin_manager.thirdparty.solvers import AbstractSolver
+        from ovos_plugin_manager.templates.solvers import (
+            QuestionSolver, ChatMessageSolver, CorpusSolver, QACorpusSolver)
+
+        class _Direct(AbstractSolver):
+            priority = 9999
+
+        class _Question(QuestionSolver):
+            priority = 9999
+
+            def get_spoken_answer(self, query, lang=None, units=None):
+                return "answer"
+
+        class _Chat(ChatMessageSolver):
+            priority = 9999
+
+            def continue_chat(self, messages, lang=None, units=None):
+                return "answer"
+
+        class _Corpus(CorpusSolver):
+            priority = 9999
+
+            def retrieve_from_corpus(self, query, k=3, lang=None):
+                return []
+
+        class _QACorpus(QACorpusSolver):
+            priority = 9999
+
+            def retrieve_from_corpus(self, query, k=3, lang=None):
+                return []
+
+        return (_Direct, _Question, _Chat, _Corpus, _QACorpus)
+
+    def test_class_priority_is_not_shadowed(self):
+        """The declared value reaches the instance, built with config only."""
+        for cls in self._solvers():
+            with self.subTest(solver=cls.__name__):
+                self.assertEqual(cls(config={}).priority, 9999)
+
+    def test_an_explicit_keyword_still_wins(self):
+        """Passing priority= is unchanged behaviour and must keep working."""
+        for cls in self._solvers():
+            with self.subTest(solver=cls.__name__):
+                self.assertEqual(cls(config={}, priority=7).priority, 7)
+
+    def test_a_solver_that_declares_nothing_gets_fifty(self):
+        """The neutral default is unchanged for every existing plugin."""
+        from ovos_plugin_manager.templates.solvers import QuestionSolver
+
+        class _Plain(QuestionSolver):
+            def get_spoken_answer(self, query, lang=None, units=None):
+                return None
+
+        self.assertEqual(_Plain(config={}).priority, 50)
+
+    def test_zero_is_kept_and_not_read_as_missing(self):
+        """0 is a real priority; a falsy check would turn it into 50."""
+        from ovos_plugin_manager.templates.solvers import QuestionSolver
+
+        class _First(QuestionSolver):
+            priority = 0
+
+            def get_spoken_answer(self, query, lang=None, units=None):
+                return None
+
+        self.assertEqual(_First(config={}).priority, 0)
+        self.assertEqual(_First(config={}, priority=0).priority, 0)
+
+    def test_the_chain_sorts_by_declared_priority(self):
+        """The expression ovos_persona uses to order .modules."""
+        from ovos_plugin_manager.templates.solvers import QuestionSolver
+
+        class _Fallback(QuestionSolver):
+            priority = 9999
+
+            def get_spoken_answer(self, query, lang=None, units=None):
+                return "fallback"
+
+        class _Real(QuestionSolver):
+            priority = 50
+
+            def get_spoken_answer(self, query, lang=None, units=None):
+                return "real"
+
+        loaded = {"failure": _Fallback(config={}), "openai": _Real(config={})}
+        ordered = sorted(loaded.values(), key=lambda k: k.priority)
+        self.assertEqual([type(m).__name__ for m in ordered],
+                         ["_Real", "_Fallback"])

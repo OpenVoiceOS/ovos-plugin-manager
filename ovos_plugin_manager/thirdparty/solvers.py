@@ -45,11 +45,18 @@ class AbstractSolver:
     def __init__(self, config=None,
                  translator: Optional[LanguageTranslator] = None,
                  detector: Optional[LanguageDetector] = None,
-                 priority=50,
+                 priority: Optional[int] = None,
                  enable_tx=False,
                  enable_cache=False,
                  internal_lang: Optional[str] = None,
                  *args, **kwargs):
+        # None means "not given here", so a subclass that declares
+        # ``priority`` in its class body keeps that value. Assigning the
+        # keyword unconditionally made the instance attribute shadow the class
+        # attribute, and a plugin that declared 9999 to sort last still sorted
+        # at 50. A caller that passes the keyword explicitly still wins.
+        if priority is None:
+            priority = getattr(type(self), "priority", 50)
         self.priority = priority
         self.enable_tx = enable_tx
         self.enable_cache = enable_cache
