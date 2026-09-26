@@ -20,6 +20,7 @@ from typing import Dict, List, Optional, Tuple, Union
 from unittest.mock import MagicMock, patch
 
 from ovos_plugin_manager.templates.agents import (
+    AbstractAgentEngine,
     AgentContextManager,
     AgentMessage,
     ChatEngine,
@@ -32,6 +33,7 @@ from ovos_plugin_manager.templates.agents import (
     MultimodalAgentMessage,
     MultimodalChatEngine,
     NaturalLanguageInferenceEngine,
+    OptionMatcherEngine,
     QAIndexerEngine,
     ReRankerEngine,
     RetrievalEngine,
@@ -807,6 +809,99 @@ class TestChatEngineToolsConformance(unittest.TestCase):
         self.assertEqual(calls[2]["session_id"], "s3")
         self.assertEqual(calls[2]["lang"], "es-es")
 
+
+# Tests for the priority contract
+###############################################################################
+
+
+class TestAgentEnginePriority(unittest.TestCase):
+    """Every agent engine declares a sort priority.
+
+    ovos-persona merges seven plugin families into one dict and orders them
+    with ``sorted(self.loaded_modules.values(), key=lambda k: k.priority)``.
+    The two deprecated families in ``templates.solvers`` carry
+    ``priority=50``. The agent engines that replace them declared nothing, so
+    a single installed engine made that sort raise ``AttributeError`` and no
+    handler at all could be reached.
+    """
+
+    #: Every family ``get_utterance_handler_plugins`` merges, and the bases
+    #: the rest of the engines inherit from.
+    ENGINES = (
+        AbstractAgentEngine,
+        ChatEngine,
+        MultimodalChatEngine,
+        RetrievalEngine,
+        DocumentIndexerEngine,
+        QAIndexerEngine,
+        SummarizerEngine,
+        ChatSummarizerEngine,
+        ExtractiveQAEngine,
+        ReRankerEngine,
+        OptionMatcherEngine,
+        YesNoEngine,
+        NaturalLanguageInferenceEngine,
+        CoreferenceEngine,
+    )
+
+    def test_every_engine_declares_priority(self):
+        """The attribute is readable on the class, before any instance."""
+        for cls in self.ENGINES:
+            with self.subTest(engine=cls.__name__):
+                self.assertTrue(hasattr(cls, "priority"),
+                                f"{cls.__name__} declares no priority")
+                self.assertIsInstance(cls.priority, int)
+
+    def test_priority_is_the_neutral_fifty(self):
+        """50 is the value the rest of the ecosystem calls neutral."""
+        for cls in self.ENGINES:
+            with self.subTest(engine=cls.__name__):
+                self.assertEqual(cls.priority, 50)
+
+    def test_the_persona_sort_does_not_raise(self):
+        """The exact expression ovos_persona/solvers.py runs on .modules."""
+
+        class _Chat(ChatEngine):
+            def continue_chat(self, messages, session_id="default", lang=None,
+                              units=None, tools=None):
+                return None
+
+        class _Retrieval(RetrievalEngine):
+            def query(self, query, lang=None, k=3):
+                return []
+
+        loaded = {"chat": _Chat(config={}), "retrieval": _Retrieval(config={})}
+        ordered = sorted(loaded.values(), key=lambda k: k.priority)
+        self.assertEqual(len(ordered), 2)
+
+    def test_a_subclass_may_override_priority(self):
+        """The default is a default, not a fixed value."""
+
+        class _Eager(ChatEngine):
+            priority = 10
+
+            def continue_chat(self, messages, session_id="default", lang=None,
+                              units=None, tools=None):
+                return None
+
+        self.assertEqual(_Eager(config={}).priority, 10)
+        self.assertEqual(ChatEngine.priority, 50)
+
+    def test_an_instance_may_override_priority(self):
+        """A per-instance value still wins, as config-driven ordering needs."""
+
+        class _Chat(ChatEngine):
+            def continue_chat(self, messages, session_id="default", lang=None,
+                              units=None, tools=None):
+                return None
+
+        engine = _Chat(config={})
+        engine.priority = 5
+        self.assertEqual(engine.priority, 5)
+        self.assertEqual(ChatEngine.priority, 50)
+
+
+###############################################################################
 
 if __name__ == "__main__":
     unittest.main()

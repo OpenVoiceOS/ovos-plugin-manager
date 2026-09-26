@@ -184,6 +184,23 @@ class AbstractAgentEngine(ABC):
     Base class for agent engines that process input to produce specific outputs.
     """
 
+    # Ordering hint for a service that holds more than one engine. Lower sorts
+    # earlier. 50 is the neutral value the rest of the ecosystem uses, and it
+    # is the value the deprecated QuestionSolver and ChatMessageSolver in
+    # ``templates.solvers`` already return, so an engine that replaces one of
+    # those keeps its place in the chain.
+    #
+    # It is declared here, on the common base, because a consumer that holds
+    # several plugin families sorts them in one pass: ovos-persona merges
+    # question solvers, chat solvers, retrieval engines, chat engines,
+    # multimodal chat engines and both indexer engines into a single dict and
+    # orders it on this attribute. An engine that does not declare it makes
+    # that sort raise, and then no engine in the service can be reached, not
+    # just the one that is missing the attribute.
+    #
+    # A subclass or an instance may override it.
+    priority: int = 50
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initializes the engine.
