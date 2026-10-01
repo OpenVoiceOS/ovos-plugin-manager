@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.0.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/3.0.0a1) (2026-10-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.12.5a1...3.0.0a1)
+
+**Breaking changes:**
+
+- feat!: MediaBackend v2 - plugins report events, the daemon owns all state emission [\#442](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/442) ([JarbasAl](https://github.com/JarbasAl))
+
+**Merged pull requests:**
+
+- chore\(ci\): drop the broken Dependabot config [\#455](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/455) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [2.12.5a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.12.5a1) (2026-09-25)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.12.4a1...2.12.5a1)
@@ -339,17 +351,9 @@
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1a1...2.1.1a2)
 
-**Merged pull requests:**
-
-- chore\(deps\): update dependency python to 3.14 [\#347](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/347) ([renovate[bot]](https://github.com/apps/renovate))
-
 ## [2.1.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a1) (2025-12-18)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.0...2.1.1a1)
-
-**Merged pull requests:**
-
-- chore: Configure Renovate [\#346](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/346) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [2.1.0](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.0) (2025-11-04)
 
