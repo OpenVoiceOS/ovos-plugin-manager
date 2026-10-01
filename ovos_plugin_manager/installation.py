@@ -2,19 +2,49 @@ import os
 import sys
 from os.path import exists, dirname
 from subprocess import PIPE, Popen
+from typing import Iterator, List, Optional, Tuple, Union
 
 import requests
 from combo_lock import NamedLock
-from ovos_utils.log import LOG
+from ovos_utils.log import LOG, log_deprecation, deprecated
 
 from ovos_plugin_manager.exceptions import PipException
+from ovos_plugin_manager._deprecation import imported_internally
+from ovos_plugin_manager.version import VERSION_MAJOR
+
+# Calculate next major version for deprecation
+_deprecation_version = f"{VERSION_MAJOR + 1}.0"
+
+# Deprecation notice for external callers of this module
+if not imported_internally(__name__):
+    log_deprecation(f"ovos_plugin_manager.installation module is deprecated and will be removed in v{_deprecation_version}",
+                    func_name="installation module",
+                    func_module="ovos_plugin_manager.installation",
+                    deprecation_version=_deprecation_version)
 
 # default constraints to use if none are given
 DEFAULT_CONSTRAINTS = '/etc/mycroft/constraints.txt'
 PIP_LOCK = NamedLock("ovos_pip.lock")
 
 
-def search_pip(query, strict=True, page=1, max_results=10):
+@deprecated(f"search_pip is deprecated, use a modern package manager instead", _deprecation_version)
+def search_pip(query: str, strict: bool = True,
+               page: int = 1, max_results: int = 10) -> Iterator[Tuple[str, str]]:
+    """
+    Yield package name and short description pairs from PyPI search results.
+
+    Searches pypi.org/search, parses result pages, and yields up to `max_results`
+    tuples of `(package_name, description)`. Follows additional result pages automatically.
+
+    Parameters:
+        query (str): Search term to query on PyPI.
+        strict (bool): If True, only include packages whose name contains `query`.
+        page (int): Starting page number; intended for internal recursive pagination.
+        max_results (int): Maximum total results to yield.
+
+    Returns:
+        Iterator[Tuple[str, str]]: Tuples of `(package_name, description)`.
+    """
     raw_text = requests.get(f'https://pypi.org/search/?q={query}&page='
                             f'{page}').text
     raw_names = raw_text.split('<span class="package-snippet__name">')[1:-2]
@@ -27,15 +57,16 @@ def search_pip(query, strict=True, page=1, max_results=10):
     for desc in raw_desc:
         descs.append(desc.split('</p>')[0])
 
-    n_results = 0
     if strict:
         pkgs = [(names[i], descs[i]) for i in range(len(names)) if
                 query in names[i]]
     else:
         pkgs = [(names[i], descs[i]) for i in range(len(names))]
-    for p in pkgs[:max_results]:
+    yielded = min(len(pkgs), max_results)
+    for p in pkgs[:yielded]:
         yield p
-    if len(pkgs) > max_results or not len(pkgs):
+    remaining = max_results - yielded
+    if remaining <= 0 or not pkgs:
         return
 
     raw_pages = raw_text.split(f'<a href="/search/?q={query}&amp;page=')[1:-1]
@@ -43,19 +74,43 @@ def search_pip(query, strict=True, page=1, max_results=10):
         try:
             p = p.split('button-group__button">')[-1].split('</a>')[0]
             raw_pages[idx] = int(p)
-        except:
+        except Exception:
             raw_pages[idx] = 0
     next_page = bool(len([p for p in raw_pages if p > page]))
 
     if next_page:
-        for pkg in search_pip(query, strict, page + 1):
-            n_results += 1
+        for pkg in search_pip(query, strict, page + 1, remaining):
             yield pkg
-            if n_results >= max_results:
-                return
+            remaining -= 1
+            if remaining <= 0:
+                break
 
 
-def pip_install(packages, constraints=None, print_logs=False):
+@deprecated("pip_install is deprecated, use a modern package manager instead", _deprecation_version)
+def pip_install(packages: Union[str, List[str]], constraints: Optional[str] = None,
+                print_logs: bool = False) -> bool:
+    """
+    Install pip package specifiers sequentially into the current Python interpreter.
+
+    Uses an optional constraints file (falls back to ``DEFAULT_CONSTRAINTS`` if present).
+    Serializes installs with a named lock. Prefixes with ``sudo -n`` when the interpreter
+    bin directory is not writable.
+
+    Parameters:
+        packages (Union[str, List[str]]): Pip install specifier(s) (e.g. ``["ovos-tts-plugin-piper>=0.1"]`` or ``"ovos-tts-plugin-piper>=0.1"``).
+        constraints (Optional[str]): Path to a constraints file; if given and missing, returns
+            False. If omitted and ``DEFAULT_CONSTRAINTS`` exists, it is used automatically.
+        print_logs (bool): If True, forward pip stdout/stderr to the terminal.
+
+    Returns:
+        bool: True if all packages installed successfully; False if no packages given or the
+        specified constraints file was not found.
+
+    Raises:
+        PipException: If any package installation exits with a non-zero status.
+    """
+    if isinstance(packages, str):
+        packages = [packages]
     if not len(packages):
         return False
     # Use constraints to limit the installed versions
@@ -82,15 +137,18 @@ def pip_install(packages, constraints=None, print_logs=False):
         for dependent_python_package in packages:
             LOG.info("(pip) Installing " + dependent_python_package)
             pip_command = pip_args + [dependent_python_package]
+            # When print_logs=True, don't pipe output - let it go directly to console
+            # When print_logs=False, pipe output to capture it silently
             if print_logs:
                 proc = Popen(pip_command)
             else:
                 proc = Popen(pip_command, stdout=PIPE, stderr=PIPE)
             pip_code = proc.wait()
             if pip_code != 0:
-                stderr = proc.stderr.read().decode()
+                stdout = proc.stdout.read().decode() if proc.stdout else ""
+                stderr = proc.stderr.read().decode() if proc.stderr else ""
                 raise PipException(
-                    pip_code, proc.stdout.read().decode(), stderr
+                    pip_code, stdout, stderr
                 )
 
     return True

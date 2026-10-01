@@ -1,57 +1,32 @@
-from abc import abstractmethod
+"""
+DEPRECATED: Use ovos_hardware_helpers.switches instead.
+
+This module re-exports AbstractSwitches from ovos-hardware-helpers as a
+backwards-compatibility shim. All new code should import directly from
+ovos_hardware_helpers.switches.
+"""
+from ovos_utils.log import log_deprecation
+from ovos_plugin_manager.version import VERSION_MAJOR
+
+# Log deprecation on import
+_deprecation_version = f"{VERSION_MAJOR + 1}.0"
+log_deprecation("ovos_plugin_manager.hardware.switches is deprecated, use ovos_hardware_helpers.switches instead",
+                func_name="switches module",
+                func_module="ovos_plugin_manager.hardware.switches",
+                deprecation_version=_deprecation_version)
+
+__all__ = ["AbstractSwitches"]
 
 
-class AbstractSwitches:
-    @property
-    @abstractmethod
-    def capabilities(self) -> dict:
-        """
-        Return a dict of capabilities this object supports
-        """
-
-    @abstractmethod
-    def on_action(self):
-        """
-        Override to do something when the `action` button is pressed.
-        """
-        pass
-
-    @abstractmethod
-    def on_vol_up(self):
-        """
-        Override to do something when the `volume up` button is pressed.
-        """
-        pass
-
-    @abstractmethod
-    def on_vol_down(self):
-        """
-        Override to do something when the `volume down` button is pressed.
-        """
-        pass
-
-    @abstractmethod
-    def on_mute(self):
-        """
-        Override to do something when `mute` switch is activated.
-        """
-        pass
-
-    @abstractmethod
-    def on_unmute(self):
-        """
-        Override to do something when `mute` switch is deactivated.
-        """
-        pass
-
-    @abstractmethod
-    def shutdown(self):
-        """
-        Perform any cleanup.
-        """
-
-    def get_capabilities(self) -> dict:
-        """
-        Backwards-compatible method to return `self.capabilities`
-        """
-        return self.capabilities
+def __getattr__(name: str):
+    """Lazy import to make ovos-hardware-helpers an optional dependency."""
+    if name == "AbstractSwitches":
+        try:
+            from ovos_hardware_helpers.switches import AbstractSwitches
+            return AbstractSwitches
+        except ModuleNotFoundError as e:
+            raise ImportError(
+                f"ovos-hardware-helpers is not installed. "
+                f"Install it with: pip install ovos-hardware-helpers"
+            ) from e
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

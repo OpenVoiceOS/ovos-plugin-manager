@@ -171,7 +171,7 @@ def load_skill_plugins(*args, **kwargs):
     for skill_id, plug in plugins.items():
         try:
             skill = plug(*args, **kwargs)
-        except:
+        except Exception:
             LOG.exception(f"Failed to load {skill_id}")
             continue
         plugin_skills.append(skill)

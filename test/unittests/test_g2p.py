@@ -87,7 +87,8 @@ class TestG2P(unittest.TestCase):
 
 
 class TestG2PFactory(unittest.TestCase):
-    def test_create_g2p(self):
+    @patch("ovos_plugin_manager.utils.config.Configuration", return_value={"lang": "en-US"})
+    def test_create_g2p(self, _):
         from ovos_plugin_manager.g2p import OVOSG2PFactory
         real_get_class = OVOSG2PFactory.get_class
         mock_class = Mock()
@@ -100,18 +101,20 @@ class TestG2PFactory(unittest.TestCase):
 
         mock_get_class = Mock(side_effect=_copy_args)
         OVOSG2PFactory.get_class = mock_get_class
+        try:
+            OVOSG2PFactory.create(config=_TEST_CONFIG)
+            mock_get_class.assert_called_once()
+            self.assertEqual(call_args, ({**_TEST_CONFIG['g2p']['good'],
+                                          **{"module": "good",
+                                             "lang": "en-US"}},))
+            mock_class.assert_called_once_with({**_TEST_CONFIG['g2p']['good'],
+                                                **{"module": "good",
+                                                   "lang": "en-US"}})
+        finally:
+            OVOSG2PFactory.get_class = real_get_class
 
-        OVOSG2PFactory.create(config=_TEST_CONFIG)
-        mock_get_class.assert_called_once()
-        self.assertEqual(call_args, ({**_TEST_CONFIG['g2p']['good'],
-                                      **{"module": "good",
-                                         "lang": "en-US"}},))
-        mock_class.assert_called_once_with({**_TEST_CONFIG['g2p']['good'],
-                                            **{"module": "good",
-                                               "lang": "en-US"}})
-        OVOSG2PFactory.get_class = real_get_class
-
-    def test_create_fallback(self):
+    @patch("ovos_plugin_manager.utils.config.Configuration", return_value={"lang": "en-US"})
+    def test_create_fallback(self, _):
         from ovos_plugin_manager.g2p import OVOSG2PFactory
         real_get_class = OVOSG2PFactory.get_class
         mock_class = Mock()
@@ -128,12 +131,13 @@ class TestG2PFactory(unittest.TestCase):
 
         mock_get_class = Mock(side_effect=_copy_args)
         OVOSG2PFactory.get_class = mock_get_class
-
-        OVOSG2PFactory.create(config=_FALLBACK_CONFIG)
-        mock_get_class.assert_called()
-        self.assertEqual(call_args[0]["module"], 'good')
-        self.assertEqual(bad_call_args[0]["module"], 'bad')
-        mock_class.assert_called_once_with({**_FALLBACK_CONFIG['g2p']['good'],
-                                            **{"module": "good",
-                                               "lang": "en-US"}})
-        OVOSG2PFactory.get_class = real_get_class
+        try:
+            OVOSG2PFactory.create(config=_FALLBACK_CONFIG)
+            mock_get_class.assert_called()
+            self.assertEqual(call_args[0]["module"], 'good')
+            self.assertEqual(bad_call_args[0]["module"], 'bad')
+            mock_class.assert_called_once_with({**_FALLBACK_CONFIG['g2p']['good'],
+                                                **{"module": "good",
+                                                   "lang": "en-US"}})
+        finally:
+            OVOSG2PFactory.get_class = real_get_class

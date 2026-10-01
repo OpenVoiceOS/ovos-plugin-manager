@@ -114,9 +114,10 @@ class TestLangDetectionFactory(unittest.TestCase):
         with self.assertRaises(ValueError):
             OVOSLangDetectionFactory.get_class(conf)
 
+    @patch("ovos_plugin_manager.utils.config.Configuration", return_value={"lang": "en-US"})
     @patch("ovos_plugin_manager.language.load_lang_detect_plugin")
     @patch("ovos_plugin_manager.language.Configuration")
-    def test_create(self, config, load_plugin):
+    def test_create(self, config, load_plugin, _cfg_utils):
         from ovos_plugin_manager.language import OVOSLangDetectionFactory
         plug_instance = Mock()
         mock_plugin = Mock(return_value=plug_instance)
@@ -129,7 +130,7 @@ class TestLangDetectionFactory(unittest.TestCase):
         load_plugin.assert_called_once_with('good')
         mock_plugin.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
                                                     **{'module': 'good', 'lang': 'en-US'}})
-        self.assertEquals(plug_instance, plug)
+        self.assertEqual(plug_instance, plug)
 
         # Create plugin fully specified in passed config
         mock_plugin.reset_mock()
@@ -137,9 +138,10 @@ class TestLangDetectionFactory(unittest.TestCase):
         load_plugin.assert_called_with("good")
         mock_plugin.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
                                                     **{'module': 'good', 'lang': 'en-US'}})
-        self.assertEquals(plug_instance, plug)
+        self.assertEqual(plug_instance, plug)
 
-    def test_create_fallback(self):
+    @patch("ovos_plugin_manager.utils.config.Configuration", return_value={"lang": "en-US"})
+    def test_create_fallback(self, _):
         from ovos_plugin_manager.language import OVOSLangDetectionFactory
         real_get_class = OVOSLangDetectionFactory.get_class
         mock_class = Mock()
@@ -157,14 +159,15 @@ class TestLangDetectionFactory(unittest.TestCase):
 
         mock_get_class = Mock(side_effect=_copy_args)
         OVOSLangDetectionFactory.get_class = mock_get_class
-
-        OVOSLangDetectionFactory.create(config=_FALLBACK_CONFIG)
-        mock_get_class.assert_called()
-        self.assertEqual(call_args[0]["module"], 'good')
-        self.assertEqual(bad_call_args[0]["module"], 'bad')
-        mock_class.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
-                                                    **{'module': 'good', 'lang': 'en-US'}})
-        OVOSLangDetectionFactory.get_class = real_get_class
+        try:
+            OVOSLangDetectionFactory.create(config=_FALLBACK_CONFIG)
+            mock_get_class.assert_called()
+            self.assertEqual(call_args[0]["module"], 'good')
+            self.assertEqual(bad_call_args[0]["module"], 'bad')
+            mock_class.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
+                                                       **{'module': 'good', 'lang': 'en-US'}})
+        finally:
+            OVOSLangDetectionFactory.get_class = real_get_class
 
 
 class TestLangTranslationFactory(unittest.TestCase):
@@ -184,9 +187,10 @@ class TestLangTranslationFactory(unittest.TestCase):
         with self.assertRaises(ValueError):
             OVOSLangTranslationFactory.get_class(conf)
 
+    @patch("ovos_plugin_manager.utils.config.Configuration", return_value={"lang": "en-US"})
     @patch("ovos_plugin_manager.language.load_tx_plugin")
     @patch("ovos_plugin_manager.language.Configuration")
-    def test_create(self, config, load_plugin):
+    def test_create(self, config, load_plugin, _cfg_utils):
         from ovos_plugin_manager.language import OVOSLangTranslationFactory
         plug_instance = Mock()
         mock_plugin = Mock(return_value=plug_instance)
@@ -199,7 +203,7 @@ class TestLangTranslationFactory(unittest.TestCase):
         load_plugin.assert_called_once_with('good')
         mock_plugin.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
                                                     **{'module': 'good', 'lang': 'en-US'}})
-        self.assertEquals(plug_instance, plug)
+        self.assertEqual(plug_instance, plug)
 
         # Create plugin fully specified in passed config
         mock_plugin.reset_mock()
@@ -207,9 +211,10 @@ class TestLangTranslationFactory(unittest.TestCase):
         load_plugin.assert_called_with("good")
         mock_plugin.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
                                                     **{'module': 'good', 'lang': 'en-US'}})
-        self.assertEquals(plug_instance, plug)
+        self.assertEqual(plug_instance, plug)
 
-    def test_create_fallback(self):
+    @patch("ovos_plugin_manager.utils.config.Configuration", return_value={"lang": "en-US"})
+    def test_create_fallback(self, _):
         from ovos_plugin_manager.language import OVOSLangTranslationFactory
         real_get_class = OVOSLangTranslationFactory.get_class
         mock_class = Mock()
@@ -227,11 +232,12 @@ class TestLangTranslationFactory(unittest.TestCase):
 
         mock_get_class = Mock(side_effect=_copy_args)
         OVOSLangTranslationFactory.get_class = mock_get_class
-
-        OVOSLangTranslationFactory.create(config=_FALLBACK_CONFIG)
-        mock_get_class.assert_called()
-        self.assertEqual(call_args[0]["module"], 'good')
-        self.assertEqual(bad_call_args[0]["module"], 'bad')
-        mock_class.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
-                                                    **{'module': 'good', 'lang': 'en-US'}})
-        OVOSLangTranslationFactory.get_class = real_get_class
+        try:
+            OVOSLangTranslationFactory.create(config=_FALLBACK_CONFIG)
+            mock_get_class.assert_called()
+            self.assertEqual(call_args[0]["module"], 'good')
+            self.assertEqual(bad_call_args[0]["module"], 'bad')
+            mock_class.assert_called_once_with(config={**_TEST_CONFIG["language"]["good"],
+                                                       **{'module': 'good', 'lang': 'en-US'}})
+        finally:
+            OVOSLangTranslationFactory.get_class = real_get_class
