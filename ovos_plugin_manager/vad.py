@@ -1,4 +1,6 @@
-from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
+from typing import Tuple
+
+from ovos_plugin_manager.utils import PluginTypes, next_fallback_module, PluginConfigTypes
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.vad import VADEngine
@@ -82,7 +84,7 @@ class OVOSVADFactory:
         return load_vad_plugin(vad_module)
 
     @classmethod
-    def create(cls, config=None):
+    def create(cls, config=None, *, _tried: Tuple[str, ...] = ()):
         """Factory method to create a VAD engine based on configuration.
 
         The configuration file ``mycroft.conf`` contains a ``VAD`` section with
@@ -103,14 +105,20 @@ class OVOSVADFactory:
 
         plugin_config = config.get(plugin, {})
         fallback = plugin_config.get("fallback_module")
+        tried = tuple(_tried) + (plugin,)
 
         try:
             clazz = OVOSVADFactory.get_class(config)
             return clazz(plugin_config)
         except Exception:
             LOG.exception(f'VAD plugin {plugin} could not be loaded!')
-            if fallback in config and fallback != plugin:
-                LOG.info(f"Attempting to load fallback plugin instead: {fallback}")
-                config["module"] = fallback
-                return cls.create(config)
+            nxt = next_fallback_module(fallback, tried)
+            if nxt:
+                LOG.info(f"Attempting to load fallback plugin instead: {nxt}")
+                # A copy: the section handed in is usually the live
+                # Configuration, and the walk writes the module it is trying.
+                config = dict(config)
+                config["module"] = nxt
+                return cls.create(config, _tried=tried)
+            LOG.error(f"VAD fallback chain exhausted, tried: {list(tried)}")
             raise

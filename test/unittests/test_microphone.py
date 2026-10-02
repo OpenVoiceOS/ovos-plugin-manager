@@ -188,3 +188,102 @@ class TestMicrophoneFactory(unittest.TestCase):
         load_plugin.assert_called_once_with("dummy",
                                             PluginTypes.MIC)
         self.assertEqual(mock, module)
+
+
+class TestMicrophoneFallbackChain(unittest.TestCase):
+    """The walk follows the chain, not the configuration keys (T-5111)."""
+
+    CHAIN = {
+        "module": "bad",
+        "bad": {"fallback_module": "good"},
+        # `good` deliberately carries NO configuration block of its own.
+    }
+    CYCLE = {
+        "module": "bad",
+        "bad": {"fallback_module": "worse"},
+        "worse": {"fallback_module": "bad"},
+    }
+
+    def _run(self, config):
+        from ovos_plugin_manager.microphone import OVOSMicrophoneFactory
+        real_get_class = OVOSMicrophoneFactory.get_class
+        tried = []
+
+        def _get_class(cfg):
+            tried.append(cfg["module"])
+            if cfg["module"] == "good":
+                return Mock()
+            raise RuntimeError(f"{cfg['module']} is not installed")
+
+        OVOSMicrophoneFactory.get_class = Mock(side_effect=_get_class)
+        try:
+            return OVOSMicrophoneFactory.create(config=deepcopy(config)), tried
+        finally:
+            OVOSMicrophoneFactory.get_class = real_get_class
+
+    def test_follows_a_fallback_with_no_config_block(self):
+        got, tried = self._run(self.CHAIN)
+        self.assertEqual(tried, ["bad", "good"])
+        self.assertIsNotNone(got)
+
+    def test_stops_on_a_cyclic_chain(self):
+        with self.assertRaises(Exception) as ctx:
+            self._run(self.CYCLE)
+        self.assertNotIsInstance(ctx.exception, RecursionError)
+
+
+class TestMicrophoneKeepsTheCallerConfig(unittest.TestCase):
+    """The factory reads the caller's configuration and never edits it.
+
+    A microphone plugin takes its own settings as keyword arguments, so the
+    factory must hand `clazz` the settings without `fallback_module`. Taking
+    that key out of the caller's own block instead of out of a copy destroys
+    the chain for every later call on the same mapping, which is normally the
+    live `Configuration`.
+    """
+
+    RECOVERING = {
+        "module": "bad",
+        "bad": {"fallback_module": "good", "sample_width": 1},
+        "good": {"sample_rate": 16000},
+    }
+
+    def _create(self, config):
+        """Create through the real factory; the `bad` plugin fails to build."""
+        from ovos_plugin_manager.microphone import OVOSMicrophoneFactory
+        real_get_class = OVOSMicrophoneFactory.get_class
+        built = []
+
+        def _get_class(cfg):
+            module = cfg["module"]
+
+            def _plugin(**kwargs):
+                if module == "bad":
+                    raise RuntimeError("bad is broken")
+                built.append(kwargs)
+                return Mock()
+
+            return _plugin
+
+        OVOSMicrophoneFactory.get_class = Mock(side_effect=_get_class)
+        try:
+            return OVOSMicrophoneFactory.create(config=config), built
+        finally:
+            OVOSMicrophoneFactory.get_class = real_get_class
+
+    def test_create_does_not_write_to_the_caller_config(self):
+        config = deepcopy(self.RECOVERING)
+        self._create(config)
+        self.assertEqual(config, self.RECOVERING)
+
+    def test_a_second_create_on_the_same_config_recovers_again(self):
+        config = deepcopy(self.RECOVERING)
+        self.assertIsNotNone(self._create(config)[0])
+        self.assertIsNotNone(self._create(config)[0])
+
+    def test_the_plugin_gets_its_settings_without_the_chain_key(self):
+        """A control: this holds whether the copy is made or the key popped."""
+        config = {"module": "good",
+                  "good": {"fallback_module": "bad", "sample_rate": 16000}}
+        _, built = self._create(config)
+        self.assertEqual(built, [{"sample_rate": 16000}])
