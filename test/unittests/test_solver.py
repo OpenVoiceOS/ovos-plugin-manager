@@ -511,5 +511,35 @@ class TestAutoDetectLang(unittest.TestCase):
         self.assertEqual(result, 'es')
 
 
+class TestAutoDetectLangWithoutADetector(unittest.TestCase):
+    """`lang` is optional, so a call that omits it runs with no detector.
+
+    An install that carries a solver plugin and no language detector is the
+    common one. Detection is then best effort: the language stays unknown and
+    the solver answers, in the same way for a text passed by keyword and for a
+    text passed by position.
+    """
+
+    def setUp(self):
+        self.solver = AbstractSolver()
+        self.solver.detect_language = MagicMock(
+            side_effect=ValueError("Failed to load module: a-detector"))
+
+        @auto_detect_lang(text_keys=['text'])
+        def _func(solver, text, lang=None):
+            return text, lang
+
+        self.func = _func
+
+    def test_a_positional_text_answers_with_no_language(self):
+        self.assertEqual(self.func(self.solver, 'hello world'),
+                         ('hello world', None))
+
+    def test_a_keyword_text_answers_with_no_language(self):
+        """A control: the keyword path already treated detection as optional."""
+        self.assertEqual(self.func(self.solver, text='hello world'),
+                         ('hello world', None))
+
+
 if __name__ == '__main__':
     unittest.main()

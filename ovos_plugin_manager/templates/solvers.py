@@ -103,7 +103,11 @@ def auto_detect_lang(text_keys: List[str]):
                 else:
                     for idx, v in enumerate(args):
                         if isinstance(v, str) and len(v.split(" ")) > 1:
-                            lang = solver.detect_language(v)
+                            try:
+                                lang = solver.detect_language(v)
+                            except Exception as e:
+                                LOG.error(f"failed to detect 'lang': {e}")
+                                continue
                             LOG.debug(f"detected 'lang': {lang} in argument '{idx}' for func: {func}")
 
             if lang:
