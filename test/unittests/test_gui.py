@@ -106,11 +106,14 @@ class TestGUIAdapterFactory(unittest.TestCase):
     def test_create_all_instantiates_every_adapter(self, find_adapters, load):
         from ovos_plugin_manager.gui import OVOSGUIAdapterFactory
         find_adapters.return_value = {"a": object(), "b": object()}
-        load.side_effect = lambda name: MagicMock(name=f"cls_{name}")
+        classes = {"a": MagicMock(name="cls_a"), "b": MagicMock(name="cls_b")}
+        load.side_effect = lambda name: classes[name]
         bus = MagicMock()
         adapters = OVOSGUIAdapterFactory.create_all(bus=bus,
                                                     config={"a": {"k": 1}})
         self.assertEqual(len(adapters), 2)
+        classes["a"].assert_called_once_with({"k": 1}, bus=bus)
+        classes["b"].assert_called_once_with({}, bus=bus)
 
     @patch("ovos_plugin_manager.gui.load_gui_adapter_plugin")
     @patch("ovos_plugin_manager.gui.find_gui_adapter_plugins")
@@ -144,16 +147,23 @@ class TestAbstractGUIPlugin(unittest.TestCase):
         adapter.handle_show_weather.assert_called_once_with(
             "skill.test", {"current_temp": 22}, "default")
 
-    def test_dispatch_unknown_template_is_safe(self):
+    @patch("ovos_plugin_manager.templates.gui.LOG")
+    def test_dispatch_unknown_template_is_safe(self, log):
         adapter = self._adapter()
         # must not raise on an unknown template
         adapter.dispatch_template("SYSTEM_does_not_exist", "skill.test", {})
+        log.warning.assert_called_once()
+        self.assertIn("SYSTEM_does_not_exist", log.warning.call_args[0][0])
 
-    def test_dispatch_swallows_handler_exception(self):
+    @patch("ovos_plugin_manager.templates.gui.LOG")
+    def test_dispatch_swallows_handler_exception(self, log):
         adapter = self._adapter()
         adapter.handle_show_text = MagicMock(side_effect=RuntimeError("boom"))
         # a crashing adapter handler must not propagate to ovos-gui
         adapter.dispatch_template("SYSTEM_text", "skill.test", {"text": "hi"})
+        adapter.handle_show_text.assert_called_once_with(
+            "skill.test", {"text": "hi"}, "default")
+        log.exception.assert_called_once()
 
     def test_hooks_use_session_id(self):
         import inspect
