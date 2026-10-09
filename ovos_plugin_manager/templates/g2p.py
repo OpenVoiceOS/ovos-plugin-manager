@@ -121,13 +121,23 @@ class Grapheme2PhonemePlugin:
             return None
         raise OutOfVocabulary
 
-    def utterance2visemes(self, utterance, lang, default_dur=0.4):
+    def utterance2visemes(self, utterance, lang, default_dur=0.1):
+        """Return (viseme, end_time) pairs with end times cumulative from speech start.
+
+        Enclosure plugins such as ovos-PHAL-plugin-mk1 sleep until `start + end`
+        for each pair, so the times must accumulate. A constant per-phoneme value
+        collapses every viseme onto the same instant and only the first one shows.
+        """
         arpa = []
         for w in utterance.split():
             phones = self.get_arpa(w, lang) or \
                      ['B', 'L', 'AE', '.', 'B', 'L', 'AE']
             arpa += phones + ["."]
-        return [(VISIMES.get(pho.lower(), '4'), default_dur) for pho in arpa]
+        visemes, end = [], 0.0
+        for pho in arpa:
+            end += default_dur
+            visemes.append((VISIMES.get(pho.lower(), '4'), round(end, 3)))
+        return visemes
 
     @classproperty
     @abc.abstractmethod
