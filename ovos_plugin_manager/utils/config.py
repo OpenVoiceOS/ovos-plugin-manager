@@ -45,7 +45,7 @@ def get_plugin_config(config: Optional[dict] = None, section: str = None,
                 # Use section-scoped config as defaults (i.e. TTS.lang)
                 module_config.setdefault(key, val)
         config = module_config
-    if section not in ["hotwords", "VAD", "listener", "gui", None]:
+    if section not in ["hotwords", "VAD", "end_of_turn", "listener", "gui", None]:
         # With some exceptions, plugins will want a `lang` value. If it was not
         # set in the section or module config, use the default top-level config.
         config.setdefault('lang', lang)

@@ -4,6 +4,16 @@ Behavior changes since the last stable release, newest first. This file is
 reset at each stable release; entries that remove or deprecate behavior
 become the deprecation ledger for the next semver cycle.
 
+## 3.0.0a1
+
+- New plugin type `opm.end_of_turn` (`PluginTypes.END_OF_TURN`), with the
+  `EndOfTurnEngine` base class in `ovos_plugin_manager.templates.eot` and the
+  `OVOSEndOfTurnFactory` in `ovos_plugin_manager.end_of_turn`. End-of-turn
+  plugins decide whether the user finished speaking; listeners fall back to
+  their own silence timer when no plugin is configured.
+- `get_plugin_config` no longer appends the top-level `lang` value to configs
+  resolved under the `end_of_turn` section, matching `VAD`.
+
 ## 2.11.4a2
 
 - `PHALPlugin.shutdown()` now removes exactly the `(topic, handler)` pairs
