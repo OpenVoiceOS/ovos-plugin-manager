@@ -19,6 +19,7 @@ use to expose supported-language configuration.
 | Enum value | Entry point group | Template base class |
 |---|---|---|
 | `VAD` | `opm.VAD` | `VADEngine` |
+| `END_OF_TURN` | `opm.end_of_turn` | `EndOfTurnEngine` |
 | `MIC` | `opm.microphone` | `OVOSMicrophone` |
 
 ### Hardware, skills, and the pipeline

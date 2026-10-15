@@ -38,13 +38,13 @@ from ovos_plugin_manager.stt import OVOSSTTFactory
 stt = OVOSSTTFactory.create()
 ```
 
-See [docs/index.md](docs/index.md) for the full guide, including TTS, wake word, VAD, and transformer plugins, and how to write a new plugin.
+See [docs/index.md](docs/index.md) for the full guide, including TTS, wake word, VAD, end-of-turn, and transformer plugins, and how to write a new plugin.
 
 ## Related projects
 
 - [OpenVoiceOS/ovos-core](https://github.com/OpenVoiceOS/ovos-core): the OVOS voice assistant core, the main consumer of OPM
 - [OpenVoiceOS/ovos-audio](https://github.com/OpenVoiceOS/ovos-audio): loads TTS and audio playback plugins through OPM
-- [OpenVoiceOS/ovos-dinkum-listener](https://github.com/OpenVoiceOS/ovos-dinkum-listener): loads STT, wake word, and VAD plugins through OPM
+- [OpenVoiceOS/ovos-dinkum-listener](https://github.com/OpenVoiceOS/ovos-dinkum-listener): loads STT, wake word, VAD, and end-of-turn plugins through OPM
 - [OpenVoiceOS/ovos-technical-manual](https://openvoiceos.github.io/ovos-technical-manual/OPM): the OVOS technical manual entry for OPM
 
 ## License

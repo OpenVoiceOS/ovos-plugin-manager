@@ -61,6 +61,7 @@ class PluginTypes(str, Enum):
     SKILL = "opm.skill"
     MIC = "opm.microphone"
     VAD = "opm.VAD"
+    END_OF_TURN = "opm.end_of_turn"
     PHONEME = "opm.g2p"
     AUDIO2IPA = "opm.audio2ipa"
     AUDIO = 'mycroft.plugin.audioservice'  # DEPRECATED
@@ -127,6 +128,7 @@ class PluginConfigTypes(str, Enum):
     ADMIN = "opm.phal.admin.config"
     SKILL = "opm.skill.config"
     VAD = "opm.VAD.config"
+    END_OF_TURN = "opm.end_of_turn.config"
     MIC = "opm.microphone.config"
     PHONEME = "opm.g2p.config"
     AUDIO2IPA = "opm.audio2ipa.config"
