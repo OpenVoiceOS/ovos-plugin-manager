@@ -23,7 +23,7 @@ Base classes: `ovos_plugin_manager/templates/agents.py`, `ovos_plugin_manager/te
 
 ## Available ToolBoxes (`opm.agents.toolbox`)
 
-Each `ToolBox` implements `discover_tools() → List[AgentTool]` (`agent_tools.py:314`). You can call tools directly with `ToolBox.call_tool(name, kwargs)`, or over the OVOS bus with the `ovos.persona.tools.{toolbox_id}.call` message topic (`agent_tools.py:102`).
+Each `ToolBox` implements `discover_tools() → List[AgentTool]`. You can call tools directly with `ToolBox.call_tool(name, kwargs)`, or over the OVOS bus with the `ovos.persona.tools.call` topic and the toolbox in `data.toolbox_id` ([OVOS-TOOLS-1](https://github.com/OpenVoiceOS/architecture/blob/dev/tools-1.md) §4.2). The [Agent Tools API page](api/agent-tools.md) has a complete plugin example and the bus reference.
 
 | Plugin ID | Class | Tools | Package | API Key |
 |---|---|---|---|---|
@@ -53,7 +53,7 @@ Each `AgentTool` (`agent_tools.py:40`) carries:
 - `output_schema`: Pydantic `ToolOutput` subclass, validated on every call
 - `tool_call`: the Python callable. It receives an instantiated `ToolArguments` and returns `ToolOutput`
 
-`ToolBox.tool_json_list` (`agent_tools.py:290`) converts all tools to the JSON Schema list format that OpenAI, Anthropic, and Gemini tool-calling endpoints expect.
+`ToolBox.tool_json_list` lists every tool with its argument and output JSON Schemas. `ToolBox.openai_tools` converts that list to the OpenAI `tools` shape, which chat plugins map to their own provider format.
 
 ---
 

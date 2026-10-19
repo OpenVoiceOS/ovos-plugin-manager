@@ -4,6 +4,103 @@
 
 Tool plugins extend personas with executable functions. A `ToolBox` groups related tools, handles bus-based discovery, and validates inputs/outputs via Pydantic.
 
+## What you can do
+
+Write a tool once as a `ToolBox` plugin, and every OVOS tool consumer can use it with no extra code:
+
+- An LLM agent loop ([ovos-agentic-loop](https://github.com/OpenVoiceOS/ovos-agentic-loop)) offers it to the model and runs it when the model asks.
+- The device tool service ([ovos-PHAL-plugin-tools](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-tools)) lets any program on the messagebus list and run it.
+- [ovos-persona-server](https://github.com/OpenVoiceOS/ovos-persona-server) publishes tool plugins to MCP and UTCP clients.
+- Any Python program calls it directly with `ToolBox.call_tool()`.
+
+The reverse also works: [ovos-tool-adapters](https://github.com/OpenVoiceOS/ovos-tool-adapters) turns an MCP server or a UTCP manual into a `ToolBox`.
+
+## User story: write a tool plugin
+
+You want an agent to count the words in a text. These steps make a complete, installable plugin.
+
+1. Create the package `my-text-tools` with this `pyproject.toml`:
+
+   ```toml
+   [build-system]
+   requires = ["setuptools>=61.0"]
+   build-backend = "setuptools.build_meta"
+
+   [project]
+   name = "my-text-tools"
+   version = "0.1.0"
+   dependencies = ["ovos-plugin-manager>=2.11.1a1"]
+
+   [project.entry-points."opm.agents.toolbox"]
+   my-text-tools = "my_text_tools:TextToolBox"
+   ```
+
+2. Write `my_text_tools/__init__.py`:
+
+   ```python
+   from typing import Any, Dict, List, Optional
+
+   from pydantic import Field
+   from ovos_plugin_manager.templates.agent_tools import (
+       AgentTool, ToolArguments, ToolBox, ToolOutput,
+   )
+
+
+   class WordCountArgs(ToolArguments):
+       text: str = Field(..., description="The text to count words in.")
+
+
+   class WordCountOutput(ToolOutput):
+       words: int = Field(..., description="Number of words in the text.")
+
+
+   class TextToolBox(ToolBox):
+       def __init__(self, config: Optional[Dict[str, Any]] = None, bus=None):
+           super().__init__(toolbox_id="my-text-tools", config=config, bus=bus)
+
+       def discover_tools(self) -> List[AgentTool]:
+           return [
+               AgentTool(
+                   name="word_count",
+                   description="Count the words in a piece of text.",
+                   argument_schema=WordCountArgs,
+                   output_schema=WordCountOutput,
+                   tool_call=lambda args: WordCountOutput(words=len(args.text.split())),
+               )
+           ]
+   ```
+
+   The constructor takes `config` and `bus` as keyword arguments and passes its own `toolbox_id`. Every host builds a toolbox as `cls(config=..., bus=...)`, so a constructor with other arguments fails to load.
+
+3. Install it and call it:
+
+   ```bash
+   pip install ./my-text-tools
+   ```
+
+   ```python
+   from ovos_plugin_manager.persona import find_toolbox_plugins
+
+   toolbox = find_toolbox_plugins()["my-text-tools"]()
+   print(toolbox.call_tool("word_count", {"text": "the cat sleeps on the warm roof"}))
+   ```
+
+   ```text
+   words=7
+   ```
+
+4. Use it. On a device that runs ovos-PHAL-plugin-tools, send `ovos.tools.reload` and then `ovos.tools.invoke`:
+
+   ```json
+   {"name": "word_count", "result": {"words": 7}}
+   ```
+
+   In an agent loop, add `"my-text-tools"` to the `toolboxes` list of the loop's config.
+
+### Choose tool names a model accepts
+
+The model sees `name` as a function name. OpenAI-style tool-calling APIs accept only letters, digits, `_` and `-`, up to 64 characters, and refuse the whole request when one name breaks the rule (`Function at index 0 has an invalid name`). Use snake_case names such as `word_count`.
+
 ---
 
 ## Core Classes
@@ -41,6 +138,7 @@ Returns the list of tools provided by this plugin. Called at init and on `refres
 | Method | Description |
 |---|---|
 | `bind(bus)` | Attach to messagebus; registers discovery and call handlers. |
+| `unbind()` | Remove the handlers that `bind()` registered. |
 | `call_tool(name, tool_kwargs)` | Execute a tool by name with full input/output validation. |
 | `get_tool(name)` | Retrieve an `AgentTool` by name; triggers lazy refresh if not cached. |
 | `refresh_tools()` | Re-run `discover_tools()` and update the internal cache. |
@@ -84,16 +182,25 @@ several toolboxes (as the `ovos-agentic-loop` `NativeToolCallEngine` does); use 
 
 ## Messagebus Interface
 
-Tools expose themselves on the bus automatically when `bind(bus)` is called.
+A toolbox answers the toolbox topics of [OVOS-TOOLS-1](https://github.com/OpenVoiceOS/architecture/blob/dev/tools-1.md) §4 once `bind(bus)` runs. Passing `bus` to the constructor calls `bind()`. `unbind()` removes the handlers again.
 
-| Message | Direction | Description |
+| Message | Request `data` | Response `data` |
 |---|---|---|
-| `ovos.persona.tools.discover` | → ToolBox | Broadcast discovery request. |
-| `ovos.persona.tools.discover` (response) | ← ToolBox | Returns `{"tools": [...], "toolbox_id": "..."}`. |
-| `ovos.persona.tools.<toolbox_id>.call` | → ToolBox | Call a specific tool with `{"name": "...", "kwargs": {...}}`. |
-| `ovos.persona.tools.<toolbox_id>.call` (response) | ← ToolBox | Returns `{"result": {...}}` or `{"error": "..."}`. |
+| `ovos.persona.tools.discover` | none read | `{"toolbox_id": "...", "tools": [...]}`, one response per toolbox. Each tool entry carries `name`, `description`, `argument_schema`, `output_schema` and `toolbox_id`. |
+| `ovos.persona.tools.call` | `toolbox_id`, `name`, `kwargs` | `{"toolbox_id": "...", "result": {...}}` or `{"toolbox_id": "...", "error": "..."}`. Only the toolbox named in `toolbox_id` answers. A call for any other toolbox gets no response from this one. |
+| `ovos.persona.tools.<toolbox_id>.call` | `name`, `kwargs` | Same as `ovos.persona.tools.call`. This is the predecessor topic, kept for one stable cycle (§6). |
 
-This allows agent plugins in separate processes (e.g. MCP or UTCP servers) to discover and call tools dynamically without importing the plugin directly.
+Example call and answer:
+
+```json
+{"type": "ovos.persona.tools.call",
+ "data": {"toolbox_id": "ovos-math-tools", "name": "evaluate_expression", "kwargs": {"expression": "2**10"}}}
+
+{"type": "ovos.persona.tools.call.response",
+ "data": {"result": {"result": 1024.0, "expression": "2**10", "error": null}, "toolbox_id": "ovos-math-tools"}}
+```
+
+Programs in other processes can find and call tools this way without importing the plugin. For one flat list of every tool on a device, use the tool service topics `ovos.tools.*` of ovos-PHAL-plugin-tools (§5).
 
 ---
 
@@ -110,10 +217,12 @@ my_toolbox = "my_package:MyToolBox"
 
 ## Writing a ToolBox Plugin
 
+The [user story above](#user-story-write-a-tool-plugin) is a complete plugin. A tool function can also be a plain function:
+
 ```python
 from ovos_plugin_manager.templates.agent_tools import AgentTool, ToolArguments, ToolBox, ToolOutput
 from pydantic import Field
-from typing import List
+from typing import Any, Dict, List, Optional
 
 
 class WeatherArgs(ToolArguments):
@@ -131,8 +240,8 @@ def fetch_weather(args: WeatherArgs) -> WeatherOutput:
 
 
 class WeatherToolBox(ToolBox):
-    def __init__(self, bus=None):
-        super().__init__(toolbox_id="weather_tools", bus=bus)
+    def __init__(self, config: Optional[Dict[str, Any]] = None, bus=None):
+        super().__init__(toolbox_id="weather_tools", config=config, bus=bus)
 
     def discover_tools(self) -> List[AgentTool]:
         return [
@@ -170,3 +279,15 @@ from ovos_plugin_manager.persona import find_toolbox_plugins
 plugins = find_toolbox_plugins()
 # {"my_toolbox": MyToolBox, ...}
 ```
+
+---
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| A host logs `failed to load toolbox` with a `TypeError` | The constructor does not accept `config` and `bus` keyword arguments. Use `__init__(self, config=None, bus=None)` and pass `toolbox_id` to `super().__init__()`. |
+| `Failed to load plugin entry point ... No module named ...` | The package is not importable by the host process. Install it in the same Python environment. A running process cannot import a package installed in editable mode after it started. Restart it. |
+| The model provider answers `Function at index 0 has an invalid name` | A tool name holds a character outside `a-z A-Z 0-9 _ -`. Rename the tool. |
+| `ValueError: Tool input validation failed for '<name>'` | The arguments do not match `argument_schema`. The chained exception holds the pydantic detail. |
+| `RuntimeError: Tool output validation failed for '<name>'` | `tool_call` returned a dict that does not match `output_schema`. |
