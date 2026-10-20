@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/3.0.1a1) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/3.0.0a1...3.0.1a1)
+
+**Merged pull requests:**
+
+- fix: ToolBox answers the OVOS-TOOLS-1 call topic and tags each tool with its toolbox [\#470](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/470) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [3.0.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/3.0.0a1) (2026-10-01)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.12.5a1...3.0.0a1)
@@ -292,7 +300,6 @@
 **Merged pull requests:**
 
 - chore\(deps\): update pilosus/action-pip-license-checker action to v3 [\#355](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/355) ([renovate[bot]](https://github.com/apps/renovate))
-- chore\(deps\): update pypa/gh-action-pip-audit action to v1.1.0 - autoclosed [\#351](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/351) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [2.2.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.1a1) (2026-01-29)
 
@@ -333,11 +340,6 @@
 ## [2.1.1a5](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a5) (2026-01-08)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.1.1a4...2.1.1a5)
-
-**Merged pull requests:**
-
-- chore\(deps\): update actions/setup-python action to v6 [\#353](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/353) ([renovate[bot]](https://github.com/apps/renovate))
-- chore\(deps\): update actions/checkout action to v6 [\#352](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/352) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [2.1.1a4](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.1.1a4) (2026-01-08)
 
