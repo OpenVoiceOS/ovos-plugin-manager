@@ -524,6 +524,17 @@ class TestTextEmbedder(unittest.TestCase):
         result = emb.get_embeddings("hello world")
         self.assertIsInstance(result, list)
 
+    def test_get_embeddings_batch_keeps_the_order_of_the_texts(self) -> None:
+        """The default batch embeds each text with get_embeddings, in order."""
+
+        class LengthEmbedder(TextEmbedder):
+            def get_embeddings(self, text: str) -> List[float]:
+                return [float(len(text)), 1.0]
+
+        self.assertEqual(LengthEmbedder().get_embeddings_batch(["abc", "a", "ab"]),
+                         [[3.0, 1.0], [1.0, 1.0], [2.0, 1.0]])
+        self.assertEqual(LengthEmbedder().get_embeddings_batch([]), [])
+
 
 class TestImageEmbedder(unittest.TestCase):
     """Tests for ImageEmbedder base class."""
