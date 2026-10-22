@@ -1,6 +1,6 @@
 import abc
 import collections
-from typing import Iterable
+from typing import Iterable, Optional
 
 from ovos_utils import classproperty
 from ovos_utils.process_utils import RuntimeRequirements
@@ -18,7 +18,28 @@ class AudioFrame:
 
 
 class VADEngine:
-    def __init__(self, config=None, sample_rate=None):
+    """Voice Activity Detection base class.
+
+    Subclasses must implement :meth:`is_silence`. The provided
+    :meth:`extract_speech` uses a sliding ring-buffer algorithm to attempt to
+    trim leading/trailing silence from an audio buffer; it may return ``None``
+    if the audio ends before the unvoiced threshold is reached.
+    """
+
+    def __init__(self, config: Optional[dict] = None,
+                 sample_rate: Optional[int] = None):
+        """
+        Initialize the VAD engine configuration and timing parameters.
+
+        Parameters:
+            config (Optional[dict]): Optional configuration overrides for VAD behavior.
+                Expected keys:
+                    - "padding_duration_ms": padding around detected speech in ms (default 300)
+                    - "frame_duration_ms": duration of each frame in ms (default 30)
+                    - "thresh": fraction of padding frames to trigger voiced/unvoiced (default 0.8)
+            sample_rate (Optional[int]): Audio sample rate in Hz. If omitted, reads from
+                core configuration "listener.sample_rate" or defaults to 16000.
+        """
         self.config_core = Configuration()
         self.config = config or {}
         self.sample_rate = sample_rate or \
@@ -80,8 +101,14 @@ class VADEngine:
             timestamp += duration
             offset += n
 
-    def extract_speech(self, audio: bytes) -> bytes:
-        """returns the audio data with speech only, removing all noise before and after speech"""
+    def extract_speech(self, audio: bytes) -> Optional[bytes]:
+        """Returns the audio data with speech only, removing silence before and after.
+
+        This method uses a sliding ring buffer to detect speech. It returns the
+        voiced segments once it detects enough trailing silence. If the input
+        buffer ends while speech is still being detected (the "triggered" state),
+        it returns None.
+        """
         # We use a deque for our sliding window/ring buffer.
         ring_buffer = collections.deque(maxlen=self.num_padding_frames)
         triggered = False

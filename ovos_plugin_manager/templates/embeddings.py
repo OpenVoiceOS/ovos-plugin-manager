@@ -517,6 +517,15 @@ class TextEmbedder:
         """
         raise NotImplementedError
 
+    def get_embeddings_batch(self, texts: List[str]) -> List[EmbeddingsArray]:
+        """
+        Generate one embedding vector per text, in the order of ``texts``.
+
+        This default implementation embeds each text individually; subclasses may override for more efficient
+        bulk handling, such as one forward pass or one remote request for all the texts.
+        """
+        return [self.get_embeddings(text) for text in texts]
+
 
 class ImageEmbedder:
 

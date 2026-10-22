@@ -1,3 +1,4 @@
+import json
 import unittest
 from unittest.mock import patch, Mock
 
@@ -17,6 +18,45 @@ _TEST_CONFIG = {
         }
     }
 }
+
+
+class TestWakeWordVerifier(unittest.TestCase):
+    PLUGIN_TYPE = PluginTypes.WAKEWORD_VERIFIER
+
+    @patch("ovos_plugin_manager.utils.find_plugins")
+    def test_find_wake_word_verifier_plugins(self, find_plugins):
+        from ovos_plugin_manager.wakewords import find_wake_word_verifier_plugins
+        find_wake_word_verifier_plugins()
+        find_plugins.assert_called_once_with(self.PLUGIN_TYPE)
+
+    @patch("ovos_plugin_manager.utils.load_plugin")
+    def test_load_wake_word_verifier_plugin(self, load_plugin):
+        from ovos_plugin_manager.wakewords import load_wake_word_verifier_plugin
+        load_wake_word_verifier_plugin("test_verifier_mod")
+        load_plugin.assert_called_once_with("test_verifier_mod", self.PLUGIN_TYPE)
+
+    def test_hot_word_verifier_verify_not_implemented(self):
+        from ovos_plugin_manager.templates.hotwords import HotWordVerifier
+        verifier = HotWordVerifier(config={"threshold": 0.9})
+        self.assertEqual(verifier.config, {"threshold": 0.9})
+        with self.assertRaises(NotImplementedError):
+            verifier.verify(b"\x00" * 1024)
+
+    def test_hot_word_verifier_default_config(self):
+        from ovos_plugin_manager.templates.hotwords import HotWordVerifier
+        verifier = HotWordVerifier()
+        self.assertEqual(verifier.config, {})
+
+    def test_hot_word_verifier_subclass(self):
+        from ovos_plugin_manager.templates.hotwords import HotWordVerifier
+
+        class AlwaysAcceptVerifier(HotWordVerifier):
+            def verify(self, chunk: bytes) -> bool:
+                return True
+
+        verifier = AlwaysAcceptVerifier(config={"model": "dummy"})
+        self.assertTrue(verifier.verify(b"\x00" * 512))
+        self.assertIsInstance(verifier, HotWordVerifier)
 
 
 class TestHotwordsTemplate(unittest.TestCase):
@@ -84,15 +124,34 @@ class TestWakewords(unittest.TestCase):
 
     def test_get_ww_id(self):
         from ovos_plugin_manager.wakewords import get_ww_id
-        # TODO
+        config = {"model": "hey_mycroft.tflite"}
+        ww_id = get_ww_id("ovos-ww-plugin-precise", "hey mycroft", config)
+        self.assertIsInstance(ww_id, str)
+        # same args produce same id
+        self.assertEqual(ww_id,
+                         get_ww_id("ovos-ww-plugin-precise", "hey mycroft",
+                                   config))
+        # different config produces different id
+        self.assertNotEqual(ww_id,
+                            get_ww_id("ovos-ww-plugin-precise", "hey mycroft",
+                                      {"model": "other.tflite"}))
 
-    def test_scan_wws(self):
+    def test_scan_wws_not_implemented(self):
         from ovos_plugin_manager.wakewords import scan_wws
-        # TODO
+        with self.assertRaises(NotImplementedError):
+            scan_wws()
 
-    def test_get_wws(self):
+    @patch("ovos_plugin_manager.wakewords.get_ww_supported_langs")
+    @patch("ovos_plugin_manager.wakewords.os.listdir")
+    @patch("builtins.open", new_callable=unittest.mock.mock_open)
+    @patch("ovos_plugin_manager.wakewords.xdg_data_home", return_value="/fake/xdg")
+    def test_get_wws(self, xdg, mock_open, listdir, supported_langs):
         from ovos_plugin_manager.wakewords import get_wws
-        # TODO
+        supported_langs.return_value = {"en-US": ["myplugin"]}
+        listdir.return_value = ["ww123.json"]
+        with patch("json.load", return_value={"model": "test.tflite"}):
+            result = get_wws(scan=False)
+        self.assertIsInstance(result, dict)
 
 
 class TestWakeWordFactory(unittest.TestCase):
@@ -101,17 +160,18 @@ class TestWakeWordFactory(unittest.TestCase):
         real_load_module = OVOSWakeWordFactory.load_module
         mock_load = Mock()
         OVOSWakeWordFactory.load_module = mock_load
+        try:
+            OVOSWakeWordFactory.create_hotword(config=_TEST_CONFIG)
+            mock_load.assert_called_once_with("ovos-ww-plugin-precise", "hey_mycroft",
+                                              _TEST_CONFIG["hotwords"]
+                                              ['hey_mycroft'])
 
-        OVOSWakeWordFactory.create_hotword(config=_TEST_CONFIG)
-        mock_load.assert_called_once_with("ovos-ww-plugin-precise", "hey_mycroft",
-                                          _TEST_CONFIG["hotwords"]
-                                          ['hey_mycroft'], "en-US", None)
-
-        OVOSWakeWordFactory.create_hotword("hey_neon", _TEST_CONFIG)
-        mock_load.assert_called_with("ovos-ww-plugin-vosk", "hey_neon",
-                                     _TEST_CONFIG["hotwords"]
-                                     ['hey_neon'], "en-US", None)
-        OVOSWakeWordFactory.load_module = real_load_module
+            OVOSWakeWordFactory.create_hotword("hey_neon", _TEST_CONFIG)
+            mock_load.assert_called_with("ovos-ww-plugin-vosk", "hey_neon",
+                                         _TEST_CONFIG["hotwords"]
+                                         ['hey_neon'])
+        finally:
+            OVOSWakeWordFactory.load_module = real_load_module
 
     @patch("ovos_plugin_manager.utils.load_plugin")
     def test_get_class(self, load_plugin):
@@ -143,21 +203,20 @@ class TestWakeWordFactory(unittest.TestCase):
         real_get_class = OVOSWakeWordFactory.get_class
         mock_get_class = Mock()
         OVOSWakeWordFactory.get_class = mock_get_class
+        try:
+            # Test valid return
+            mock_return = Mock()
+            mock_get_class.return_value = mock_return
+            module = OVOSWakeWordFactory.load_module(
+                "ovos-ww-plugin-precise", "hey_mycroft", _TEST_CONFIG['hotwords']['hey_mycroft'])
+            mock_get_class.assert_called_once_with(
+                "hey_mycroft", {"hotwords": {
+                    "hey_mycroft": _TEST_CONFIG['hotwords']['hey_mycroft']}})
+            self.assertEqual(module, mock_return())
 
-        # Test valid return
-        mock_return = Mock()
-        mock_get_class.return_value = mock_return
-        module = OVOSWakeWordFactory.load_module(
-            "ovos-ww-plugin-precise", "hey_mycroft", _TEST_CONFIG['hotwords']['hey_mycroft'],
-            'en-US')
-        mock_get_class.assert_called_once_with(
-            "hey_mycroft", {"lang": "en-US", "hotwords": {
-                "hey_mycroft": _TEST_CONFIG['hotwords']['hey_mycroft']}})
-        self.assertEqual(module, mock_return())
-
-        # Test no return
-        mock_get_class.return_value = None
-        with self.assertRaises(ImportError):
-            OVOSWakeWordFactory.load_module("dummy", "test", {}, "en-US")
-
-        OVOSWakeWordFactory.get_class = real_get_class
+            # Test no return
+            mock_get_class.return_value = None
+            with self.assertRaises(ImportError):
+                OVOSWakeWordFactory.load_module("dummy", "test", {})
+        finally:
+            OVOSWakeWordFactory.get_class = real_get_class

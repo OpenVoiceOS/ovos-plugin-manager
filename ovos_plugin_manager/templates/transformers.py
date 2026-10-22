@@ -1,5 +1,5 @@
 import abc
-from typing import List, Tuple, Optional
+from typing import Dict, FrozenSet, List, Tuple, Optional
 
 from ovos_bus_client.util import get_mycroft_bus
 from ovos_config.config import Configuration
@@ -30,7 +30,7 @@ class MetadataTransformer:
         """ perform any initialization actions """
         pass
 
-    def transform(self, context: dict = None) -> (list, dict):
+    def transform(self, context: dict = None) -> dict:
         """
         Optionally transform passed context
         eg. inject default values or convert metadata format
@@ -66,7 +66,7 @@ class UtteranceTransformer:
         pass
 
     def transform(self, utterances: List[str],
-                  context: dict = None) -> (list, dict):
+                  context: dict = None) -> Tuple[List[str], dict]:
         """
         Optionally transform passed utterances and/or return additional context
         :param utterances: List of str utterances to parse
@@ -142,6 +142,66 @@ class IntentTransformer:
 
 
 
+class TypedSlotsTransformer:
+    """Computes the typed-slots map (OVOS-INTENT-1 §5.6) after the utterance
+    and metadata transformer chains and before the first matcher runs
+    (OVOS-TRANSFORM-1 §3.7).
+
+    Ownership split: the plugin computes and returns the map for the
+    declared types it is given; the orchestrator selects a single loaded
+    plugin, hands it the declared types, drops any key naming an
+    unregistered type, replaces whatever map a producer already placed on
+    the Message, discards the map outright when a later utterance rewrite
+    invalidates its spans, and carries the surviving map to dispatch. This
+    transformer MUST NOT touch ``utterances`` or ``Message.context`` for
+    this purpose - that is an utterance or metadata transformer's job.
+    """
+
+    #: Types this plugin is able to compute, as self-description for a
+    #: deployment choosing between plugins. The orchestrator does not read it
+    #: and never withholds the call from a plugin whose declared types look
+    #: irrelevant: OVOS-TRANSFORM-1 §3.7 lets a transformer compute every
+    #: registered type where the deployment asks for that, so skipping it on
+    #: the strength of its declaration would discard values it may produce.
+    supported_types: FrozenSet[str] = frozenset()
+
+    def __init__(self, name, priority=50, config=None):
+        self.name = name
+        self.bus = None
+        self.priority = priority
+        if not config:
+            config_core = dict(Configuration())
+            config = config_core.get("typed_slots_transformers", {}).get(self.name)
+        self.config = config or {}
+
+    def bind(self, bus=None):
+        """ attach messagebus """
+        self.bus = bus or get_mycroft_bus()
+
+    def initialize(self):
+        """ perform any initialization actions """
+        pass
+
+    def transform(self, utterances: List[str], declared_types: FrozenSet[str],
+                  session) -> Dict[str, List[dict]]:
+        """
+        Compute the typed-slots map for the given candidate utterances.
+
+        :param utterances: candidate utterance list as the preceding
+            transformer chains left it
+        :param declared_types: set of types declared by registered intents
+        :param session: the active Session, e.g. for ``location.tz`` when
+            resolving a ``date``
+        :returns: dict mapping type name to a list of
+            ``{"span": [start, end], "surface": str, "value": ...}`` entries
+        """
+        return {}
+
+    def default_shutdown(self):
+        """ perform any shutdown actions """
+        pass
+
+
 class AudioTransformer:
     """process audio data and optionally transform it before STT stage"""
 
@@ -174,26 +234,53 @@ class AudioTransformer:
         return config
 
     def bind(self, bus=None):
-        """ attach messagebus """
+        """
+        Attach a message bus to this transformer, defaulting to the global Mycroft bus when omitted.
+        
+        Parameters:
+            bus (optional): Message bus client to attach. If not provided, the global Mycroft bus returned by `get_mycroft_bus()` is used.
+        """
         self.bus = bus or get_mycroft_bus()
 
-    def feed_audio_chunk(self, chunk):
+    def feed_audio_chunk(self, chunk: bytes) -> None:
+        """Feed a non-speech audio chunk; appends the (possibly modified) chunk to :attr:`noise_feed`."""
         chunk = self.on_audio(chunk)
         self.noise_feed.write(chunk)
 
-    def feed_hotword_chunk(self, chunk):
+    def feed_hotword_chunk(self, chunk: bytes) -> None:
+        """
+        Append a hotword audio chunk to the transformer's hotword buffer after processing.
+        
+        The chunk is passed to `on_hotword` for optional transformation and then written to
+        the `hotword_feed` buffer for later use.
+        """
         chunk = self.on_hotword(chunk)
         self.hotword_feed.write(chunk)
 
-    def feed_speech_chunk(self, chunk):
+    def feed_speech_chunk(self, chunk: bytes) -> None:
+        """
+        Feed a speech audio chunk recorded after hotword detection into the speech buffer.
+        
+        Parameters:
+            chunk (bytes): Raw audio bytes captured after hotword detection; will be processed by `on_speech` and appended to the transformer's `speech_feed` buffer.
+        """
         chunk = self.on_speech(chunk)
         self.speech_feed.write(chunk)
 
-    def feed_speech_utterance(self, chunk):
+    def feed_speech_utterance(self, chunk: bytes) -> bytes:
+        """
+        Process a complete speech utterance and return the (possibly modified) audio.
+        
+        Parameters:
+        	chunk (bytes): Raw audio bytes of the complete speech utterance.
+        
+        Returns:
+        	audio (bytes): The processed audio bytes (modified or original).
+        """
         return self.on_speech_end(chunk)
 
-    def reset(self):
-        # end of prediction, reset buffers
+    def reset(self) -> None:
+        """Clear all audio buffers. Called at the end of each prediction cycle."""
         self.speech_feed.clear()
         self.hotword_feed.clear()
         self.noise_feed.clear()
@@ -279,7 +366,7 @@ class TTSTransformer:
         self.priority = priority
         if not config:
             config_core = dict(Configuration())
-            config = config_core.get("dialog_transformers", {}).get(self.name)
+            config = config_core.get("tts_transformers", {}).get(self.name)
         self.config = config or {}
 
     def bind(self, bus=None):

@@ -7,7 +7,7 @@ from ovos_bus_client.session import SessionManager
 from ovos_plugin_manager.templates.transformers import AudioLanguageDetector
 from ovos_plugin_manager.utils.config import get_plugin_config
 from ovos_utils import classproperty
-from ovos_utils.lang import standardize_lang_tag
+from ovos_spec_tools import standardize_lang
 from ovos_utils.log import LOG
 from ovos_utils.process_utils import RuntimeRequirements
 from ovos_plugin_manager.utils.audio import AudioData
@@ -70,7 +70,7 @@ class STT(metaclass=ABCMeta):
 
     @property
     def lang(self):
-        return standardize_lang_tag(self._lang or \
+        return standardize_lang(self._lang or \
                                     self.config.get("lang") or \
                                     SessionManager.get().lang)
 
@@ -83,7 +83,7 @@ class STT(metaclass=ABCMeta):
         Parameters:
             val (str): Language tag or code to set; it will be normalized to a standardized tag format before storage.
         """
-        self._lang = standardize_lang_tag(val)
+        self._lang = standardize_lang(val)
 
     @abstractmethod
     def execute(self, audio: AudioData, language: Optional[str] = None) -> str:
@@ -139,7 +139,7 @@ class StreamThread(Thread, metaclass=ABCMeta):
 
     def __init__(self, queue, language):
         super().__init__()
-        self.language = standardize_lang_tag(language)
+        self.language = standardize_lang(language)
         self.queue = queue
         self.text = None
 
@@ -186,7 +186,7 @@ class StreamingSTT(STT, metaclass=ABCMeta):
         self.stream_stop()
         self.queue = Queue()
         self.stream = self.create_streaming_thread()
-        self.stream.language = standardize_lang_tag(language or self.lang)
+        self.stream.language = standardize_lang(language or self.lang)
         self.transcript_ready.clear()
         self.stream.start()
 
@@ -201,31 +201,49 @@ class StreamingSTT(STT, metaclass=ABCMeta):
 
     def stream_stop(self):
         """
-        Stop the active streaming session and return its final transcription.
+        Stop the active streaming session and return the final transcription.
         
-        If a stream is active, signal end-of-stream to the worker, wait for it to finalize and join the thread, clear internal stream state, and mark the transcript as ready.
+        If a stream is active, signal end-of-stream to the worker, wait for it to finish, clear internal stream state, and mark the transcript as ready.
         
         Returns:
-        	str or None: Final transcription text if a stream was active, `None` otherwise.
+            str or None: Final transcription text if a stream was active, `None` otherwise.
         """
         if self.stream is not None:
             self.queue.put(None)
-            text = self.stream.finalize()
             self.stream.join()
+            text = self.stream.finalize()
             self.stream = None
             self.queue = None
             self.transcript_ready.set()
             return text
         return None
 
-    def execute(self, audio: Optional = None,
-                language: Optional[str] = None):
+    def execute(self, audio: Optional[AudioData] = None,
+                language: Optional[str] = None) -> Optional[str]:
+        """
+        Stop the active streaming session and return its final transcription.
+
+        Parameters:
+            audio (Optional[AudioData]): Ignored; present for API compatibility.
+            language (Optional[str]): Ignored; language is set when the stream was started.
+
+        Returns:
+            Optional[str]: Final transcription text, or ``None`` if no stream was active.
+        """
         return self.stream_stop()
 
-    def transcribe(self, audio: Optional = None,
-                   lang: Optional[str] = None) -> List[Tuple[str, float]]:
-        """transcribe audio data to a list of
-        possible transcriptions and respective confidences"""
+    def transcribe(self, audio: Optional[AudioData] = None,
+                   lang: Optional[str] = None) -> List[Tuple[Optional[str], float]]:
+        """
+        Produce the final transcription from the active streaming session.
+
+        Parameters:
+            audio (Optional[AudioData]): Unused; accepted for API compatibility.
+            lang (Optional[str]): Unused; language is determined when the stream was started.
+
+        Returns:
+            List[Tuple[Optional[str], float]]: Single-element list of ``(transcription, 1.0)``.
+        """
         return [(self.execute(audio, lang), 1.0)]
 
     @abstractmethod
