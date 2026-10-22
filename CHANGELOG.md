@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.1.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/3.1.0a1) (2026-10-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/3.0.1a1...3.1.0a1)
+
+**Merged pull requests:**
+
+- feat: TextEmbedder.get\_embeddings\_batch [\#472](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/472) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [3.0.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/3.0.1a1) (2026-10-20)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/3.0.0a1...3.0.1a1)
@@ -297,10 +305,6 @@
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.1a1...2.2.1a3)
 
-**Merged pull requests:**
-
-- chore\(deps\): update pilosus/action-pip-license-checker action to v3 [\#355](https://github.com/OpenVoiceOS/ovos-plugin-manager/pull/355) ([renovate[bot]](https://github.com/apps/renovate))
-
 ## [2.2.1a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.2.1a1) (2026-01-29)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/2.2.0...2.2.1a1)
@@ -375,15 +379,15 @@
 
 ## [2.0.0a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/2.0.0a1) (2025-07-22)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a3...2.0.0a1)
-
-## [1.0.4a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a3) (2025-07-22)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...1.0.4a3)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a2...2.0.0a1)
 
 ## [1.0.4a2](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a2) (2025-07-22)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a2)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a3...1.0.4a2)
+
+## [1.0.4a3](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a3) (2025-07-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-plugin-manager/compare/1.0.4a1...1.0.4a3)
 
 ## [1.0.4a1](https://github.com/OpenVoiceOS/ovos-plugin-manager/tree/1.0.4a1) (2025-06-18)
 
