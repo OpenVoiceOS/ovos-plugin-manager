@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import TYPE_CHECKING, Optional, Dict, Any
 
 from ovos_bus_client import Message
 from ovos_bus_client import MessageBusClient
@@ -6,21 +6,8 @@ from ovos_bus_client.apis.gui import GUIInterface
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 
-try:
+if TYPE_CHECKING:
     from ovos_gui.homescreen import HomescreenManager
-except ImportError as _exc:
-
-    class HomescreenManager:
-        """Fallback class when ovos-gui is not installed.
-
-        Raises the original ImportError when instantiated to
-        provide clear error messaging while still allowing type hints to work.
-        """
-
-        def __init__(self, *args, **kwargs):
-            LOG.error("you seem to be running GUIExtensions without ovos-gui installed...")
-            # raise the original ImportError
-            raise _exc
 
 
 class GUIExtension:
@@ -54,16 +41,17 @@ class GUIExtension:
         self.preload_gui = preload_gui
         self.permanent = permanent
         self.config = config
-        self.homescreen_manager: Optional[HomescreenManager] = None
+        self.homescreen_manager: Optional["HomescreenManager"] = None
         self.register_bus_events()
 
     def register_bus_events(self):
         self.bus.on("mycroft.gui.screen.close", self.handle_remove_namespace)
 
-    def bind_homescreen(self, homescreen: Optional[HomescreenManager] = None):
+    def bind_homescreen(self, homescreen: Optional["HomescreenManager"] = None):
         if self.config.get("homescreen_supported", False):
             if not homescreen:
                 LOG.debug("Loading HomescreenManager")
+                from ovos_gui.homescreen import HomescreenManager
                 homescreen = HomescreenManager(self.bus)
                 homescreen.daemon = True
                 homescreen.start()
@@ -308,6 +296,21 @@ class AbstractGUIPlugin:
 
     def on_idle(self) -> None:
         """Called when the GUI returns to the idle/resting state."""
+
+    # ------------------------------------------------------------------
+    # Connection report
+    # ------------------------------------------------------------------
+
+    def any_client_connected(self) -> bool:
+        """Report whether at least one display client is connected (spec §6.8).
+
+        ovos-gui may use this to answer "is a GUI connected" queries. Adapters
+        that own a client transport override it; the default reports no client.
+
+        Returns:
+            True when this adapter has at least one connected client.
+        """
+        return False
 
     # ------------------------------------------------------------------
     # Status event hook

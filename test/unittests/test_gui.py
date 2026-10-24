@@ -173,3 +173,26 @@ class TestAbstractGUIPlugin(unittest.TestCase):
             params = inspect.signature(getattr(AbstractGUIPlugin, name)).parameters
             self.assertIn("session_id", params)
             self.assertNotIn("site_id", params)
+
+    def test_any_client_connected_defaults_false(self):
+        self.assertFalse(self._adapter().any_client_connected())
+
+
+class TestGUITemplateImport(unittest.TestCase):
+    """The adapter base must import without ovos-gui (ovos-gui depends on OPM)."""
+
+    def test_module_load_does_not_import_ovos_gui(self):
+        import builtins
+        import importlib
+        import ovos_plugin_manager.templates.gui as gui_templates
+        real_import = builtins.__import__
+        attempted = []
+
+        def recording_import(name, *args, **kwargs):
+            attempted.append(name)
+            return real_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", recording_import):
+            importlib.reload(gui_templates)
+        importlib.reload(gui_templates)
+        self.assertFalse([n for n in attempted if n.startswith("ovos_gui")])
