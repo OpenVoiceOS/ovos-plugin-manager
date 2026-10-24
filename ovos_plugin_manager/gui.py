@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from ovos_plugin_manager.utils import PluginTypes, PluginConfigTypes
-from ovos_plugin_manager.templates.gui import GUIExtension
+from ovos_plugin_manager.templates.gui import GUIExtension, AbstractGUIPlugin
 from ovos_utils.log import LOG
 
 
@@ -93,3 +93,95 @@ class OVOSGuiFactory:
             LOG.exception('The selected gui plugin could not be loaded.')
             raise
         return gui
+
+
+# ---------------------------------------------------------------------------
+# GUI adapter plugins (opm.gui_adapter)
+#
+# Adapters are rendering backends (Qt, browser, TUI, ...). Unlike the single
+# GUIExtension above, *every* installed adapter is loaded simultaneously so a
+# device can drive multiple displays at once. ovos-gui dispatches every template
+# event to all of them via OVOSGUIAdapterFactory.create_all().
+# ---------------------------------------------------------------------------
+
+
+def find_gui_adapter_plugins() -> dict:
+    """
+    Find all installed GUI adapter plugins (entry-point group ``opm.gui_adapter``)
+    @return: dict plugin names to entrypoints
+    """
+    from ovos_plugin_manager.utils import find_plugins
+    return find_plugins(PluginTypes.GUI_ADAPTER)
+
+
+def load_gui_adapter_plugin(module_name: str) -> type(AbstractGUIPlugin):
+    """
+    Get an uninstantiated class for the requested GUI adapter module_name
+    @param module_name: Plugin entrypoint name to load
+    @return: Uninstantiated class
+    """
+    from ovos_plugin_manager.utils import load_plugin
+    return load_plugin(module_name, PluginTypes.GUI_ADAPTER)
+
+
+def get_gui_adapter_configs() -> dict:
+    """
+    Get valid GUI adapter plugin configurations by plugin name
+    @return: dict plugin names to list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_configs_for_plugin_type
+    return load_configs_for_plugin_type(PluginTypes.GUI_ADAPTER)
+
+
+def get_gui_adapter_module_configs(module_name: str) -> dict:
+    """
+    Get valid configurations for the specified GUI adapter plugin
+    @param module_name: plugin to get configuration for
+    @return: dict mapping the plugin name to its list of dict configurations
+    """
+    from ovos_plugin_manager.utils.config import load_plugin_configs
+    cfgs = load_plugin_configs(module_name, PluginConfigTypes.GUI_ADAPTER)
+    return {module_name: cfgs} if isinstance(cfgs, list) else cfgs
+
+
+class OVOSGUIAdapterFactory:
+    """Factory that loads GUI adapter plugins (``opm.gui_adapter``).
+
+    Adapters are *additive*: every installed adapter is instantiated so the
+    device renders on all available backends concurrently. This is the entry
+    point ovos-gui uses to obtain its render backends.
+    """
+
+    @staticmethod
+    def get_classes() -> dict:
+        """Return all installed adapter classes keyed by entrypoint name."""
+        return find_gui_adapter_plugins()
+
+    @staticmethod
+    def create_all(bus=None, config: Optional[dict] = None) -> List[AbstractGUIPlugin]:
+        """Instantiate every installed GUI adapter plugin.
+
+        A failing adapter is logged and skipped — one bad adapter must never
+        prevent the others (or the GUI service) from starting. Returns an empty
+        list on a headless device with no adapters installed.
+
+        @param bus: shared MessageBusClient passed to each adapter
+        @param config: optional global configuration (per-adapter config is
+                       resolved from the ``opm.gui_adapter`` config section)
+        @return: list of instantiated AbstractGUIPlugin adapters
+        """
+        adapters: List[AbstractGUIPlugin] = []
+        for name in find_gui_adapter_plugins():
+            try:
+                clazz = load_gui_adapter_plugin(name)
+                if clazz is None:
+                    LOG.warning(f"GUI adapter '{name}' could not be loaded")
+                    continue
+                adapter_config = (config or {}).get(name, {})
+                adapters.append(clazz(adapter_config, bus=bus))
+                LOG.info(f"Loaded GUI adapter plugin: {name}")
+            except Exception:
+                LOG.exception(f"Failed to load GUI adapter plugin: {name}")
+        if not adapters:
+            LOG.debug("No GUI adapter plugins installed (headless GUI service)")
+        return adapters
