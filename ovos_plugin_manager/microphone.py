@@ -2,7 +2,9 @@ from ovos_config import Configuration
 from ovos_utils.log import LOG, deprecated
 import warnings
 from ovos_plugin_manager.templates.microphone import Microphone
-from ovos_plugin_manager.utils import PluginTypes
+from typing import Tuple
+
+from ovos_plugin_manager.utils import PluginTypes, next_fallback_module
 
 
 def find_microphone_plugins() -> dict:
@@ -58,7 +60,7 @@ class OVOSMicrophoneFactory:
         return load_microphone_plugin(microphone_module)
 
     @classmethod
-    def create(cls, config=None):
+    def create(cls, config=None, *, _tried: Tuple[str, ...] = ()):
         """Factory method to create a microphone engine based on configuration.
 
         The configuration file ``mycroft.conf`` contains a ``microphone`` section with
@@ -70,19 +72,28 @@ class OVOSMicrophoneFactory:
         """
         config = config or Configuration().get("listener", {}).get("microphone", {})
         microphone_module = config.get('module')
-        microphone_config = config.get(microphone_module, {})
-        fallback = microphone_config.get("fallback_module")
+        plugin_config = config.get(microphone_module, {})
+        fallback = plugin_config.get("fallback_module")
+        # A copy without the chain key: the plugin takes its own settings as
+        # keyword arguments, and the block belongs to the caller.
+        microphone_config = {k: v for k, v in plugin_config.items()
+                             if k != "fallback_module"}
+        tried = tuple(_tried) + (microphone_module,)
         try:
             clazz = OVOSMicrophoneFactory.get_class(config)
-            if fallback:
-                microphone_config.pop('fallback_module')
             microphone = clazz(**microphone_config)
             LOG.debug(f'Loaded microphone plugin {microphone_module}')
         except Exception:
             LOG.exception('The selected microphone plugin could not be loaded.')
-            if fallback in config and fallback != microphone_module:
-                LOG.info(f"Attempting to load fallback plugin instead: {fallback}")
-                config["module"] = fallback
-                return cls.create(config)
+            nxt = next_fallback_module(fallback, tried)
+            if nxt:
+                LOG.info(f"Attempting to load fallback plugin instead: {nxt}")
+                # A copy: the section handed in is usually the live
+                # Configuration, and the walk writes the module it is trying.
+                config = dict(config)
+                config["module"] = nxt
+                return cls.create(config, _tried=tried)
+            LOG.error(f"Microphone fallback chain exhausted, "
+                      f"tried: {list(tried)}")
             raise
         return microphone
