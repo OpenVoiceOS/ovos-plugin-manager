@@ -46,9 +46,9 @@ def failing_logic(args: AddArgs) -> AddOutput:
 
 
 class MathToolBox(ToolBox):
-    def __init__(self, bus=None, fail_discover: bool = False):
+    def __init__(self, config=None, bus=None, fail_discover: bool = False):
         self._fail_discover = fail_discover
-        super().__init__(toolbox_id="math_tools", bus=bus)
+        super().__init__(toolbox_id="math_tools", config=config, bus=bus)
 
     def discover_tools(self) -> List[AgentTool]:
         if self._fail_discover:
@@ -65,8 +65,8 @@ class MathToolBox(ToolBox):
 
 
 class FailingToolBox(ToolBox):
-    def __init__(self, bus=None):
-        super().__init__(toolbox_id="failing_tools", bus=bus)
+    def __init__(self, config=None, bus=None):
+        super().__init__(toolbox_id="failing_tools", config=config, bus=bus)
 
     def discover_tools(self) -> List[AgentTool]:
         return [
@@ -123,6 +123,23 @@ class TestToolBoxInit(unittest.TestCase):
     def test_no_bus_on_init(self):
         tb = MathToolBox()
         self.assertIsNone(tb.bus)
+
+
+class TestToolBoxContract(unittest.TestCase):
+    def test_config_passthrough(self):
+        cfg = {"api_key": "secret", "some_option": 42}
+        tb = MathToolBox(config=cfg)
+        self.assertEqual(tb.config, cfg)
+
+    def test_config_defaults_to_empty_dict(self):
+        tb = MathToolBox()
+        self.assertEqual(tb.config, {})
+
+    def test_config_and_bus_together(self):
+        bus = FakeBus()
+        tb = MathToolBox(config={"x": 1}, bus=bus)
+        self.assertEqual(tb.config, {"x": 1})
+        self.assertIs(tb.bus, bus)
 
 
 class TestToolBoxCallTool(unittest.TestCase):

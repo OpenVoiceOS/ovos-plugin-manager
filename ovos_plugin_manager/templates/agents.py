@@ -1,5 +1,6 @@
 import abc
 import difflib
+import inspect
 import time
 from abc import ABC
 from dataclasses import dataclass, field
@@ -241,6 +242,29 @@ class ChatEngine(AbstractAgentEngine):
     # ``AgentMessage.tool_calls``. Tool-aware engines override this to True.
     supports_tools: bool = False
 
+    # Classes already warned about a non-conforming ``continue_chat`` signature.
+    _tools_warned_classes: set = set()
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        method = cls.__dict__.get("continue_chat")
+        if method is None:
+            return
+        try:
+            sig = inspect.signature(method)
+        except (TypeError, ValueError):
+            return
+        params = sig.parameters.values()
+        accepts_tools = "tools" in sig.parameters or \
+            any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params)
+        if not accepts_tools and cls not in ChatEngine._tools_warned_classes:
+            ChatEngine._tools_warned_classes.add(cls)
+            LOG.warning(f"{cls.__name__}.continue_chat does not accept a 'tools' "
+                        f"argument (or **kwargs). It will not receive tool "
+                        f"definitions when called with tools=..., and will silently "
+                        f"ignore requests that require tool calling. Add a 'tools' "
+                        f"parameter to conform to the ChatEngine contract.")
+
     @abc.abstractmethod
     def continue_chat(self, messages: List[AgentMessage],
                       session_id: str = "default",
@@ -290,7 +314,8 @@ class ChatEngine(AbstractAgentEngine):
         Returns:
             Iterable[str]: A stream of tokens/partial text.
         """
-        yield from self.continue_chat(messages, session_id, lang, units).content.split()
+        yield from self.continue_chat(messages=messages, session_id=session_id,
+                                      lang=lang, units=units).content.split()
 
     def stream_sentences(self, messages: List[AgentMessage],
                     session_id: str = "default",
@@ -316,7 +341,8 @@ class ChatEngine(AbstractAgentEngine):
         Returns:
             Iterable[str]: A stream of complete sentences.
         """
-        yield from self.continue_chat(messages, session_id, lang, units).content.split("\n")
+        yield from self.continue_chat(messages=messages, session_id=session_id,
+                                      lang=lang, units=units).content.split("\n")
 
     def get_response(self, utterance: str,
                      session_id: str = "default",
@@ -394,7 +420,8 @@ class MultimodalChatEngine(ChatEngine):
         Returns:
             Iterable[AgentMessage]: A stream of response messages.
         """
-        yield self.continue_chat(messages, session_id, lang, units)
+        yield self.continue_chat(messages=messages, session_id=session_id,
+                                 lang=lang, units=units)
 
     def get_response(self, utterance: str,
                      image_content: Optional[List[str]] = None,  # b64 encoded

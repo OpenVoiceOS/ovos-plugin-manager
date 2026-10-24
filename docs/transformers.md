@@ -1,15 +1,15 @@
 # Transformer Pipelines
 
-Transformers are ordered black-box chains that rewrite an artifact at a
-fixed point in the voice pipeline: raw audio before STT, utterances after
-STT, message context before intent matching, the selected intent before
-dispatch, dialog text before TTS, and synthesized audio before playback.
+Transformers are ordered chains that rewrite an artifact at a fixed point in the voice
+pipeline: raw audio before STT, utterances after STT, message context before intent
+matching, the selected intent before dispatch, dialog text before TTS, and synthesized
+audio before playback.
 
-`ovos_plugin_manager.transformer_services` provides the canonical runner
-services that load, order and chain transformer plugins. They are consumed
-by ovos-core, ovos-audio, ovos-dinkum-listener, ovos-tts-server,
-ovos-stt-server, hivemind-core, hivemind-audio-binary-protocol and the
-HiveMind satellites — the same plugin works unmodified in all of them.
+`ovos_plugin_manager.transformer_services` has the canonical runner services that load,
+order, and chain transformer plugins. ovos-core, ovos-audio, ovos-dinkum-listener,
+ovos-tts-server, ovos-stt-server, hivemind-core, hivemind-audio-binary-protocol, and the
+HiveMind satellites all use these services, so the same plugin works unmodified in each of
+them.
 
 ## The six chains
 
@@ -24,9 +24,9 @@ HiveMind satellites — the same plugin works unmodified in all of them.
 
 ## Configuration
 
-Loading is **config-gated and opt-in**: a plugin only loads when its name
-appears in the chain's config section, and an entry can be disabled with
-`"active": false` without removing its config.
+Loading is config-gated and opt-in. A plugin loads only when its name appears in the
+chain's config section. You can disable an entry with `"active": false` without removing
+its config.
 
 ```json
 {
@@ -45,12 +45,12 @@ appears in the chain's config section, and an entry can be disabled with
 
 ### Ordering
 
-Chains run in **ascending priority order** (OVOS-TRANSFORM §4): a plugin
-with `priority = 1` runs before one with `priority = 50`. The default is
-50. Later plugins see — and may override — earlier plugins' output.
+Chains run in ascending priority order (OVOS-TRANSFORM §4): a plugin with `priority = 1`
+runs before one with `priority = 50`. The default is 50. A later plugin sees, and may
+override, an earlier plugin's output.
 
-A deployer can bypass priorities entirely with an explicit `order` list;
-loaded plugins absent from the list do not run:
+A deployer can bypass priorities entirely with an explicit `order` list. A loaded plugin
+that is absent from the list does not run:
 
 ```json
 {
@@ -62,23 +62,21 @@ loaded plugins absent from the list do not run:
 
 ### Cancellation
 
-A transformer can cancel the whole lifecycle (OVOS-TRANSFORM §8.1) by
-returning both `"canceled": true` and a `"cancel_reason"` in its context.
-The runner stamps `cancel_by` with the emitting plugin's name and stops the
-chain; the consumer terminates the lifecycle (e.g. ovos-core emits
-`ovos.utterance.cancelled` → `ovos.utterance.handled`). This is how
-stop-word plugins like `ovos-utterance-plugin-cancel` work.
+A transformer can cancel the whole lifecycle (OVOS-TRANSFORM §8.1) by returning both
+`"canceled": true` and a `"cancel_reason"` in its context. The runner stamps `cancel_by`
+with the emitting plugin's name and stops the chain. The consumer then ends the lifecycle
+(for example, ovos-core emits `ovos.utterance.cancelled`, then `ovos.utterance.handled`).
+Stop-word plugins such as `ovos-utterance-plugin-cancel` use this mechanism.
 
 ### Error handling
 
-A plugin exception never aborts the chain: it is logged and the chain
-proceeds with the previous plugin's output.
+A plugin exception never stops the chain. The runner logs the exception and the chain
+continues with the previous plugin's output.
 
 ## Where chains run — and surprise interactions
 
-The same chain type can run in more than one process. That is a feature —
-but each plugin should be enabled in **exactly one** place per deployment,
-or its effect is applied twice.
+The same chain type can run in more than one process. That is by design, but enable each
+plugin in exactly one place per deployment. Otherwise its effect applies twice.
 
 | Surface | Chains it can run |
 |---|---|
@@ -91,20 +89,19 @@ or its effect is applied twice.
 | hivemind-audio-binary-protocol | audio, utterance, metadata, dialog, tts |
 | HiveMind satellites (on device) | audio (pre-send), utterance (relay), tts (pre-playback) |
 
-Moving a chain **to a server is a deliberate centralization tool**: enable a
-dialog transformer on ovos-tts-server and every device that synthesizes
-through it gets the same tone/persona rewrite globally — the server then
-returns audio for *different text than you sent*, which looks surprising
-from the client but is exactly the point. The same applies to a shared STT
-server correcting transcripts for every client, or a HiveMind server
-canceling utterances by policy for the whole mesh.
+Moving a chain to a server is a deliberate way to centralize behavior. Enable a dialog
+transformer on ovos-tts-server, and every device that synthesizes through it gets the same
+tone or persona rewrite. The server then returns audio for different text than the client
+sent. This looks surprising from the client, but it is the intended effect. The same
+applies to a shared STT server that corrects transcripts for every client, or a HiveMind
+server that cancels utterances by policy for the whole mesh.
 
-Rules of thumb:
+Guidelines:
 
-- **Per-device effects** (denoise for one bad microphone, a voice effect on
-  one speaker) → enable on the device/satellite.
-- **Fleet-wide effects** (a global persona/tone, shared transcript
-  corrections, policy stop-words) → enable on the server everyone uses.
+- For a per-device effect (denoise for one bad microphone, a voice effect on one speaker),
+  enable the plugin on the device or satellite.
+- For a fleet-wide effect (a global persona or tone, shared transcript corrections, policy
+  stop-words), enable the plugin on the server everyone uses.
 - Never enable the same plugin on both sides of a connection.
 
 ## Consuming the runners
@@ -119,6 +116,10 @@ utterances, context = service.transform(["hello world"], {"lang": "en-US"})
 service.shutdown()
 ```
 
-All runners accept an optional bus (bound to plugins that support it, or
-later via `set_bus()`) and expose `plugins` (execution order),
-`get_available_plugins()`, `transform(...)` and `shutdown()`.
+All runners accept an optional bus, which they bind to plugins that support it, or you can
+bind it later with `set_bus()`. Each runner exposes `plugins` (execution order),
+`get_available_plugins()`, `transform(...)`, and `shutdown()`.
+
+---
+
+[← Configuration](configuration.md) · [Home](index.md) · [Voice Cloning →](voice-clone.md)

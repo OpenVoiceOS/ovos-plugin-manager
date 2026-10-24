@@ -245,10 +245,15 @@ class AudioFile(srAudioFile):
 
 # patch for type checks in plugins to pass
 # TODO - remove in next major version
+#
+# AudioFile is deliberately NOT rebound. This class subclasses srAudioFile,
+# the vendored copy, and not the INSTALLED speech_recognition.AudioSource.
+# speech_recognition.Recognizer.record() asserts isinstance(source,
+# AudioSource) on its first line, so rebinding the name made record() refuse
+# every source built from it.
 try:
     import speech_recognition
 
     speech_recognition.AudioData = AudioData
-    speech_recognition.AudioFile = AudioFile
 except ImportError:
     pass

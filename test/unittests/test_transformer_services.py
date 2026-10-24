@@ -68,6 +68,35 @@ class TestLoadingGate(unittest.TestCase):
             service = UtteranceTransformersService(config={"plug-a": {}})
         self.assertIn("plug-a", service.loaded_plugins)
 
+    def test_configured_but_not_found_plugin_warns(self):
+        from ovos_plugin_manager.transformer_services import LOG
+        with patch.object(UtteranceTransformersService, "plugin_finder",
+                          staticmethod(_fake_finder({"plug-a": _UttPrefixer}))), \
+             patch.object(LOG, "warning") as warn:
+            UtteranceTransformersService(
+                config={"plug-a": {}, "plug-missing": {}})
+        calls = [c for c in warn.call_args_list if "plug-missing" in c.args[0]]
+        self.assertEqual(len(calls), 1)
+        self.assertIn("utterance_transformers", calls[0].args[0])
+
+    def test_configured_and_found_plugin_does_not_warn(self):
+        from ovos_plugin_manager.transformer_services import LOG
+        with patch.object(UtteranceTransformersService, "plugin_finder",
+                          staticmethod(_fake_finder({"plug-a": _UttPrefixer}))), \
+             patch.object(LOG, "warning") as warn:
+            UtteranceTransformersService(config={"plug-a": {}})
+        warn.assert_not_called()
+
+    def test_disabled_missing_plugin_does_not_warn(self):
+        from ovos_plugin_manager.transformer_services import LOG
+        with patch.object(UtteranceTransformersService, "plugin_finder",
+                          staticmethod(_fake_finder({"plug-a": _UttPrefixer}))), \
+             patch.object(LOG, "warning") as warn:
+            UtteranceTransformersService(
+                config={"plug-a": {},
+                       "plug-missing": {"active": False}})
+        warn.assert_not_called()
+
     def test_constructor_type_error_is_not_masked(self):
         """A TypeError raised INSIDE a config-accepting constructor must not
         trigger a silent no-config retry."""
@@ -112,7 +141,8 @@ class TestPriorityOrdering(unittest.TestCase):
         self.assertEqual([p.name for p in service.plugins], ["first", "last"])
         utterances, context = service.transform(["hello"])
         self.assertEqual(utterances, ["last:first:hello"])
-        self.assertEqual(context, {"first": True, "last": True})
+        self.assertEqual(context, {"first": True, "last": True,
+                                   "utterance_transformer_ids": ["first", "last"]})
 
     def test_legacy_descending_low_priority_runs_last(self):
         service = self._service(sort_ascending=False)
@@ -293,7 +323,8 @@ class TestServiceTransforms(unittest.TestCase):
         service = self._empty(MetadataTransformersService)
         service.loaded_plugins["m"] = Meta("m")
         context = service.transform({"seed": 1})
-        self.assertEqual(context, {"seed": 1, "injected": True})
+        self.assertEqual(context, {"seed": 1, "injected": True,
+                                   "metadata_transformer_ids": ["m"]})
 
     def test_dialog_transform(self):
         class Dialog(DialogTransformer):
@@ -352,6 +383,44 @@ class TestServiceTransforms(unittest.TestCase):
         service.loaded_plugins["p"] = plugin
         service.shutdown()  # must not raise
         plugin.shutdown.assert_called_once()
+
+    def test_utterance_transform_debug_log_redacts_session(self):
+        secret = {"password": "hunter2", "access_key": "sekrit"}
+
+        class Leaky(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                return utterances, {"session": secret}
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["leaky"] = Leaky("leaky", priority=1)
+        from ovos_plugin_manager.transformer_services import LOG
+        with patch.object(LOG, "level", "DEBUG"), \
+                patch.object(LOG, "debug") as mock_debug:
+            service.transform(["hi"], {})
+        self.assertTrue(mock_debug.called)
+        logged = "".join(str(a) for call in mock_debug.call_args_list
+                          for a in call.args)
+        self.assertNotIn("hunter2", logged)
+        self.assertNotIn("sekrit", logged)
+
+    def test_metadata_transform_debug_log_redacts_session(self):
+        secret = {"password": "hunter2", "access_key": "sekrit"}
+
+        class Leaky(MetadataTransformer):
+            def transform(self, context=None):
+                return {"session": secret}
+
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["leaky"] = Leaky("leaky", priority=1)
+        from ovos_plugin_manager.transformer_services import LOG
+        with patch.object(LOG, "level", "DEBUG"), \
+                patch.object(LOG, "debug") as mock_debug:
+            service.transform({})
+        self.assertTrue(mock_debug.called)
+        logged = "".join(str(a) for call in mock_debug.call_args_list
+                          for a in call.args)
+        self.assertNotIn("hunter2", logged)
+        self.assertNotIn("sekrit", logged)
 
 
 class TestAudioTransformersService(unittest.TestCase):
@@ -454,5 +523,307 @@ class TestTTSTransformersModule(unittest.TestCase):
         self.assertTrue(callable(load_tts_transformer_plugin))
 
 
+class TestTransform1Conformance(unittest.TestCase):
+    """OVOS-TRANSFORM-1 §1.3 provenance, §7 wrong-shape rejection and §3.4
+    intent dispatch-identity invariant."""
+
+    def _empty(self, klass, **kwargs):
+        with patch.object(klass, "plugin_finder", staticmethod(_fake_finder({}))):
+            return klass(config={}, **kwargs)
+
+    # §1.3 -- provenance stamping
+    def test_utterance_provenance_stamped_in_order(self):
+        p1 = _UttPrefixer("p1", priority=10)
+        p2 = _UttPrefixer("p2", priority=20)
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["p1"] = p1
+        service.loaded_plugins["p2"] = p2
+        _, context = service.transform(["hi"])
+        self.assertEqual(context.get("utterance_transformer_ids"), ["p1", "p2"])
+
+    def test_metadata_provenance_stamped_in_order(self):
+        class Meta(MetadataTransformer):
+            def transform(self, context=None):
+                return {}
+
+        p1 = Meta("p1", priority=10)
+        p2 = Meta("p2", priority=20)
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["p1"] = p1
+        service.loaded_plugins["p2"] = p2
+        context = service.transform({})
+        self.assertEqual(context.get("metadata_transformer_ids"), ["p1", "p2"])
+
+    def test_in_place_utterance_context_is_not_merged_into_itself(self):
+        class InPlace(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                context["nested"]["touched"] = True
+                return utterances, context
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["in-place"] = InPlace("in-place", priority=10)
+        original = {"nested": {"lang": "en-us"}}
+        _, context = service.transform(["hello"], original)
+        self.assertIs(context, original)
+        self.assertEqual(context["nested"], {"lang": "en-us", "touched": True})
+        self.assertEqual(context["utterance_transformer_ids"], ["in-place"])
+
+    def test_in_place_metadata_context_is_not_merged_into_itself(self):
+        class InPlace(MetadataTransformer):
+            def transform(self, context=None):
+                context["nested"]["touched"] = True
+                return context
+
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["in-place"] = InPlace("in-place", priority=10)
+        original = {"nested": {"lang": "en-us"}}
+        context = service.transform(original)
+        self.assertIs(context, original)
+        self.assertEqual(context["nested"], {"lang": "en-us", "touched": True})
+        self.assertEqual(context["metadata_transformer_ids"], ["in-place"])
+
+    def test_empty_utterance_context_preserves_identity(self):
+        class InPlace(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                context["touched"] = True
+                return utterances, context
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["in-place"] = InPlace("in-place", priority=10)
+        original = {}
+        _, context = service.transform(["hello"], original)
+        self.assertIs(context, original)
+        self.assertTrue(context["touched"])
+
+    def test_empty_metadata_context_preserves_identity(self):
+        class InPlace(MetadataTransformer):
+            def transform(self, context=None):
+                context["touched"] = True
+                return context
+
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["in-place"] = InPlace("in-place", priority=10)
+        original = {}
+        context = service.transform(original)
+        self.assertIs(context, original)
+        self.assertTrue(context["touched"])
+
+    # §7 -- wrong-shape returns rejected, prior output kept
+    def test_utterance_wrong_shape_rejected(self):
+        class Bad(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                return "not a tuple"
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["bad"] = Bad("bad", priority=10)
+        utterances, context = service.transform(["hello"], {"k": "v"})
+        self.assertEqual(utterances, ["hello"])
+        self.assertEqual(context, {"k": "v"})
+
+    def test_utterance_wrong_arity_rejected(self):
+        class Bad(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                return ["x"], {}, "extra"
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["bad"] = Bad("bad", priority=10)
+        utterances, _ = service.transform(["hello"], {})
+        self.assertEqual(utterances, ["hello"])
+
+    def test_utterance_non_dict_context_rejected(self):
+        class Bad(UtteranceTransformer):
+            def transform(self, utterances, context=None):
+                return ["x"], "not a dict"
+
+        service = self._empty(UtteranceTransformersService)
+        service.loaded_plugins["bad"] = Bad("bad", priority=10)
+        utterances, context = service.transform(["hello"], {"k": "v"})
+        self.assertEqual(utterances, ["hello"])
+        self.assertEqual(context, {"k": "v"})
+
+    def test_metadata_wrong_shape_rejected(self):
+        class Bad(MetadataTransformer):
+            def transform(self, context=None):
+                return ["not", "a", "dict"]
+
+        service = self._empty(MetadataTransformersService)
+        service.loaded_plugins["bad"] = Bad("bad", priority=10)
+        context = service.transform({"k": "v"})
+        self.assertEqual(context, {"k": "v"})
+
+    def test_intent_wrong_shape_rejected(self):
+        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+        from ovos_plugin_manager.templates.transformers import IntentTransformer
+
+        class Bad(IntentTransformer):
+            def transform(self, intent):
+                return {"not": "a match"}
+
+        original = IntentHandlerMatch(match_type="skillA:foo", match_data={},
+                                      skill_id="skillA", utterance="hello")
+        service = self._empty(IntentTransformersService)
+        service.loaded_plugins["bad"] = Bad("bad", priority=10)
+        result = service.transform(original)
+        self.assertEqual(result.match_type, "skillA:foo")
+
+    # §3.4 -- intent dispatch-identity invariant
+    def test_intent_identity_change_rejected(self):
+        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+        from ovos_plugin_manager.templates.transformers import IntentTransformer
+
+        class Rogue(IntentTransformer):
+            def transform(self, intent):
+                return IntentHandlerMatch(match_type="skillB:bar", match_data={},
+                                          skill_id="skillB", utterance="hello")
+
+        original = IntentHandlerMatch(match_type="skillA:foo", match_data={},
+                                      skill_id="skillA", utterance="hello")
+        service = self._empty(IntentTransformersService)
+        service.loaded_plugins["rogue"] = Rogue("rogue", priority=50)
+        result = service.transform(original)
+        self.assertEqual(result.match_type, "skillA:foo")
+        self.assertEqual(result.skill_id, "skillA")
+
+    def test_intent_skill_id_change_rejected(self):
+        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+        from ovos_plugin_manager.templates.transformers import IntentTransformer
+
+        class Rogue(IntentTransformer):
+            def transform(self, intent):
+                return IntentHandlerMatch(match_type="skillA:foo", match_data={},
+                                          skill_id="evil", utterance="hello")
+
+        original = IntentHandlerMatch(match_type="skillA:foo", match_data={},
+                                      skill_id="skillA", utterance="hello")
+        service = self._empty(IntentTransformersService)
+        service.loaded_plugins["rogue"] = Rogue("rogue", priority=50)
+        result = service.transform(original)
+        self.assertEqual(result.skill_id, "skillA")
+
+    def test_intent_identity_preserving_change_accepted(self):
+        """§3.4 permits enriching match_data while identity is unchanged."""
+        from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
+        from ovos_plugin_manager.templates.transformers import IntentTransformer
+
+        class Enricher(IntentTransformer):
+            def transform(self, intent):
+                return IntentHandlerMatch(match_type=intent.match_type,
+                                          match_data={"slot": "value"},
+                                          skill_id=intent.skill_id,
+                                          utterance=intent.utterance)
+
+        original = IntentHandlerMatch(match_type="skillA:foo", match_data={},
+                                      skill_id="skillA", utterance="hello")
+        service = self._empty(IntentTransformersService)
+        service.loaded_plugins["e"] = Enricher("e", priority=50)
+        result = service.transform(original)
+        self.assertEqual(result.match_data.get("slot"), "value")
+
+
+class TestDebugEnabledGate(unittest.TestCase):
+    """ovos-utils' LOG is a custom class: no isEnabledFor, no inheritance --
+    LOG.level is the single source of truth for the hot-path debug gate."""
+
+    def _gate(self, level):
+        from ovos_plugin_manager.transformer_services import (LOG,
+                                                              _debug_enabled)
+        with patch.object(LOG, "level", level):
+            return _debug_enabled()
+
+    def test_debug_levels_enable(self):
+        import logging
+        self.assertTrue(self._gate("DEBUG"))
+        self.assertTrue(self._gate(logging.DEBUG))
+        self.assertTrue(self._gate(5))  # custom level below DEBUG
+
+    def test_info_and_above_disable(self):
+        import logging
+        self.assertFalse(self._gate("INFO"))
+        self.assertFalse(self._gate("WARNING"))
+        self.assertFalse(self._gate(logging.ERROR))
+
+    def test_notset_disables(self):
+        """NOTSET defers to the stdlib root logger (WARNING by default),
+        which drops debug records -- the gate must not treat 0 as enabled."""
+        import logging
+        self.assertFalse(self._gate("NOTSET"))
+        self.assertFalse(self._gate(logging.NOTSET))
+
+    def test_unknown_level_name_disables(self):
+        self.assertFalse(self._gate("VERBOSE_NONSENSE"))
+
+
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestUnresolvedSectionIsReportedOnce(unittest.TestCase):
+    """An entry that names no installed plugin is reported once per entry
+    when the section was found under its own key, and in a single line when
+    the mapping was used as the section without being found under it.
+
+    The two cases are indistinguishable from inside the service, so the
+    second states what it did and what to pass instead, rather than
+    asserting once per entry that a plugin is missing.
+    """
+
+    FULL_CONFIG = {
+        "lang": "en-US",
+        "listener": {},
+        "websocket": {},
+        "tts": {},
+        "date_format": "DMY",
+        "system_unit": "metric",
+    }
+
+    def _warnings(self, config):
+        with patch.object(UtteranceTransformersService, "find_plugins",
+                          classmethod(lambda cls: {}.items())), \
+             patch("ovos_plugin_manager.transformer_services.LOG.warning") as w:
+            UtteranceTransformersService(Mock(), config=config)
+        return [c.args[0] for c in w.call_args_list]
+
+    def test_a_whole_configuration_is_one_line_naming_every_entry(self):
+        warnings = self._warnings(dict(self.FULL_CONFIG))
+        self.assertEqual(len(warnings), 1, warnings)
+        for key in self.FULL_CONFIG:
+            self.assertIn(key, warnings[0])
+        self.assertIn("utterance_transformers", warnings[0])
+
+    def test_the_named_section_still_reports_once_per_plugin(self):
+        warnings = self._warnings(
+            {"utterance_transformers": {"p1": {}, "p2": {}}})
+        self.assertEqual(len(warnings), 2, warnings)
+        self.assertEqual({"p1" in w for w in warnings}, {True, False})
+
+    def test_a_bare_section_still_names_its_missing_plugin(self):
+        """A caller passing the section keeps an actionable message."""
+        warnings = self._warnings({"p1": {}})
+        self.assertEqual(len(warnings), 1, warnings)
+        self.assertIn("p1", warnings[0])
+
+    def test_an_inactive_entry_is_not_reported(self):
+        self.assertEqual(self._warnings({"p1": {"active": False}}), [])
+
+    def test_nothing_missing_says_nothing(self):
+        self.assertEqual(self._warnings({}), [])
+
+    def test_the_resolved_section_is_not_treated_as_ambiguous(self):
+        """A caller handing over exactly what the section holds did the right
+        thing, and must not be told to do what it already did.
+
+        This is the shape every swept caller uses:
+        ``config.get("utterance_transformers") or {}``. The mapping cannot
+        contain its own section key, so a check for that key alone reads a
+        correct caller as a mistaken one.
+        """
+        from ovos_config import Configuration
+        section = dict(Configuration().get("utterance_transformers") or {})
+        if not section:
+            self.skipTest("deployment ships no utterance_transformers section")
+        warnings = self._warnings(section)
+        self.assertTrue(warnings, "the genuine per-entry warnings must remain")
+        for w in warnings:
+            self.assertNotIn("used as the section itself", w)
+        for name in section:
+            self.assertTrue(any(f"'{name}'" in w for w in warnings), name)

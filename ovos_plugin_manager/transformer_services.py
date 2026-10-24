@@ -24,6 +24,7 @@ incomplete pair is a shape violation: logged, stripped, chain
 continues. Terminal bus events (§8.2) are the consumer's concern.
 """
 import inspect
+import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from ovos_config import Configuration
@@ -37,6 +38,41 @@ from ovos_plugin_manager.metadata_transformers import find_metadata_transformer_
 from ovos_plugin_manager.templates.pipeline import IntentHandlerMatch
 from ovos_plugin_manager.text_transformers import find_utterance_transformer_plugins
 from ovos_plugin_manager.tts_transformers import find_tts_transformer_plugins
+
+
+def _debug_enabled() -> bool:
+    """Return whether the shared OVOS logger will emit debug records.
+
+    ``LOG.debug`` resolves its caller with ``inspect.stack`` before the
+    standard logger rejects a disabled record. Transformer runners are hot
+    paths, so avoid that comparatively expensive work at INFO and above.
+
+    ``LOG`` is ovos-utils' custom logger class: it has no ``isEnabledFor``
+    and no level inheritance -- ``LOG.level`` (stdlib name string or int) is
+    the single source of truth. ``NOTSET`` makes the stdlib logger underneath
+    defer to the root logger (WARNING by default), which drops debug records,
+    so treat it as debug-disabled rather than letting it fall through the
+    ``<=`` comparison as 0.
+    """
+    level = LOG.level
+    if isinstance(level, str):
+        resolved = logging.getLevelName(level.upper())
+        level = resolved if isinstance(resolved, int) else logging.INFO
+    return logging.NOTSET < level <= logging.DEBUG
+
+
+def _stamp_provenance(context: dict, key: str, transformer_id: str) -> None:
+    """Stamp transformer self-identification per OVOS-TRANSFORM-1 §1.3.
+
+    On every touch a transformer performs, its own ``transformer_id`` MUST be
+    the last element of the corresponding ``<type>_transformer_ids`` list. The
+    orchestrator enforces this by appending the id once per execution window,
+    creating the list if absent.
+    """
+    ids = context.get(key)
+    if not isinstance(ids, list):
+        ids = []
+    context[key] = ids + [transformer_id]
 
 
 class TransformersService:
@@ -62,12 +98,47 @@ class TransformersService:
         self.has_loaded = False
         self.sort_ascending = sort_ascending
         self._sorted_plugins = None
+        self._section_named = self._section_was_named(config)
         self.config = self._resolve_section(config)
         self.load_plugins()
 
     @classmethod
+    def _section_was_named(cls, config: Optional[dict]) -> bool:
+        """Whether the mapping to use was found under this stage's own key.
+
+        ``False`` means :meth:`_resolve_section` used the mapping it was
+        given AS the section. That is right for a caller passing the section
+        directly and wrong for one passing a whole configuration that does
+        not carry the section, and the two are indistinguishable from here.
+
+        Nothing branches on this except how an entry that names no installed
+        plugin is reported (see :meth:`load_plugins`). Callers should pass
+        ``config[cls.config_section]`` rather than the whole configuration.
+        """
+        if not cls.config_section:
+            return False
+        if config is None:
+            # the service read the deployment itself, so there is nothing to
+            # be ambiguous about
+            return True
+        if cls.config_section in config:
+            return True
+        # a caller that handed over exactly what this stage's section holds
+        # did the right thing. This is an equality against the deployment's
+        # own value, not a guess about the mapping's shape.
+        try:
+            return config == dict(Configuration().get(cls.config_section) or {})
+        except Exception:
+            return False
+
+    @classmethod
     def _resolve_section(cls, config: Optional[dict]) -> dict:
-        """Accept either a full core config or the section mapping itself."""
+        """Accept either a full core config or the section mapping itself.
+
+        A caller should pass its own section. When the mapping carries no
+        ``config_section`` key the mapping itself is used, which cannot be
+        told apart from a whole configuration that lacks the section.
+        """
         if config is None:
             config = Configuration()
         if cls.config_section and cls.config_section in config:
@@ -90,7 +161,9 @@ class TransformersService:
             # plugins in the explicit chain are enabled even without
             # their own config entry
             enabled |= set(explicit_order)
+        found_names = set()
         for plug_name, plug in self.find_plugins():
+            found_names.add(plug_name)
             if plug_name not in enabled:
                 continue
             plug_config = self.config.get(plug_name) or {}
@@ -110,6 +183,32 @@ class TransformersService:
             except Exception:
                 LOG.exception(f"Failed to load {self.transformer_type} "
                               f"transformer plugin: {plug_name}")
+        # a name enabled in config but never returned by the finder is not
+        # installed at all -- OPM only iterates what it finds, so this would
+        # otherwise fail silently (no log line whatsoever)
+        missing = []
+        for plug_name in enabled - found_names:
+            plug_config = self.config.get(plug_name) or {}
+            if isinstance(plug_config, dict) and not plug_config.get("active", True):
+                continue
+            missing.append(plug_name)
+        if missing and self._section_named:
+            for plug_name in sorted(missing):
+                LOG.warning(f"'{plug_name}' is enabled in the "
+                            f"'{self.config_section}' config section but is "
+                            f"not installed")
+        elif missing:
+            # the mapping was used as the section without being found under
+            # its key, so an entry naming no plugin may be a plugin that is
+            # missing, or a key of a configuration that was passed whole.
+            # One line states both, rather than asserting the first once
+            # per entry.
+            LOG.warning(
+                f"the mapping given to {type(self).__name__} names no "
+                f"installed plugin for: {', '.join(sorted(missing))}. It "
+                f"carried no '{self.config_section}' key and was used as "
+                f"the section itself. If it is a whole configuration, pass "
+                f"config['{self.config_section}'] instead.")
         self._sorted_plugins = None
         self.has_loaded = True
 
@@ -224,14 +323,39 @@ class UtteranceTransformersService(TransformersService):
 
     def transform(self, utterances: List[str],
                   context: Optional[dict] = None) -> Tuple[List[str], dict]:
-        context = context or {}
+        if context is None:
+            context = {}
         for module in self.plugins:
             try:
-                utterances, data = module.transform(utterances, context)
-                _safe = {k: v for k, v in data.items() if k != "session"}  # no leaking TTS/STT creds in logs
-                LOG.debug(f"{module.name}: {_safe}")
+                result = module.transform(utterances, context)
+                # OVOS-TRANSFORM-1 §7: a wrong-shape return is treated the
+                # same as a raised exception -> log and proceed with the
+                # prior transformer's output unchanged.
+                if not (isinstance(result, (tuple, list)) and len(result) == 2):
+                    LOG.warning(f"{module.name} returned wrong shape "
+                                f"(expected (utterances, context)): {type(result)}; "
+                                f"ignoring its output")
+                    continue
+                new_utterances, data = result
+                if not isinstance(data, dict):
+                    LOG.warning(f"{module.name} returned non-dict context; "
+                                f"ignoring its output")
+                    continue
+                if _debug_enabled():
+                    # Do not leak TTS/STT credentials from the session.
+                    safe = {k: v for k, v in data.items() if k != "session"}
+                    LOG.debug("%s: %s", module.name, safe)
                 canceled = self._check_cancellation(data, module)
-                context = merge_dict(context, data)
+                # In-place transformers commonly return the exact context
+                # object they received. Merging an object into itself is a
+                # no-op for flat data and recursively walks identical nested
+                # mappings until RecursionError. Preserve the same object and
+                # only merge when a plugin returned a distinct delta/result.
+                if data is not context:
+                    context = merge_dict(context, data)
+                utterances = new_utterances
+                # OVOS-TRANSFORM-1 §1.3: stamp the transformer's self-identification
+                _stamp_provenance(context, "utterance_transformer_ids", module.name)
                 if canceled:
                     break
             except Exception as e:
@@ -246,14 +370,27 @@ class MetadataTransformersService(TransformersService):
     plugin_finder = staticmethod(find_metadata_transformer_plugins)
 
     def transform(self, context: Optional[dict] = None) -> dict:
-        context = context or {}
+        if context is None:
+            context = {}
         for module in self.plugins:
             try:
                 data = module.transform(context)
-                _safe = {k: v for k, v in data.items() if k != "session"}  # no leaking TTS/STT creds in logs
-                LOG.debug(f"{module.name}: {_safe}")
+                # OVOS-TRANSFORM-1 §7: reject wrong-shape returns; a metadata
+                # transformer's only output is a Message.context dict (§3.3).
+                if not isinstance(data, dict):
+                    LOG.warning(f"{module.name} returned wrong shape "
+                                f"(expected context dict): {type(data)}; "
+                                f"ignoring its output")
+                    continue
+                if _debug_enabled():
+                    # Do not leak TTS/STT credentials from the session.
+                    safe = {k: v for k, v in data.items() if k != "session"}
+                    LOG.debug("%s: %s", module.name, safe)
                 canceled = self._check_cancellation(data, module)
-                context = merge_dict(context, data)
+                if data is not context:
+                    context = merge_dict(context, data)
+                # OVOS-TRANSFORM-1 §1.3: stamp the transformer's self-identification
+                _stamp_provenance(context, "metadata_transformer_ids", module.name)
                 if canceled:
                     break
             except Exception as e:
@@ -270,8 +407,26 @@ class IntentTransformersService(TransformersService):
     def transform(self, intent: IntentHandlerMatch) -> IntentHandlerMatch:
         for module in self.plugins:
             try:
-                intent = module.transform(intent)
-                LOG.debug(f"{module.name}: {intent}")
+                result = module.transform(intent)
+                # OVOS-TRANSFORM-1 §7 / §3.4: reject wrong-shape returns.
+                if not isinstance(result, IntentHandlerMatch):
+                    LOG.warning(f"{module.name} returned wrong shape "
+                                f"(expected IntentHandlerMatch): {type(result)}; "
+                                f"ignoring its output")
+                    continue
+                # OVOS-TRANSFORM-1 §3.4 identity invariant: an intent
+                # transformer MUST NOT change the dispatch identity
+                # (skill_id / match_type). If it does, discard the output
+                # and keep the prior Match — this is the orchestrator-side
+                # safety net for a MUST NOT the transformer already owes.
+                if (result.match_type != intent.match_type or
+                        result.skill_id != intent.skill_id):
+                    LOG.warning(f"{module.name} attempted to change intent "
+                                f"identity (match_type/skill_id); ignoring its "
+                                f"output per OVOS-TRANSFORM-1 §3.4")
+                    continue
+                intent = result
+                LOG.debug("%s: %s", module.name, intent)
             except Exception as e:
                 LOG.warning(f"{module.name} transform exception: {e}")
         return intent
@@ -305,7 +460,7 @@ class DialogTransformersService(TransformersService):
         for module in self.plugins:
             try:
                 dialog, context = module.transform(dialog, context=context)
-                LOG.debug(f"{module.name}: {dialog}")
+                LOG.debug("%s: %s", module.name, dialog)
                 if self._check_cancellation(context, module):
                     break
             except Exception:
@@ -329,7 +484,7 @@ class TTSTransformersService(TransformersService):
         for module in self.plugins:
             try:
                 wav_file, context = module.transform(wav_file, context=context)
-                LOG.debug(f"{module.name}: {wav_file}")
+                LOG.debug("%s: %s", module.name, wav_file)
                 if self._check_cancellation(context, module):
                     break
             except Exception:
@@ -348,6 +503,15 @@ class AudioTransformersService(TransformersService):
                  default_context: Optional[dict] = None):
         self.default_context = default_context or {}
         super().__init__(bus=bus, config=config, sort_ascending=sort_ascending)
+
+    @classmethod
+    def _section_was_named(cls, config: Optional[dict]) -> bool:
+        """The legacy nested location names the section too."""
+        if config is None:
+            config = Configuration()
+        listener = config.get("listener") or {}
+        return (cls.config_section in listener
+                or super()._section_was_named(config))
 
     @classmethod
     def _resolve_section(cls, config: Optional[dict]) -> dict:
@@ -402,7 +566,7 @@ class AudioTransformersService(TransformersService):
             try:
                 chunk = module.feed_speech_utterance(chunk)
                 chunk, data = module.transform(chunk)
-                LOG.debug(f"{module.name}: {data}")
+                LOG.debug("%s: %s", module.name, data)
                 canceled = self._check_cancellation(data, module)
                 context = merge_dict(context, data)
                 if canceled:
