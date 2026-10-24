@@ -20,6 +20,7 @@ runtime through Python entry points.
   - [TTS](api/tts.md): Text-to-Speech
   - [Wake Word](api/wake-word.md): Hotword / Wake Word detection
   - [VAD](api/vad.md): Voice Activity Detection
+  - [End of Turn](api/end-of-turn.md): End-of-turn detection (`opm.end_of_turn`)
   - [Microphone](api/microphone.md): Audio input sources
   - [PHAL](api/phal.md): Platform/Hardware Abstraction Layer
   - [Transformers](api/transformers.md): Audio, Utterance, Dialog, Metadata, TTS, Intent transformers
