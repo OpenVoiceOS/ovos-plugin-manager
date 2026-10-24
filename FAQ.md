@@ -51,3 +51,24 @@ Agent Tools are executable functions exposed to AI agents via the OVOS messagebu
 
 ## What serialization mode does ToolBox use for bus responses?
 `ToolBox.handle_call()` uses `model_dump(mode='json')` to serialize Pydantic models for bus transmission. This ensures consistency with the JSON schema advertised in `tool_json_list` and handles datetime, UUID, enum, and aliased fields correctly — see `ovos_plugin_manager/templates/agent_tools.py:145`.
+
+## What are the Triples plugin types?
+The triples system provides a semantic triple pipeline with four independent plugin types:
+
+1. **TriplesExtractor** — `opm.triples` — extracts raw (subject, predicate, object) tuples from documents
+2. **EntityLinker** — `opm.entity_linker` — resolves entity mentions to canonical IDs; includes `link_triples()` for batch entity annotation
+3. **TriplesDB** — `opm.triples.store` — persists triples with wildcard query support; concrete `add_batch()` and `delete_batch()` wrappers
+4. **TriplesReasoner** — `opm.triples.reasoner` — forward-chains over triples to derive new facts; intentionally decoupled from storage
+
+**TriplesEntailmentEngine** is a validator (not a plugin type): checks if extracted triples are logically consistent with premise documents via NLI.
+
+See `ovos_plugin_manager/templates/triples.py` for full API; `ovos_plugin_manager/triples.py` and `ovos_plugin_manager/entity_linker.py` for factory classes.
+
+## How do I use TriplesDB?
+Implement the abstract interface: `add(subject, predicate, obj, confidence, metadata)`, `query(subject, predicate, obj)`, `delete(...)`, `count()`. Use `Triple` dataclass for return values. The `add_batch()` and `delete_batch()` methods have default loop-based implementations; override for bulk efficiency — see `ovos_plugin_manager/templates/triples.py:180–290`.
+
+## How do I implement EntityLinker.link_triples()?
+Override `link_entities(text, lang)` to return `List[LinkedEntity]`. The default `link_triples()` implementation calls `link_entities()` separately on subject and object strings and yields `LinkedTriple` with entity annotations. Override `link_triples()` for full-sentence context — see `ovos_plugin_manager/templates/triples.py:137–175`.
+
+## How is TriplesReasoner decoupled from storage?
+`TriplesReasoner.infer()` accepts an iterable of `Triple` objects and yields inferred `Triple` objects. It does NOT interact with `TriplesDB`. The caller (application code) is responsible for the store→infer→persist loop. This keeps reasoners testable and reusable — see `ovos_plugin_manager/templates/triples.py:304–329`.
