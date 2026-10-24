@@ -180,11 +180,22 @@ class TestGrapheme2PhonemePlugin(unittest.TestCase):
         self.assertIsInstance(result, list)
 
     def test_utterance2visemes(self) -> None:
-        """utterance2visemes returns list of (viseme, duration) tuples."""
-        result = self.arpa_plugin.utterance2visemes("hello world", "en-us")
+        """utterance2visemes returns (viseme, end_time) tuples with cumulative end times."""
+        result = self.arpa_plugin.utterance2visemes("hello world", "en-us", default_dur=0.1)
         self.assertIsInstance(result, list)
+        # HH AH L OW . W ER L D . -> ten phonemes including the two word gaps
+        self.assertEqual(len(result), 10)
         for item in result:
             self.assertEqual(len(item), 2)
+        end_times = [end for _, end in result]
+        self.assertEqual(end_times, [round(0.1 * (i + 1), 3) for i in range(10)])
+        self.assertEqual(end_times, sorted(end_times))
+        self.assertEqual(len(set(end_times)), len(end_times))
+
+    def test_utterance2visemes_default_duration(self) -> None:
+        """The default per-phoneme duration keeps a short utterance near real speech length."""
+        result = self.arpa_plugin.utterance2visemes("hello world", "en-us")
+        self.assertAlmostEqual(result[-1][1], 1.0, places=3)
 
     def test_runtime_requirements(self) -> None:
         """runtime_requirements returns RuntimeRequirements."""
