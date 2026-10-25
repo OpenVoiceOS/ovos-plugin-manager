@@ -169,10 +169,23 @@ class TestAbstractGUIPlugin(unittest.TestCase):
         import inspect
         from ovos_plugin_manager.templates.gui import AbstractGUIPlugin
         for name in ("on_namespace_activated", "on_namespace_deactivated",
-                     "on_status_event", "on_session_update", "dispatch_template"):
+                     "on_status_event", "on_session_update", "dispatch_template",
+                     "on_legacy_page"):
             params = inspect.signature(getattr(AbstractGUIPlugin, name)).parameters
             self.assertIn("session_id", params)
             self.assertNotIn("site_id", params)
+
+    def test_legacy_page_defaults_to_noop(self):
+        adapter = self._adapter()
+        self.assertIsNone(adapter.on_legacy_page("skill.test", "time",
+                                                 {"time_string": "10:36"}, "default"))
+        adapter.bus.assert_not_called()
+        self.assertEqual(adapter.bus.method_calls, [])
+
+    def test_legacy_page_is_not_a_template(self):
+        from ovos_plugin_manager.templates.gui import AbstractGUIPlugin
+        self.assertNotIn("time", AbstractGUIPlugin._TEMPLATE_HANDLERS)
+        self.assertNotIn("on_legacy_page", AbstractGUIPlugin._TEMPLATE_HANDLERS.values())
 
     def test_any_client_connected_defaults_false(self):
         self.assertFalse(self._adapter().any_client_connected())

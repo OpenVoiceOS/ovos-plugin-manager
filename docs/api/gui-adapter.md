@@ -26,6 +26,30 @@ partial implementations are valid. Handlers cover the template events (`handle_s
 …) plus lifecycle hooks (`on_namespace_activated`, `on_namespace_deactivated`, `on_idle`)
 and `on_status_event`. Each handler receives `(skill_id, data, session_id="default")`.
 
+### Legacy page hook
+
+```python
+on_legacy_page(skill_id: str, page: str, data: Dict[str, Any], session_id: str = "default") -> None
+```
+
+A skill that shows its own page name (`time`, `CurrentWeather`, `Timer`) instead of a
+`SYSTEM_*` template is not dispatched as a template. OVOS-GUI-1
+[4.2](https://github.com/OpenVoiceOS/architecture/blob/b6c1583/gui-1.md#42-messages) forbids
+that, and allows a deployment-specific legacy path instead. `on_legacy_page` is that path.
+
+- `page` is the skill's own page name as sent. The service calls the hook once per show,
+  for the active `page_names` entry only, the same as `dispatch_template`.
+- `data` is the namespace's full merged session data, with `__` keys stripped and null
+  values removed, the same map `dispatch_template` gets.
+- The order is the template order: `on_session_update`, then `on_legacy_page`, then
+  `on_namespace_activated`. Clear, removal and idle work the same as for a template.
+- Legacy frame names that alias to a spec template (`SYSTEM_TextFrame` → `SYSTEM_text`)
+  are dispatched as templates, not sent here.
+- The default is a no-op. An adapter that cannot render skill pages ignores it.
+
+This hook is outside the specification. It lets stock skills keep rendering while they
+migrate to templates.
+
 `handle_show_media_player` renders the OCP unified player from the `ocp_*` session keys
 (title/artist/image, `ocp_uri`, `ocp_position`, `ocp_duration`, `ocp_playback_state`,
 `ocp_playlist`, `ocp_search_results`, `ocp_playlist_position`).

@@ -352,6 +352,37 @@ class AbstractGUIPlugin:
         """
 
     # ------------------------------------------------------------------
+    # Legacy page hook (deployment-specific, outside OVOS-GUI-1)
+    # ------------------------------------------------------------------
+
+    def on_legacy_page(
+        self,
+        skill_id: str,
+        page: str,
+        data: Dict[str, Any],
+        session_id: str = "default",
+    ) -> None:
+        """Called when a skill shows a page name that is not a ``SYSTEM_*`` template.
+
+        This is the deployment-specific legacy path that OVOS-GUI-1 section 4.2
+        allows: the service never dispatches such a page as a template, but MAY
+        route it here. It exists so stock skills keep rendering while they
+        migrate to templates. Legacy frame names that alias to a spec template
+        (``SYSTEM_TextFrame`` and so on) are dispatched as templates instead.
+
+        The service calls it once per show, for the active ``page_names`` entry
+        only, after any ``on_session_update`` and before
+        ``on_namespace_activated``, exactly as it calls ``dispatch_template``.
+
+        Args:
+            skill_id: Namespace / skill that requested the display.
+            page:     The skill's own page name as sent (e.g. ``"time"``).
+            data:     Full merged session data, ``__`` keys stripped and
+                      null values removed, as ``dispatch_template`` gets it.
+            session_id: Target session identifier (shared screens share a session_id).
+        """
+
+    # ------------------------------------------------------------------
     # Template dispatch helper
     # ------------------------------------------------------------------
 
