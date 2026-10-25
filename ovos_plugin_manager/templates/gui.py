@@ -390,6 +390,8 @@ class AbstractGUIPlugin:
         page: str,
         data: Dict[str, Any],
         session_id: str = "default",
+        index: int = 0,
+        page_count: int = 1,
     ) -> None:
         """Called when a skill shows a page name that is not a ``SYSTEM_*`` template.
 
@@ -411,6 +413,8 @@ class AbstractGUIPlugin:
             data:     Full merged session data, ``__`` keys stripped and
                       null values removed, as ``dispatch_template`` gets it.
             session_id: Target session identifier (shared screens share a session_id).
+            index:    The active entry's zero-based position in ``page_names``.
+            page_count: The length of ``page_names``.
         """
 
     # ------------------------------------------------------------------
@@ -449,6 +453,8 @@ class AbstractGUIPlugin:
         skill_id: str,
         data: Dict[str, Any],
         session_id: str = "default",
+        index: int = 0,
+        page_count: int = 1,
     ) -> None:
         """Dispatch a template show event to the appropriate handler method.
 
@@ -457,6 +463,10 @@ class AbstractGUIPlugin:
             skill_id: ID of the skill requesting display.
             data:     Session data from the namespace at the time of the call.
             session_id:  Target session identifier (shared screens share a session_id).
+            index:    The active entry's zero-based position in ``page_names``
+                      (section 6.3). The ``handle_show_*`` handlers do not get it;
+                      an adapter that needs it overrides this method.
+            page_count: The length of ``page_names`` (section 6.3).
         """
         handler_name = self._TEMPLATE_HANDLERS.get(template)
         if handler_name:

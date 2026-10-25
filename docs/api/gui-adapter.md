@@ -30,12 +30,32 @@ partial implementations are valid.
 | `on_namespace_activated`, `on_namespace_deactivated` | `(skill_id, session_id="default")` |
 | `on_idle` | `(session_id="default")`: the session whose stack emptied. Idle is per session. |
 | `on_status_event` | `(event_name, data, session_id="default")`: `session_id` is the session that raised it. |
-| `on_legacy_page` | `(skill_id, page, data, session_id="default")` (below) |
+| `dispatch_template` | `(template, skill_id, data, session_id="default", index=0, page_count=1)` (below) |
+| `on_legacy_page` | `(skill_id, page, data, session_id="default", index=0, page_count=1)` (below) |
+
+### Active entry: `index` and `page_count`
+
+`dispatch_template` and `on_legacy_page` get two more arguments, as
+[6.3](https://github.com/OpenVoiceOS/architecture/blob/b6c1583/gui-1.md#63-events-received)
+(proposed amendment B) defines them:
+
+- `index`: the active entry's zero-based position in `page_names`.
+- `page_count`: the length of `page_names`.
+
+The service sends them on every show and again when a
+[`gui.page.focus`](https://github.com/OpenVoiceOS/architecture/blob/b6c1583/gui-1.md#42-messages)
+makes another held entry active. That second dispatch, with the new `index`, is how a
+render backend learns that the focus took effect. A backend that does not have both values
+for a namespace must not send `gui.page.focus` for it.
+
+The defaults (`0` and `1`) keep an adapter working that ignores them. The `handle_show_*`
+handlers do not get them; an adapter that needs them overrides `dispatch_template`.
 
 ### Legacy page hook
 
 ```python
-on_legacy_page(skill_id: str, page: str, data: Dict[str, Any], session_id: str = "default") -> None
+on_legacy_page(skill_id: str, page: str, data: Dict[str, Any], session_id: str = "default",
+               index: int = 0, page_count: int = 1) -> None
 ```
 
 A skill that shows its own page name (`time`, `CurrentWeather`, `Timer`) instead of a
@@ -45,7 +65,8 @@ that, and allows a deployment-specific legacy path instead. `on_legacy_page` is 
 
 - The service takes this path when the **first** `page_names` entry is not a `SYSTEM_*`
   name, as 4.2 decides. `page` is the **active** entry, exactly as the skill sent it. The
-  service calls the hook once per show, the same as `dispatch_template`.
+  service calls the hook once per show, the same as `dispatch_template`, with the same
+  `index` and `page_count`.
 - `data` is the namespace's full merged session data, with `__` keys stripped and null
   values removed, the same map `dispatch_template` gets.
 - The order is the template order: `on_session_update`, then `on_legacy_page`, then

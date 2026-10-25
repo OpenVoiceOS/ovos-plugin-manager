@@ -175,6 +175,26 @@ class TestAbstractGUIPlugin(unittest.TestCase):
             self.assertIn("session_id", params)
             self.assertNotIn("site_id", params)
 
+    def test_page_hooks_take_index_and_page_count_with_defaults(self):
+        import inspect
+        from ovos_plugin_manager.templates.gui import AbstractGUIPlugin
+        for name in ("dispatch_template", "on_legacy_page"):
+            params = inspect.signature(getattr(AbstractGUIPlugin, name)).parameters
+            self.assertEqual(params["index"].default, 0)
+            self.assertEqual(params["page_count"].default, 1)
+
+    def test_dispatch_with_entry_reaches_handler_unchanged(self):
+        adapter = self._adapter()
+        adapter.handle_show_text = MagicMock()
+        adapter.dispatch_template("SYSTEM_text", "skill.test", {"text": "hi"},
+                                  "kitchen", index=1, page_count=2)
+        adapter.handle_show_text.assert_called_once_with(
+            "skill.test", {"text": "hi"}, "kitchen")
+
+    def test_legacy_page_accepts_entry(self):
+        self.assertIsNone(self._adapter().on_legacy_page(
+            "skill.test", "time", {}, "default", index=0, page_count=1))
+
     def test_legacy_page_defaults_to_noop(self):
         adapter = self._adapter()
         self.assertIsNone(adapter.on_legacy_page("skill.test", "time",
