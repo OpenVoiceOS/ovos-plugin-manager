@@ -266,7 +266,11 @@ class AbstractGUIPlugin:
         data: Dict[str, Any],
         session_id: str = "default",
     ) -> None:
-        """Handle SYSTEM_confirm template event."""
+        """Handle SYSTEM_confirm: ``question``, optional ``yes_label`` / ``no_label``.
+
+        An interactive companion (proposed GUI-1 amendment A). The user's
+        answer goes back as event ``confirm`` with ``{"answer": bool}``.
+        """
 
     def handle_show_select(
         self,
@@ -274,7 +278,23 @@ class AbstractGUIPlugin:
         data: Dict[str, Any],
         session_id: str = "default",
     ) -> None:
-        """Handle SYSTEM_select template event."""
+        """Handle SYSTEM_select: ``prompt``, ``items`` of ``{label, value, image}``.
+
+        An interactive companion (proposed GUI-1 amendment A). The choice
+        goes back as event ``select`` with ``{"value": <the item value>}``.
+        """
+
+    def handle_show_input(
+        self,
+        skill_id: str,
+        data: Dict[str, Any],
+        session_id: str = "default",
+    ) -> None:
+        """Handle SYSTEM_input: ``prompt``, optional ``placeholder``, ``secret``.
+
+        An interactive companion (proposed GUI-1 amendment A). The entered
+        text goes back as event ``input`` with ``{"text": str}``.
+        """
 
     def handle_show_face(
         self,
@@ -415,6 +435,7 @@ class AbstractGUIPlugin:
         "SYSTEM_map":            "handle_show_map",
         "SYSTEM_confirm":        "handle_show_confirm",
         "SYSTEM_select":         "handle_show_select",
+        "SYSTEM_input":          "handle_show_input",
         "SYSTEM_face":           "handle_show_face",
     }
 

@@ -194,6 +194,14 @@ class TestAbstractGUIPlugin(unittest.TestCase):
         self.assertEqual(param.default, "default")
         self.assertIsNone(self._adapter().on_idle("kitchen"))
 
+    def test_interactive_companions_are_dispatchable(self):
+        adapter = self._adapter()
+        for name in ("confirm", "select", "input"):
+            with patch.object(adapter, f"handle_show_{name}") as handler:
+                adapter.dispatch_template(f"SYSTEM_{name}", "skill.test", {"prompt": "?"},
+                                          "kitchen")
+                handler.assert_called_once_with("skill.test", {"prompt": "?"}, "kitchen")
+
     def test_any_client_connected_defaults_false(self):
         self.assertFalse(self._adapter().any_client_connected())
 
