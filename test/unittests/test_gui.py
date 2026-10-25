@@ -170,7 +170,7 @@ class TestAbstractGUIPlugin(unittest.TestCase):
         from ovos_plugin_manager.templates.gui import AbstractGUIPlugin
         for name in ("on_namespace_activated", "on_namespace_deactivated",
                      "on_status_event", "on_session_update", "dispatch_template",
-                     "on_legacy_page"):
+                     "on_legacy_page", "on_idle"):
             params = inspect.signature(getattr(AbstractGUIPlugin, name)).parameters
             self.assertIn("session_id", params)
             self.assertNotIn("site_id", params)
@@ -186,6 +186,13 @@ class TestAbstractGUIPlugin(unittest.TestCase):
         from ovos_plugin_manager.templates.gui import AbstractGUIPlugin
         self.assertNotIn("time", AbstractGUIPlugin._TEMPLATE_HANDLERS)
         self.assertNotIn("on_legacy_page", AbstractGUIPlugin._TEMPLATE_HANDLERS.values())
+
+    def test_on_idle_takes_session_with_default(self):
+        import inspect
+        from ovos_plugin_manager.templates.gui import AbstractGUIPlugin
+        param = inspect.signature(AbstractGUIPlugin.on_idle).parameters["session_id"]
+        self.assertEqual(param.default, "default")
+        self.assertIsNone(self._adapter().on_idle("kitchen"))
 
     def test_any_client_connected_defaults_false(self):
         self.assertFalse(self._adapter().any_client_connected())

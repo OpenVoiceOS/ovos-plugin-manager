@@ -21,10 +21,16 @@ AbstractGUIPlugin(config: Dict[str, Any], bus: Optional[MessageBusClient] = None
 ```
 
 Subclass and override only the handlers you need — every handler defaults to a no-op, so
-partial implementations are valid. Handlers cover the template events (`handle_show_idle`,
-`handle_show_text`, `handle_show_list`, `handle_show_media_player`, `handle_show_weather`,
-…) plus lifecycle hooks (`on_namespace_activated`, `on_namespace_deactivated`, `on_idle`)
-and `on_status_event`. Each handler receives `(skill_id, data, session_id="default")`.
+partial implementations are valid.
+
+| Handler | Arguments |
+|---|---|
+| `handle_show_<template>` (`handle_show_text`, `handle_show_weather`, …), called by `dispatch_template` | `(skill_id, data, session_id="default")` |
+| `on_session_update` | `(skill_id, data, session_id="default")` |
+| `on_namespace_activated`, `on_namespace_deactivated` | `(skill_id, session_id="default")` |
+| `on_idle` | `(session_id="default")`: the session whose stack emptied. Idle is per session. |
+| `on_status_event` | `(event_name, data, session_id="default")`: `session_id` is the session that raised it. |
+| `on_legacy_page` | `(skill_id, page, data, session_id="default")` (below) |
 
 ### Legacy page hook
 

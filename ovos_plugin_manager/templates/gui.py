@@ -294,8 +294,15 @@ class AbstractGUIPlugin:
     def on_namespace_deactivated(self, skill_id: str, session_id: str = "default") -> None:
         """Called when a skill's namespace is cleared or removed."""
 
-    def on_idle(self) -> None:
-        """Called when the GUI returns to the idle/resting state."""
+    def on_idle(self, session_id: str = "default") -> None:
+        """Called when the active stack of ``session_id`` becomes empty.
+
+        Idle is per session: show the resting display to the clients of
+        ``session_id`` only. Clients of other sessions are not affected.
+
+        Args:
+            session_id: The session whose stack emptied.
+        """
 
     # ------------------------------------------------------------------
     # Connection report
