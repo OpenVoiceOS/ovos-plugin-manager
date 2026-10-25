@@ -211,19 +211,19 @@ class AbstractGUIPlugin:
     ) -> None:
         """Handle SYSTEM_media_player template event.
 
-        Render the OCP unified media player UI. ``data`` contains all ``ocp_*``
-        session keys:
+        Render the unified media player UI. ``data`` holds the ``media_*``
+        session keys of the OVOS-GUI-1 catalogue (section 3.4):
 
-        - ``ocp_title``, ``ocp_artist``, ``ocp_album``, ``ocp_image`` — track metadata
-        - ``ocp_uri`` — currently playing URI
-        - ``ocp_position`` — playback position in milliseconds
-        - ``ocp_duration`` — track duration in milliseconds (-1 for live streams)
-        - ``ocp_playback_state`` — one of: ``"playing"``, ``"paused"``, ``"stopped"``,
+        - ``media_title``, ``media_artist``, ``media_album``, ``media_image`` — track metadata
+        - ``media_uri`` — currently playing URI
+        - ``media_position`` — playback position in milliseconds
+        - ``media_duration`` — track duration in milliseconds (-1 for live streams)
+        - ``media_playback_state`` — one of: ``"playing"``, ``"paused"``, ``"stopped"``,
           ``"loading"``, ``"error"``
-        - ``ocp_playlist`` — list of ``{title, artist, image, uri, duration}`` dicts
-        - ``ocp_search_results`` — list of ``{title, artist, image, uri, skill_id,
+        - ``media_playlist`` — list of ``{title, artist, image, uri, duration}`` dicts
+        - ``media_search_results`` — list of ``{title, artist, image, uri, skill_id,
           match_confidence}`` dicts
-        - ``ocp_playlist_position`` — index of current track in ``ocp_playlist``
+        - ``media_playlist_position`` — index of current track in ``media_playlist``
 
         Adapters should render three navigable views: Now Playing, Queue, Search Results.
         """
@@ -329,7 +329,7 @@ class AbstractGUIPlugin:
     # ------------------------------------------------------------------
 
     def any_client_connected(self) -> bool:
-        """Report whether at least one display client is connected (spec §6.8).
+        """Report whether at least one display client is connected (OVOS-GUI-1 section 6.8).
 
         ovos-gui may use this to answer "is a GUI connected" queries. Adapters
         that own a client transport override it; the default reports no client.
@@ -351,8 +351,10 @@ class AbstractGUIPlugin:
     ) -> None:
         """Called for well-known system status events forwarded by ovos-gui.
 
-        Examples of *event_name* values: ``"recognizer_loop:wakeword"``,
-        ``"speak"``, ``"recognizer_loop:record_begin"``.
+        Examples of *event_name* values (OVOS-GUI-1 section 5.3):
+        ``"ovos.listener.wakeword"``, ``"ovos.utterance.speak"``,
+        ``"ovos.listener.record.started"``. ``gui.ambient.*`` topics and the
+        legacy topics a service still forwards arrive here too.
 
         Args:
             event_name: The original bus message type.
@@ -379,7 +381,7 @@ class AbstractGUIPlugin:
         """
 
     # ------------------------------------------------------------------
-    # Legacy page hook (deployment-specific, outside OVOS-GUI-1)
+    # Legacy page hook (optional, transitional; proposed OVOS-GUI-1 amendment E)
     # ------------------------------------------------------------------
 
     def on_legacy_page(
@@ -391,14 +393,16 @@ class AbstractGUIPlugin:
     ) -> None:
         """Called when a skill shows a page name that is not a ``SYSTEM_*`` template.
 
-        This is the deployment-specific legacy path that OVOS-GUI-1 section 4.2
-        allows: the service never dispatches such a page as a template, but MAY
-        route it here. It exists so stock skills keep rendering while they
-        migrate to templates. Legacy frame names that alias to a spec template
-        (``SYSTEM_TextFrame`` and so on) are dispatched as templates instead.
+        This is the legacy-page hook of proposed OVOS-GUI-1 amendment E, the
+        legacy path that section 4.2 allows: the service never dispatches such a
+        page as a template, but MAY route it here. It exists so stock skills keep
+        rendering while they migrate to templates. Legacy frame names that alias
+        to a spec template (``SYSTEM_TextFrame`` and so on) are dispatched as
+        templates instead.
 
-        The service calls it once per show, for the active ``page_names`` entry
-        only, after any ``on_session_update`` and before
+        The service takes this path when the first ``page_names`` entry is not a
+        ``SYSTEM_*`` name (section 4.2), and calls it once per show with the
+        active entry, after any ``on_session_update`` and before
         ``on_namespace_activated``, exactly as it calls ``dispatch_template``.
 
         Args:

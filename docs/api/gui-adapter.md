@@ -43,8 +43,9 @@ A skill that shows its own page name (`time`, `CurrentWeather`, `Timer`) instead
 [4.2](https://github.com/OpenVoiceOS/architecture/blob/b6c1583/gui-1.md#42-messages) forbids
 that, and allows a deployment-specific legacy path instead. `on_legacy_page` is that path.
 
-- `page` is the skill's own page name as sent. The service calls the hook once per show,
-  for the active `page_names` entry only, the same as `dispatch_template`.
+- The service takes this path when the **first** `page_names` entry is not a `SYSTEM_*`
+  name, as 4.2 decides. `page` is the **active** entry, exactly as the skill sent it. The
+  service calls the hook once per show, the same as `dispatch_template`.
 - `data` is the namespace's full merged session data, with `__` keys stripped and null
   values removed, the same map `dispatch_template` gets.
 - The order is the template order: `on_session_update`, then `on_legacy_page`, then
@@ -53,12 +54,24 @@ that, and allows a deployment-specific legacy path instead. `on_legacy_page` is 
   are dispatched as templates, not sent here.
 - The default is a no-op. An adapter that cannot render skill pages ignores it.
 
-This hook is outside the specification. It lets stock skills keep rendering while they
-migrate to templates.
+This is the optional, transitional legacy-page hook of the proposed amendment E (branch
+`gui1/legacy-page-hook`). A producer that relies on it is not conformant. It lets stock
+skills keep rendering while they migrate to templates.
 
-`handle_show_media_player` renders the OCP unified player from the `ocp_*` session keys
-(title/artist/image, `ocp_uri`, `ocp_position`, `ocp_duration`, `ocp_playback_state`,
-`ocp_playlist`, `ocp_search_results`, `ocp_playlist_position`).
+`handle_show_media_player` renders the unified media player from the `media_*` session keys
+of the [3.4](https://github.com/OpenVoiceOS/architecture/blob/b6c1583/gui-1.md#34-catalogue)
+catalogue (`media_title`, `media_artist`, `media_album`, `media_image`, `media_uri`,
+`media_position`, `media_duration`, `media_playback_state`, `media_playlist`,
+`media_search_results`, `media_playlist_position`).
+
+`on_status_event` gets the topics of
+[5.3](https://github.com/OpenVoiceOS/architecture/blob/b6c1583/gui-1.md#53-system-wide-signals)
+(`ovos.listener.wakeword`, `ovos.utterance.speak`, …), the `gui.ambient.*` topics, and any
+legacy topic the service still forwards.
+
+The three interactive companions of the proposed amendment A, `SYSTEM_confirm`,
+`SYSTEM_select` and `SYSTEM_input`, dispatch to `handle_show_confirm`,
+`handle_show_select` and `handle_show_input`.
 
 ---
 
