@@ -1,11 +1,14 @@
 import os
 import sys
+from base64 import urlsafe_b64encode
 from os.path import exists, dirname
+from pathlib import Path
 from subprocess import PIPE, Popen
+from tempfile import gettempdir
 from typing import Iterator, List, Optional, Tuple, Union
 
 import requests
-from combo_lock import NamedLock
+from filelock import FileLock
 from ovos_utils.log import LOG, log_deprecation, deprecated
 
 from ovos_plugin_manager.exceptions import PipException
@@ -22,9 +25,29 @@ if not imported_internally(__name__):
                     func_module="ovos_plugin_manager.installation",
                     deprecation_version=_deprecation_version)
 
+
+def _named_lock(name: str) -> FileLock:
+    """Return a lock shared by every process and thread that uses ``name``.
+
+    The lock file path is the one combo-lock uses when the temp directory is
+    in RAM, so a process that still runs combo-lock waits on the same lock.
+    The directory and the file are writable by all users, because services
+    that share a lock can run as different users.
+    """
+    lock_dir = Path(gettempdir(), "combo_locks")
+    try:
+        lock_dir.mkdir()
+    except FileExistsError:
+        pass
+    else:
+        lock_dir.chmod(0o777)
+    filename = urlsafe_b64encode(name.encode()).decode() + ".lock"
+    return FileLock(lock_dir / filename, mode=0o666)
+
+
 # default constraints to use if none are given
 DEFAULT_CONSTRAINTS = '/etc/mycroft/constraints.txt'
-PIP_LOCK = NamedLock("ovos_pip.lock")
+PIP_LOCK = _named_lock("ovos_pip.lock")
 
 
 @deprecated(f"search_pip is deprecated, use a modern package manager instead", _deprecation_version)

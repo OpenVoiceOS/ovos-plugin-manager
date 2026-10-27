@@ -14,7 +14,7 @@ dependencies = [
     "ovos-utils>=0.2.1,<1.0.0",
     "ovos_bus_client>=0.0.8,<3.0.0",
     "ovos-config>=0.0.12,<4.0.0",
-    "combo_lock~=0.3",
+    "filelock>=3.12",
     "requests~=2.32",
     "quebra_frases",
     "ovos-spec-tools[langcodes]>=1.6.1a1",
