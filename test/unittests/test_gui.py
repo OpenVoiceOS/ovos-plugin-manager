@@ -169,7 +169,78 @@ class TestAbstractGUIPlugin(unittest.TestCase):
         import inspect
         from ovos_plugin_manager.templates.gui import AbstractGUIPlugin
         for name in ("on_namespace_activated", "on_namespace_deactivated",
-                     "on_status_event", "on_session_update", "dispatch_template"):
+                     "on_status_event", "on_session_update", "dispatch_template",
+                     "on_legacy_page", "on_idle"):
             params = inspect.signature(getattr(AbstractGUIPlugin, name)).parameters
             self.assertIn("session_id", params)
             self.assertNotIn("site_id", params)
+
+    def test_page_hooks_take_index_and_page_count_with_defaults(self):
+        import inspect
+        from ovos_plugin_manager.templates.gui import AbstractGUIPlugin
+        for name in ("dispatch_template", "on_legacy_page"):
+            params = inspect.signature(getattr(AbstractGUIPlugin, name)).parameters
+            self.assertEqual(params["index"].default, 0)
+            self.assertEqual(params["page_count"].default, 1)
+
+    def test_dispatch_with_entry_reaches_handler_unchanged(self):
+        adapter = self._adapter()
+        adapter.handle_show_text = MagicMock()
+        adapter.dispatch_template("SYSTEM_text", "skill.test", {"text": "hi"},
+                                  "kitchen", index=1, page_count=2)
+        adapter.handle_show_text.assert_called_once_with(
+            "skill.test", {"text": "hi"}, "kitchen")
+
+    def test_legacy_page_accepts_entry(self):
+        self.assertIsNone(self._adapter().on_legacy_page(
+            "skill.test", "time", {}, "default", index=0, page_count=1))
+
+    def test_legacy_page_defaults_to_noop(self):
+        adapter = self._adapter()
+        self.assertIsNone(adapter.on_legacy_page("skill.test", "time",
+                                                 {"time_string": "10:36"}, "default"))
+        adapter.bus.assert_not_called()
+        self.assertEqual(adapter.bus.method_calls, [])
+
+    def test_legacy_page_is_not_a_template(self):
+        from ovos_plugin_manager.templates.gui import AbstractGUIPlugin
+        self.assertNotIn("time", AbstractGUIPlugin._TEMPLATE_HANDLERS)
+        self.assertNotIn("on_legacy_page", AbstractGUIPlugin._TEMPLATE_HANDLERS.values())
+
+    def test_on_idle_takes_session_with_default(self):
+        import inspect
+        from ovos_plugin_manager.templates.gui import AbstractGUIPlugin
+        param = inspect.signature(AbstractGUIPlugin.on_idle).parameters["session_id"]
+        self.assertEqual(param.default, "default")
+        self.assertIsNone(self._adapter().on_idle("kitchen"))
+
+    def test_interactive_companions_are_dispatchable(self):
+        adapter = self._adapter()
+        for name in ("confirm", "select", "input"):
+            with patch.object(adapter, f"handle_show_{name}") as handler:
+                adapter.dispatch_template(f"SYSTEM_{name}", "skill.test", {"prompt": "?"},
+                                          "kitchen")
+                handler.assert_called_once_with("skill.test", {"prompt": "?"}, "kitchen")
+
+    def test_any_client_connected_defaults_false(self):
+        self.assertFalse(self._adapter().any_client_connected())
+
+
+class TestGUITemplateImport(unittest.TestCase):
+    """The adapter base must import without ovos-gui (ovos-gui depends on OPM)."""
+
+    def test_module_load_does_not_import_ovos_gui(self):
+        import builtins
+        import importlib
+        import ovos_plugin_manager.templates.gui as gui_templates
+        real_import = builtins.__import__
+        attempted = []
+
+        def recording_import(name, *args, **kwargs):
+            attempted.append(name)
+            return real_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", recording_import):
+            importlib.reload(gui_templates)
+        importlib.reload(gui_templates)
+        self.assertFalse([n for n in attempted if n.startswith("ovos_gui")])

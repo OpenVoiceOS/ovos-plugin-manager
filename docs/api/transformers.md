@@ -120,6 +120,28 @@ Modify or augment the `IntentHandlerMatch` before it is dispatched to the skill.
 
 ---
 
+## Typed-Slots Transformers
+
+**Entry point group:** `opm.transformer.typed_slots`
+**Template:** `ovos_plugin_manager.templates.transformers.TypedSlotsTransformer`
+
+Run after the utterance and metadata transformer chains, before intent matching. The
+plugin computes and returns the typed-slots map for the declared types it is given;
+the orchestrator selects a single loaded plugin, hands it the declared types, drops
+any key naming an unregistered type, replaces whatever map a producer already placed
+on the Message, discards the map when a later utterance rewrite invalidates its
+spans, and carries the surviving map to dispatch. The plugin never touches
+`utterances` or `Message.context`.
+
+### Method
+
+#### `transform(utterances: List[str], declared_types: FrozenSet[str], session) -> Dict[str, List[dict]]`
+
+Return a dict mapping type name to a list of `{"span": [start, end], "surface": str,
+"value": ...}` entries.
+
+---
+
 ## Dialog Transformers
 
 **Entry point group:** `opm.transformer.dialog`

@@ -13,12 +13,11 @@ requires-python = ">=3.10"
 dependencies = [
     "ovos-utils>=0.2.1,<1.0.0",
     "ovos_bus_client>=0.0.8,<3.0.0",
-    "ovos-config>=0.0.12,<3.0.0",
+    "ovos-config>=0.0.12,<4.0.0",
     "combo_lock~=0.3",
     "requests~=2.32",
     "quebra_frases",
-    "ovos-spec-tools[langcodes]>=0.0.1a2",
-    "importlib_metadata",
+    "ovos-spec-tools[langcodes]>=1.6.1a1",
     "setuptools; python_version>='3.12'",
     "standard-aifc; python_version>='3.13'",
     "audioop-lts; python_version>='3.13'",
@@ -38,7 +37,10 @@ test = [
     "pytest-cov",
     "python-vlc",
     "ovos-hardware-helpers>=1.0.0",
-    "mediavocab>=1.0.0"
+    "mediavocab>=1.0.0",
+    # opm patches speech_recognition.AudioData; the tests that hold that
+    # patch to its contract must RUN, never skip for a missing package
+    "SpeechRecognition"
 ]
 
 [tool.setuptools]

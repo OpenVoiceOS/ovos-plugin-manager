@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import TYPE_CHECKING, Optional, Dict, Any
 
 from ovos_bus_client import Message
 from ovos_bus_client import MessageBusClient
@@ -6,21 +6,8 @@ from ovos_bus_client.apis.gui import GUIInterface
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 
-try:
+if TYPE_CHECKING:
     from ovos_gui.homescreen import HomescreenManager
-except ImportError as _exc:
-
-    class HomescreenManager:
-        """Fallback class when ovos-gui is not installed.
-
-        Raises the original ImportError when instantiated to
-        provide clear error messaging while still allowing type hints to work.
-        """
-
-        def __init__(self, *args, **kwargs):
-            LOG.error("you seem to be running GUIExtensions without ovos-gui installed...")
-            # raise the original ImportError
-            raise _exc
 
 
 class GUIExtension:
@@ -54,16 +41,17 @@ class GUIExtension:
         self.preload_gui = preload_gui
         self.permanent = permanent
         self.config = config
-        self.homescreen_manager: Optional[HomescreenManager] = None
+        self.homescreen_manager: Optional["HomescreenManager"] = None
         self.register_bus_events()
 
     def register_bus_events(self):
         self.bus.on("mycroft.gui.screen.close", self.handle_remove_namespace)
 
-    def bind_homescreen(self, homescreen: Optional[HomescreenManager] = None):
+    def bind_homescreen(self, homescreen: Optional["HomescreenManager"] = None):
         if self.config.get("homescreen_supported", False):
             if not homescreen:
                 LOG.debug("Loading HomescreenManager")
+                from ovos_gui.homescreen import HomescreenManager
                 homescreen = HomescreenManager(self.bus)
                 homescreen.daemon = True
                 homescreen.start()
@@ -223,19 +211,19 @@ class AbstractGUIPlugin:
     ) -> None:
         """Handle SYSTEM_media_player template event.
 
-        Render the OCP unified media player UI. ``data`` contains all ``ocp_*``
-        session keys:
+        Render the unified media player UI. ``data`` holds the ``media_*``
+        session keys of the OVOS-GUI-1 catalogue (section 3.4):
 
-        - ``ocp_title``, ``ocp_artist``, ``ocp_album``, ``ocp_image`` — track metadata
-        - ``ocp_uri`` — currently playing URI
-        - ``ocp_position`` — playback position in milliseconds
-        - ``ocp_duration`` — track duration in milliseconds (-1 for live streams)
-        - ``ocp_playback_state`` — one of: ``"playing"``, ``"paused"``, ``"stopped"``,
+        - ``media_title``, ``media_artist``, ``media_album``, ``media_image`` — track metadata
+        - ``media_uri`` — currently playing URI
+        - ``media_position`` — playback position in milliseconds
+        - ``media_duration`` — track duration in milliseconds (-1 for live streams)
+        - ``media_playback_state`` — one of: ``"playing"``, ``"paused"``, ``"stopped"``,
           ``"loading"``, ``"error"``
-        - ``ocp_playlist`` — list of ``{title, artist, image, uri, duration}`` dicts
-        - ``ocp_search_results`` — list of ``{title, artist, image, uri, skill_id,
+        - ``media_playlist`` — list of ``{title, artist, image, uri, duration}`` dicts
+        - ``media_search_results`` — list of ``{title, artist, image, uri, skill_id,
           match_confidence}`` dicts
-        - ``ocp_playlist_position`` — index of current track in ``ocp_playlist``
+        - ``media_playlist_position`` — index of current track in ``media_playlist``
 
         Adapters should render three navigable views: Now Playing, Queue, Search Results.
         """
@@ -278,7 +266,11 @@ class AbstractGUIPlugin:
         data: Dict[str, Any],
         session_id: str = "default",
     ) -> None:
-        """Handle SYSTEM_confirm template event."""
+        """Handle SYSTEM_confirm: ``question``, optional ``yes_label`` / ``no_label``.
+
+        An interactive companion (proposed GUI-1 amendment A). The user's
+        answer goes back as event ``confirm`` with ``{"answer": bool}``.
+        """
 
     def handle_show_select(
         self,
@@ -286,7 +278,23 @@ class AbstractGUIPlugin:
         data: Dict[str, Any],
         session_id: str = "default",
     ) -> None:
-        """Handle SYSTEM_select template event."""
+        """Handle SYSTEM_select: ``prompt``, ``items`` of ``{label, value, image}``.
+
+        An interactive companion (proposed GUI-1 amendment A). The choice
+        goes back as event ``select`` with ``{"value": <the item value>}``.
+        """
+
+    def handle_show_input(
+        self,
+        skill_id: str,
+        data: Dict[str, Any],
+        session_id: str = "default",
+    ) -> None:
+        """Handle SYSTEM_input: ``prompt``, optional ``placeholder``, ``secret``.
+
+        An interactive companion (proposed GUI-1 amendment A). The entered
+        text goes back as event ``input`` with ``{"text": str}``.
+        """
 
     def handle_show_face(
         self,
@@ -306,8 +314,30 @@ class AbstractGUIPlugin:
     def on_namespace_deactivated(self, skill_id: str, session_id: str = "default") -> None:
         """Called when a skill's namespace is cleared or removed."""
 
-    def on_idle(self) -> None:
-        """Called when the GUI returns to the idle/resting state."""
+    def on_idle(self, session_id: str = "default") -> None:
+        """Called when the active stack of ``session_id`` becomes empty.
+
+        Idle is per session: show the resting display to the clients of
+        ``session_id`` only. Clients of other sessions are not affected.
+
+        Args:
+            session_id: The session whose stack emptied.
+        """
+
+    # ------------------------------------------------------------------
+    # Connection report
+    # ------------------------------------------------------------------
+
+    def any_client_connected(self) -> bool:
+        """Report whether at least one display client is connected (OVOS-GUI-1 section 6.8).
+
+        ovos-gui may use this to answer "is a GUI connected" queries. Adapters
+        that own a client transport override it; the default reports no client.
+
+        Returns:
+            True when this adapter has at least one connected client.
+        """
+        return False
 
     # ------------------------------------------------------------------
     # Status event hook
@@ -321,8 +351,10 @@ class AbstractGUIPlugin:
     ) -> None:
         """Called for well-known system status events forwarded by ovos-gui.
 
-        Examples of *event_name* values: ``"recognizer_loop:wakeword"``,
-        ``"speak"``, ``"recognizer_loop:record_begin"``.
+        Examples of *event_name* values (OVOS-GUI-1 section 5.3):
+        ``"ovos.listener.wakeword"``, ``"ovos.utterance.speak"``,
+        ``"ovos.listener.record.started"``. ``gui.ambient.*`` topics and the
+        legacy topics a service still forwards arrive here too.
 
         Args:
             event_name: The original bus message type.
@@ -346,6 +378,43 @@ class AbstractGUIPlugin:
             skill_id: Namespace / skill that owns the data.
             data:     Full key/value session data dict (excluding reserved keys).
             session_id:  Target session identifier (shared screens share a session_id).
+        """
+
+    # ------------------------------------------------------------------
+    # Legacy page hook (optional, transitional; proposed OVOS-GUI-1 amendment E)
+    # ------------------------------------------------------------------
+
+    def on_legacy_page(
+        self,
+        skill_id: str,
+        page: str,
+        data: Dict[str, Any],
+        session_id: str = "default",
+        index: int = 0,
+        page_count: int = 1,
+    ) -> None:
+        """Called when a skill shows a page name that is not a ``SYSTEM_*`` template.
+
+        This is the legacy-page hook of proposed OVOS-GUI-1 amendment E, the
+        legacy path that section 4.2 allows: the service never dispatches such a
+        page as a template, but MAY route it here. It exists so stock skills keep
+        rendering while they migrate to templates. Legacy frame names that alias
+        to a spec template (``SYSTEM_TextFrame`` and so on) are dispatched as
+        templates instead.
+
+        The service takes this path when the first ``page_names`` entry is not a
+        ``SYSTEM_*`` name (section 4.2), and calls it once per show with the
+        active entry, after any ``on_session_update`` and before
+        ``on_namespace_activated``, exactly as it calls ``dispatch_template``.
+
+        Args:
+            skill_id: Namespace / skill that requested the display.
+            page:     The skill's own page name as sent (e.g. ``"time"``).
+            data:     Full merged session data, ``__`` keys stripped and
+                      null values removed, as ``dispatch_template`` gets it.
+            session_id: Target session identifier (shared screens share a session_id).
+            index:    The active entry's zero-based position in ``page_names``.
+            page_count: The length of ``page_names``.
         """
 
     # ------------------------------------------------------------------
@@ -374,6 +443,7 @@ class AbstractGUIPlugin:
         "SYSTEM_map":            "handle_show_map",
         "SYSTEM_confirm":        "handle_show_confirm",
         "SYSTEM_select":         "handle_show_select",
+        "SYSTEM_input":          "handle_show_input",
         "SYSTEM_face":           "handle_show_face",
     }
 
@@ -383,6 +453,8 @@ class AbstractGUIPlugin:
         skill_id: str,
         data: Dict[str, Any],
         session_id: str = "default",
+        index: int = 0,
+        page_count: int = 1,
     ) -> None:
         """Dispatch a template show event to the appropriate handler method.
 
@@ -391,6 +463,10 @@ class AbstractGUIPlugin:
             skill_id: ID of the skill requesting display.
             data:     Session data from the namespace at the time of the call.
             session_id:  Target session identifier (shared screens share a session_id).
+            index:    The active entry's zero-based position in ``page_names``
+                      (section 6.3). The ``handle_show_*`` handlers do not get it;
+                      an adapter that needs it overrides this method.
+            page_count: The length of ``page_names`` (section 6.3).
         """
         handler_name = self._TEMPLATE_HANDLERS.get(template)
         if handler_name:

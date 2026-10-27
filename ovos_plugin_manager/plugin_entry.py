@@ -9,16 +9,18 @@ from ovos_plugin_manager.installation import pip_install
 from ovos_utils import camel_case_split
 from ovos_utils.json_helper import merge_dict
 from ovos_utils.log import log_deprecation
+from ovos_plugin_manager._deprecation import imported_internally
 from ovos_plugin_manager.version import VERSION_MAJOR
 
 # Calculate next major version for deprecation
 _deprecation_version = f"{VERSION_MAJOR + 1}.0"
 
-# Deprecation notice for this module
-log_deprecation(f"ovos_plugin_manager.plugin_entry module is deprecated and will be removed in v{_deprecation_version}",
-                func_name="plugin_entry module",
-                func_module="ovos_plugin_manager.plugin_entry",
-                deprecation_version=_deprecation_version)
+# Deprecation notice for external callers of this module
+if not imported_internally(__name__):
+    log_deprecation(f"ovos_plugin_manager.plugin_entry module is deprecated and will be removed in v{_deprecation_version}",
+                    func_name="plugin_entry module",
+                    func_module="ovos_plugin_manager.plugin_entry",
+                    deprecation_version=_deprecation_version)
 
 
 class OpenVoiceOSPlugin:

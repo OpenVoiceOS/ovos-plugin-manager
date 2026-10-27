@@ -1,8 +1,8 @@
 # Configuration Utilities
 
-`ovos_plugin_manager.utils.config` provides helpers for resolving plugin configuration
-from the global OVOS config (`ovos.conf` / `mycroft.conf`), filtering language-specific
-options, and sorting by priority.
+`ovos_plugin_manager.utils.config` has helpers to resolve plugin configuration from the
+global OVOS config (`ovos.conf` / `mycroft.conf`), filter language-specific options, and
+sort them by priority.
 
 ## `get_plugin_config`
 
@@ -14,11 +14,11 @@ def get_plugin_config(
 ) -> dict
 ```
 
-Resolve a merged configuration dict for a plugin. Configuration precedence (highest to lowest):
+Resolve a merged configuration dict for a plugin. Configuration precedence, highest to lowest:
 
-1. Module-specific block — `config[section][module]`
-2. Section-level defaults — `config[section]` (scalar keys only)
-3. Top-level `lang` — `config['lang']`
+1. Module-specific block: `config[section][module]`
+2. Section-level defaults: `config[section]` (scalar keys only)
+3. Top-level `lang`: `config['lang']`
 
 **Parameters**
 
@@ -28,8 +28,8 @@ Resolve a merged configuration dict for a plugin. Configuration precedence (high
 | `section` | `str` | Top-level config key for the plugin category (e.g. `"stt"`, `"tts"`, `"hotwords"`). |
 | `module` | `str` | Plugin entry point name to look up inside `config[section]`. If omitted, reads from `config[section]['module']`. |
 
-**Returns** `dict` — merged config containing at minimum `module` and `lang` keys (except for
-`hotwords`, `VAD`, `listener`, and `gui` sections).
+**Returns** `dict`: merged config with at least `module` and `lang` keys, except for the
+`hotwords`, `VAD`, `listener`, and `gui` sections.
 
 **Example**
 
@@ -52,7 +52,8 @@ def load_plugin_configs(
 ) -> Union[dict, list]
 ```
 
-Load language/variant configuration for a single plugin by calling its `.config` entry point.
+Load language and variant configuration for a single plugin by calling its `.config` entry
+point.
 
 **Parameters**
 
@@ -72,7 +73,7 @@ Load language/variant configuration for a single plugin by calling its `.config`
 def load_configs_for_plugin_type(plug_type: PluginTypes) -> dict
 ```
 
-Load configs for **all** installed plugins of the given type.
+Load configs for all installed plugins of the given type.
 
 **Returns** `{plugin_name: {lang: [configs]}}`.
 
@@ -120,8 +121,8 @@ Return a mapping of language code to list of plugin names that support that lang
 def sort_plugin_configs(configs: dict) -> dict
 ```
 
-Sort each plugin's config list by the `"priority"` key (lower = higher priority).
-Invalid/empty config lists are removed.
+Sort each plugin's config list by the `"priority"` key. Lower values mean higher priority.
+The function removes invalid or empty config lists.
 
 **Returns** `{plugin_name: [sorted_configs]}`.
 
@@ -137,18 +138,22 @@ def get_valid_plugin_configs(
 ) -> list
 ```
 
-Filter a single plugin's `{lang: [configs]}` dict to configs matching `lang`.
-When `include_dialects=True`, configs for closely related dialects are included with a
-+15 priority bonus.
+Filter a single plugin's `{lang: [configs]}` dict to configs that match `lang`.
+When `include_dialects=True`, the result also includes configs for closely related
+dialects, with a +15 priority bonus.
 
 ---
 
 ## Config priority
 
-Within a config list, entries are sorted by their `"priority"` key. Higher values are
-considered more preferred; factory methods iterate through the list from the end.
+Within a config list, entries are sorted by their `"priority"` key. Higher values mean a
+more preferred config. Factory methods iterate through the list from the end, so the
+highest-priority entry runs last.
 
-The default priority is `60`. A dialect match boosts priority by `+15` (to 75), making it
-more preferred than a generic language match with the default priority. Since factory
-methods iterate configs from the end (highest priority last), larger priority values win.
+The default priority is `60`. A dialect match adds `15` to reach `75`, so it wins over a
+generic language match at the default priority.
+
+---
+
+[← Writing a Plugin](writing-plugins.md) · [Home](index.md) · [Transformers →](transformers.md)
 

@@ -1,32 +1,33 @@
 
 # OVOS Plugin Manager (OPM) Documentation
 
-`ovos-plugin-manager` (OPM) is the central plugin discovery, loading, and configuration
-framework for the OpenVoiceOS ecosystem. It defines the base classes (templates) that all
-OVOS plugins must implement, and provides factory methods and utilities for finding and
-loading installed plugins at runtime via Python entry points.
+`ovos-plugin-manager` (OPM) is the plugin discovery, loading, and configuration framework
+for the OpenVoiceOS ecosystem. It defines the base classes (templates) that OVOS plugins
+implement, and it has factory methods and utilities to find and load installed plugins at
+runtime through Python entry points.
 
 ## Contents
 
-- [Plugin Types & Entry Points](plugin-types.md) — full `PluginTypes` enum and `setup.py` entry point names
-- [Transformer Pipelines](transformers.md) — the six transformer chains, runner services, config, ordering and deployment surfaces
-- [Writing a Plugin](writing-plugins.md) — step-by-step guide with `setup.py` template
-- [Configuration Utilities](configuration.md) — `get_plugin_config`, language configs, sorting
-- [Installation Utilities](installation.md) — `pip_install`, `search_pip`
+- [Installation Utilities](installation.md): `pip_install`, `search_pip`
+- [Plugin Types & Entry Points](plugin-types.md): full `PluginTypes` enum and `setup.py` entry point names
+- [Writing a Plugin](writing-plugins.md): step-by-step guide with `setup.py` template
+- [Configuration Utilities](configuration.md): `get_plugin_config`, language configs, sorting
+- [Transformer Pipelines](transformers.md): the six transformer chains, runner services, config, ordering and deployment surfaces
+- [Voice Cloning Plugins](voice-clone.md): the `opm.vc` audio-to-audio voice conversion contract
+- [Agent Plugins](agents.md): all available ChatEngine, ToolBox, and Persona plugins with entry point registry
 - **API References**
-  - [STT](api/stt.md) — Speech-to-Text
-  - [TTS](api/tts.md) — Text-to-Speech
-  - [Wake Word](api/wake-word.md) — Hotword / Wake Word detection
-  - [VAD](api/vad.md) — Voice Activity Detection
-  - [Microphone](api/microphone.md) — Audio input sources
-  - [PHAL](api/phal.md) — Platform/Hardware Abstraction Layer
-  - [Transformers](api/transformers.md) — Audio, Utterance, Dialog, Metadata, TTS, Intent transformers
-  - [Agents & Solvers](api/agents.md) — NLP solver and agent engine plugins
-  - [Agent Tools](api/agent-tools.md) — ToolBox plugin API (`opm.agents.toolbox`)
-- [Agent Plugins](agents.md) — all available ChatEngine, ToolBox, and Persona plugins with entry point registry
-  - [Pipeline](api/pipeline.md) — Intent matching pipeline plugins
-  - [Media Provider](api/media-provider.md) — OCP catalog/search providers (`opm.media.provider`, OVOS-OCP-1)
-  - [Language](api/language.md) — Translation and language detection plugins
+  - [STT](api/stt.md): Speech-to-Text
+  - [TTS](api/tts.md): Text-to-Speech
+  - [Wake Word](api/wake-word.md): Hotword / Wake Word detection
+  - [VAD](api/vad.md): Voice Activity Detection
+  - [Microphone](api/microphone.md): Audio input sources
+  - [PHAL](api/phal.md): Platform/Hardware Abstraction Layer
+  - [Transformers](api/transformers.md): Audio, Utterance, Dialog, Metadata, TTS, Intent transformers
+  - [Agents & Solvers](api/agents.md): NLP solver and agent engine plugins
+  - [Agent Tools](api/agent-tools.md): ToolBox plugin API (`opm.agents.toolbox`)
+  - [Pipeline](api/pipeline.md): Intent matching pipeline plugins
+  - [Media Provider](api/media-provider.md): OCP catalog/search providers (`opm.media.provider`, OVOS-OCP-1)
+  - [Language](api/language.md): Translation and language detection plugins
 
 ## Architecture Overview
 
@@ -40,8 +41,8 @@ ovos-core / ovos-dinkum-listener / ovos-audio
 ```
 
 Plugins are Python packages that register themselves under a well-known entry point group
-(e.g. `opm.stt`). OPM calls `importlib.metadata.entry_points()` to discover installed
-plugins without any manual registration.
+(for example, `opm.stt`). OPM calls `importlib.metadata.entry_points()` to discover
+installed plugins without any manual registration.
 
 ## Quick Start
 

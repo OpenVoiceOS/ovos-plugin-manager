@@ -63,16 +63,20 @@ class ToolBox(ABC):
     Entry point group: ``opm.agents.toolbox``
     """
 
-    def __init__(self, toolbox_id: str,
+    def __init__(self,
+                 toolbox_id: str,
+                 config: Optional[Dict[str, Any]] = None,
                  bus: Optional[Union[MessageBusClient, FakeBus]] = None):
         """
         Initializes the ToolBox. Note: Messagebus binding is deferred until `bind()` is called.
 
         Args:
-            toolbox_id: A unique identifier for this ToolBox instance (usually the entrypoint name, e.g., 'web_search_tools').
+            toolbox_id: Unique plugin identity, matching its entry-point name.
+            config: Plugin-specific configuration dict.
             bus: The OVOS Messagebus client instance. If provided, `bind()` is called automatically.
         """
-        self.toolbox_id: str = toolbox_id  # Unique ID for the toolbox
+        self.toolbox_id: str = toolbox_id
+        self.config: Dict[str, Any] = config or {}
         self.bus: Optional[Union[MessageBusClient, FakeBus]] = None
 
         # Internal cache for discovered tools, mapped by name
@@ -80,7 +84,7 @@ class ToolBox(ABC):
         try:
             self.tools = {tool.name: tool for tool in self.discover_tools()}
         except Exception as e:
-            LOG.debug(f"ToolBox '{toolbox_id}' failed initial tool discovery, will retry on first use: {e}")
+            LOG.debug(f"ToolBox '{self.toolbox_id}' deferred tool discovery: {e}")
 
         # Initialize the messagebus connection if provided
         if bus:
@@ -96,10 +100,26 @@ class ToolBox(ABC):
             bus: The active OVOS Messagebus client or FakeBus instance.
         """
         self.bus = bus
-        # General discovery broadcast
+        # OVOS-TOOLS-1 §4.1: general discovery broadcast
         self.bus.on("ovos.persona.tools.discover", self.handle_discover)
-        # Specific call channel for this toolbox
+        # OVOS-TOOLS-1 §4.2: one static call topic, the toolbox in data.toolbox_id
+        self.bus.on("ovos.persona.tools.call", self.handle_call)
+        # OVOS-TOOLS-1 §6: predecessor per-toolbox call topic, kept one stable cycle
         self.bus.on(f"ovos.persona.tools.{self.toolbox_id}.call", self.handle_call)
+
+    def unbind(self) -> None:
+        """
+        Removes the messagebus handlers that `bind()` registered.
+
+        A host that drops or replaces a ToolBox calls this, so the old instance
+        stops answering the toolbox topics.
+        """
+        if self.bus is None:
+            return
+        self.bus.remove("ovos.persona.tools.discover", self.handle_discover)
+        self.bus.remove("ovos.persona.tools.call", self.handle_call)
+        self.bus.remove(f"ovos.persona.tools.{self.toolbox_id}.call", self.handle_call)
+        self.bus = None
 
     def refresh_tools(self) -> None:
         """
@@ -121,7 +141,8 @@ class ToolBox(ABC):
         """
         self.refresh_tools()
         response_data: Dict[str, Any] = {
-            "tools": self.tool_json_list,
+            # OVOS-TOOLS-1 §3: toolbox_id is a field of every tool definition
+            "tools": [{**tool, "toolbox_id": self.toolbox_id} for tool in self.tool_json_list],
             "toolbox_id": self.toolbox_id
         }
         self.bus.emit(message.response(response_data))
@@ -131,11 +152,17 @@ class ToolBox(ABC):
         Handles messagebus calls to a specific tool within this ToolBox.
 
         It attempts to execute the tool and emits the result or error back on the bus.
+        On 'ovos.persona.tools.call' the call names its toolbox in ``data.toolbox_id``;
+        a call for another toolbox, or for none, gets no answer (OVOS-TOOLS-1 §4.2).
 
         Args:
-            message: The incoming Message object containing 'name' (tool name)
-                     and 'kwargs' (tool arguments dictionary).
+            message: The incoming Message object containing 'toolbox_id' (on
+                     'ovos.persona.tools.call'), 'name' (tool name) and 'kwargs'
+                     (tool arguments dictionary).
         """
+        if message.msg_type == "ovos.persona.tools.call" and \
+                message.data.get("toolbox_id") != self.toolbox_id:
+            return
         name: str = message.data.get("name", "")
         tool_kwargs: Dict[str, Any] = message.data.get("kwargs", {})
 
