@@ -17,7 +17,7 @@
 import ast
 import inspect
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call, patch
 
 from ovos_plugin_manager.templates.media import (
     AudioPlayerBackend,
@@ -125,12 +125,12 @@ class TestMediaBackend(unittest.TestCase):
             received.append((event, data))
 
         self.backend.bind_event_reporter(reporter)
-        self.backend.report(PlaybackEvent.ERROR, error="boom")
+        self.backend.report(PlaybackEvent.ERROR, error="boom", uri="file:///a.mp3")
 
         self.assertEqual(len(received), 1)
         event, data = received[0]
         self.assertIs(event, PlaybackEvent.ERROR)
-        self.assertEqual(data, {"error": "boom"})
+        self.assertEqual(data, {"error": "boom", "uri": "file:///a.mp3"})
 
     def test_bind_event_reporter_delivers_via_play(self) -> None:
         """play() reports TRACK_START through the bound reporter."""
@@ -150,43 +150,43 @@ class TestMediaBackend(unittest.TestCase):
 
         self.backend.bind_event_reporter(r)
         self.backend.report(PlaybackEvent.PAUSED)
-        self.backend.report(PlaybackEvent.ERROR, error="disk full")
+        self.backend.report(PlaybackEvent.ERROR, error="disk full", uri="file:///a.mp3")
         self.backend.report(PlaybackEvent.END_OF_MEDIA, uri="file:///test.mp3")
 
         self.assertEqual(received, [
             (PlaybackEvent.PAUSED, {}),
-            (PlaybackEvent.ERROR, {"error": "disk full"}),
+            (PlaybackEvent.ERROR, {"error": "disk full", "uri": "file:///a.mp3"}),
             (PlaybackEvent.END_OF_MEDIA, {"uri": "file:///test.mp3"}),
         ])
 
     def test_reporter_with_named_error_kwarg_receives_error_event(self) -> None:
         """A reporter that only names the keywords it cares about - e.g.
-        (event, error=None) - must still work for PlaybackEvent.ERROR,
+        (event, error=None, uri=None) - must still work for PlaybackEvent.ERROR,
         proving the call convention is positional-event + keyword-data."""
         received = []
 
-        def r(event, error=None):
+        def r(event, error=None, uri=None):
             received.append((event, error))
 
         self.backend.bind_event_reporter(r)
-        self.backend.report(PlaybackEvent.ERROR, error="disk full")
+        self.backend.report(PlaybackEvent.ERROR, error="disk full", uri="file:///a.mp3")
 
         self.assertEqual(received, [(PlaybackEvent.ERROR, "disk full")])
 
     def test_error_payload_shape_is_normative(self) -> None:
-        """PlaybackEvent.ERROR is always reported with a single 'error'
-        kwarg whose value is a string - pin the documented payload shape."""
+        """PlaybackEvent.ERROR is always reported with an 'error' kwarg
+        whose value is a string, plus the track's 'uri'."""
         reporter = MagicMock()
         self.backend.bind_event_reporter(reporter)
 
         try:
             raise RuntimeError("player crashed")
         except RuntimeError as exc:
-            self.backend.report(PlaybackEvent.ERROR, error=str(exc))
+            self.backend.report(PlaybackEvent.ERROR, error=str(exc), uri="file:///a.mp3")
 
-        reporter.assert_called_once_with(PlaybackEvent.ERROR, error="player crashed")
+        reporter.assert_called_once_with(PlaybackEvent.ERROR, error="player crashed", uri="file:///a.mp3")
         _, kwargs = reporter.call_args
-        self.assertEqual(set(kwargs), {"error"})
+        self.assertEqual(set(kwargs), {"error", "uri"})
         self.assertIsInstance(kwargs["error"], str)
 
     def test_capability_defaults(self) -> None:
@@ -499,6 +499,59 @@ class TestMediaBackend(unittest.TestCase):
         self.assertEqual(backend.get_track_length(), 60000)
         backend.set_track_position(1234)
         self.assertEqual(backend.get_track_position(), 1234)
+
+
+class TestEndEventsRequireUri(unittest.TestCase):
+    """END_OF_MEDIA and ERROR without a uri cannot be staleness-checked by
+    the daemon, so report() drops them with an error log."""
+
+    def setUp(self) -> None:
+        self.backend = _ConcreteMediaBackend()
+        self.reporter = MagicMock()
+        self.backend.bind_event_reporter(self.reporter)
+
+    def test_end_events_without_uri_are_dropped_and_logged(self) -> None:
+        cases = [
+            (PlaybackEvent.END_OF_MEDIA, {}),
+            (PlaybackEvent.END_OF_MEDIA, {"uri": None}),
+            (PlaybackEvent.END_OF_MEDIA, {"uri": ""}),
+            (PlaybackEvent.ERROR, {"error": "boom"}),
+            (PlaybackEvent.ERROR, {"error": "boom", "uri": ""}),
+        ]
+        for event, data in cases:
+            with self.subTest(event=event, data=data):
+                self.reporter.reset_mock()
+                with patch("ovos_plugin_manager.templates.media.LOG") as log:
+                    self.backend.report(event, **data)
+                self.reporter.assert_not_called()
+                log.error.assert_called_once()
+                message = log.error.call_args[0][0]
+                self.assertIn("_ConcreteMediaBackend", message)
+                self.assertIn(str(event), message)
+
+    def test_report_track_end_without_uri_is_dropped(self) -> None:
+        with patch("ovos_plugin_manager.templates.media.LOG") as log:
+            self.backend.report_track_end()
+            self.backend.report_track_end(error=RuntimeError("boom"))
+        self.reporter.assert_not_called()
+        self.assertEqual(log.error.call_count, 2)
+
+    def test_end_events_with_uri_are_forwarded_unchanged(self) -> None:
+        self.backend.report(PlaybackEvent.END_OF_MEDIA, uri="file:///a.mp3")
+        self.backend.report(PlaybackEvent.ERROR, error="boom", uri="file:///a.mp3")
+        self.assertEqual(self.reporter.call_args_list, [
+            call(PlaybackEvent.END_OF_MEDIA, uri="file:///a.mp3"),
+            call(PlaybackEvent.ERROR, error="boom", uri="file:///a.mp3"),
+        ])
+
+    def test_other_events_without_uri_are_forwarded(self) -> None:
+        others = [e for e in PlaybackEvent
+                  if e not in (PlaybackEvent.END_OF_MEDIA, PlaybackEvent.ERROR)]
+        self.assertEqual(len(others), 4)
+        for event in others:
+            self.backend.report(event)
+        self.assertEqual(self.reporter.call_args_list,
+                         [call(event) for event in others])
 
 
 class TestStopRequestedFlagCannotGoStale(unittest.TestCase):

@@ -133,14 +133,14 @@ class MediaBackend(metaclass=ABCMeta):
         backends can be constructed and exercised standalone, e.g. in
         tests, without a daemon attached.
 
-        Plugins SHOULD attach the ``uri`` of the track the event belongs
+        Plugins MUST attach the ``uri`` of the track the event belongs
         to when reporting ``PlaybackEvent.END_OF_MEDIA`` and
         ``PlaybackEvent.ERROR`` - ``self.report(PlaybackEvent.END_OF_MEDIA,
         uri=<the uri load_track received>)`` - so the daemon can detect and
         drop a stale event that outlives its track (e.g. a late callback
         from a previous track's watcher thread firing after a new track
-        has already loaded). An event reported without a ``uri`` cannot be
-        staleness-checked by the daemon.
+        has already loaded). An event without a ``uri`` cannot be
+        staleness-checked, so ``report`` logs an error and drops it.
 
         **Re-entrancy.** A plugin MAY call ``report()`` synchronously from
         inside any verb, including ``stop()``: a backend that stops its
@@ -168,6 +168,11 @@ class MediaBackend(metaclass=ABCMeta):
         if self._event_reporter is None:
             LOG.debug(f"{self.__class__.__name__} not bound to an event "
                       f"reporter, dropping {event}")
+            return
+        if event in (PlaybackEvent.END_OF_MEDIA, PlaybackEvent.ERROR) \
+                and not data.get("uri"):
+            LOG.error(f"{self.__class__.__name__} reported {event} without "
+                      f"a uri, dropping it (uri is required)")
             return
         self._event_reporter(event, **data)
 
@@ -197,7 +202,8 @@ class MediaBackend(metaclass=ABCMeta):
         Arguments:
             uri: the uri of the track this end-of-playback event belongs
                 to, forwarded to ``report`` for daemon-side staleness
-                checks (see ``report``).
+                checks (see ``report``). Required for ``END_OF_MEDIA`` and
+                ``ERROR``: without it ``report`` drops the event.
             error: the exception or error description if playback ended
                 because of a failure, else None.
         """
