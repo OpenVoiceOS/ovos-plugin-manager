@@ -1,13 +1,17 @@
 """The language-distance boundary used to select dialect plugin configs."""
+import importlib.util
 import unittest
 
 from ovos_plugin_manager.utils.config import get_valid_plugin_configs
 
-MACROLANGUAGE_PAIRS = [("arz", "ar"), ("cmn", "zh")]
+# linguatag (Python >= 3.11) separates the Sinitic languages from Mandarin;
+# the langcodes matcher that Python 3.10 resolves does not.
+LINGUATAG = importlib.util.find_spec("linguatag") is not None
+
+MACROLANGUAGE_PAIRS = [("arz", "ar")] + ([("cmn", "zh")] if LINGUATAG else [])
 REGIONAL_PAIRS = [("ar-SA", "ar"), ("en-AU", "en-GB"), ("pt-BR", "pt-PT")]
-# Wu is not mutually intelligible with Mandarin, which "zh" denotes.
-UNRELATED_PAIRS = [("en", "zh"), ("es", "fr"), ("fr-CH", "de-CH"), ("af", "nl"),
-                   ("wuu", "zh")]
+UNRELATED_PAIRS = [("en", "zh"), ("es", "fr"), ("fr-CH", "de-CH"), ("af", "nl")] + \
+                  ([("wuu", "zh")] if LINGUATAG else [])
 
 
 def _selected(requested: str, available: str) -> bool:
