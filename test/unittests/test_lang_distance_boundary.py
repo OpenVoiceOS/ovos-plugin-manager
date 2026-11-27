@@ -3,9 +3,11 @@ import unittest
 
 from ovos_plugin_manager.utils.config import get_valid_plugin_configs
 
-MACROLANGUAGE_PAIRS = [("arz", "ar"), ("wuu", "zh")]
+MACROLANGUAGE_PAIRS = [("arz", "ar"), ("cmn", "zh")]
 REGIONAL_PAIRS = [("ar-SA", "ar"), ("en-AU", "en-GB"), ("pt-BR", "pt-PT")]
-UNRELATED_PAIRS = [("en", "zh"), ("es", "fr"), ("fr-CH", "de-CH"), ("af", "nl")]
+# Wu is not mutually intelligible with Mandarin, which "zh" denotes.
+UNRELATED_PAIRS = [("en", "zh"), ("es", "fr"), ("fr-CH", "de-CH"), ("af", "nl"),
+                   ("wuu", "zh")]
 
 
 def _selected(requested: str, available: str) -> bool:
